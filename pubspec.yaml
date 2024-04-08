@@ -9,7 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  fl_chart: ^0.36.0
+  sqflite: ^2.0.0+3
+  path_provider: ^2.0.0
+  mysql1: ^0.20.0 # Update to a version that exists
+  intl: ^0.17.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
