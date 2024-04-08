@@ -1,0 +1,445 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'db_connection.dart'; // Import your database connection utility
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+        ),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.all(16), // Added padding
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Sales Orders Status', // Changed title to "Sales Orders Status"
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: OrderStatusWidget(),
+              ),
+              SizedBox(height: 32), // Added extra space after OrderStatusWidget
+              InProgressOrdersWidget(), // Added the InProgressOrdersWidget widget
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class OrderStatusWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'Order Status',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: OrderStatusIndicator(),
+        ),
+      ],
+    );
+  }
+}
+
+class OrderStatusIndicator extends StatefulWidget {
+  @override
+  _OrderStatusIndicatorState createState() => _OrderStatusIndicatorState();
+}
+
+class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
+  int complete = 0;
+  int pending = 0;
+  int voided = 0;
+  DateTimeRange dateRange = DateTimeRange(
+    start: DateTime.now().subtract(const Duration(days: 30)),
+    end: DateTime.now(),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDataForDateRange(dateRange);
+  }
+
+Future<void> fetchDataForDateRange(DateTimeRange selectedDateRange) async {
+  var db = await connectToDatabase();
+
+  String formattedStartDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.start);
+  String formattedEndDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.end);
+
+  var results = await db.query(
+    'SELECT COUNT(*) AS Total, CASE WHEN status = "confirm" THEN "Complete" WHEN status = "in progress" THEN "Pending" ELSE status END AS status FROM cart_item WHERE created BETWEEN ? AND ? GROUP BY status;',
+    [formattedStartDate, formattedEndDate],
+  );
+
+  int completeOrders = 0;
+  int pendingOrders = 0;
+  int voidedOrders = 0;
+
+  for (var row in results) {
+    String status = row['status'] as String;
+    int count = row['Total'] as int;
+
+    // Accumulate counts based on status
+    if (status == 'Complete') {
+      completeOrders += count;
+    } else if (status == 'Pending') {
+      pendingOrders += count;
+    } else if (status == 'Void') {
+      voidedOrders += count;
+    }
+  }
+
+  setState(() {
+    complete = completeOrders;
+    pending = pendingOrders;
+    voided = voidedOrders;
+  });
+
+  await db.close();
+}
+
+
+Future<void> _selectDateRange(BuildContext context) async {
+  final DateTime now = DateTime.now();
+  final DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
+  final DateTime lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+
+  final DateTimeRange? pickedRange = await showDateRangePicker(
+    context: context,
+    initialDateRange: DateTimeRange(start: firstDayOfMonth, end: lastDayOfMonth),
+    firstDate: DateTime(2020),
+    lastDate: DateTime(2025),
+  );
+
+  if (pickedRange != null && pickedRange != dateRange) {
+    setState(() {
+      dateRange = pickedRange;
+    });
+    await fetchDataForDateRange(dateRange);
+  }
+}
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: () => _selectDateRange(context),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.calendar_today, size: 24.0),
+                SizedBox(width: 8),
+                Text(
+                  "${DateFormat('dd/MM/yyyy').format(dateRange.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange.end)}",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                Icon(Icons.arrow_drop_down, size: 24.0),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            // Complete Order Number
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$pending', // Displaying complete order number
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: 8), // Adding space between complete order number and "Orders"
+                Text(
+                  'Orders Pending',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            CustomPaint(
+              size: Size(200, 200),
+              painter: OrderStatusPainter(
+                complete: complete,
+                pending: pending,
+                voided: voided,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildStatusIndicator('Complete', Colors.green, complete),
+            _buildStatusIndicator('Pending', Colors.blue, pending),
+            _buildStatusIndicator('Void', Colors.red, voided),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusIndicator(String label, Color color, int value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.brightness_1, color: color, size: 12),
+          SizedBox(width: 4),
+          Text('$label $value'),
+        ],
+      ),
+    );
+  }
+}
+
+class OrderStatusPainter extends CustomPainter {
+  final int complete;
+  final int pending;
+  final int voided;
+  final double lineWidth;
+
+  OrderStatusPainter({
+    required this.complete,
+    required this.pending,
+    required this.voided,
+    this.lineWidth = 10.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - lineWidth / 2;
+    final total = complete + pending + voided;
+    final sweepAngle = 2 * 3.141592653589793238462643383279502884197;
+
+    Paint paintComplete = Paint()
+      ..color = Colors.green
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = lineWidth;
+
+    Paint paintPending = Paint()
+      ..color = Colors.blue
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = lineWidth;
+
+    Paint paintVoided = Paint()
+      ..color = Colors.red
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = lineWidth;
+
+    double startAngle = -3.141592653589793238462643383279502884197 / 2;
+
+    double completeSweep = sweepAngle * (complete / total);
+    double pendingSweep = sweepAngle * (pending / total);
+    double voidedSweep = sweepAngle * (voided / total);
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      completeSweep,
+      false,
+      paintComplete,
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle + completeSweep,
+      pendingSweep,
+      false,
+      paintPending,
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle + completeSweep + pendingSweep,
+      voidedSweep,
+      false,
+      paintVoided,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class InProgressOrdersWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'In Progress Orders',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+        FutureBuilder<List<InProgressOrder>>(
+          future: fetchInProgressOrders(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else if (snapshot.hasData) {
+              return Container(
+                padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...snapshot.data!.map((order) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${order.date}',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 4), // Adding some space between date and order heading
+                        Center(
+                          child: Text(
+                            '${order.status} Orders',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 12), // Adding some space between orders
+                      ],
+                    )),
+                  ],
+                ),
+              );
+            } else {
+              return Text('No data');
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<List<InProgressOrder>> fetchInProgressOrders() async {
+    var db = await connectToDatabase();
+    var results = await db.query(
+      'SELECT id, CASE WHEN status = \'in progress\' THEN \'Pending\' ELSE status END AS status, created FROM cart_item;',
+    );
+
+    List<InProgressOrder> inProgressOrders = [];
+    for (var row in results) {
+      inProgressOrders.add(
+        InProgressOrder(
+          row['created'].toString(),
+          row['status'].toString(),
+        ),
+      );
+    }
+    await db.close();
+    return inProgressOrders;
+  }
+}
+
+class InProgressOrder {
+  final String date;
+  final String status;
+
+  InProgressOrder(this.date, this.status);
+}
