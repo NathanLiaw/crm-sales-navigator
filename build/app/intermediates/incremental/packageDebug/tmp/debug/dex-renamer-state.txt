@@ -1,0 +1,4 @@
+#Tue Apr 09 16:52:22 MYT 2024
+base.0=C\:\\projects\\flutter_projects\\crm-sales-navigator\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\classes.dex
+path.0=classes.dex
+renamed.0=classes.dex
