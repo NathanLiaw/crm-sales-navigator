@@ -4,22 +4,15 @@ import 'package:flutter/material.dart';
 import 'components/category_button.dart';
 import 'package:sales_navigator/categories_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sales_navigator/data/productdata.dart';
 
 class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({super.key});
+  const ProductsScreen({Key? key}) : super(key: key);
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
-  List<Product> products = [
-    Product(id: "1", name: "Product 1", imageUrl: "url", price: 9.99),
-    Product(id: "2", name: "Product 2", imageUrl: "url", price: 19.99),
-    // Add more products as needed
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,7 +115,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
               ],
             ),
-            ItemsWidget(),
+            Flexible(
+              child: SingleChildScrollView(
+                child: ItemsWidget(),
+              ),
+            ),
           ],
         ),
       ),
