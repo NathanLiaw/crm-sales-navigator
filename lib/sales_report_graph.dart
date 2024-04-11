@@ -95,28 +95,29 @@ class _SalesReportState extends State<SalesReport> {
 
       case 'Month':
         query = '''
-SELECT 
-    Dates.`Date`,
-    DATE_FORMAT(Dates.`Date`, '%a') AS `Day`, -- Short form of the day
-    IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`
+        SELECT
+    GeneratedMonths.YearMonth,
+    GeneratedMonths.MonthName,
+    IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
 FROM (
-    SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
-    UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-    UNION ALL SELECT CURDATE()
-) AS Dates
+    SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
+           DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
+    FROM (
+        SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
+        SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL
+        SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL
+        SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11
+    ) AS c
+) AS GeneratedMonths
 LEFT JOIN (
     SELECT 
-        DATE(ci.created) AS `Date`,
-        ROUND(SUM(ci.total), 0) AS `Total Sales`
+        DATE_FORMAT(ci.created, '%Y-%m') AS YearMonth,
+        ci.total AS `Total Sales`
     FROM cart_item ci
-    WHERE ci.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE()
-    GROUP BY DATE(ci.created)
-) AS DailySales ON Dates.`Date` = DailySales.`Date`
-ORDER BY Dates.`Date` ASC;
+    WHERE ci.created >= CURDATE() - INTERVAL 12 MONTH
+) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
+GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
+ORDER BY GeneratedMonths.YearMonth ASC;
         ''';
         break;
       case 'Year':
