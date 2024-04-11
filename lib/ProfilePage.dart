@@ -8,10 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/CustomNavigationBar.dart';
 
 class ProfilePage extends StatefulWidget {
-  // final String salesmanName; // Define salesmanName variable
-
-  // ProfilePage(
-  //     {required this.salesmanName}); // Constructor to receive salesmanName
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -25,7 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _getSalesmanName();
   }
 
-  // 使用didChangeDependencies方法来重新获取销售人员姓名
+  // Use the didChangeDependencies function to recapture salesperson names
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -35,8 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _getSalesmanName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      salesmanName = prefs.getString('salesmanName') ??
-          ''; // Use default value if 'salesmanName' is null
+      salesmanName = prefs.getString('salesmanName') ?? '';
     });
   }
 
@@ -51,7 +46,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications),
+            icon: Icon(Icons.notifications, color: Colors.white),
             onPressed: () {
               // Handle notifications
             },
@@ -95,15 +90,15 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(), // 保留底部导航栏
+      bottomNavigationBar: CustomNavigationBar(),
     );
   }
 
   Widget buildProfileOption(String title, IconData icon, BuildContext context) {
     return GestureDetector(
       onTap: () {
+        // check button title
         if (title == 'Account Setting') {
-          // check button title
           Navigator.push(
             // Navigate to account setting page
             context,
@@ -159,12 +154,11 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
-          // implement logout logic
-          // 清除 SharedPreferences 中的数据
+          // Clearing data in SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.clear();
 
-          // 导航到登录页面
+          // Navigate to the login page
           Navigator.pushReplacementNamed(context, '/login');
         },
         style: ElevatedButton.styleFrom(
