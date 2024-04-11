@@ -83,7 +83,6 @@ class LoginPage extends StatelessWidget {
                 SizedBox(height: 10),
                 Text('Phone: +60-82362333, 362666, 362999'),
                 Text('Email: FYHKCH@hotmail.com'),
-                // Add more contact information here if needed
               ],
             ),
           ),
@@ -165,8 +164,8 @@ class LoginPage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Implement sign-in logic here
-                    signIn(context); // Call the sign in method
+                    // Call the sign in method
+                    signIn(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xff0069BA),
@@ -187,7 +186,7 @@ class LoginPage extends StatelessWidget {
               SizedBox(height: 10),
               TextButton(
                 onPressed: () {
-                  // Implement forgot password logic here
+                  // Show pop up window
                   showContactInfoDialog(context);
                 },
                 child: Text(
