@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Cart.dart';
-import 'package:sales_navigator/HomePage.dart';
-import 'package:sales_navigator/LoginPage.dart';
-import 'package:sales_navigator/ProductPage.dart';
-import 'package:sales_navigator/ProfilePage.dart';
-import 'package:sales_navigator/SalesPage.dart';
+import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/login_page.dart';
+import 'package:sales_navigator/product_page.dart';
+import 'package:sales_navigator/profile_page.dart';
+import 'package:sales_navigator/sales_page.dart';
 // import 'package:sales_navigator/cart_item_sqlite.dart';
 
 Future<void> main() async {
