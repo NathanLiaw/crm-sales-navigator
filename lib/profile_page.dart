@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Components/CustomNavigationBar.dart';
+import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/account_setting_page.dart';
 import 'package:sales_navigator/contact_us_page.dart';
 import 'package:sales_navigator/recent_order_page.dart';
