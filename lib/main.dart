@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/Cart.dart';
 import 'package:sales_navigator/HomePage.dart';
 import 'package:sales_navigator/LoginPage.dart';
-import 'package:sales_navigator/Order_details.dart';
 import 'package:sales_navigator/ProductPage.dart';
 import 'package:sales_navigator/ProfilePage.dart';
 import 'package:sales_navigator/SalesPage.dart';
@@ -21,7 +20,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: OrderDetailsPage(),
+      home: LoginPage(),
       routes: {
         '/home': (context) => HomePage(),
         '/sales': (context) => SalesPage(),
