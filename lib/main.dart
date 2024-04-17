@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/login_page.dart';
+import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/product_page.dart';
 import 'package:sales_navigator/profile_page.dart';
 import 'package:sales_navigator/sales_page.dart';
