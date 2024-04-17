@@ -1,0 +1,1 @@
+ C:\\projects\\flutter_projects\\crm-sales-navigator\\.dart_tool\\flutter_build\\50d1db8d583f32ab5996b2ea21e2b0e2\\native_assets.yaml: 

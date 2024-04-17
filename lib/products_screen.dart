@@ -1,9 +1,12 @@
-import 'package:sales_navigator/model/Sort_popup.dart';
-import 'package:sales_navigator/model/items_widget.dart';
 import 'package:flutter/material.dart';
-import 'components/category_button.dart';
+import 'package:sales_navigator/brands_screen.dart';
 import 'package:sales_navigator/categories_screen.dart';
+import 'package:sales_navigator/filter_categories_screen.dart';
+import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'components/category_button.dart';
+import 'model/Sort_popup.dart';
+import 'model/items_widget.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
@@ -13,17 +16,76 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
+  String searchQuery = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(70),
+        child: AppBar(
+          backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+          leading: IconButton(
+            icon: Icon(
+              Icons.location_on,
+              size: 34,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchScreen()),
+              ).then((value) {
+                if (value != null) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                }
+              });
+            },
+          ),
+          title: InkWell(
+            onTap: () {},
+            child: Container(
+              child: TextField(
+                readOnly: true,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Search',
+                  suffixIcon: Icon(Icons.search),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(80),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(
+                Icons.notifications,
+                size: 34,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                // Add your onPressed logic here
+              },
+            ),
+          ],
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
-          color: Color.fromARGB(255, 226, 226, 226),
+          color: Color.fromARGB(240, 243, 243, 243),
         ),
         child: Column(
           children: [
-            const SizedBox(
-              height: 70,
+            SizedBox(
+              height: 10,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -39,7 +101,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
                 CategoryButton(
                   buttonnames: 'Brands',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return BrandScreen();
+                    }));
+                  },
                 ),
               ],
             ),
@@ -99,7 +166,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     children: [
                       IconButton(
                         iconSize: 38,
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return FilterCategoriesScreen();
+                          }));
+                        },
                         icon: const Icon(Icons.filter_alt),
                       ),
                       Text(
@@ -117,7 +189,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
             Flexible(
               child: SingleChildScrollView(
-                child: ItemsWidget(),
+                child: ItemsWidget(searchQuery: searchQuery),
               ),
             ),
           ],

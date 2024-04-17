@@ -4,7 +4,7 @@ class ItemAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        color: Color.fromARGB(255, 0, 76, 135),
+        color: const Color.fromARGB(255, 0, 76, 135),
         padding: EdgeInsets.all(14),
         child: Row(children: [
           IconButton(

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.sales_navigator.app-mergeDebugResources-9:/values-night-v8/values-night-v8.xml",
+            "outputFile": "com.example.sales_navigator.app-mergeDebugResources-16:/values-night-v8/values-night-v8.xml",
             "map": [
                 {
                     "source": "C:\\projects\\flutter_projects\\crm-sales-navigator\\android\\app\\src\\main\\res\\values-night\\styles.xml",

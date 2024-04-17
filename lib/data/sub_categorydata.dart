@@ -1,4 +1,6 @@
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/data/categorydata.dart';
 
 class SubCategoryData {
   final int id;
@@ -11,14 +13,21 @@ class SubCategoryData {
 
 Future<List<List<SubCategoryData>>> fetchSubCategories(
     MySqlConnection conn) async {
-  final results = await conn.query('SELECT * FROM sub_category');
-  return results.map<List<SubCategoryData>>((row) {
-    return [
-      SubCategoryData(
+  final categories = await fetchCategories(conn);
+  final subCategories = <List<SubCategoryData>>[];
+
+  for (var category in categories) {
+    final results = await conn
+        .query('SELECT * FROM sub_category WHERE category = ?', [category.id]);
+    final subCategoryList = results.map<SubCategoryData>((row) {
+      return SubCategoryData(
         id: row['id'] as int,
         categoryId: row['category'] as int,
         subCategory: row['sub_category'] as String,
-      ),
-    ];
-  }).toList();
+      );
+    }).toList();
+    subCategories.add(subCategoryList);
+  }
+
+  return subCategories;
 }

@@ -34,60 +34,102 @@
 27-->C:\projects\flutter_projects\crm-sales-navigator\android\app\src\main\AndroidManifest.xml:41:13-50
 27-->C:\projects\flutter_projects\crm-sales-navigator\android\app\src\main\AndroidManifest.xml:41:19-48
 28        </intent>
-29    </queries>
-30
-31    <application
-32        android:name="android.app.Application"
-33        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-33-->[androidx.core:core:1.6.0] C:\Users\Armann Waganer\.gradle\caches\transforms-3\2579a7de00054bf46a8dbc332552f622\transformed\core-1.6.0\AndroidManifest.xml:24:18-86
-34        android:debuggable="true"
-35        android:icon="@mipmap/ic_launcher"
-36        android:label="sales_navigator" >
-37        <activity
-38            android:name="com.example.sales_navigator.MainActivity"
-39            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-40            android:exported="true"
-41            android:hardwareAccelerated="true"
-42            android:launchMode="singleTop"
-43            android:theme="@style/LaunchTheme"
-44            android:windowSoftInputMode="adjustResize" >
+29        <intent>
+29-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:25:9-27:18
+30            <action android:name="android.media.browse.MediaBrowserService" />
+30-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:26:13-79
+30-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:26:21-76
+31        </intent>
+32        <intent>
+32-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:28:9-30:18
+33            <action android:name="androidx.media2.session.MediaSessionService" />
+33-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:29:13-82
+33-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:29:21-79
+34        </intent>
+35        <intent>
+35-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:31:9-33:18
+36            <action android:name="androidx.media2.session.MediaLibraryService" />
+36-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:32:13-82
+36-->[androidx.media2:media2-session:1.2.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\AndroidManifest.xml:32:21-79
+37        </intent>
+38    </queries>
+39
+40    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+40-->[com.google.android.exoplayer:exoplayer-core:2.18.7] C:\Users\Armann Waganer\.gradle\caches\transforms-3\1c54749537a4d1ff3f2079d73b98930f\transformed\jetified-exoplayer-core-2.18.7\AndroidManifest.xml:24:5-79
+40-->[com.google.android.exoplayer:exoplayer-core:2.18.7] C:\Users\Armann Waganer\.gradle\caches\transforms-3\1c54749537a4d1ff3f2079d73b98930f\transformed\jetified-exoplayer-core-2.18.7\AndroidManifest.xml:24:22-76
+41
+42    <permission
+42-->[androidx.core:core:1.10.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\AndroidManifest.xml:22:5-24:47
+43        android:name="com.example.sales_navigator.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+43-->[androidx.core:core:1.10.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\AndroidManifest.xml:23:9-81
+44        android:protectionLevel="signature" />
+44-->[androidx.core:core:1.10.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\AndroidManifest.xml:24:9-44
 45
-46            <!--
-47                 Specifies an Android theme to apply to this Activity as soon as
-48                 the Android process has started. This theme is visible to the user
-49                 while the Flutter UI initializes. After that, this theme continues
-50                 to determine the Window background behind the Flutter UI.
-51            -->
-52            <meta-data
-53                android:name="io.flutter.embedding.android.NormalTheme"
-54                android:resource="@style/NormalTheme" />
-55
-56            <intent-filter>
-57                <action android:name="android.intent.action.MAIN" />
-58
-59                <category android:name="android.intent.category.LAUNCHER" />
-60            </intent-filter>
-61        </activity>
-62        <!--
-63             Don't delete the meta-data below.
-64             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java
-65        -->
-66        <meta-data
-67            android:name="flutterEmbedding"
-68            android:value="2" />
-69
-70        <uses-library
-70-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:25:9-27:40
-71            android:name="androidx.window.extensions"
-71-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:26:13-54
-72            android:required="false" />
-72-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:27:13-37
-73        <uses-library
-73-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:28:9-30:40
-74            android:name="androidx.window.sidecar"
-74-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:29:13-51
-75            android:required="false" />
-75-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:30:13-37
-76    </application>
-77
-78</manifest>
+46    <uses-permission android:name="com.example.sales_navigator.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+46-->[androidx.core:core:1.10.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\AndroidManifest.xml:26:5-97
+46-->[androidx.core:core:1.10.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\AndroidManifest.xml:26:22-94
+47
+48    <application
+49        android:name="android.app.Application"
+50        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+50-->[androidx.core:core:1.10.1] C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\AndroidManifest.xml:28:18-86
+51        android:debuggable="true"
+52        android:icon="@mipmap/ic_launcher"
+53        android:label="sales_navigator" >
+54        <activity
+55            android:name="com.example.sales_navigator.MainActivity"
+56            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+57            android:exported="true"
+58            android:hardwareAccelerated="true"
+59            android:launchMode="singleTop"
+60            android:theme="@style/LaunchTheme"
+61            android:windowSoftInputMode="adjustResize" >
+62
+63            <!--
+64                 Specifies an Android theme to apply to this Activity as soon as
+65                 the Android process has started. This theme is visible to the user
+66                 while the Flutter UI initializes. After that, this theme continues
+67                 to determine the Window background behind the Flutter UI.
+68            -->
+69            <meta-data
+70                android:name="io.flutter.embedding.android.NormalTheme"
+71                android:resource="@style/NormalTheme" />
+72
+73            <intent-filter>
+74                <action android:name="android.intent.action.MAIN" />
+75
+76                <category android:name="android.intent.category.LAUNCHER" />
+77            </intent-filter>
+78        </activity>
+79        <!--
+80             Don't delete the meta-data below.
+81             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java
+82        -->
+83        <meta-data
+84            android:name="flutterEmbedding"
+85            android:value="2" />
+86
+87        <activity
+87-->[:url_launcher_android] C:\projects\flutter_projects\crm-sales-navigator\build\url_launcher_android\intermediates\merged_manifest\debug\AndroidManifest.xml:10:9-13:74
+88            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
+88-->[:url_launcher_android] C:\projects\flutter_projects\crm-sales-navigator\build\url_launcher_android\intermediates\merged_manifest\debug\AndroidManifest.xml:11:13-74
+89            android:exported="false"
+89-->[:url_launcher_android] C:\projects\flutter_projects\crm-sales-navigator\build\url_launcher_android\intermediates\merged_manifest\debug\AndroidManifest.xml:12:13-37
+90            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+90-->[:url_launcher_android] C:\projects\flutter_projects\crm-sales-navigator\build\url_launcher_android\intermediates\merged_manifest\debug\AndroidManifest.xml:13:13-71
+91
+92        <uses-library
+92-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:25:9-27:40
+93            android:name="androidx.window.extensions"
+93-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:26:13-54
+94            android:required="false" />
+94-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:27:13-37
+95        <uses-library
+95-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:28:9-30:40
+96            android:name="androidx.window.sidecar"
+96-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:29:13-51
+97            android:required="false" />
+97-->[androidx.window:window:1.0.0-beta04] C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\AndroidManifest.xml:30:13-37
+98    </application>
+99
+100</manifest>
