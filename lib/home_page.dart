@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Components/CustomNavigationBar.dart';
+import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/notification_page.dart';
 
 class HomePage extends StatelessWidget {
