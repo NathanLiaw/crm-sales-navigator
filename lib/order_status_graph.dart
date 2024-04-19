@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'db_connection.dart'; // Import your database connection utility
+import 'db_connection.dart'; 
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -18,12 +20,12 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
         ),
         body: SingleChildScrollView(
-          padding: EdgeInsets.all(16), // Added padding
+          padding: const EdgeInsets.all(16), // Added padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
                   'Sales Orders Status', // Changed title to "Sales Orders Status"
                   style: TextStyle(
@@ -33,9 +35,9 @@ class MyApp extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Container(
-                padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -44,14 +46,14 @@ class MyApp extends StatelessWidget {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 2,
                       blurRadius: 4,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: OrderStatusWidget(),
+                child: const OrderStatusWidget(),
               ),
-              SizedBox(height: 32), // Added extra space after OrderStatusWidget
-              InProgressOrdersWidget(), // Added the InProgressOrdersWidget widget
+              const SizedBox(height: 32), // Added extra space after OrderStatusWidget
+              const InProgressOrdersWidget(), // Added the InProgressOrdersWidget widget
             ],
           ),
         ),
@@ -61,13 +63,15 @@ class MyApp extends StatelessWidget {
 }
 
 class OrderStatusWidget extends StatelessWidget {
+  const OrderStatusWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        const Padding(
+          padding: EdgeInsets.all(16),
           child: Text(
             'Order Status',
             style: TextStyle(
@@ -77,22 +81,22 @@ class OrderStatusWidget extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Container(
-          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(5),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.5),
                 spreadRadius: 2,
                 blurRadius: 4,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: OrderStatusIndicator(),
+          child: const OrderStatusIndicator(),
         ),
       ],
     );
@@ -100,6 +104,8 @@ class OrderStatusWidget extends StatelessWidget {
 }
 
 class OrderStatusIndicator extends StatefulWidget {
+  const OrderStatusIndicator({super.key});
+
   @override
   _OrderStatusIndicatorState createState() => _OrderStatusIndicatorState();
 }
@@ -191,18 +197,18 @@ Future<void> _selectDateRange(BuildContext context) async {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.calendar_today, size: 24.0),
-                SizedBox(width: 8),
+                const Icon(Icons.calendar_today, size: 24.0),
+                const SizedBox(width: 8),
                 Text(
                   "${DateFormat('dd/MM/yyyy').format(dateRange.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange.end)}",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
-                Icon(Icons.arrow_drop_down, size: 24.0),
+                const Icon(Icons.arrow_drop_down, size: 24.0),
               ],
             ),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Stack(
           alignment: Alignment.center,
           children: [
@@ -212,14 +218,14 @@ Future<void> _selectDateRange(BuildContext context) async {
               children: [
                 Text(
                   '$pending', // Displaying complete order number
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 8), // Adding space between complete order number and "Orders"
-                Text(
+                const SizedBox(height: 8), // Adding space between complete order number and "Orders"
+                const Text(
                   'Orders Pending',
                   style: TextStyle(
                     fontSize: 15,
@@ -229,7 +235,7 @@ Future<void> _selectDateRange(BuildContext context) async {
               ],
             ),
             CustomPaint(
-              size: Size(200, 200),
+              size: const Size(200, 200),
               painter: OrderStatusPainter(
                 complete: complete,
                 pending: pending,
@@ -238,7 +244,7 @@ Future<void> _selectDateRange(BuildContext context) async {
             ),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -258,7 +264,7 @@ Future<void> _selectDateRange(BuildContext context) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.brightness_1, color: color, size: 12),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text('$label $value'),
         ],
       ),
@@ -284,7 +290,7 @@ class OrderStatusPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - lineWidth / 2;
     final total = complete + pending + voided;
-    final sweepAngle = 2 * 3.141592653589793238462643383279502884197;
+    const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
 
     Paint paintComplete = Paint()
       ..color = Colors.green
@@ -340,13 +346,15 @@ class OrderStatusPainter extends CustomPainter {
 }
 
 class InProgressOrdersWidget extends StatelessWidget {
+  const InProgressOrdersWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             'In Progress Orders',
             style: TextStyle(
@@ -356,17 +364,17 @@ class InProgressOrdersWidget extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         FutureBuilder<List<InProgressOrder>>(
           future: fetchInProgressOrders(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else if (snapshot.hasData) {
               return Container(
-                padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -375,7 +383,7 @@ class InProgressOrdersWidget extends StatelessWidget {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 2,
                       blurRadius: 4,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -386,30 +394,30 @@ class InProgressOrdersWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          '${order.date}',
-                          style: TextStyle(
+                          order.date,
+                          style: const TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 4), // Adding some space between date and order heading
+                        const SizedBox(height: 4), // Adding some space between date and order heading
                         Center(
                           child: Text(
                             '${order.status} Orders',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        SizedBox(height: 12), // Adding some space between orders
+                        const SizedBox(height: 12), // Adding some space between orders
                       ],
                     )),
                   ],
                 ),
               );
             } else {
-              return Text('No data');
+              return const Text('No data');
             }
           },
         ),

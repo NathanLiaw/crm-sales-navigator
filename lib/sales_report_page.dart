@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'db_connection.dart'; // Replace with your actual database connection utility
+import 'db_connection.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -11,12 +13,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SalesReportPage(),
+      home: const SalesReportPage(),
     );
   }
 }
 
 class SalesReportPage extends StatefulWidget {
+  const SalesReportPage({super.key});
+
   @override
   _SalesReportPageState createState() => _SalesReportPageState();
 }
@@ -123,9 +127,13 @@ ORDER BY GeneratedMonths.YearMonth DESC;
 
     return results.map((row) {
       return SalesData(
-        day: row['Day'] ?? row['MonthName']?.toString() ?? row['Year']?.toString(),
+        day: row['Day'] ??
+            row['MonthName']?.toString() ??
+            row['Year']?.toString(),
         date: row['Date'], // Adding date to SalesData object
-        totalSales: row['Total Sales'] != null ? (row['Total Sales'] as num).toDouble() : null,
+        totalSales: row['Total Sales'] != null
+            ? (row['Total Sales'] as num).toDouble()
+            : null,
       );
     }).toList();
   }
@@ -141,14 +149,14 @@ ORDER BY GeneratedMonths.YearMonth DESC;
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF004C87),
+        backgroundColor: const Color(0xFF004C87),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        title: Text(
+        title: const Text(
           'Total Income Report',
           style: TextStyle(color: Colors.white),
         ),
@@ -166,12 +174,13 @@ ORDER BY GeneratedMonths.YearMonth DESC;
                     changeReportType(newValue);
                   }
                 },
-                items: ['Week', 'Month', 'Year'].map<DropdownMenuItem<String>>((String value) {
+                items: ['Week', 'Month', 'Year']
+                    .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(
                       value,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -186,9 +195,10 @@ ORDER BY GeneratedMonths.YearMonth DESC;
               future: salesData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error.toString()}'));
+                  return Center(
+                      child: Text('Error: ${snapshot.error.toString()}'));
                 } else if (snapshot.hasData) {
                   return ListView.builder(
                     itemCount: snapshot.data!.length,
@@ -197,11 +207,15 @@ ORDER BY GeneratedMonths.YearMonth DESC;
                       return Column(
                         children: [
                           ListTile(
-                            title: Text(item.day != null ? item.day! : '', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            subtitle: selectedReportType == 'Week' && item.date != null // Check if report type is 'Week' and date is available
+                            title: Text(item.day != null ? item.day! : '',
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            subtitle: selectedReportType == 'Week' &&
+                                    item.date !=
+                                        null // Check if report type is 'Week' and date is available
                                 ? Text(
                                     'Date: ${_formatDate(item.date!)}', // Display date in the required format
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -210,15 +224,16 @@ ORDER BY GeneratedMonths.YearMonth DESC;
                           ),
                           if (item.totalSales != null)
                             ListTile(
-                              title: Text('Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}'),
+                              title: Text(
+                                  'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}'),
                             ),
-                          Divider(color: Colors.grey),
+                          const Divider(color: Colors.grey),
                         ],
                       );
                     },
                   );
                 } else {
-                  return Center(child: Text('No data available'));
+                  return const Center(child: Text('No data available'));
                 }
               },
             ),

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 
 class OrderDetailsPage extends StatelessWidget {
+  const OrderDetailsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
-        title: Text(
+        backgroundColor: const Color(0xff0069BA),
+        title: const Text(
           'Order Details',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -22,7 +24,7 @@ class OrderDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Text(
                   'To:',
@@ -39,8 +41,8 @@ class OrderDetailsPage extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Text(
                   'From:',
@@ -49,8 +51,8 @@ class OrderDetailsPage extends StatelessWidget {
                 Text('Fong Yuan Hung Import & Export Sdn Bhd.'),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Text(
                   'Salesman:',
@@ -59,8 +61,8 @@ class OrderDetailsPage extends StatelessWidget {
                 Text('Norman Lu'),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Text(
                   'Order ID:',
@@ -69,8 +71,8 @@ class OrderDetailsPage extends StatelessWidget {
                 Text('SO0234678'),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Text(
                   'Created Date:',
@@ -79,8 +81,8 @@ class OrderDetailsPage extends StatelessWidget {
                 Text('sample date'),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Text(
                   'Expiry Date:',
@@ -89,7 +91,7 @@ class OrderDetailsPage extends StatelessWidget {
                 Text('sample date'),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildOrderItem(
               itemName: '2M Hose Reel & Cart',
               itemModel: 'SX-901-18',
@@ -106,11 +108,11 @@ class OrderDetailsPage extends StatelessWidget {
               status: 'No Stock',
               totalPrice: 'RM 300.00',
             ),
-            SizedBox(height: 16),
-            Text('Subtotal (6 items) RM700.00'),
-            Text('Total RM700.00'),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text('Subtotal (6 items) RM700.00'),
+            const Text('Total RM700.00'),
+            const SizedBox(height: 16),
+            const Text(
               '*This is not an invoice & prices are not finalised',
               style: TextStyle(color: Colors.grey),
             ),
@@ -118,7 +120,7 @@ class OrderDetailsPage extends StatelessWidget {
               onPressed: () {
                 // Handle "Void" button click
               },
-              child: Text('Void', style: TextStyle(color: Colors.white)),
+              child: const Text('Void', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -141,7 +143,7 @@ class OrderDetailsPage extends StatelessWidget {
         Text(itemModel),
         Text('Unit Price: $unitPrice $quantity'),
         Text('Status: $status Total: $totalPrice'),
-        Divider(),
+        const Divider(),
       ],
     );
   }

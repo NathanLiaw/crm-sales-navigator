@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'db_connection.dart'; // Import your database connection utility
+import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -14,18 +16,20 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SalesReport(),
+      home: const SalesReport(),
     );
   }
 }
 
 class SalesReport extends StatefulWidget {
+  const SalesReport({Key? key});
+
   @override
   _SalesReportState createState() => _SalesReportState();
 }
 
 class _SalesReportState extends State<SalesReport> {
-  Map<String, List<SalesData>> _salesDataMap = {};
+  final Map<String, List<SalesData>> _salesDataMap = {};
   String _selectedInterval = 'Weekly';
 
   @override
@@ -66,8 +70,8 @@ class _SalesReportState extends State<SalesReport> {
     late String query;
 
     switch (reportType) {
-    case 'Week':
-      query = '''
+      case 'Week':
+        query = '''
     SELECT 
         Dates.`Date`,
         DATE_FORMAT(Dates.`Date`, '%a') AS `Day`, -- Short form of the day
@@ -91,11 +95,11 @@ class _SalesReportState extends State<SalesReport> {
     ) AS DailySales ON Dates.`Date` = DailySales.`Date`
     ORDER BY Dates.`Date` ASC;
       ''';
-      break;
+        break;
 
       case 'Month':
         query = '''
-        SELECT
+SELECT
     GeneratedMonths.YearMonth,
     GeneratedMonths.MonthName,
     IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
@@ -104,9 +108,7 @@ FROM (
            DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
     FROM (
         SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
-        SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL
-        SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL
-        SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11
+        SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
     ) AS c
 ) AS GeneratedMonths
 LEFT JOIN (
@@ -114,7 +116,7 @@ LEFT JOIN (
         DATE_FORMAT(ci.created, '%Y-%m') AS YearMonth,
         ci.total AS `Total Sales`
     FROM cart_item ci
-    WHERE ci.created >= CURDATE() - INTERVAL 12 MONTH
+    WHERE ci.created >= CURDATE() - INTERVAL 6 MONTH
 ) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
 GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
 ORDER BY GeneratedMonths.YearMonth ASC;
@@ -174,7 +176,7 @@ ORDER BY GeneratedMonths.YearMonth ASC;
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Sales Report',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -204,15 +206,41 @@ ORDER BY GeneratedMonths.YearMonth ASC;
       body: _salesDataMap[_selectedInterval] != null
           ? _salesDataMap[_selectedInterval]!.isNotEmpty
               ? Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 10, 20, 10),
-                  child: LineChart(
-                    sampleData(_salesDataMap[_selectedInterval]!),
-                  ),
-                )
-              : Center(
+  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+  child: Align(
+    alignment: Alignment.center, // This will center the LineChart horizontally.
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        // Set the maximum width of the chart to a fraction of the screen size
+        maxWidth: MediaQuery.of(context).size.width * 0.95, // 95% of the screen width
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        height: MediaQuery.of(context).size.height * 0.52,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: LineChart(
+          sampleData(_salesDataMap[_selectedInterval]!),
+        ),
+      ),
+    ),
+  ),
+)
+
+              : const Center(
                   child: Text('No data available'),
                 )
-          : Center(
+          : const Center(
               child: CircularProgressIndicator(),
             ),
     );
@@ -241,61 +269,66 @@ ORDER BY GeneratedMonths.YearMonth ASC;
       ),
       titlesData: FlTitlesData(
         leftTitles: SideTitles(
-          showTitles: true,
-          getTitles: (value) =>
-              value % (maxY / 6) == 0 ? '${value.toInt()}' : '',
-          interval: maxY / 6,
-          reservedSize: 40,
-        ),
-bottomTitles: SideTitles(
   showTitles: true,
   getTitles: (value) {
-    if (salesData.isEmpty) return '';
-
-    int index = value.toInt();
-    int lastIndex = salesData.length - 1;
-
-    if (_selectedInterval == 'Weekly') {
-      // Display weekdays for the current week
-      if (index == lastIndex) {
-        // Return current day for the last point
-        return DateFormat('EEE').format(DateTime.now());
-      } else {
-        // Display previous days
-        DateTime currentDate = DateTime.now();
-        DateTime date =
-            currentDate.subtract(Duration(days: lastIndex - index));
-        return DateFormat('EEE').format(date);
-      }
-    } else if (_selectedInterval == 'Monthly') {
-      // Display months
-      if (index == lastIndex) {
-        // Return current month for the last point
-        return DateFormat('MMM').format(DateTime.now());
-      } else {
-        // Display previous months
-        DateTime date = DateTime.now()
-            .subtract(Duration(days: (lastIndex - index) * 30));
-        return DateFormat('MMM').format(date);
-      }
+    // Format the value with 'K' for thousands, otherwise show the full number.
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}K'; // If value is 1000 or more, it is divided by 1000 and 'K' is added.
     } else {
-      // Display years
-      if (index == lastIndex) {
-        // Return current year for the last point
-        return DateFormat('yyyy').format(DateTime.now());
-      } else {
-        // Display previous years
-        return (DateTime.now().year - (lastIndex - index)).toString();
-      }
+      return value.toInt().toString(); // If value is less than 1000, it is displayed as a full number without any decimals.
     }
   },
-  reservedSize: 22,
+  interval: maxY / 6, // Adjust interval as needed
+  reservedSize: 40, // Adjust reserved size as needed
 ),
+        bottomTitles: SideTitles(
+          showTitles: true,
+          getTitles: (value) {
+            if (salesData.isEmpty) return '';
 
+            int index = value.toInt();
+            int lastIndex = salesData.length - 1;
+
+            if (_selectedInterval == 'Weekly') {
+              // Display weekdays for the current week
+              if (index == lastIndex) {
+                // Return current day for the last point
+                return DateFormat('EEE').format(DateTime.now());
+              } else {
+                // Display previous days
+                DateTime currentDate = DateTime.now();
+                DateTime date =
+                    currentDate.subtract(Duration(days: lastIndex - index));
+                return DateFormat('EEE').format(date);
+              }
+            } else if (_selectedInterval == 'Monthly') {
+              // Display months
+              if (index == lastIndex) {
+                // Return current month for the last point
+                return DateFormat('MMM').format(DateTime.now());
+              } else {
+                // Display previous months
+                DateTime date = DateTime.now()
+                    .subtract(Duration(days: (lastIndex - index) * 30));
+                return DateFormat('MMM').format(date);
+              }
+            } else {
+              // Display years
+              if (index == lastIndex) {
+                // Return current year for the last point
+                return DateFormat('yyyy').format(DateTime.now());
+              } else {
+                // Display previous years
+                return (DateTime.now().year - (lastIndex - index)).toString();
+              }
+            }
+          },
+          reservedSize: 22,
+        ),
       ),
       borderData: FlBorderData(
         show: true,
-        border: Border(
+        border: const Border(
           bottom: BorderSide(color: Colors.grey, width: 1),
           left: BorderSide(color: Colors.grey, width: 1),
           right: BorderSide.none,

@@ -4,26 +4,28 @@ import 'package:sales_navigator/sales_report_graph.dart';
 import 'package:sales_navigator/sales_report_page.dart';
 import 'package:sales_navigator/top_selling_product_graph.dart';
 import 'package:sales_navigator/top_selling_product_report_page.dart';
-import 'top_customer_graph.dart'; // Import your graph widgets here
-import 'top_customer_report_page.dart';
-
+import 'customer_graph.dart';
+import 'customer_report_page.dart';
+import 'sales_order.dart';
 class DataAnalyticsPage extends StatelessWidget {
+  const DataAnalyticsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Data Analytics',
           style: TextStyle(color: Colors.white), // Set text color to white
         ),
-        backgroundColor: Color(0xFF004C87), // Set app bar color to #004C87
+        backgroundColor: const Color(0xFF004C87), // Set app bar color to #004C87
         leading: Theme(
           data: Theme.of(context).copyWith(
-            iconTheme: IconThemeData(
+            iconTheme: const IconThemeData(
                 color: Colors.white), // Set back button color to white
           ),
           child: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
               Navigator.pop(
                   context); // Navigate back when the back button is pressed
@@ -42,27 +44,10 @@ class DataAnalyticsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            TopCustomerReport()), // Ensure you have this page
+                            const SalesReportPage()), // Ensure you have this page
                   );
                 },
-                child: Container(
-                  height: 425,
-                  child: TopCustomersGraph(),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            SalesReportPage()), // Ensure you have this page
-                  );
-                },
-                child: Container(
+                child: const SizedBox(
                   height: 425,
                   child: SalesReport(),
                 ),
@@ -75,10 +60,27 @@ class DataAnalyticsPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TopSellingProductReport()),
+                        builder: (context) =>
+                            const CustomerReport()), // Ensure you have this page
                   );
                 },
-                child: Container(
+                child: const SizedBox(
+                  height: 425,
+                  child: CustomersGraph(),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ProductReport()),
+                  );
+                },
+                child: const SizedBox(
                   height: 425,
                   child: TopSellingProductsPage(),
                 ),
@@ -88,14 +90,13 @@ class DataAnalyticsPage extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
                 onTap: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //       builder: (context) =>
-                  //           Order Status()),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>const SalesOrderPage()),
+                  );
                 },
-                child: Container(
+                child: const SizedBox(
                   height: 425,
                   child: OrderStatusWidget(),
                 ),
@@ -109,7 +110,7 @@ class DataAnalyticsPage extends StatelessWidget {
 }
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     home: DataAnalyticsPage(),
   ));
 }
