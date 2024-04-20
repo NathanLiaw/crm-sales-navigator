@@ -45,6 +45,22 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
         area = areaMap;
       });
 
+      // Retrieve the currently selected areaId from preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int? storedAreaId = prefs.getInt('areaId');
+
+      // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
+      if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
+        setState(() {
+          selectedAreaId = storedAreaId;
+        });
+      } else if (areaMap.isNotEmpty) {
+        setState(() {
+          selectedAreaId = areaMap.keys.first;
+          // Store the initial selectedAreaId in SharedPreferences
+          prefs.setInt('areaId', selectedAreaId);
+        });
+      }
     } catch (e) {
       print('Error fetching area: $e');
     }
@@ -53,6 +69,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
   @override
   void initState() {
     super.initState();
+    selectedAreaId = -1;
     fetchAreaFromDb();
   }
 
@@ -74,9 +91,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
             value: areaId,
             groupValue: selectedAreaId,
             onChanged: (selectedAreaId) {
-              setState(() {
-                setAreaId(selectedAreaId!);
-              });
+              setAreaId(selectedAreaId!);
             },
           );
         }).toList(),

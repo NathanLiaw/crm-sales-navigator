@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/brands_screen.dart';
 import 'package:sales_navigator/categories_screen.dart';
 import 'package:sales_navigator/filter_categories_screen.dart';
 import 'package:sales_navigator/model/area_select_popup.dart';
 import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'components/category_button.dart';
 import 'model/sort_popup.dart';
 import 'model/items_widget.dart';
+import 'db_connection.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
@@ -18,6 +21,66 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   String searchQuery = '';
+  late Map<int, String> area = {};
+  static late int selectedAreaId;
+
+  Future<void> setAreaId(int areaId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('areaId', areaId);
+    setState(() {
+      selectedAreaId = areaId; // Update the selected area ID
+    });
+  }
+
+  Future<void> fetchAreaFromDb() async {
+    Map<int, String> areaMap = {};
+    try {
+      MySqlConnection conn = await connectToDatabase();
+      final results = await readData(
+        conn,
+        'area',
+        'status=1',
+        '',
+        'id, area',
+      );
+      await conn.close();
+
+      areaMap = Map.fromEntries(results.map((row) => MapEntry<int, String>(
+        row['id'],
+        row['area'] ?? '',
+      )));
+
+      setState(() {
+        area = areaMap;
+      });
+
+      // Retrieve the currently selected areaId from preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int? storedAreaId = prefs.getInt('areaId');
+
+      // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
+      if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
+        setState(() {
+          selectedAreaId = storedAreaId;
+        });
+      } else if (areaMap.isNotEmpty) {
+        setState(() {
+          selectedAreaId = areaMap.keys.first;
+          // Store the initial selectedAreaId in SharedPreferences
+          prefs.setInt('areaId', selectedAreaId);
+        });
+      }
+    } catch (e) {
+      print('Error fetching area: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selectedAreaId = -1;
+    fetchAreaFromDb();
+  }
 
   @override
   Widget build(BuildContext context) {
