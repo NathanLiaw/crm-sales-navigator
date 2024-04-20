@@ -20,6 +20,7 @@ class DatabaseHelper {
   }
 
   static Future<Database> initDatabase() async {
+    print('db initialised');
     final path = await getDatabasesPath();
     final databasePath = join(path, 'salesNavigator.db');
 
@@ -53,7 +54,7 @@ class DatabaseHelper {
 
         // Create the cart table
         await db.execute(
-          '''CREATE TABLE $cartTableName(
+          '''CREATE TABLE IF NOT EXISTS $cartTableName(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_type TEXT,
             expiration_date TEXT,
@@ -81,7 +82,7 @@ class DatabaseHelper {
 
         // Create the cart_items table
         await db.execute(
-          '''CREATE TABLE $cartItemTableName(
+          '''CREATE TABLE IF NOT EXISTS $cartItemTableName(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cart_id INTEGER,
             buyer_id INTEGER,

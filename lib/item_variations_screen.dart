@@ -37,79 +37,13 @@ class ItemVariationsScreen extends StatefulWidget {
 
 class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   late Map<String, dynamic> priceData;
-  late int itemCount;
-  late Map<String, int> quantityMap; // Declare the quantityMap
-  late CartItem cartItem;
-
-  void createCartItem(String uom, int quantity, double price) async {
-    int? buyerId = await UtilityFunction.getUserId();
-
-    setState(() {
-      cartItem = CartItem(
-        buyerId: buyerId,
-        productId: widget.productId,
-        productName: widget.productName,
-        uom: uom,
-        quantity: quantity,
-        discount: 0,
-        originalUnitPrice: price,
-        unitPrice: price,
-        total: price * quantity,
-        cancel: '',
-        remark: '',
-        status: 'in progress',
-        created: DateTime.parse(UtilityFunction.getCurrentDateTime()),
-        modified: DateTime.parse(UtilityFunction.getCurrentDateTime()),
-      );
-    });
-  }
-
-  Future<void> insertItemIntoCart(Future<CartItem cartItemFuture) async {
-    final db = await DatabaseHelper.database;
-
-    try {
-      // Wait for the future to complete and get the CartItem
-      final CartItem cartItem = await cartItemFuture;
-
-      final cartItemMap = cartItem.toMap();
-      final tableName = 'cart_item';
-
-      // Check if the data already exists in the database based on 'id' (assuming 'id' is the primary key)
-      final List<Map<String, dynamic>> existingData = await db.query(
-        tableName,
-        where: 'id = ?',
-        whereArgs: [cartItem.id],
-      );
-
-      // If the data already exists, skip insertion
-      if (existingData.isNotEmpty) {
-        print('Cart item with ID ${cartItem.id} already exists in the database. Skipping insertion.');
-        return;
-      }
-
-      // Insert cart item into the database
-      await DatabaseHelper.insertData(cartItemMap, tableName);
-
-      print('Cart item inserted successfully.');
-    } catch (e) {
-      print('Error inserting cart item: $e');
-    }
-  }
+  late Map<String, int> quantityMap = {}; // Initialize quantityMap
+  late CartItem? cartItem; // Nullable CartItem
 
   @override
   void initState() {
     super.initState();
-    // Parse the JSON string and count the number of entries
     priceData = jsonDecode(widget.priceByUom);
-    itemCount = priceData.length;
-
-    // Initialize quantityMap with default values
-    quantityMap = {}; // Initialize an empty map
-
-    // Populate quantityMap with default quantity of 0 for each item variation
-    priceData.forEach((key, value) {
-      quantityMap[key] = 1;
-    });
   }
 
   @override
@@ -127,11 +61,11 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
         backgroundColor: Color.fromARGB(255, 0, 76, 135),
       ),
       body: ListView.builder(
-        itemCount: itemCount,
+        itemCount: priceData.length,
         itemBuilder: (context, idx) {
           final uom = priceData.keys.elementAt(idx);
           final price = priceData[uom];
-          final currentQuantity = quantityMap[uom] ?? 0;
+          final currentQuantity = quantityMap[uom] ?? 1;
 
           return Column(
             children: [
@@ -214,7 +148,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                     iconSize: 28,
                                     onPressed: () {
                                       // Decrement quantity when minus button is pressed
-                                      if (currentQuantity > 0) {
+                                      if (currentQuantity > 1) {
                                         setState(() {
                                           quantityMap[uom] = currentQuantity - 1;
                                         });
@@ -268,11 +202,29 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                             ),
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              // Implement add to cart functionality with quantity
-                              print('Adding $currentQuantity of $uom to cart');
-                              createCartItem(uom, quantityMap[uom]!, price);
-                              insertItemIntoCart(cartItem);
+                            onPressed: () async {
+                              // Create CartItem with current quantity and uom
+                              cartItem = CartItem(
+                                buyerId: await UtilityFunction.getUserId(),
+                                productId: widget.productId,
+                                productName: widget.productName,
+                                uom: uom,
+                                quantity: currentQuantity,
+                                discount: 0,
+                                originalUnitPrice: price,
+                                unitPrice: price,
+                                total: price * currentQuantity,
+                                cancel: '',
+                                remark: '',
+                                status: 'in progress',
+                                created: DateTime.now(),
+                                modified: DateTime.now(),
+                              );
+
+                              // Insert CartItem into database
+                              if (cartItem != null) {
+                                await insertItemIntoCart(cartItem!);
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
@@ -305,28 +257,20 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
       ),
     );
   }
+
+  Future<void> insertItemIntoCart(CartItem cartItem) async {
+    try {
+      final db = await DatabaseHelper.database;
+      final cartItemMap = cartItem.toMap(excludeId: true); // Assuming 'id' is auto-generated
+      final tableName = 'cart_item';
+
+      await DatabaseHelper.insertData(cartItemMap, tableName);
+      print('Cart item inserted successfully.');
+    } catch (e) {
+      print('Error inserting cart item: $e');
+    }
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*
