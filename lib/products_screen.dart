@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/brands_screen.dart';
 import 'package:sales_navigator/categories_screen.dart';
 import 'package:sales_navigator/filter_categories_screen.dart';
+import 'package:sales_navigator/model/area_select_popup.dart';
 import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'components/category_button.dart';
-import 'model/Sort_popup.dart';
+import 'model/sort_popup.dart';
 import 'model/items_widget.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -32,16 +33,32 @@ class _ProductsScreenState extends State<ProductsScreen> {
               color: Colors.white,
             ),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SearchScreen()),
-              ).then((value) {
-                if (value != null) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                }
-              });
+              showModalBottomSheet(
+                context: context,
+                builder: (BuildContext context) {
+                  return Container(
+                    height: 380,
+                    width: double.infinity,
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                          child: Text(
+                            'Select Area',
+                            style: GoogleFonts.inter(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        AreaSelectPopUp(),
+                      ],
+                    ),
+                  );
+                },
+              );
             },
           ),
           title: InkWell(
@@ -55,7 +72,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   hintText: 'Search',
                   suffixIcon: Icon(Icons.search),
                   contentPadding:
-                      EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
                   border: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.blue),
                     borderRadius: BorderRadius.circular(80),
@@ -95,8 +112,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   onTap: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                      return CategoryScreen();
-                    }));
+                          return CategoryScreen();
+                        }));
                   },
                 ),
                 CategoryButton(
@@ -104,8 +121,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   onTap: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                      return BrandScreen();
-                    }));
+                          return BrandScreen();
+                        }));
                   },
                 ),
               ],
@@ -169,8 +186,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         onPressed: () {
                           Navigator.push(context,
                               MaterialPageRoute(builder: (context) {
-                            return FilterCategoriesScreen();
-                          }));
+                                return FilterCategoriesScreen();
+                              }));
                         },
                         icon: const Icon(Icons.filter_alt),
                       ),

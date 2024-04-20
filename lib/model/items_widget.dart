@@ -17,12 +17,13 @@ class ItemsWidget extends StatelessWidget {
     try {
       final conn = await connectToDatabase();
       final results = await conn.query(
-          'SELECT product_name, photo1, description,sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ? LIMIT 100',
+          'SELECT id, product_name, photo1, description,sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ? LIMIT 100',
           ['%$searchQuery%']);
       await conn.close();
 
       return results
           .map((row) => {
+                'id': row['id'],
                 'product_name': row['product_name'],
                 'photo1': row['photo1'],
                 'description': row['description'],
@@ -58,6 +59,7 @@ class ItemsWidget extends StatelessWidget {
             crossAxisCount: 2,
             shrinkWrap: true,
             children: products.map((product) {
+              final productId = product['id'] as int;
               final productName = product['product_name'] as String;
               final localPath = product['photo1'] as String;
               final itemDescription = product['description'] as Blob;
@@ -79,11 +81,12 @@ class ItemsWidget extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ItemScreen(
+                              productId: productId,
                               itemAssetName: assetName,
                               productName: productName,
                               itemDescription: itemDescription,
                               priceByUom: product['price_by_uom']
-                                  .toString(), // Change this line
+                                  .toString(),
                             ),
                           ),
                         );

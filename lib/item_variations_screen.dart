@@ -10,16 +10,23 @@ import 'package:mysql1/mysql1.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sales_navigator/cart_item.dart';
 import 'dart:convert';
+
+import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/utility_function.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemVariationsScreen extends StatefulWidget {
   const ItemVariationsScreen({
     Key? key,
+    required this.productId,
     required this.productName,
     required this.itemAssetName,
     required this.priceByUom,
   }) : super(key: key);
 
+  final int productId;
   final String productName;
   final String itemAssetName;
   final String priceByUom;
@@ -29,13 +36,84 @@ class ItemVariationsScreen extends StatefulWidget {
 }
 
 class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
+  late Map<String, dynamic> priceData;
+  late int itemCount;
+  late Map<String, int> quantityMap; // Declare the quantityMap
+  late CartItem cartItem;
+
+  void createCartItem(String uom, int quantity, double price) async {
+    int? buyerId = await UtilityFunction.getUserId();
+
+    setState(() {
+      cartItem = CartItem(
+        buyerId: buyerId,
+        productId: widget.productId,
+        productName: widget.productName,
+        uom: uom,
+        quantity: quantity,
+        discount: 0,
+        originalUnitPrice: price,
+        unitPrice: price,
+        total: price * quantity,
+        cancel: '',
+        remark: '',
+        status: 'in progress',
+        created: DateTime.parse(UtilityFunction.getCurrentDateTime()),
+        modified: DateTime.parse(UtilityFunction.getCurrentDateTime()),
+      );
+    });
+  }
+
+  Future<void> insertItemIntoCart(Future<CartItem cartItemFuture) async {
+    final db = await DatabaseHelper.database;
+
+    try {
+      // Wait for the future to complete and get the CartItem
+      final CartItem cartItem = await cartItemFuture;
+
+      final cartItemMap = cartItem.toMap();
+      final tableName = 'cart_item';
+
+      // Check if the data already exists in the database based on 'id' (assuming 'id' is the primary key)
+      final List<Map<String, dynamic>> existingData = await db.query(
+        tableName,
+        where: 'id = ?',
+        whereArgs: [cartItem.id],
+      );
+
+      // If the data already exists, skip insertion
+      if (existingData.isNotEmpty) {
+        print('Cart item with ID ${cartItem.id} already exists in the database. Skipping insertion.');
+        return;
+      }
+
+      // Insert cart item into the database
+      await DatabaseHelper.insertData(cartItemMap, tableName);
+
+      print('Cart item inserted successfully.');
+    } catch (e) {
+      print('Error inserting cart item: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Parse the JSON string and count the number of entries
+    priceData = jsonDecode(widget.priceByUom);
+    itemCount = priceData.length;
+
+    // Initialize quantityMap with default values
+    quantityMap = {}; // Initialize an empty map
+
+    // Populate quantityMap with default quantity of 0 for each item variation
+    priceData.forEach((key, value) {
+      quantityMap[key] = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final priceData = jsonDecode(widget.priceByUom);
-    final firstEntry = priceData.entries.first;
-    final variationName = firstEntry.key;
-    final variationPrices = firstEntry.value;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -49,16 +127,17 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
         backgroundColor: Color.fromARGB(255, 0, 76, 135),
       ),
       body: ListView.builder(
-        itemCount: variationPrices.length,
+        itemCount: itemCount,
         itemBuilder: (context, idx) {
-          final uom = variationPrices.keys.elementAt(idx);
-          final price = variationPrices[uom];
+          final uom = priceData.keys.elementAt(idx);
+          final price = priceData[uom];
+          final currentQuantity = quantityMap[uom] ?? 0;
+
           return Column(
             children: [
               Container(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 10),
-                margin:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
@@ -95,37 +174,37 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                  margin: EdgeInsets.only(left: 10),
-                                  child: Flexible(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          width: 248,
-                                          child: Text(
-                                            widget.productName,
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 2,
-                                            style: GoogleFonts.inter(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold),
-                                          ),
+                                margin: EdgeInsets.only(left: 10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      width: 248,
+                                      child: Text(
+                                        widget.productName,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                        SizedBox(
-                                          width: 248,
-                                          child: Text(
-                                            '$uom',
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 2,
-                                            style: GoogleFonts.inter(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  )),
+                                    SizedBox(
+                                      width: 248,
+                                      child: Text(
+                                        '$uom',
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               SizedBox(
                                 height: 10,
                               ),
@@ -133,18 +212,40 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                 children: [
                                   IconButton(
                                     iconSize: 28,
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      // Decrement quantity when minus button is pressed
+                                      if (currentQuantity > 0) {
+                                        setState(() {
+                                          quantityMap[uom] = currentQuantity - 1;
+                                        });
+                                      }
+                                    },
                                     icon: const Icon(Icons.remove),
                                   ),
-                                  Text(
-                                    '1',
-                                    style: GoogleFonts.inter(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500),
+                                  Container(
+                                    width: 40,
+                                    child: TextField(
+                                      textAlign: TextAlign.center,
+                                      keyboardType: TextInputType.number,
+                                      controller: TextEditingController(text: currentQuantity.toString()),
+                                      onChanged: (value) {
+                                        final newValue = int.tryParse(value);
+                                        if (newValue != null) {
+                                          setState(() {
+                                            quantityMap[uom] = newValue;
+                                          });
+                                        }
+                                      },
+                                    ),
                                   ),
                                   IconButton(
                                     iconSize: 28,
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      // Increment quantity when plus button is pressed
+                                      setState(() {
+                                        quantityMap[uom] = currentQuantity + 1;
+                                      });
+                                    },
                                     icon: const Icon(Icons.add),
                                   ),
                                 ],
@@ -155,37 +256,40 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                       ],
                     ),
                     Container(
-                      margin: EdgeInsets.only(
-                        left: 10,
-                        bottom: 10,
-                      ),
+                      margin: EdgeInsets.only(left: 10, bottom: 10),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'RM $price',
+                            'RM ${price?.toStringAsFixed(3)}',
                             style: GoogleFonts.inter(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 20),
-                                backgroundColor:
-                                    Color.fromARGB(255, 4, 124, 189),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
+                            onPressed: () {
+                              // Implement add to cart functionality with quantity
+                              print('Adding $currentQuantity of $uom to cart');
+                              createCartItem(uom, quantityMap[uom]!, price);
+                              insertItemIntoCart(cartItem);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                              backgroundColor: Color.fromARGB(255, 4, 124, 189),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0),
                               ),
-                              child: Text(
-                                'Add To Cart',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ))
+                            ),
+                            child: Text(
+                              'Add To Cart',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -202,6 +306,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
     );
   }
 }
+
 
 
 

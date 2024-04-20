@@ -6,7 +6,7 @@ Future<MySqlConnection> connectToDatabase() async {
     host: '10.0.2.2',
     port: 3306, // Default MySQL port
     user: 'root',
-    password: '123456',
+    password: '901022',
     db: 'fyh',
   );
 
