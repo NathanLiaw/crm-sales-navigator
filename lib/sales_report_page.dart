@@ -130,7 +130,7 @@ ORDER BY GeneratedMonths.YearMonth DESC;
         day: row['Day'] ??
             row['MonthName']?.toString() ??
             row['Year']?.toString(),
-        date: row['Date'], // Adding date to SalesData object
+        date: row['Date'],
         totalSales: row['Total Sales'] != null
             ? (row['Total Sales'] as num).toDouble()
             : null,
@@ -205,28 +205,54 @@ ORDER BY GeneratedMonths.YearMonth DESC;
                     itemBuilder: (context, index) {
                       final item = snapshot.data![index];
                       return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ListTile(
-                            title: Text(item.day != null ? item.day! : '',
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            subtitle: selectedReportType == 'Week' &&
-                                    item.date !=
-                                        null // Check if report type is 'Week' and date is available
-                                ? Text(
-                                    'Date: ${_formatDate(item.date!)}', // Display date in the required format
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  )
-                                : null, // If not 'Week' or date is null, don't show subtitle
-                          ),
-                          if (item.totalSales != null)
-                            ListTile(
-                              title: Text(
-                                  'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}'),
+                            title: Text(
+                              item.day != null ? item.day! : '',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                            subtitle: selectedReportType == 'Week' &&
+                                    item.date != null
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Date: ${_formatDate(item.date!)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Color.fromARGB(255, 0, 100, 0),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : selectedReportType == 'Month' ||
+                                        selectedReportType == 'Year'
+                                    ? Text(
+                                        'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Color.fromARGB(255, 0, 100, 0),
+                                        ),
+                                      )
+                                    : null,
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 16),
+                          ),
                           const Divider(color: Colors.grey),
                         ],
                       );
@@ -251,7 +277,7 @@ ORDER BY GeneratedMonths.YearMonth DESC;
 
 class SalesData {
   final String? day;
-  final DateTime? date; // Changed type to DateTime
+  final DateTime? date;
 
   final double? totalSales;
 

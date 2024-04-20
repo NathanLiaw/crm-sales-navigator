@@ -163,11 +163,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:sales_navigator/cart_page.dart';
+// import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/data_analytics_page.dart';
 import 'package:sales_navigator/home_page.dart';
-import 'package:sales_navigator/product_page.dart';
+// import 'package:sales_navigator/product_page.dart';
 import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_page.dart';
+// import 'package:sales_navigator/sales_page.dart';
 
 class CustomNavigationBar extends StatefulWidget {
   @override
@@ -255,7 +256,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => SalesPage(),
+                          pageBuilder: (_, __, ___) => DataAnalyticsPage(),
                           transitionsBuilder: (
                             context,
                             animation,
@@ -271,44 +272,44 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                     }
                     break;
                   case 2:
-                    if (ModalRoute.of(context)!.settings.name != '/product') {
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => ProductPage(),
-                          transitionsBuilder: (
-                            context,
-                            animation,
-                            secondaryAnimation,
-                            child,
-                          ) =>
-                              FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        ),
-                      );
-                    }
+                    // if (ModalRoute.of(context)!.settings.name != '/product') {
+                    //   Navigator.pushReplacement(
+                    //     context,
+                    //     PageRouteBuilder(
+                    //       pageBuilder: (_, __, ___) => ProductPage(),
+                    //       transitionsBuilder: (
+                    //         context,
+                    //         animation,
+                    //         secondaryAnimation,
+                    //         child,
+                    //       ) =>
+                    //           FadeTransition(
+                    //         opacity: animation,
+                    //         child: child,
+                    //       ),
+                    //     ),
+                    //   );
+                    // }
                     break;
                   case 3:
-                    if (ModalRoute.of(context)!.settings.name != '/cart') {
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => CartPage(),
-                          transitionsBuilder: (
-                            context,
-                            animation,
-                            secondaryAnimation,
-                            child,
-                          ) =>
-                              FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        ),
-                      );
-                    }
+                    // if (ModalRoute.of(context)!.settings.name != '/cart') {
+                    //   Navigator.pushReplacement(
+                    //     context,
+                    //     PageRouteBuilder(
+                    //       pageBuilder: (_, __, ___) => CartPage(),
+                    //       transitionsBuilder: (
+                    //         context,
+                    //         animation,
+                    //         secondaryAnimation,
+                    //         child,
+                    //       ) =>
+                    //           FadeTransition(
+                    //         opacity: animation,
+                    //         child: child,
+                    //       ),
+                    //     ),
+                    //   );
+                    // }
                     break;
                   case 4:
                     if (ModalRoute.of(context)!.settings.name != '/profile') {

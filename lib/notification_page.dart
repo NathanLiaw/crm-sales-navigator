@@ -18,7 +18,7 @@ class NotificationsPage extends StatelessWidget {
         ),
       ),
       body: ListView.builder(
-        itemCount: 3, // Replace with actual number of notifications
+        itemCount: 3,
         itemBuilder: (context, index) {
           return _buildNotificationItem(
             title: 'Customer Payment Due',

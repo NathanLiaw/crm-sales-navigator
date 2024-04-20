@@ -110,7 +110,7 @@ class Customer {
 
   Customer(this.name, this.totalValue, this.percentageOfTotal);
 
-  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalValue)}'; // Updated formatting
+  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalValue)}';
 }
 
 class CustomerBar extends StatelessWidget {
@@ -132,7 +132,7 @@ class CustomerBar extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16, // Increased font size to 18
+                  fontSize: 16,
                 ),
               ),
               Text(
@@ -140,7 +140,7 @@ class CustomerBar extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.w500,
-                  fontSize: 16, // Increased font size to 18
+                  fontSize: 16,
                 ),
               ),
             ],

@@ -119,145 +119,151 @@ class _ProductReportState extends State<ProductReport> {
     });
   }
 
-Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
-  final bool isCustomRangeSelected = selectedButtonIndex == -1;
+  Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
+    final bool isCustomRangeSelected = selectedButtonIndex == -1;
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(left: 5.0),
-            child: TextButton.icon(
-              onPressed: () async {
-                final DateTimeRange? picked = await showDateRangePicker(
-                  context: context,
-                  initialDateRange: _selectedDateRange,
-                  firstDate: DateTime(2019),
-                  lastDate: DateTime.now(),
-                  builder: (BuildContext context, Widget? child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: Theme.of(context).colorScheme.copyWith(
-                          primary: Colors.lightBlue,
-                          onPrimary: Colors.white,
-                          surface: const Color.fromARGB(255, 212, 234, 255),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(left: 5.0),
+              child: TextButton.icon(
+                onPressed: () async {
+                  final DateTimeRange? picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: _selectedDateRange,
+                    firstDate: DateTime(2019),
+                    lastDate: DateTime.now(),
+                    builder: (BuildContext context, Widget? child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: Theme.of(context).colorScheme.copyWith(
+                                primary: Colors.lightBlue,
+                                onPrimary: Colors.white,
+                                surface:
+                                    const Color.fromARGB(255, 212, 234, 255),
+                              ),
                         ),
-                      ),
-                      
-                      child: child!,
-                    );
-                  },
-                );
-                if (picked != null && picked != _selectedDateRange) {
-                  setState(() {
-                    _selectedDateRange = picked;
-                    selectedButtonIndex = 3;
-                    products = fetchProducts(_selectedDateRange);
-                  });
-                }
-              },
-              icon: Icon(
-                Icons.calendar_today, // Always use the calendar icon
-                color: isCustomRangeSelected ? Colors.white : Colors.black, // Set icon color based on selection
-              ),
-              label: Text(
-                formattedDate,
-                style: TextStyle(
-                  color: isCustomRangeSelected ? Colors.white : Colors.black, // Set text color based on selection
-                  fontSize: 15,
+                        child: child!,
+                      );
+                    },
+                  );
+                  if (picked != null && picked != _selectedDateRange) {
+                    setState(() {
+                      _selectedDateRange = picked;
+                      selectedButtonIndex = 3;
+                      products = fetchProducts(_selectedDateRange);
+                    });
+                  }
+                },
+                icon: Icon(
+                  Icons.calendar_today,
+                  color: isCustomRangeSelected ? Colors.white : Colors.black,
                 ),
-              ),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
-                      return const Color(0xFF047CBD);
-                    }
-                    return const Color(0xFFD9D9D9);
-                  },
+                label: Text(
+                  formattedDate,
+                  style: TextStyle(
+                    color: isCustomRangeSelected ? Colors.white : Colors.black,
+                    fontSize: 15,
+                  ),
                 ),
-                foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
-                      return Colors.white;
-                    }
-                    return Colors.black;
-                  },
-                ),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (isCustomRangeSelected) {
+                        return const Color(0xFF047CBD);
+                      }
+                      return const Color(0xFFD9D9D9);
+                    },
+                  ),
+                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (isCustomRangeSelected) {
+                        return Colors.white;
+                      }
+                      return Colors.black;
+                    },
+                  ),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          TextButton.icon(
-    onPressed: toggleSortOrder,
-    icon: Icon(
-      isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
-      color: Colors.black,
-    ),
-    label: const Text(
-      'Sort',
-      style: TextStyle(color: Colors.black),
-    ),
-    style: TextButton.styleFrom(
-      backgroundColor: const Color(0xFFD9D9D9),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ),
-  )
-        ],
-      ),
-      const SizedBox(height: 10),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Row(
-          children: [
-            _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0), selectedButtonIndex == 0),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1), selectedButtonIndex == 1),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2), selectedButtonIndex == 2),
+            TextButton.icon(
+              onPressed: toggleSortOrder,
+              icon: Icon(
+                isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
+                color: Colors.black,
+              ),
+              label: const Text(
+                'Sort',
+                style: TextStyle(color: Colors.black),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFD9D9D9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            )
           ],
         ),
-      ),
-      const SizedBox(height: 10),
-    ],
-  );
-}
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+                  selectedButtonIndex == 0),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+                  selectedButtonIndex == 1),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+                  selectedButtonIndex == 2),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
 
-Widget _buildTimeFilterButton(String text, VoidCallback onPressed, bool isSelected) {
-  return TextButton(
-    onPressed: onPressed,
-    style: ButtonStyle(
-      backgroundColor: MaterialStateProperty.resolveWith<Color>(
-        (Set<MaterialState> states) {
-          return isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9);
-        },
-      ),
-      foregroundColor: MaterialStateProperty.resolveWith<Color>(
-        (Set<MaterialState> states) {
-          return isSelected ? Colors.white : Colors.black;
-        },
-      ),
-      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+  Widget _buildTimeFilterButton(
+      String text, VoidCallback onPressed, bool isSelected) {
+    return TextButton(
+      onPressed: onPressed,
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            return isSelected
+                ? const Color(0xFF047CBD)
+                : const Color(0xFFD9D9D9);
+          },
+        ),
+        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            return isSelected ? Colors.white : Colors.black;
+          },
+        ),
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+          EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
-      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-        EdgeInsets.symmetric(horizontal: 8, vertical: 2), // Adjusted padding
-      ),
-    ),
-    child: Text(text, style: const TextStyle(fontSize: 14)), // Adjusted font size
-  );
-}
+      child: Text(text, style: const TextStyle(fontSize: 12)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +279,8 @@ Widget _buildTimeFilterButton(String text, VoidCallback onPressed, bool isSelect
             Navigator.of(context).pop();
           },
         ),
-        title: const Text('Product Report', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Product Report', style: TextStyle(color: Colors.white)),
       ),
       body: Column(
         children: [
@@ -294,65 +301,78 @@ Widget _buildTimeFilterButton(String text, VoidCallback onPressed, bool isSelect
                     children: snapshot.data!.map((product) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child:ExpansionTile(
-  backgroundColor: Colors.grey[200],
-  title: Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        '${product.serialNumber}. ',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-      const SizedBox(width: 3),
-      Expanded(
-        child: Text(
-          product.productName,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    ],
-  ),
-  subtitle: Text(
-    '     Total Quantity Sold: ${product.totalQuantitySold}',
-    style: const TextStyle(color: Color.fromARGB(255, 0, 100, 0),fontSize: 17,fontWeight: FontWeight.w500),
-  ),
-  children: [
-    Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 4),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '    Product ID: ${product.id}',
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '    Brand Name: ${product.brandName}',
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '    Total Sales: RM ${product.totalSales}',
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '    Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    ),
-  ],
-),
-
-
+                        child: ExpansionTile(
+                          backgroundColor: Colors.grey[200],
+                          title: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${product.serialNumber}. ',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  product.productName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: Text(
+                            '     Total Quantity Sold: ${product.totalQuantitySold}',
+                            style: const TextStyle(
+                                color: Color.fromARGB(255, 0, 100, 0),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 20, right: 20, top: 4),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '    Product ID: ${product.id}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '    Brand Name: ${product.brandName}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '    Total Sales: RM ${product.totalSales}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '    Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     }).toList(),
                   );
@@ -389,5 +409,6 @@ class Product {
     required this.serialNumber,
   });
 
-  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalSales)}';
+  String get totalSalesDisplay =>
+      'RM ${NumberFormat("#,##0", "en_US").format(totalSales)}';
 }

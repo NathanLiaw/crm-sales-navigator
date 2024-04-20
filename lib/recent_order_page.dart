@@ -433,7 +433,9 @@ class _RecentOrderState extends State<RecentOrder> {
       }
     } catch (e) {
       print('Error fetching product photo: $e');
-      return 'asset/no_photo_available.jpg'; // Return empty string if an error occurs
+      return 'asset/no_photo_available.jpg';
     }
   }
+  
+  readData(MySqlConnection conn, String s, String t, String u, String v) {}
 }

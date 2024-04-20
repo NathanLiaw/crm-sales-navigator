@@ -16,19 +16,19 @@ class DataAnalyticsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Data Analytics',
-          style: TextStyle(color: Colors.white), // Set text color to white
+          style: TextStyle(color: Colors.white), 
         ),
-        backgroundColor: const Color(0xFF004C87), // Set app bar color to #004C87
+        backgroundColor: const Color(0xFF004C87),
         leading: Theme(
           data: Theme.of(context).copyWith(
             iconTheme: const IconThemeData(
-                color: Colors.white), // Set back button color to white
+                color: Colors.white),
           ),
           child: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
               Navigator.pop(
-                  context); // Navigate back when the back button is pressed
+                  context);
             },
           ),
         ),
@@ -44,7 +44,7 @@ class DataAnalyticsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            const SalesReportPage()), // Ensure you have this page
+                            const SalesReportPage()), 
                   );
                 },
                 child: const SizedBox(
@@ -61,7 +61,7 @@ class DataAnalyticsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            const CustomerReport()), // Ensure you have this page
+                            const CustomerReport()),
                   );
                 },
                 child: const SizedBox(

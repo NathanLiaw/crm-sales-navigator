@@ -1,37 +1,36 @@
 import 'package:flutter/material.dart';
-import 'db_connection.dart'; // Make sure to import your database connection function
-import 'data_analytics_page.dart';
-import 'package:mysql1/mysql1.dart';
+// import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/login_page.dart';
+import 'package:sales_navigator/order_details_page.dart';
+// import 'package:sales_navigator/product_page.dart';
+import 'package:sales_navigator/profile_page.dart';
+// import 'package:sales_navigator/sales_page.dart';
+// import 'package:sales_navigator/cart_item_sqlite.dart';
 
-void main() {
-  runApp(MyApp());
-  testDbConnection(); // Call this function to test the DB connection
+Future<void> main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await DatabaseHelper.importCartItemData();
+  runApp(const MainApp());
 }
 
-void testDbConnection() async {
-  try {
-    // Attempt to open a connection to the database.
-    var conn = await connectToDatabase();
-    print('Connected to the MySQL server successfully!');
-    // Close the connection when finished.
-    await conn.close();
-  } on MySqlException catch (e) {
-    print('Failed to connect to the database. Error: ${e.message}');
-  } on Exception catch (e) {
-    print('An error occurred: $e');
-  }
-}
+class MainApp extends StatelessWidget {
+  const MainApp({Key? key}) : super(key: key);
 
-class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Data Analytics',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: DataAnalyticsPage(),
+      debugShowCheckedModeBanner: false,
+      home: LoginPage(),
+      routes: {
+        '/home': (context) => HomePage(),
+        '/sales': (context) => DataAnalyticsPage(),
+        // '/product': (context) => ProductPage(),
+        // '/cart': (context) => CartPage(),
+        '/login': (context) => LoginPage(),
+        '/profile': (context) => ProfilePage(),
+      },
     );
   }
 }

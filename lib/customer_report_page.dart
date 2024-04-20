@@ -14,12 +14,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         colorScheme: const ColorScheme.light(
-          primary: Colors.lightBlue, // Set primary color to light blue
-          onPrimary: Colors.white, // Set text color on primary to white
-          surface: Colors.lightBlue, // Set surface color to light blue
+          primary: Colors.lightBlue,
+          onPrimary: Colors.white,
+          surface: Colors.lightBlue,
         ),
         iconTheme: const IconThemeData(
-            color: Colors.lightBlue), // Set icon color to light blue
+            color: Colors.lightBlue),
       ),
       home: const CustomerReport(),
     );
@@ -130,15 +130,15 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
                 if (picked != null && picked != _selectedDateRange) {
                   setState(() {
                     _selectedDateRange = picked;
-                    selectedButtonIndex = 3; // Clear selected button index
+                    selectedButtonIndex = 3;
                     customers =
                         fetchCustomers(isSortedAscending, _selectedDateRange);
                   });
                 }
               },
               icon: Icon(
-                Icons.calendar_today, // Calendar icon
-                color: isCustomRangeSelected ? Colors.white : Colors.black, // Change icon color based on selection
+                Icons.calendar_today,
+                color: isCustomRangeSelected ? Colors.white : Colors.black,
               ),
               label: Text(
                 formattedDate,
@@ -229,10 +229,10 @@ Widget _buildTimeFilterButton(String text, VoidCallback onPressed, bool isSelect
         ),
       ),
       padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-        EdgeInsets.symmetric(horizontal: 8, vertical: 2), // Adjusted padding
+        EdgeInsets.symmetric(horizontal: 8),
       ),
     ),
-    child: Text(text, style: const TextStyle(fontSize: 14)), // Adjusted font size
+    child: Text(text, style: const TextStyle(fontSize: 12)),
   );
 }
 
@@ -276,7 +276,7 @@ Widget _buildTimeFilterButton(String text, VoidCallback onPressed, bool isSelect
                         child: 
                         
                         ExpansionTile(
-  backgroundColor: Colors.grey[200], // Set the background color to light grey
+  backgroundColor: Colors.grey[200],
   title: Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -284,7 +284,7 @@ Widget _buildTimeFilterButton(String text, VoidCallback onPressed, bool isSelect
         '${customer.serialNumber}. ',
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
-      const SizedBox(width: 3), // Space between serial number and company name
+      const SizedBox(width: 3),
       Expanded(
         child: Text(
           customer.companyName,

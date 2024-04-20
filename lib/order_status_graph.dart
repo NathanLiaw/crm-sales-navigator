@@ -20,14 +20,14 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16), // Added padding
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
-                  'Sales Orders Status', // Changed title to "Sales Orders Status"
+                  'Sales Orders Status',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -52,8 +52,8 @@ class MyApp extends StatelessWidget {
                 ),
                 child: const OrderStatusWidget(),
               ),
-              const SizedBox(height: 32), // Added extra space after OrderStatusWidget
-              const InProgressOrdersWidget(), // Added the InProgressOrdersWidget widget
+              const SizedBox(height: 32),
+              const InProgressOrdersWidget(),
             ],
           ),
         ),
@@ -143,8 +143,6 @@ Future<void> fetchDataForDateRange(DateTimeRange selectedDateRange) async {
   for (var row in results) {
     String status = row['status'] as String;
     int count = row['Total'] as int;
-
-    // Accumulate counts based on status
     if (status == 'Complete') {
       completeOrders += count;
     } else if (status == 'Pending') {
@@ -217,14 +215,14 @@ Future<void> _selectDateRange(BuildContext context) async {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '$pending', // Displaying complete order number
+                  '$pending',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 8), // Adding space between complete order number and "Orders"
+                const SizedBox(height: 8),
                 const Text(
                   'Orders Pending',
                   style: TextStyle(
@@ -400,7 +398,7 @@ class InProgressOrdersWidget extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 4), // Adding some space between date and order heading
+                        const SizedBox(height: 4), 
                         Center(
                           child: Text(
                             '${order.status} Orders',
@@ -410,7 +408,7 @@ class InProgressOrdersWidget extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12), // Adding some space between orders
+                        const SizedBox(height: 12),
                       ],
                     )),
                   ],

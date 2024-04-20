@@ -208,11 +208,10 @@ ORDER BY GeneratedMonths.YearMonth ASC;
               ? Padding(
   padding: const EdgeInsets.symmetric(horizontal: 4.0),
   child: Align(
-    alignment: Alignment.center, // This will center the LineChart horizontally.
+    alignment: Alignment.center,
     child: ConstrainedBox(
       constraints: BoxConstraints(
-        // Set the maximum width of the chart to a fraction of the screen size
-        maxWidth: MediaQuery.of(context).size.width * 0.95, // 95% of the screen width
+        maxWidth: MediaQuery.of(context).size.width * 0.95,
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
@@ -271,15 +270,15 @@ ORDER BY GeneratedMonths.YearMonth ASC;
         leftTitles: SideTitles(
   showTitles: true,
   getTitles: (value) {
-    // Format the value with 'K' for thousands, otherwise show the full number.
+
     if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)}K'; // If value is 1000 or more, it is divided by 1000 and 'K' is added.
+      return '${(value / 1000).toStringAsFixed(1)}K';
     } else {
-      return value.toInt().toString(); // If value is less than 1000, it is displayed as a full number without any decimals.
+      return value.toInt().toString();
     }
   },
-  interval: maxY / 6, // Adjust interval as needed
-  reservedSize: 40, // Adjust reserved size as needed
+  interval: maxY / 6, 
+  reservedSize: 40,
 ),
         bottomTitles: SideTitles(
           showTitles: true,
@@ -290,24 +289,18 @@ ORDER BY GeneratedMonths.YearMonth ASC;
             int lastIndex = salesData.length - 1;
 
             if (_selectedInterval == 'Weekly') {
-              // Display weekdays for the current week
               if (index == lastIndex) {
-                // Return current day for the last point
                 return DateFormat('EEE').format(DateTime.now());
               } else {
-                // Display previous days
                 DateTime currentDate = DateTime.now();
                 DateTime date =
                     currentDate.subtract(Duration(days: lastIndex - index));
                 return DateFormat('EEE').format(date);
               }
             } else if (_selectedInterval == 'Monthly') {
-              // Display months
               if (index == lastIndex) {
-                // Return current month for the last point
                 return DateFormat('MMM').format(DateTime.now());
               } else {
-                // Display previous months
                 DateTime date = DateTime.now()
                     .subtract(Duration(days: (lastIndex - index) * 30));
                 return DateFormat('MMM').format(date);
@@ -315,7 +308,6 @@ ORDER BY GeneratedMonths.YearMonth ASC;
             } else {
               // Display years
               if (index == lastIndex) {
-                // Return current year for the last point
                 return DateFormat('yyyy').format(DateTime.now());
               } else {
                 // Display previous years
