@@ -231,7 +231,7 @@ $orderByClause;''';
           ),
           style: TextButton.styleFrom(
             backgroundColor: isCustomRangeSelected
-                ? Color(0xFF047CBD)
+                ? const Color(0xFF047CBD)
                 : const Color(0xFFD9D9D9),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -259,7 +259,7 @@ $orderByClause;''';
       },
       style: TextButton.styleFrom(
         backgroundColor: isSelected
-            ? Color(0xFF047CBD)
+            ? const Color(0xFF047CBD)
             : const Color(0xFFD9D9D9),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),

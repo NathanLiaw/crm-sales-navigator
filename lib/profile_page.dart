@@ -8,6 +8,8 @@ import 'package:sales_navigator/about_us_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -39,14 +41,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
-        title: Text(
+        backgroundColor: const Color(0xff0069BA),
+        title: const Text(
           'Profile',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
+            icon: const Icon(Icons.notifications, color: Colors.white),
             onPressed: () {
               // Handle notifications
             },
@@ -59,10 +61,10 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Container(
                 alignment: Alignment.center,
-                child: Text(
+                child: const Text(
                   'Welcome,',
                   style: TextStyle(
                     fontSize: 15,
@@ -74,9 +76,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   alignment: Alignment.center,
                   child: Text(
                     '$salesmanName',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   )),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               buildProfileOption('Account Setting', Icons.settings, context),
               buildProfileOption('Reports', Icons.favorite, context),
               buildProfileOption('Recent Order', Icons.shopping_bag, context),
@@ -84,13 +86,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
           ),
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 
@@ -102,8 +104,8 @@ class _ProfilePageState extends State<ProfilePage> {
           Navigator.push(
             // Navigate to account setting page
             context,
-            MaterialPageRoute(builder: (context) => AccountSetting()),
-          )..then((value) {
+            MaterialPageRoute(builder: (context) => const AccountSetting()),
+          ).then((value) {
               if (value == true) {
                 _getSalesmanName();
               }
@@ -112,30 +114,30 @@ class _ProfilePageState extends State<ProfilePage> {
         if (title == 'Terms & Condition') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => TermsandConditions()),
+            MaterialPageRoute(builder: (context) => const TermsandConditions()),
           );
         }
         if (title == 'Contact Us') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ContactUs()),
+            MaterialPageRoute(builder: (context) => const ContactUs()),
           );
         }
         if (title == 'About Us') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AboutUs()),
+            MaterialPageRoute(builder: (context) => const AboutUs()),
           );
         }
         if (title == 'Recent Order') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => RecentOrder()),
+            MaterialPageRoute(builder: (context) => const RecentOrder()),
           );
         }
       },
       child: Container(
-        margin: EdgeInsets.only(top: 10),
+        margin: const EdgeInsets.only(top: 10),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(5),
@@ -150,7 +152,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget buildLogoutButton() {
     return Container(
-      margin: EdgeInsets.only(left: 100, right: 100),
+      margin: const EdgeInsets.only(left: 100, right: 100),
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
@@ -165,11 +167,11 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(5),
-            side: BorderSide(color: Colors.red, width: 2),
+            side: const BorderSide(color: Colors.red, width: 2),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 10, bottom: 10),
+        child: const Padding(
+          padding: EdgeInsets.only(top: 10, bottom: 10),
           child: Text(
             'Log Out',
             style: TextStyle(color: Colors.red),

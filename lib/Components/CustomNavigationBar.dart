@@ -171,6 +171,8 @@ import 'package:sales_navigator/profile_page.dart';
 // import 'package:sales_navigator/sales_page.dart';
 
 class CustomNavigationBar extends StatefulWidget {
+  const CustomNavigationBar({super.key});
+
   @override
   _CustomNavigationBarState createState() => _CustomNavigationBarState();
 }
@@ -183,7 +185,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       height: _isVisible ? 60 : 0,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       child: Scaffold(
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
@@ -193,26 +195,26 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
               gap: 7,
               selectedIndex: _selectedIndex,
               color: Colors.grey,
               activeColor: Colors.white,
               iconSize: 24,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              duration: Duration(milliseconds: 500),
-              tabBackgroundColor: Color(0xff0069BA),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              duration: const Duration(milliseconds: 500),
+              tabBackgroundColor: const Color(0xff0069BA),
               tabs: [
-                GButton(
+                const GButton(
                   icon: Icons.home,
                   text: 'Home',
                 ),
-                GButton(
+                const GButton(
                   icon: Icons.sell,
                   text: 'Sales',
                 ),
-                GButton(
+                const GButton(
                   icon: Icons.shopping_bag,
                   text: 'Product',
                 ),
@@ -221,7 +223,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                   text: 'Cart',
                   leading: buildCartIcon(),
                 ),
-                GButton(
+                const GButton(
                   icon: Icons.person,
                   text: 'Profile',
                 ),
@@ -236,7 +238,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => HomePage(),
+                          pageBuilder: (_, __, ___) => const HomePage(),
                           transitionsBuilder: (
                             context,
                             animation,
@@ -256,7 +258,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => DataAnalyticsPage(),
+                          pageBuilder: (_, __, ___) => const DataAnalyticsPage(),
                           transitionsBuilder: (
                             context,
                             animation,
@@ -316,7 +318,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => ProfilePage(),
+                          pageBuilder: (_, __, ___) => const ProfilePage(),
                           transitionsBuilder: (
                             context,
                             animation,
@@ -336,7 +338,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => HomePage(),
+                          pageBuilder: (_, __, ___) => const HomePage(),
                           transitionsBuilder: (
                             context,
                             animation,
@@ -373,12 +375,12 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
           top: 0,
           right: 0,
           child: Container(
-            padding: EdgeInsets.all(2),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.red,
             ),
-            child: Text(
+            child: const Text(
               '13',
               style: TextStyle(
                 color: Colors.white,
@@ -398,14 +400,14 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   }
 
   void _scrollListener() {
-    ScrollController _controller = ScrollController();
-    _controller.addListener(() {
-      if (_controller.position.userScrollDirection == ScrollDirection.reverse) {
+    ScrollController controller = ScrollController();
+    controller.addListener(() {
+      if (controller.position.userScrollDirection == ScrollDirection.reverse) {
         setState(() {
           _isVisible = false;
         });
       }
-      if (_controller.position.userScrollDirection == ScrollDirection.forward) {
+      if (controller.position.userScrollDirection == ScrollDirection.forward) {
         setState(() {
           _isVisible = true;
         });

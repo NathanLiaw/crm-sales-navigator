@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/login_page.dart';
-import 'package:sales_navigator/order_details_page.dart';
+// import 'package:sales_navigator/order_details_page.dart';
 // import 'package:sales_navigator/product_page.dart';
 import 'package:sales_navigator/profile_page.dart';
 // import 'package:sales_navigator/sales_page.dart';
@@ -16,7 +16,7 @@ Future<void> main() async {
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({Key? key}) : super(key: key);
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +24,12 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: LoginPage(),
       routes: {
-        '/home': (context) => HomePage(),
-        '/sales': (context) => DataAnalyticsPage(),
+        '/home': (context) => const HomePage(),
+        '/sales': (context) => const DataAnalyticsPage(),
         // '/product': (context) => ProductPage(),
         // '/cart': (context) => CartPage(),
         '/login': (context) => LoginPage(),
-        '/profile': (context) => ProfilePage(),
+        '/profile': (context) => const ProfilePage(),
       },
     );
   }

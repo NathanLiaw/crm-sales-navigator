@@ -258,7 +258,7 @@ class _ProductReportState extends State<ProductReport> {
           ),
         ),
         padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-          EdgeInsets.symmetric(horizontal: 8),
+          const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12)),

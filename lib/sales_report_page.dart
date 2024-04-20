@@ -228,7 +228,7 @@ ORDER BY GeneratedMonths.YearMonth DESC;
                                           fontSize: 16,
                                         ),
                                       ),
-                                      SizedBox(height: 4),
+                                      const SizedBox(height: 4),
                                       Text(
                                         'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}',
                                         style: const TextStyle(
@@ -250,7 +250,7 @@ ORDER BY GeneratedMonths.YearMonth DESC;
                                         ),
                                       )
                                     : null,
-                            contentPadding: EdgeInsets.symmetric(
+                            contentPadding: const EdgeInsets.symmetric(
                                 vertical: 4, horizontal: 16),
                           ),
                           const Divider(color: Colors.grey),

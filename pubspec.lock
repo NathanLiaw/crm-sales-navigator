@@ -42,7 +42,7 @@ packages:
     source: hosted
     version: "1.18.0"
   crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypto
       sha256: ff625774173754681d66daaf4a448684fb04b78f902da9cb3d308c19cc5e8bab
@@ -113,7 +113,7 @@ packages:
     source: sdk
     version: "0.0.0"
   google_nav_bar:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: google_nav_bar
       sha256: "1c8e3882fa66ee7b74c24320668276ca23affbd58f0b14a24c1e5590f4d07ab0"
@@ -289,7 +289,7 @@ packages:
     source: hosted
     version: "1.5.1"
   shared_preferences:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: shared_preferences
       sha256: d3bbe5553a986e83980916ded2f0b435ef2e1893dfaa29d5a7a790d0eca12180

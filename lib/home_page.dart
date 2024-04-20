@@ -3,6 +3,8 @@ import 'package:sales_navigator/Components/CustomNavigationBar.dart';
 import 'package:sales_navigator/notification_page.dart';
 
 class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
   // // pass salesman name to profile page
   // final String salesmanName;
   // HomePage({required this.salesmanName});
@@ -11,28 +13,28 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
-        title: Text(
+        backgroundColor: const Color(0xff0069BA),
+        title: const Text(
           'HomePage',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
+            icon: const Icon(Icons.notifications, color: Colors.white),
             onPressed: () {
               // Handle notifications
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NotificationsPage()),
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
               );
             },
           ),
         ],
       ),
-      body: Center(
+      body: const Center(
         child: Text('Welcome to homepage'), // show salesman name for testing
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 }

@@ -14,11 +14,12 @@ dependencies:
   path_provider: ^2.0.0
   mysql1: ^0.20.0 # Update to a version that exists
   intl: ^0.17.0
+  shared_preferences: any
+  google_nav_bar: any
+  crypto: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  shared_preferences: ^2.0.8
-  google_nav_bar: ^5.0.6
 flutter:
   uses-material-design: true

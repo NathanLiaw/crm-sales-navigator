@@ -13,7 +13,7 @@ Future<MySqlConnection> connectToDatabase() async {
 
   try {
     final conn = await MySqlConnection.connect(settings);
-    await Future.delayed(Duration(seconds: 2));  
+    await Future.delayed(const Duration(seconds: 2));  
     print('Connected to MySQL database');
     return conn;
   } catch (e) {
@@ -30,7 +30,7 @@ Future<List<Map<String, dynamic>>> executeQuery(String query) async {
     return results.map((row) => row.fields).toList();
   } catch (e) {
     print('Error executing query: $e');
-    throw e;
+    rethrow;
   } finally {
     await conn?.close();
   }
