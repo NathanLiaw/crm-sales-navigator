@@ -18,7 +18,8 @@ class ItemsWidget extends StatelessWidget {
       final conn = await connectToDatabase();
       final results = await conn.query(
           'SELECT id, product_name, photo1, description,sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ? LIMIT 100',
-          ['%$searchQuery%']);
+          ['%$searchQuery%']
+      );
       await conn.close();
 
       return results

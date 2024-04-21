@@ -20,9 +20,9 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
-  String searchQuery = '';
   late Map<int, String> area = {};
   static late int selectedAreaId;
+  String searchQuery = '';
 
   Future<void> setAreaId(int areaId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -54,11 +54,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
         area = areaMap;
       });
 
-      // Retrieve the currently selected areaId from preferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       int? storedAreaId = prefs.getInt('areaId');
 
-      // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
       if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
         setState(() {
           selectedAreaId = storedAreaId;
@@ -66,7 +64,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
       } else if (areaMap.isNotEmpty) {
         setState(() {
           selectedAreaId = areaMap.keys.first;
-          // Store the initial selectedAreaId in SharedPreferences
           prefs.setInt('areaId', selectedAreaId);
         });
       }
@@ -124,23 +121,35 @@ class _ProductsScreenState extends State<ProductsScreen> {
               );
             },
           ),
-          title: InkWell(
-            onTap: () {},
+          title: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchScreen()),
+              ).then((value) {
+                if (value != null) {
+                  setState(() {
+                    searchQuery = value as String;
+                  });
+                }
+              });
+            },
             child: Container(
-              child: TextField(
-                readOnly: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: 'Search',
-                  suffixIcon: Icon(Icons.search),
-                  contentPadding:
-                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
-                    borderRadius: BorderRadius.circular(80),
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              height: 40.0,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.search),
+                  SizedBox(width: 10.0),
+                  Text(
+                    'Search',
+                    style: TextStyle(fontSize: 16.0, color: Colors.black54),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -164,28 +173,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ),
         child: Column(
           children: [
-            SizedBox(
-              height: 10,
-            ),
+            SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CategoryButton(
                   buttonnames: 'Categories',
                   onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                          return CategoryScreen();
-                        }));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CategoryScreen()),
+                    );
                   },
                 ),
                 CategoryButton(
                   buttonnames: 'Brands',
                   onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                          return BrandScreen();
-                        }));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => BrandScreen()),
+                    );
                   },
                 ),
               ],
@@ -247,10 +254,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       IconButton(
                         iconSize: 38,
                         onPressed: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                                return FilterCategoriesScreen();
-                              }));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => FilterCategoriesScreen()),
+                          );
                         },
                         icon: const Icon(Icons.filter_alt),
                       ),
@@ -278,3 +285,4 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 }
+
