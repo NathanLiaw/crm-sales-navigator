@@ -1,21 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
-
-import 'dart:convert';
-
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mysql1/mysql1.dart';
-
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/cart_item.dart';
-import 'dart:convert';
-
+import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/utility_function.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemVariationsScreen extends StatefulWidget {
   const ItemVariationsScreen({
@@ -58,7 +47,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
       ),
       body: ListView.builder(
         itemCount: priceData.length,
@@ -78,7 +67,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                       color: Colors.black.withOpacity(0.15),
                       spreadRadius: 0,
                       blurRadius: 10,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     )
                   ],
                   color: Colors.white,
@@ -89,12 +78,12 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                     Row(
                       children: [
                         Container(
-                          margin: EdgeInsets.all(10),
+                          margin: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               width: 1,
-                              color: Color.fromARGB(255, 0, 76, 135),
+                              color: const Color.fromARGB(255, 0, 76, 135),
                             ),
                           ),
                           child: Image.asset(
@@ -108,7 +97,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                margin: EdgeInsets.only(left: 10),
+                                margin: const EdgeInsets.only(left: 10),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -139,7 +128,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                   ],
                                 ),
                               ),
-                              SizedBox(
+                              const SizedBox(
                                 height: 10,
                               ),
                               Row(
@@ -190,7 +179,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                       ],
                     ),
                     Container(
-                      margin: EdgeInsets.only(left: 10, bottom: 10),
+                      margin: const EdgeInsets.only(left: 10, bottom: 10),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -204,7 +193,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                           ElevatedButton(
                             onPressed: () async {
                               // Create CartItem with current quantity and uom
-                              cartItem = CartItem(
+                              final cartItem = CartItem(
                                 buyerId: await UtilityFunction.getUserId(),
                                 productId: widget.productId,
                                 productName: widget.productName,
@@ -223,12 +212,43 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
 
                               // Insert CartItem into database
                               if (cartItem != null) {
-                                await insertItemIntoCart(cartItem!);
+                                await insertItemIntoCart(cartItem);
+
+                                // Show success dialog
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => const AlertDialog(
+                                    backgroundColor: Colors.green,
+                                    title: Row(
+                                      children: [
+                                        SizedBox(width: 20),
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Item added to cart',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+
+                                // Automatically close dialog after 1 second
+                                Future.delayed(const Duration(seconds: 1), () {
+                                  Navigator.pop(context); // Close dialog
+                                });
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                              backgroundColor: Color.fromARGB(255, 4, 124, 189),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                              backgroundColor: const Color.fromARGB(255, 4, 124, 189),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5.0),
                               ),
@@ -242,10 +262,11 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                               ),
                             ),
                           ),
+
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 4,
                     ),
                   ],
@@ -259,17 +280,55 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   }
 
   Future<void> insertItemIntoCart(CartItem cartItem) async {
-    try {
-      final db = await DatabaseHelper.database;
-      final cartItemMap = cartItem.toMap(excludeId: true); // Assuming 'id' is auto-generated
-      final tableName = 'cart_item';
+    int itemId = cartItem.productId;
+    String uom = cartItem.uom;
 
-      await DatabaseHelper.insertData(cartItemMap, tableName);
-      print('Cart item inserted successfully.');
+    try {
+      final tableName = 'cart_item';
+      final condition = "product_id = $itemId AND uom = '$uom' AND status = 'in progress'";
+      final order = '';
+      final field = '*';
+
+      final db = await DatabaseHelper.database;
+
+      // Read data from the database based on the provided condition
+      final result = await DatabaseHelper.readData(
+        db,
+        tableName,
+        condition,
+        order,
+        field,
+      );
+
+      // Check if the result contains any existing items
+      if (result.isNotEmpty) {
+        // Item already exists, update the quantity
+        final existingItem = result.first;
+        final updatedQuantity = existingItem['qty'] + cartItem.quantity;
+
+        // Prepare the data map for update
+        final data = {
+          'id': existingItem['id'],
+          'qty': updatedQuantity,
+          'modified': UtilityFunction.getCurrentDateTime(),
+        };
+
+        // Call the updateData function to perform the update operation
+        await DatabaseHelper.updateData(data, tableName);
+
+        print('Cart item quantity updated successfully.');
+      } else {
+        // Item does not exist, insert it as a new item
+        final cartItemMap = cartItem.toMap(excludeId: true);
+        await DatabaseHelper.insertData(cartItemMap, tableName);
+        print('New cart item inserted successfully.');
+      }
     } catch (e) {
-      print('Error inserting cart item: $e');
+      print('Error inserting or updating cart item: $e');
     }
   }
+
+
 }
 
 

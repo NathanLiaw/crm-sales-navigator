@@ -150,14 +150,14 @@ class DatabaseHelper {
     return flattenedData;
   }
 
-
-  Future<List<Map<String, dynamic>>> readData(
+  static Future<List<Map<String, dynamic>>> readData(
       Database database,
       String tableName,
       String condition,
       String order,
-      String field,
-      ) async {
+      String field, {
+        List<Object?>? whereArgs, // Define whereArgs as a named parameter
+      }) async {
     String sqlQuery = '';
     String sqlOrder = '';
 
@@ -171,9 +171,10 @@ class DatabaseHelper {
 
     // Construct the SQL query
     String sql = 'SELECT $field FROM $tableName $sqlQuery $sqlOrder';
+    print('SQL Query: $sql, whereArgs: $whereArgs');
 
-    // Execute the query
-    List<Map<String, dynamic>> queryResult = await database.rawQuery(sql);
+    // Execute the query with whereArgs
+    List<Map<String, dynamic>> queryResult = await database.rawQuery(sql, whereArgs);
 
     // Process the query result
     List<Map<String, dynamic>> results = [];
@@ -195,7 +196,6 @@ class DatabaseHelper {
     return results;
   }
 
-
   // Get all data from a specific table
   static Future<List<Map<String, dynamic>>> getAllData(String tableName) async {
     final db = await database;
@@ -204,9 +204,15 @@ class DatabaseHelper {
 
   // Update data in a specific table
   static Future<int> updateData(Map<String, dynamic> data, String tableName) async {
-    final db = await database;
+    final db = await DatabaseHelper.database;
     final id = data['id'];
-    return await db.update(tableName, data, where: 'id = ?', whereArgs: [id]);
+
+    return await db.update(
+      tableName,
+      data,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   // Delete data from a specific table
