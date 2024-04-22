@@ -496,7 +496,7 @@ Widget _buildSalesOrderItem({
                       children: [
                         Expanded(
                           child: Text(
-                            '${item['product_name']} .${item['uom']}   x${item['qty']}',
+                            '${item['product_name']}      ${item['uom']} X${item['qty']}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
