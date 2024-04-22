@@ -1,4 +1,4 @@
-import 'package:path/path.dart';
+/* import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
@@ -221,3 +221,5 @@ class DatabaseHelper {
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 }
+
+*/

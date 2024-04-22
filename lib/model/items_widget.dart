@@ -11,14 +11,15 @@ import 'dart:convert';
 class ItemsWidget extends StatelessWidget {
   final int? brandId; // Brand ID to filter products
   final int? subCategoryId;
+  final String sortOrder;
 
-  ItemsWidget({this.brandId, this.subCategoryId});
+  ItemsWidget({this.brandId, this.subCategoryId, required this.sortOrder});
 
   Future<List<Map<String, dynamic>>> getProductData() async {
     try {
       final conn = await connectToDatabase();
       String query =
-          'SELECT id, product_name, photo1, description, sub_category, brand, price_by_uom FROM product WHERE status = 1';
+          'SELECT id, product_name, photo1, description, sub_category, brand, price_by_uom, created, viewed FROM product WHERE status = 1';
       List<dynamic> parameters = [];
 
       if (brandId != null) {
@@ -29,6 +30,19 @@ class ItemsWidget extends StatelessWidget {
       else if (subCategoryId != null) {
         query += ' AND sub_category = ?';
         parameters.add(subCategoryId);
+      }
+
+      // Add sorting logic based on sortOrder
+      if (sortOrder == 'By Name (A to Z)') {
+        query += ' ORDER BY product_name ASC';
+      } else if (sortOrder == 'By Name (Z to A)') {
+        query += ' ORDER BY product_name DESC';
+      } else if (sortOrder == 'Uploaded Date (New to Old)') {
+        query += ' ORDER BY created ASC';
+      } else if (sortOrder == 'Uploaded Date (Old to New)') {
+        query += ' ORDER BY created DESC';
+      } else if (sortOrder == 'Most Popular in 3 Months') {
+        query += ' ORDER BY viewed DESC';
       }
 
       query += ' LIMIT 100';
@@ -44,6 +58,8 @@ class ItemsWidget extends StatelessWidget {
                 'sub_category': row['sub_category'],
                 'brand': row['brand'],
                 'price_by_uom': row['price_by_uom'],
+                'created': row['created'],
+                'viewed': row['viewed'],
               })
           .toList();
     } catch (e) {

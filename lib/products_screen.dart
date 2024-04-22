@@ -8,7 +8,7 @@ import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'components/category_button.dart';
-import 'model/sort_popup.dart';
+import 'package:sales_navigator/model/Sort_popup.dart';
 import 'model/items_widget.dart';
 import 'db_connection.dart';
 
@@ -25,6 +25,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   String searchQuery = '';
   static int? _selectedBrandId;
   int? _selectedSubCategoryId;
+  String _currentSortOrder = 'By Name (A to Z)';
 
   Future<void> setAreaId(int areaId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -183,7 +184,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   buttonnames: 'All Products',
                   onTap: () {
                     setState(() {
-                      _selectedBrandId =
+                      _selectedBrandId = null;
+                      _selectedSubCategoryId =
                           null; // Reset the brand ID to show all products
                     });
                   },
@@ -249,7 +251,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         ),
                                       ),
                                     ),
-                                    SortPopUp(),
+                                    SortPopUp(
+                                      onSortChanged: (newSortOrder) {
+                                        setState(() {
+                                          _currentSortOrder =
+                                              newSortOrder; // Update the sort order
+                                        });
+                                        Navigator.pop(
+                                            context); // Close the bottom sheet
+                                      },
+                                    ),
                                   ],
                                 ),
                               );
@@ -303,6 +314,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 child: ItemsWidget(
                   brandId: _selectedBrandId,
                   subCategoryId: _selectedSubCategoryId,
+                  sortOrder: _currentSortOrder,
                 ),
               ),
             ),

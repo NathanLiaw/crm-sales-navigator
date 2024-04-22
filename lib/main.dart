@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'db_sqlite.dart';
 import 'products_screen.dart';
-import 'item_variations_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize the database
-  await DatabaseHelper.database;
+  /* await DatabaseHelper.database; */
 
   runApp(const MyApp());
 }
