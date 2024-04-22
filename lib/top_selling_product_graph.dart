@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'db_connection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,41 +31,64 @@ class TopSellingProductsPage extends StatefulWidget {
 class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
   List<Product> products = [];
 
-  @override
-  void initState() {
-    super.initState();
+String loggedInUsername = '';
+
+@override
+void initState() {
+  super.initState();
+  _loadUserDetails().then((_) {
     _loadTopProducts();
+  });
+}
+
+Future<void> _loadUserDetails() async {
+  final prefs = await SharedPreferences.getInstance();
+  loggedInUsername = prefs.getString('username') ?? '';
+}
+
+
+Future<void> _loadTopProducts() async {
+  // Ensure that 'loggedInUsername' is used to filter data related to the logged-in user
+  // Also, adding a condition to exclude 'void' orders
+  String query = '''
+    SELECT 
+      ci.product_name, 
+      SUM(ci.qty) AS total_qty_sold,
+      SUM(ci.qty * ci.unit_price) AS total_sales,
+      s.salesman_name
+    FROM 
+      fyh.cart_item ci
+    JOIN 
+      fyh.cart c ON ci.session = c.session
+    JOIN 
+      fyh.salesman s ON c.buyer_id = s.id
+    WHERE 
+      c.status != 'void' AND
+      s.username = '$loggedInUsername'
+    GROUP BY 
+      ci.product_name, 
+      s.salesman_name
+    ORDER BY 
+      total_qty_sold DESC
+    LIMIT 5;
+  ''';
+
+  try {
+    final results = await executeQuery(query);
+    final List<Product> fetchedProducts = results.map((row) => Product(
+      row['product_name'] as String,
+      (row['total_qty_sold'] as num).toInt(),
+      (row['total_sales'] as num).toDouble(),
+    )).toList();
+
+    setState(() {
+      products = fetchedProducts;
+    });
+  } catch (e) {
+    print('Error fetching top products: $e');
   }
+}
 
-  Future<void> _loadTopProducts() async {
-    const String query = '''
-      SELECT 
-        product_name, 
-        SUM(qty) AS total_qty_sold,
-        SUM(total) AS total_sales
-      FROM fyh.cart_item
-      GROUP BY product_name
-      ORDER BY total_qty_sold DESC
-      LIMIT 5;
-    ''';
-
-    try {
-      final results = await executeQuery(query);
-      final List<Product> fetchedProducts = results
-          .map((row) => Product(
-                row['product_name'] as String,
-                (row['total_qty_sold'] as num).toInt(),
-                (row['total_sales'] as num).toDouble(),
-              ))
-          .toList();
-
-      setState(() {
-        products = fetchedProducts;
-      });
-    } catch (e) {
-      print('Error fetching top products: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
