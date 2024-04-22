@@ -73,10 +73,11 @@ Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
     String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
     String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
     query = '''
-      SELECT 
+     SELECT 
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
+    cart_item.uom, -- Including the unit of measure from cart_item
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -90,6 +91,7 @@ WHERE
     $usernameFilter
     $orderByClause;
 
+
     ''';
   } else if (days != null) {
     query = '''
@@ -97,6 +99,7 @@ WHERE
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
+    cart_item.uom, -- Including the unit of measure from cart_item
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -117,6 +120,7 @@ WHERE
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
+    cart_item.uom, -- Including the unit of measure from cart_item
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -492,10 +496,10 @@ Widget _buildSalesOrderItem({
                       children: [
                         Expanded(
                           child: Text(
-                            '${item['product_name']}    x${item['qty']}',
+                            '${item['product_name']} .${item['uom']}   x${item['qty']}',
                             style: const TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                               color: Color.fromARGB(255, 0, 0, 0),
                             ),
                           ),
