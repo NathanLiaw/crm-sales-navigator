@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'db_connection.dart'; 
+import 'db_connection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,8 +18,7 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: Scaffold(
-        appBar: AppBar(
-        ),
+        appBar: AppBar(),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -118,70 +118,101 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
   );
+  String loggedInUsername = '';
 
   @override
   void initState() {
     super.initState();
-    fetchDataForDateRange(dateRange);
+    loadUsernameAndFetchData();
   }
 
-Future<void> fetchDataForDateRange(DateTimeRange selectedDateRange) async {
-  var db = await connectToDatabase();
-
-  String formattedStartDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.start);
-  String formattedEndDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.end);
-
-  var results = await db.query(
-    'SELECT COUNT(*) AS Total, CASE WHEN status = "confirm" THEN "Complete" WHEN status = "in progress" THEN "Pending" ELSE status END AS status FROM cart_item WHERE created BETWEEN ? AND ? GROUP BY status;',
-    [formattedStartDate, formattedEndDate],
-  );
-
-  int completeOrders = 0;
-  int pendingOrders = 0;
-  int voidedOrders = 0;
-
-  for (var row in results) {
-    String status = row['status'] as String;
-    int count = row['Total'] as int;
-    if (status == 'Complete') {
-      completeOrders += count;
-    } else if (status == 'Pending') {
-      pendingOrders += count;
-    } else if (status == 'Void') {
-      voidedOrders += count;
-    }
-  }
-
-  setState(() {
-    complete = completeOrders;
-    pending = pendingOrders;
-    voided = voidedOrders;
-  });
-
-  await db.close();
-}
-
-
-Future<void> _selectDateRange(BuildContext context) async {
-  final DateTime now = DateTime.now();
-  final DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
-  final DateTime lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
-
-  final DateTimeRange? pickedRange = await showDateRangePicker(
-    context: context,
-    initialDateRange: DateTimeRange(start: firstDayOfMonth, end: lastDayOfMonth),
-    firstDate: DateTime(2020),
-    lastDate: DateTime(2025),
-  );
-
-  if (pickedRange != null && pickedRange != dateRange) {
+  Future<void> loadUsernameAndFetchData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString('username') ?? '';
     setState(() {
-      dateRange = pickedRange;
+      loggedInUsername = username;
     });
     await fetchDataForDateRange(dateRange);
   }
-}
 
+  Future<void> fetchDataForDateRange(DateTimeRange selectedDateRange) async {
+    var db = await connectToDatabase();
+
+    if (loggedInUsername.isEmpty) {
+      print('Username is not set.');
+      return; // Return early if the username is not set
+    }
+
+    String formattedStartDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.start);
+    String formattedEndDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.end);
+
+    var results = await db.query(
+      '''SELECT 
+        COUNT(*) AS Total,
+        CASE 
+            WHEN c.status = 'confirm' THEN 'Complete'
+            WHEN c.status = 'in progress' THEN 'Pending'
+            ELSE 'Void'
+        END AS status,
+        s.username
+      FROM 
+        cart AS c
+      JOIN 
+        salesman AS s ON c.buyer_id = s.id
+      WHERE 
+        c.created BETWEEN ? AND ? AND 
+        c.buyer_user_group = 'salesman' AND 
+        s.username = ?
+      GROUP BY 
+        status, s.username;
+      ''',
+      [formattedStartDate, formattedEndDate, loggedInUsername],
+    );
+
+    int completeOrders = 0;
+    int pendingOrders = 0;
+    int voidedOrders = 0;
+
+    for (var row in results) {
+      String status = row['status'] as String;
+      int count = row['Total'] as int;
+      if (status == 'Complete') {
+        completeOrders += count;
+      } else if (status == 'Pending') {
+        pendingOrders += count;
+      } else if (status == 'Void') {
+        voidedOrders += count;
+      }
+    }
+
+    setState(() {
+      complete = completeOrders;
+      pending = pendingOrders;
+      voided = voidedOrders;
+    });
+
+    await db.close();
+  }
+
+  Future<void> _selectDateRange(BuildContext context) async {
+    final DateTime now = DateTime.now();
+    final DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
+    final DateTime lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+
+    final DateTimeRange? pickedRange = await showDateRangePicker(
+      context: context,
+      initialDateRange: DateTimeRange(start: firstDayOfMonth, end: lastDayOfMonth),
+      firstDate: DateTime(2019),
+      lastDate: DateTime(2025),
+    );
+
+    if (pickedRange != null && pickedRange != dateRange) {
+      setState(() {
+        dateRange = pickedRange;
+      });
+      await fetchDataForDateRange(dateRange);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +457,7 @@ class InProgressOrdersWidget extends StatelessWidget {
   Future<List<InProgressOrder>> fetchInProgressOrders() async {
     var db = await connectToDatabase();
     var results = await db.query(
-      'SELECT id, CASE WHEN status = \'in progress\' THEN \'Pending\' ELSE status END AS status, created FROM cart_item;',
+      'SELECT id, CASE WHEN status = \'in progress\' THEN \'Pending\' ELSE status END AS status, created FROM cart;',
     );
 
     List<InProgressOrder> inProgressOrders = [];

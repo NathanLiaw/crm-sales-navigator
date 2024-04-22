@@ -48,6 +48,8 @@ class LoginPage extends StatelessWidget {
         // prefs.setString('status', row['status']);
         // prefs.setString('created', row['created']);
         // prefs.setString('modified', row['modified']);
+// After saving other salesman data in shared preferences, save the username
+prefs.setString('username', username);
 
         // Navigate to HomePage and pass salesmanName
         Navigator.pushReplacement(
