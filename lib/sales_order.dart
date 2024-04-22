@@ -3,9 +3,6 @@ import 'package:intl/intl.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -77,7 +74,7 @@ Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
-    cart_item.uom, -- Including the unit of measure from cart_item
+    cart_item.uom,
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -99,7 +96,7 @@ WHERE
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
-    cart_item.uom, -- Including the unit of measure from cart_item
+    cart_item.uom
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -120,7 +117,7 @@ WHERE
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
-    cart_item.uom, -- Including the unit of measure from cart_item
+    cart_item.uom,
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -373,12 +370,11 @@ Widget _buildSalesOrderList() {
               : DateTime.now(),
         amount: '${firstItem['final_total']?.toStringAsFixed(2) ?? '0.00'}',
         status: firstItem['status'] ?? 'Unknown Status',
-        items: items, // Pass groupedItems directly
+        items: items,
       );
     },
   );
 }
-
 
 
 
@@ -425,7 +421,7 @@ Widget _buildSalesOrderItem({
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 16,
+          fontSize: 18,
         ),
       ),
     );
@@ -470,6 +466,7 @@ Widget _buildSalesOrderItem({
                         Text(
                           'RM $amount',
                           style: const TextStyle(
+                            color: Color.fromARGB(255, 76, 175, 80),
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -496,7 +493,7 @@ Widget _buildSalesOrderItem({
                       children: [
                         Expanded(
                           child: Text(
-                            '${item['product_name']}      ${item['uom']} X${item['qty']}',
+                            '${item['product_name']} ${item['uom']} X${item['qty']}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
@@ -517,5 +514,4 @@ Widget _buildSalesOrderItem({
     ),
   );
 }
-
-  }
+}

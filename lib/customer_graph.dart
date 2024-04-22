@@ -1,32 +1,67 @@
 import 'package:flutter/material.dart';
 import 'db_connection.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomersGraph extends StatefulWidget {
-  const CustomersGraph({super.key});
+  const CustomersGraph({Key? key}) : super(key: key);
 
   @override
   _CustomersGraphState createState() => _CustomersGraphState();
 }
 
 class _CustomersGraphState extends State<CustomersGraph> {
-  late Future<List<Customer>> Customers;
+  late Future<List<Customer>> customers;
+  String loggedInUsername = '';
 
   @override
   void initState() {
     super.initState();
-    Customers = fetchCustomers();
+    _loadUserDetails().then((_) {
+      customers = fetchCustomers();
+    });
+  }
+
+  Future<void> _loadUserDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      loggedInUsername = prefs.getString('username') ?? '';
+    });
   }
 
   Future<List<Customer>> fetchCustomers() async {
     var db = await connectToDatabase();
     var results = await db.query(
-        'SELECT c.company_name, ROUND(SUM(ci.total), 0) AS total_cart_value '
-        'FROM customer c '
-        'JOIN cart_item ci ON c.ID = ci.customer_id '
-        'GROUP BY c.ID, c.company_name, c.Username '
-        'ORDER BY total_cart_value DESC '
-        'LIMIT 5;');
+        '''SELECT 
+    c.company_name,
+    ROUND(SUM(cart_item.total), 0) AS total_cart_value
+FROM 
+    cart
+JOIN 
+    cart_item ON cart.session = cart_item.session
+JOIN 
+    salesman ON cart.buyer_id = salesman.id
+JOIN 
+    (SELECT 
+        c.ID AS customer_id, 
+        c.company_name
+    FROM 
+        customer c
+    JOIN 
+        cart_item ci ON c.ID = ci.customer_id
+    GROUP BY 
+        c.ID, c.company_name
+    ) AS c ON cart.customer_id = c.customer_id
+WHERE 
+    cart_item.status != 'void' AND
+    salesman.username = '$loggedInUsername'  -- Filter by logged-in username
+GROUP BY 
+    c.company_name
+ORDER BY 
+    total_cart_value DESC
+    LIMIT 5;
+
+''');
 
     double sumOfCustomers = 0;
     for (var row in results) {
@@ -62,7 +97,7 @@ class _CustomersGraphState extends State<CustomersGraph> {
         ),
         const SizedBox(height: 16),
         FutureBuilder<List<Customer>>(
-          future: Customers,
+          future: customers,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -87,9 +122,9 @@ class _CustomersGraphState extends State<CustomersGraph> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ...snapshot.data!.map((customer) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: CustomerBar(customer: customer),
-                        )),
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: CustomerBar(customer: customer),
+                    )),
                   ],
                 ),
               );
@@ -116,7 +151,7 @@ class Customer {
 class CustomerBar extends StatelessWidget {
   final Customer customer;
 
-  const CustomerBar({super.key, required this.customer});
+  const CustomerBar({Key? key, required this.customer}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
