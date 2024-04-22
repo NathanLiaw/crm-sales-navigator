@@ -35,7 +35,7 @@ class ProductReport extends StatefulWidget {
 }
 
 class _ProductReportState extends State<ProductReport> {
-  late Future<List<Product>>? products;
+  late Future<List<Product>> products = Future.value([]);
   DateTimeRange? _selectedDateRange;
   int selectedButtonIndex = -1;
   bool isSortedAscending = false;
