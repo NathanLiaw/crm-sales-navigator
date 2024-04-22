@@ -9,17 +9,30 @@ import 'package:sales_navigator/item_variations_screen.dart';
 import 'dart:convert';
 
 class ItemsWidget extends StatelessWidget {
-  final String searchQuery;
+  final int? brandId; // Brand ID to filter products
+  final int? subCategoryId;
 
-  ItemsWidget({required this.searchQuery});
+  ItemsWidget({this.brandId, this.subCategoryId});
 
   Future<List<Map<String, dynamic>>> getProductData() async {
     try {
       final conn = await connectToDatabase();
-      final results = await conn.query(
-          'SELECT id, product_name, photo1, description,sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ? LIMIT 100',
-          ['%$searchQuery%']
-      );
+      String query =
+          'SELECT id, product_name, photo1, description, sub_category, brand, price_by_uom FROM product WHERE status = 1';
+      List<dynamic> parameters = [];
+
+      if (brandId != null) {
+        query += ' AND brand = ?';
+        parameters.add(brandId);
+      }
+      // Else, if subCategoryId is not null, filter by subCategoryId
+      else if (subCategoryId != null) {
+        query += ' AND sub_category = ?';
+        parameters.add(subCategoryId);
+      }
+
+      query += ' LIMIT 100';
+      final results = await conn.query(query, parameters);
       await conn.close();
 
       return results
@@ -29,6 +42,7 @@ class ItemsWidget extends StatelessWidget {
                 'photo1': row['photo1'],
                 'description': row['description'],
                 'sub_category': row['sub_category'],
+                'brand': row['brand'],
                 'price_by_uom': row['price_by_uom'],
               })
           .toList();
@@ -86,8 +100,7 @@ class ItemsWidget extends StatelessWidget {
                               itemAssetName: assetName,
                               productName: productName,
                               itemDescription: itemDescription,
-                              priceByUom: product['price_by_uom']
-                                  .toString(),
+                              priceByUom: product['price_by_uom'].toString(),
                             ),
                           ),
                         );

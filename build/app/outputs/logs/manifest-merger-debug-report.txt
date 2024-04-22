@@ -20,6 +20,7 @@ INJECTED from C:\projects\flutter_projects\crm-sales-navigator\android\app\src\m
 INJECTED from C:\projects\flutter_projects\crm-sales-navigator\android\app\src\main\AndroidManifest.xml:1:1-44:12
 MERGED from C:\projects\flutter_projects\crm-sales-navigator\android\app\src\main\AndroidManifest.xml:1:1-44:12
 MERGED from [:just_audio] C:\projects\flutter_projects\crm-sales-navigator\build\just_audio\intermediates\merged_manifest\debug\AndroidManifest.xml:2:1-9:12
+MERGED from [:shared_preferences_android] C:\projects\flutter_projects\crm-sales-navigator\build\shared_preferences_android\intermediates\merged_manifest\debug\AndroidManifest.xml:2:1-9:12
 MERGED from [:wakelock_plus] C:\projects\flutter_projects\crm-sales-navigator\build\wakelock_plus\intermediates\merged_manifest\debug\AndroidManifest.xml:2:1-9:12
 MERGED from [:sqflite] C:\projects\flutter_projects\crm-sales-navigator\build\sqflite\intermediates\merged_manifest\debug\AndroidManifest.xml:2:1-9:12
 MERGED from [:package_info_plus] C:\projects\flutter_projects\crm-sales-navigator\build\package_info_plus\intermediates\merged_manifest\debug\AndroidManifest.xml:2:1-9:12
@@ -100,6 +101,8 @@ INJECTED from C:\projects\flutter_projects\crm-sales-navigator\android\app\src\m
 INJECTED from C:\projects\flutter_projects\crm-sales-navigator\android\app\src\main\AndroidManifest.xml
 MERGED from [:just_audio] C:\projects\flutter_projects\crm-sales-navigator\build\just_audio\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
 MERGED from [:just_audio] C:\projects\flutter_projects\crm-sales-navigator\build\just_audio\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
+MERGED from [:shared_preferences_android] C:\projects\flutter_projects\crm-sales-navigator\build\shared_preferences_android\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
+MERGED from [:shared_preferences_android] C:\projects\flutter_projects\crm-sales-navigator\build\shared_preferences_android\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
 MERGED from [:wakelock_plus] C:\projects\flutter_projects\crm-sales-navigator\build\wakelock_plus\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
 MERGED from [:wakelock_plus] C:\projects\flutter_projects\crm-sales-navigator\build\wakelock_plus\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
 MERGED from [:sqflite] C:\projects\flutter_projects\crm-sales-navigator\build\sqflite\intermediates\merged_manifest\debug\AndroidManifest.xml:5:5-7:41
