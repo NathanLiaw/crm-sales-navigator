@@ -12,7 +12,7 @@ dependencies:
   fl_chart: ^0.36.0
   sqflite: ^2.0.0+3
   path_provider: ^2.0.0
-  mysql1: ^0.20.0 # Update to a version that exists
+  mysql1: ^0.20.0
   intl: ^0.17.0
   shared_preferences: any
   google_nav_bar: any
