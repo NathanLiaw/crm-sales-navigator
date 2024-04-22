@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'db_connection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() => runApp(const MyApp());
 
@@ -33,73 +35,85 @@ class ProductReport extends StatefulWidget {
 }
 
 class _ProductReportState extends State<ProductReport> {
-  late Future<List<Product>> products;
+  late Future<List<Product>>? products;
   DateTimeRange? _selectedDateRange;
   int selectedButtonIndex = -1;
   bool isSortedAscending = false;
 
-  @override
-  void initState() {
-    super.initState();
+String loggedInUsername = '';
+
+@override
+void initState() {
+  super.initState();
+  _loadPreferences().then((_) {
     DateTime now = DateTime.now();
-    // Set the time to the end of today.
     DateTime endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    // Set the range for just the current day.
     _selectedDateRange = DateTimeRange(start: endOfToday, end: endOfToday);
-    isSortedAscending = false;
+    // Directly assign the Future to the products
     products = fetchProducts(_selectedDateRange);
+  });
+}
+
+
+Future<void> _loadPreferences() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  loggedInUsername = prefs.getString('username') ?? '';
+}
+
+
+Future<List<Product>> fetchProducts(DateTimeRange? dateRange) async {
+  var db = await connectToDatabase();
+  String dateRangeQuery = '';
+  if (dateRange != null) {
+    String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
+    String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
+    dateRangeQuery = "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
   }
+  String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
+  String usernameCondition = loggedInUsername.isNotEmpty ? "AND salesman.username = '$loggedInUsername'" : "";
+  try {
+    var results = await db.query('''
+      SELECT 
+        b.id AS BrandID, 
+        b.brand AS BrandName, 
+        p.id AS ProductID, 
+        p.product_name AS ProductName, 
+        SUM(ci.qty) AS TotalQuantitySold, 
+        SUM(ci.total) AS TotalSalesValue, 
+        MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS created
+      FROM cart_item ci 
+      JOIN product p ON ci.product_id = p.id 
+      JOIN brand b ON p.brand = b.id 
+      JOIN cart ON ci.session = cart.session
+      JOIN salesman ON cart.buyer_id = salesman.id
+      WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
+      GROUP BY b.id, p.id 
+      ORDER BY TotalQuantitySold $sortOrder;
+    ''');
 
-  Future<List<Product>> fetchProducts(DateTimeRange? dateRange) async {
-    var db = await connectToDatabase();
-    String dateRangeQuery = '';
-    if (dateRange != null) {
-      String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
-      String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
-      dateRangeQuery =
-          "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
+    if (results.isEmpty) {
+      print("No data found");
     }
-    String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
-    try {
-      var results = await db.query('''
-        SELECT 
-          b.id AS BrandID, 
-          b.brand AS BrandName, 
-          p.id AS ProductID, 
-          p.product_name AS ProductName, 
-          SUM(ci.qty) AS TotalQuantitySold, 
-          SUM(ci.total) AS TotalSalesValue, 
-          MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS created
-        FROM cart_item ci 
-        JOIN product p ON ci.product_id = p.id 
-        JOIN brand b ON p.brand = b.id 
-        WHERE 1 $dateRangeQuery 
-        GROUP BY b.id, p.id 
-        ORDER BY TotalQuantitySold $sortOrder;
-      ''');
 
-      if (results.isEmpty) {
-        print("No data found");
-      }
-
-      int serialNumber = 1;
-      return results.map((row) {
-        return Product(
-          id: row['ProductID'],
-          brandId: row['BrandID'],
-          productName: row['ProductName'],
-          brandName: row['BrandName'],
-          totalSales: row['TotalSalesValue'].toDouble(),
-          totalQuantitySold: row['TotalQuantitySold'].toInt(),
-          lastSold: DateTime.parse(row['created']),
-          serialNumber: serialNumber++,
-        );
-      }).toList();
-    } catch (e) {
-      print('Error fetching data: $e');
-      return [];
-    }
+    int serialNumber = 1;
+    return results.map((row) {
+      return Product(
+        id: row['ProductID'],
+        brandId: row['BrandID'],
+        productName: row['ProductName'],
+        brandName: row['BrandName'],
+        totalSales: row['TotalSalesValue'].toDouble(),
+        totalQuantitySold: row['TotalQuantitySold'].toInt(),
+        lastSold: DateTime.parse(row['created']),
+        serialNumber: serialNumber++,
+      );
+    }).toList();
+  } catch (e) {
+    print('Error fetching data: $e');
+    return [];
   }
+}
+
 
   void toggleSortOrder() {
     setState(() {
@@ -265,119 +279,120 @@ class _ProductReportState extends State<ProductReport> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    String formattedDate = _selectedDateRange != null
-        ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
-        : DateFormat('dd/MM/yyyy').format(DateTime.now());
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF004C87),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        title:
-            const Text('Product Report', style: TextStyle(color: Colors.white)),
+
+@override
+Widget build(BuildContext context) {
+  String formattedDate = _selectedDateRange != null
+      ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
+      : DateFormat('dd/MM/yyyy').format(DateTime.now());
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: const Color(0xFF004C87),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-            child: _buildFilterButtonAndDateRangeSelection(formattedDate),
-          ),
-          Expanded(
-            child: FutureBuilder<List<Product>>(
-              future: products,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData) {
-                  return ListView(
-                    children: snapshot.data!.map((product) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: ExpansionTile(
-                          backgroundColor: Colors.grey[200],
-                          title: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${product.serialNumber}. ',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  product.productName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          subtitle: Text(
-                            '     Total Quantity Sold: ${product.totalQuantitySold}',
-                            style: const TextStyle(
-                                color: Color.fromARGB(255, 0, 100, 0),
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500),
-                          ),
+      title:
+          const Text('Product Report', style: TextStyle(color: Colors.white)),
+    ),
+    body: Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+          child: _buildFilterButtonAndDateRangeSelection(formattedDate),
+        ),
+        Expanded(
+          child: FutureBuilder<List<Product>>(
+            future: products,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (snapshot.hasData) {
+                return ListView(
+                  children: snapshot.data!.map((product) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: ExpansionTile(
+                        backgroundColor: Colors.grey[200],
+                        title: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 20, right: 20, top: 4),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '    Product ID: ${product.id}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Brand Name: ${product.brandName}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Total Sales: RM ${product.totalSales}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16),
-                                    ),
-                                  ],
-                                ),
+                            Text(
+                              '${product.serialNumber}. ',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                product.productName,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                      );
-                    }).toList(),
-                  );
-                } else {
-                  return const Center(child: Text('No data available'));
+                        subtitle: Text(
+                          '     Total Quantity Sold: ${product.totalQuantitySold}',
+                          style: const TextStyle(
+                              color: Color.fromARGB(255, 0, 100, 0),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w500),
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 20, right: 20, top: 4),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '    Product ID: ${product.id}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '    Brand Name: ${product.brandName}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '    Total Sales: RM ${product.totalSales}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '    Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              } else {
+                return const Center(child: Text('No data available'));
                 }
               },
             ),

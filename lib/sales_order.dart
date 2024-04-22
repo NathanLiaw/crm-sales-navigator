@@ -8,7 +8,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
 }
 
 class SalesOrderPage extends StatefulWidget {
-  const SalesOrderPage({Key? key}) : super(key: key);
+  const SalesOrderPage({super.key});
 
   @override
   _SalesOrderPageState createState() => _SalesOrderPageState();
