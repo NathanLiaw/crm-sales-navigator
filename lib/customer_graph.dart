@@ -34,7 +34,7 @@ class _CustomersGraphState extends State<CustomersGraph> {
     var results = await db.query(
         '''SELECT 
     c.company_name,
-    ROUND(SUM(cart_item.total), 0) AS total_cart_value
+    ROUND(SUM(cart.final_total), 0) AS total_cart_value
 FROM 
     cart
 JOIN 
@@ -53,8 +53,8 @@ JOIN
         c.ID, c.company_name
     ) AS c ON cart.customer_id = c.customer_id
 WHERE 
-    cart_item.status != 'void' AND
-    salesman.username = '$loggedInUsername'  -- Filter by logged-in username
+    cart.status != 'void' AND
+    salesman.username = '$loggedInUsername' 
 GROUP BY 
     c.company_name
 ORDER BY 
