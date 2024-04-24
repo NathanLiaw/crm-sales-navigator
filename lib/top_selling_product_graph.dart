@@ -92,7 +92,9 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
       appBar: AppBar(
         title: const Text(
           'Top Selling Products',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
       ),

@@ -196,7 +196,10 @@ ORDER BY
       appBar: AppBar(
         title: const Text(
           'Sales Report',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold),
+          
         ),
         actions: [
           Padding(
