@@ -494,7 +494,6 @@ return Card(
               ],
             ),
             Positioned(
-              top: 12,
               right: 6,
               child: getStatusLabel(status),
             ),
