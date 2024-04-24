@@ -32,7 +32,8 @@ class _CustomersGraphState extends State<CustomersGraph> {
   Future<List<Customer>> fetchCustomers() async {
     var db = await connectToDatabase();
     var results = await db.query(
-        '''SELECT 
+        '''
+SELECT 
     c.company_name,
     ROUND(SUM(cart.final_total), 0) AS total_cart_value
 FROM 
@@ -138,16 +139,6 @@ ORDER BY
   }
 }
 
-class Customer {
-  final String name;
-  final double totalValue;
-  final double percentageOfTotal;
-
-  Customer(this.name, this.totalValue, this.percentageOfTotal);
-
-  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalValue)}';
-}
-
 class CustomerBar extends StatelessWidget {
   final Customer customer;
 
@@ -191,7 +182,7 @@ class CustomerBar extends StatelessWidget {
                 ),
               ),
               FractionallySizedBox(
-                widthFactor: customer.percentageOfTotal / 100,
+                widthFactor: customer.percentageOfTotal > 100 ? 1.0 : customer.percentageOfTotal / 100,
                 child: Container(
                   height: 10,
                   decoration: BoxDecoration(
@@ -206,4 +197,15 @@ class CustomerBar extends StatelessWidget {
       ),
     );
   }
+}
+
+
+class Customer {
+  final String name;
+  final double totalValue;
+  final double percentageOfTotal;
+
+  Customer(this.name, this.totalValue, this.percentageOfTotal);
+
+  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalValue)}';
 }
