@@ -3,7 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -30,11 +30,21 @@ class SalesReport extends StatefulWidget {
 class _SalesReportState extends State<SalesReport> {
   final Map<String, List<SalesData>> _salesDataMap = {};
   String _selectedInterval = 'Weekly';
+  String loggedInUsername = '';  // Add a variable to hold the username
 
   @override
   void initState() {
     super.initState();
-    _preloadData();
+    _loadUsername().then((_) {
+      _preloadData();  // Load data after username is fetched
+    });
+  }
+
+  Future<void> _loadUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      loggedInUsername = prefs.getString('username') ?? 'default_username';  // Default username if not found
+    });
   }
 
   Future<void> _preloadData() async {
@@ -90,7 +100,7 @@ LEFT JOIN (
     FROM cart c
     JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
     WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() 
-    AND c.status != 'void'
+    AND c.status != 'void' AND s.username = '$loggedInUsername'
     GROUP BY DATE(c.created)
 ) AS DailySales ON Dates.`Date` = DailySales.`Date`
 ORDER BY Dates.`Date` ASC;
@@ -118,7 +128,7 @@ LEFT JOIN (
     FROM cart c
     JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
     WHERE c.created >= CURDATE() - INTERVAL 6 MONTH
-    AND c.status != 'void'
+    AND c.status != 'void' AND s.username = '$loggedInUsername'
     GROUP BY DATE_FORMAT(c.created, '%Y-%m')
 ) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
 GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
@@ -155,7 +165,7 @@ LEFT JOIN (
     WHERE 
         c.created >= CURDATE() - INTERVAL 6 YEAR
     AND 
-        c.status != 'void'
+        c.status != 'void' AND s.username = '$loggedInUsername'
     GROUP BY 
         YEAR(c.created)
 ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
