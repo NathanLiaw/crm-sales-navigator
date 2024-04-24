@@ -37,20 +37,15 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   bool isLoading = true;
   DateTimeRange? dateRange;
   int? selectedDays;
+  int selectedButtonIndex = 3;
   bool isSortedAscending = false;
-
   String loggedInUsername = '';
 
-  @override
+   @override
   void initState() {
     super.initState();
     _loadUserDetails().then((_) {
-      DateTime now = DateTime.now();
-      DateTime startOfToday = DateTime(now.year, now.month, now.day);
-      DateTime endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      dateRange = DateTimeRange(start: startOfToday, end: endOfToday);
-      selectedDays = null;
-      _loadSalesOrders(dateRange: dateRange);
+      _loadSalesOrders();
     });
   }
 
@@ -193,11 +188,15 @@ $orderByClause;
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        _buildDateButton('Last 7d', 7),
-        const SizedBox(width: 8),
-        _buildDateButton('Last 30d', 30),
-        const SizedBox(width: 8),
-        _buildDateButton('Last 90d', 90),
+        _buildDateButton('All', null, 3),  // Updated to include index
+        const SizedBox(width: 10),
+        _buildDateButton('Last 7d', 7, 0),
+        const SizedBox(width: 10),
+        _buildDateButton('Last 30d', 30, 1),
+        const SizedBox(width: 10),
+        _buildDateButton('Last 90d', 90, 2),
+
+
       ],
     );
   }
@@ -265,19 +264,25 @@ $orderByClause;
     );
   }
 
-  Widget _buildDateButton(String text, int days) {
-    bool isSelected = selectedDays == days;
+  Widget _buildDateButton(String text, int? days, int index) {
+    bool isSelected = selectedButtonIndex == index;
     return TextButton(
       onPressed: () {
-        DateTime now = DateTime.now();
-        DateTime startDate = now.subtract(Duration(days: days));
-        DateTime endDate = now;
-        DateTimeRange newRange = DateTimeRange(start: startDate, end: endDate);
-
         setState(() {
-          selectedDays = days;
-          dateRange = newRange;
-          _loadSalesOrders(days: days, dateRange: newRange);
+          selectedButtonIndex = index;
+          if (days != null) {
+            DateTime now = DateTime.now();
+            DateTime startDate = now.subtract(Duration(days: days));
+            DateTime endDate = now;
+            DateTimeRange newRange = DateTimeRange(start: startDate, end: endDate);
+
+            dateRange = newRange;
+            _loadSalesOrders(days: days, dateRange: newRange);
+          } else {
+            // When 'All' is pressed, remove any date filters
+            dateRange = null;
+            _loadSalesOrders();
+          }
         });
       },
       style: TextButton.styleFrom(
@@ -297,6 +302,7 @@ $orderByClause;
       ),
     );
   }
+
 
   Future<void> _selectDateRange(BuildContext context,
       {DateTimeRange? predefinedRange}) async {
