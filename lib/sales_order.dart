@@ -435,89 +435,104 @@ Widget _buildSalesOrderItem({
 
   String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
 
-  return Card(
-    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-    elevation: 4,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${index + 1}. $formattedOrderNumber',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          companyName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                         Text(
-                            'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
-                          ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'RM $amount',
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 76, 175, 80),
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  getStatusLabel(status),
-                ],
-              ),
-            ],
-          ),
-        ),
-        ExpansionTile(
-          title: const Text(
-            'Items',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          children: items
-              .map((item) => Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${item['product_name']} ${item['uom']} X${item['qty']}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              color: Color.fromARGB(255, 0, 0, 0),
+return Card(
+  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+  elevation: 4,
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Stack(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${index + 1}. $formattedOrderNumber',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  companyName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'RM $amount',
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 76, 175, 80),
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.copy),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ))
-              .toList(),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 12,
+              right: 6,
+              child: getStatusLabel(status),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+      ExpansionTile(
+        title: const Text(
+          'Items',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        children: items
+            .map((item) => Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${item['product_name']} ${item['uom']} X${item['qty']}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ))
+            .toList(),
+      ),
+    ],
+  ),
+);
 }
 }
