@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,9 +85,7 @@ class _SalesLeadPipelineState extends State<SalesLeadPipeline> {
   @override
   void initState() {
     super.initState();
-    // Initialize the list of lead items
     leadItems = [];
-    // Fetch lead items from the database
     _fetchLeadItems();
   }
 
@@ -176,7 +174,6 @@ class _SalesLeadPipelineState extends State<SalesLeadPipeline> {
           ),
           SizedBox(height: 8),
           Text(leadItem.description),
-          // 将按钮和日期放在同一个Row中
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
