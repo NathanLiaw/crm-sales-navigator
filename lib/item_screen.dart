@@ -155,7 +155,12 @@ class _ItemScreenState extends State<ItemScreen> {
                     ),
                   ],
                 ),
-
+                Spacer(),
+                IconButton(
+                  iconSize: 38,
+                  onPressed: () {},
+                  icon: const Icon(Icons.thumb_up_alt_outlined),
+                ),
               ],
             ),
           ),

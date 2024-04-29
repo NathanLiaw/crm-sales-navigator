@@ -234,7 +234,6 @@ class DatabaseHelper {
     );
   }
 
-  // Delete data from a specific table
   static Future<int> deleteData(int? id, String tableName) async {
     final db = await database;
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);

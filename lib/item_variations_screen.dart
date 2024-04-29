@@ -105,9 +105,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     SizedBox(
-                                      width: 194
-
-                                      ,
+                                      width: 248,
                                       child: Text(
                                         widget.productName,
                                         overflow: TextOverflow.ellipsis,
@@ -119,7 +117,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 180,
+                                      width: 248,
                                       child: Text(
                                         '$uom',
                                         overflow: TextOverflow.ellipsis,
@@ -134,8 +132,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                 ),
                               ),
                               const SizedBox(
-                                height: 10
-                                ,
+                                height: 10,
                               ),
                               Row(
                                 children: [
@@ -269,7 +266,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                               ),
                             ),
                           ),
-
                         ],
                       ),
                     ),
@@ -334,8 +330,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
       print('Error inserting or updating cart item: $e');
     }
   }
-
-
 }
 
 

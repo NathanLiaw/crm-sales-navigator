@@ -77,8 +77,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               ),
                             ),
                             onTap: () {
-                              Navigator.pop(context,
-                                  _subCategories[index][subIndex].subCategory);
+                              Navigator.pop(
+                                  context, _subCategories[index][subIndex].id);
                             },
                           );
                         },

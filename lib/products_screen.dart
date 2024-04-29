@@ -9,6 +9,7 @@ import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'components/category_button.dart';
+import 'package:sales_navigator/model/Sort_popup.dart';
 import 'model/sort_popup.dart';
 import 'model/items_widget.dart';
 import 'db_connection.dart';
@@ -24,6 +25,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   late Map<int, String> area = {};
   static late int selectedAreaId;
   String searchQuery = '';
+  static int? _selectedBrandId;
+  int? _selectedSubCategoryId;
+  String _currentSortOrder = 'By Name (A to Z)';
 
   Future<void> setAreaId(int areaId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -179,21 +183,43 @@ class _ProductsScreenState extends State<ProductsScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CategoryButton(
-                  buttonnames: 'Categories',
+                  buttonnames: 'All Products',
                   onTap: () {
-                    Navigator.push(
+                    setState(() {
+                      _selectedBrandId = null;
+                      _selectedSubCategoryId =
+                          null; // Reset the brand ID to show all products
+                    });
+                  },
+                ),
+                CategoryButton(
+                  buttonnames: 'Categories',
+                  onTap: () async {
+                    final selectedSubCategoryId = await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => CategoryScreen()),
                     );
+                    if (selectedSubCategoryId != null) {
+                      setState(() {
+                        _selectedSubCategoryId = selectedSubCategoryId as int;
+                      });
+                    }
                   },
                 ),
                 CategoryButton(
                   buttonnames: 'Brands',
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () async {
+                    final selectedBrandId = await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => BrandScreen()),
                     );
+                    if (selectedBrandId != null) {
+                      setState(() {
+                        // Assuming you have a variable to hold the selected brand ID
+                        // Update the state with the new brand ID
+                        _selectedBrandId = selectedBrandId as int;
+                      });
+                    }
                   },
                 ),
               ],
@@ -227,7 +253,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         ),
                                       ),
                                     ),
-                                    SortPopUp(),
+                                    SortPopUp(
+                                      onSortChanged: (newSortOrder) {
+                                        setState(() {
+                                          _currentSortOrder =
+                                              newSortOrder; // Update the sort order
+                                        });
+                                        Navigator.pop(
+                                            context); // Close the bottom sheet
+                                      },
+                                    ),
                                   ],
                                 ),
                               );
@@ -247,7 +282,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 330),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   child: Column(
@@ -257,7 +292,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => FilterCategoriesScreen()),
+                            MaterialPageRoute(
+                                builder: (context) => FilterCategoriesScreen()),
                           );
                         },
                         icon: const Icon(Icons.filter_alt),
@@ -277,14 +313,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
             Flexible(
               child: SingleChildScrollView(
-                child: ItemsWidget(searchQuery: searchQuery),
+                child: ItemsWidget(
+                  brandId: _selectedBrandId,
+                  subCategoryId: _selectedSubCategoryId,
+                  sortOrder: _currentSortOrder,
+                ),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(),
     );
   }
 }
-

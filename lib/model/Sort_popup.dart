@@ -3,14 +3,17 @@ import 'package:sales_navigator/data/sortlistdata.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SortPopUp extends StatefulWidget {
-  SortPopUp({super.key});
+  final Function(String) onSortChanged;
+
+  SortPopUp({Key? key, required this.onSortChanged}) : super(key: key);
 
   @override
   State<SortPopUp> createState() => _SortPopUp();
 }
 
 class _SortPopUp extends State<SortPopUp> {
-  String currentSortList = sortLists[0];
+  static String currentSortList = sortLists[0];
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -29,6 +32,8 @@ class _SortPopUp extends State<SortPopUp> {
               setState(() {
                 currentSortList = value.toString();
               });
+              widget.onSortChanged(
+                  currentSortList); // Add this line to notify the parent widget
             },
           ),
           RadioListTile(
@@ -44,6 +49,8 @@ class _SortPopUp extends State<SortPopUp> {
               setState(() {
                 currentSortList = value.toString();
               });
+              widget.onSortChanged(
+                  currentSortList); // Add this line to notify the parent widget
             },
           ),
           RadioListTile(
@@ -59,6 +66,8 @@ class _SortPopUp extends State<SortPopUp> {
               setState(() {
                 currentSortList = value.toString();
               });
+              widget.onSortChanged(
+                  currentSortList); // Add this line to notify the parent widget
             },
           ),
           RadioListTile(
@@ -74,6 +83,8 @@ class _SortPopUp extends State<SortPopUp> {
               setState(() {
                 currentSortList = value.toString();
               });
+              widget.onSortChanged(
+                  currentSortList); // Add this line to notify the parent widget
             },
           ),
           RadioListTile(
@@ -89,6 +100,8 @@ class _SortPopUp extends State<SortPopUp> {
               setState(() {
                 currentSortList = value.toString();
               });
+              widget.onSortChanged(
+                  currentSortList); // Add this line to notify the parent widget
             },
           ),
         ],
