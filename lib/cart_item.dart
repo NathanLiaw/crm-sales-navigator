@@ -6,7 +6,7 @@ class CartItem {
   final int productId; // ID of the product (required)
   final String productName;
   final String uom; // Unit of measurement
-  final int quantity;
+  int quantity;
   final int discount;
   final double originalUnitPrice;
   final double unitPrice;
@@ -25,7 +25,7 @@ class CartItem {
     required this.productId,
     required this.productName,
     required this.uom,
-    required this.quantity,
+    this.quantity = 0,
     this.discount = 0,
     this.originalUnitPrice = 0.0,
     required this.unitPrice,

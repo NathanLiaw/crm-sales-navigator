@@ -9,12 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_fonts: ^6.2.1
+  path: ^1.9.0
+  google_fonts: ^6.2.0
   mysql1: ^0.20.0
   flutter_widget_from_html: ^0.14.11
   shared_preferences: ^2.2.3
-  path: ^1.9.0
   sqflite: ^2.3.3
+  google_nav_bar: ^5.0.6
+  intl: ^0.17.0
+  fl_chart: ^0.36.0
 
 dev_dependencies:
   flutter_test:
@@ -23,7 +26,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  
   assets:
     - photo/
+    - asset/logo/
+    - asset/

@@ -13,6 +13,7 @@ class SortPopUp extends StatefulWidget {
 
 class _SortPopUp extends State<SortPopUp> {
   static String currentSortList = sortLists[0];
+
   @override
   Widget build(BuildContext context) {
     return Container(

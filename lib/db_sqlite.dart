@@ -1,4 +1,4 @@
-/* import 'package:path/path.dart';
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
@@ -20,7 +20,6 @@ class DatabaseHelper {
   }
 
   static Future<Database> initDatabase() async {
-    print('db initialised');
     final path = await getDatabasesPath();
     final databasePath = join(path, 'salesNavigator.db');
 
@@ -196,6 +195,26 @@ class DatabaseHelper {
     return results;
   }
 
+  static Future<int> countData(Database db, String tableName, String condition) async {
+    String sqlQuery = '';
+
+    if (condition.isNotEmpty) {
+      sqlQuery = 'WHERE $condition';
+    }
+
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> queryResult = await db.rawQuery(
+        'SELECT COUNT(*) AS count FROM $tableName $sqlQuery',
+      );
+      final rowCount = queryResult.first['count'] as int;
+      return rowCount;
+    } catch (e) {
+      print('Error counting data: $e');
+      return 0; // Return 0 if an error occurs
+    }
+  }
+
   // Get all data from a specific table
   static Future<List<Map<String, dynamic>>> getAllData(String tableName) async {
     final db = await database;
@@ -215,11 +234,8 @@ class DatabaseHelper {
     );
   }
 
-  // Delete data from a specific table
-  static Future<int> deleteData(int id, String tableName) async {
+  static Future<int> deleteData(int? id, String tableName) async {
     final db = await database;
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 }
-
-*/

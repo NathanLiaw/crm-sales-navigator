@@ -58,6 +58,7 @@ class _BrandScreenState extends State<BrandScreen> {
                         // Handle brand selection
                         // You can navigate to a new screen or perform any desired action
                         Navigator.pop(context, _brands[index].id);
+                        print('Selected brand: ${_brands[index].brand}');
                       },
                     ),
                   ],

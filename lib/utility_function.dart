@@ -9,7 +9,7 @@ class UtilityFunction{
     DateTime now = DateTime.now();
 
     // Calculate expiration date by adding 7 days
-    DateTime expirationDate = now.add(Duration(days: 7));
+    DateTime expirationDate = now.add(const Duration(days: 7));
 
     // Format expiration date in 'yyyy-mm-dd' format
     String formattedExpirationDate = '${expirationDate.year.toString().padLeft(4, '0')}-'
@@ -29,16 +29,16 @@ class UtilityFunction{
       final results = await readData(
         conn,
         'tax',
-        '$taxType AND status = 1', // Use parameterized query to avoid SQL injection
-        '', // Pass taxType as a parameter
+        'tax_title = "$taxType" AND status = 1',
+        '',
         'tax_in_percent',
       );
 
       await conn.close();
 
       if (results.isNotEmpty) {
-        // Retrieve tax_in_percent from the first row (assuming only one result expected)
-        double taxInPercent = results[0]['tax_in_percent'] as double;
+        // Retrieve tax_in_percent from the first row
+        int taxInPercent = results[0]['tax_in_percent'];
 
         // Calculate final tax percentage (divide taxInPercent by 100)
         double finalTaxPercent = taxInPercent / 100.0;

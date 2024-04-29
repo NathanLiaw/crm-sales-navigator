@@ -77,7 +77,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               ),
                             ),
                             onTap: () {
-                              // Assuming SubCategoryData has an 'id' field
                               Navigator.pop(
                                   context, _subCategories[index][subIndex].id);
                             },

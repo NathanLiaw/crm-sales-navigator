@@ -48,6 +48,9 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
           ),
         ),
         backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
       ),
       body: ListView.builder(
         itemCount: priceData.length,
@@ -60,8 +63,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 10),
-                margin:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
@@ -140,8 +142,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       // Decrement quantity when minus button is pressed
                                       if (currentQuantity > 1) {
                                         setState(() {
-                                          quantityMap[uom] =
-                                              currentQuantity - 1;
+                                          quantityMap[uom] = currentQuantity - 1;
                                         });
                                       }
                                     },
@@ -152,8 +153,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                     child: TextField(
                                       textAlign: TextAlign.center,
                                       keyboardType: TextInputType.number,
-                                      controller: TextEditingController(
-                                          text: currentQuantity.toString()),
+                                      controller: TextEditingController(text: currentQuantity.toString()),
                                       onChanged: (value) {
                                         final newValue = int.tryParse(value);
                                         if (newValue != null) {
@@ -181,13 +181,14 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                         )
                       ],
                     ),
+                    const SizedBox(height: 16),
                     Container(
                       margin: const EdgeInsets.only(left: 10, bottom: 10),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'RM ${price?.toStringAsFixed(3)}',
+                            'RM ${(price! * currentQuantity).toStringAsFixed(3)}',
                             style: GoogleFonts.inter(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -195,7 +196,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                           ),
                           ElevatedButton(
                             onPressed: () async {
-                             /* // Create CartItem with current quantity and uom
+                              // Create CartItem with current quantity and uom
                               final cartItem = CartItem(
                                 buyerId: await UtilityFunction.getUserId(),
                                 productId: widget.productId,
@@ -213,7 +214,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                 modified: DateTime.now(),
                               );
 
-                             // Insert CartItem into database
+                              // Insert CartItem into database
                               if (cartItem != null) {
                                 await insertItemIntoCart(cartItem);
 
@@ -247,13 +248,11 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                 Future.delayed(const Duration(seconds: 1), () {
                                   Navigator.pop(context); // Close dialog
                                 });
-                              } */
+                              }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 20),
-                              backgroundColor:
-                                  const Color.fromARGB(255, 4, 124, 189),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                              backgroundColor: const Color.fromARGB(255, 4, 124, 189),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5.0),
                               ),
@@ -282,8 +281,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
       ),
     );
   }
-
-  /*
 
   Future<void> insertItemIntoCart(CartItem cartItem) async {
     int itemId = cartItem.productId;
@@ -333,7 +330,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
       print('Error inserting or updating cart item: $e');
     }
   }
-*/
 }
 
 

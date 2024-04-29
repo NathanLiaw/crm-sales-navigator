@@ -4,9 +4,9 @@ import 'dart:convert';
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
     host: '10.0.2.2',
-    port: 3306, // Default MySQL port
+    port: 3306,
     user: 'root',
-    password: '123456',
+    password: '',
     db: 'fyh',
   );
 
@@ -177,5 +177,19 @@ Future<bool> deleteData(
   } catch (e) {
     print('Error deleting data: $e');
     return false;
+  }
+}
+
+Future<List<Map<String, dynamic>>> executeQuery(String query) async {
+  MySqlConnection? conn;
+  try {
+    conn = await connectToDatabase();
+    var results = await conn.query(query);
+    return results.map((row) => row.fields).toList();
+  } catch (e) {
+    print('Error executing query: $e');
+    rethrow;
+  } finally {
+    await conn?.close();
   }
 }

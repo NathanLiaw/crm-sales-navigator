@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/Components/customer_navigation_bar.dart';
 import 'package:sales_navigator/brands_screen.dart';
 import 'package:sales_navigator/categories_screen.dart';
 import 'package:sales_navigator/filter_categories_screen.dart';
@@ -9,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'components/category_button.dart';
 import 'package:sales_navigator/model/Sort_popup.dart';
+import 'model/sort_popup.dart';
 import 'model/items_widget.dart';
 import 'db_connection.dart';
 
@@ -49,9 +51,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       await conn.close();
 
       areaMap = Map.fromEntries(results.map((row) => MapEntry<int, String>(
-            row['id'],
-            row['area'] ?? '',
-          )));
+        row['id'],
+        row['area'] ?? '',
+      )));
 
       setState(() {
         area = areaMap;
