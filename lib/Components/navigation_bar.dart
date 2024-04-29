@@ -3,9 +3,9 @@ import 'package:flutter/rendering.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/home_page.dart';
-import 'package:sales_navigator/product_page.dart';
+import 'package:sales_navigator/products_screen.dart';
 import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_page.dart';
+import 'package:sales_navigator/sales_order.dart';
 
 class CustomNavigationBar extends StatefulWidget {
   @override
@@ -93,7 +93,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => SalesPage(),
+                          pageBuilder: (_, __, ___) => SalesOrderPage(),
                           transitionsBuilder: (
                             context,
                             animation,
@@ -113,7 +113,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => ProductPage(),
+                          pageBuilder: (_, __, ___) => ProductsScreen(),
                           transitionsBuilder: (
                             context,
                             animation,

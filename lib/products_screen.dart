@@ -9,7 +9,6 @@ import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'components/category_button.dart';
-import 'package:sales_navigator/model/Sort_popup.dart';
 import 'model/sort_popup.dart';
 import 'model/items_widget.dart';
 import 'db_connection.dart';
