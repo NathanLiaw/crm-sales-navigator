@@ -17,6 +17,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   late String createdDate;
   late List<OrderItem> orderItems = [];
   double subtotal = 0.0;
+  bool isVoidButtonDisabled = false;
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       );
 
       // Preset cartId as 107
-      final cartId = 107;
+      final cartId = 100;
 
       // Fetch customer_id using cartId
       final customerResults = await readData(
@@ -125,8 +126,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         total += double.parse(itemTotal);
       }
 
-      await Future.delayed(const Duration(seconds: 3));
-
       setState(() {
         companyName = customerDetails.first['company_name'] as String;
         address = customerDetails.first['address_line_1'] as String;
@@ -155,20 +154,32 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       );
       await conn.close();
       if (results.isNotEmpty && results[0]['photo1'] != null) {
-        // Ensure photo1 is not null and has a value
         String photoPath = results[0]['photo1'];
-        // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'photo/' + photoPath.substring(6);
+          photoPath = 'asset/photo/' + photoPath.substring(6);
         }
         return photoPath;
       } else {
-        // Return a default placeholder image path if no photo found or photo1 is null
-        return 'asset/no_image.jpg';
+        return 'asset/no_photo_available.jpg';
       }
     } catch (e) {
       print('Error fetching product photo: $e');
-      return 'asset/no_image.jpg';
+      return 'asset/no_photo_available.jpg';
+    }
+  }
+
+  Future<void> voidOrder() async {
+    final conn = await connectToDatabase();
+    final success = await saveData(conn, 'cart', {
+      'status': 'Void',
+      'id': 100,
+    });
+    await conn.close();
+    if (success) {
+      setState(() {
+        // 更新状态为 "Void" 成功后，将按钮禁用并更改颜色
+        isVoidButtonDisabled = true;
+      });
     }
   }
 
@@ -214,7 +225,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                         ),
                         TextSpan(
                           text: '$address',
-                          style: TextStyle(color: Colors.black), // 显式设置颜色
+                          style: TextStyle(color: Colors.black),
                         ),
                       ],
                     ),
@@ -318,11 +329,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Handle "Void" button press
-                  },
+                  onPressed: isVoidButtonDisabled ? null : voidOrder,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor:
+                        isVoidButtonDisabled ? Colors.grey : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                       side: BorderSide(color: Colors.red, width: 2),
@@ -343,27 +353,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  // Widget _buildOrderItem(OrderItem item) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Row(
-  //         children: [
-  //           Image.asset(
-  //             item.photoPath,
-  //             width: 70,
-  //             height: 70,
-  //           ),
-  //           SizedBox(width: 10),
-  //           Text(item.productName),
-  //         ],
-  //       ),
-  //       Text('Unit Price: ${item.unitPrice} Qty: ${item.qty}'),
-  //       Text('Status: ${item.status} Total: ${item.total}'),
-  //       Divider(),
-  //     ],
-  //   );
-  // }
   Widget _buildOrderItem(OrderItem item) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
