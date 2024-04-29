@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'db_connection.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Total Income Report',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const SalesReportPage(),
+    );
+  }
+}
 
 class SalesReportPage extends StatefulWidget {
   const SalesReportPage({super.key});
@@ -12,38 +28,24 @@ class SalesReportPage extends StatefulWidget {
 class _SalesReportPageState extends State<SalesReportPage> {
   late Future<List<SalesData>> salesData;
   late String selectedReportType;
-  String _loggedInUsername = '';  // State variable for storing the username
 
   @override
   void initState() {
     super.initState();
     selectedReportType = 'Week';
-    _loadUsername().then((_) {
-      salesData = fetchSalesData(selectedReportType);
-    });
-  }
-
-  Future<void> _loadUsername() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String username = prefs.getString('username') ?? '';  // Fetch the username or default to empty string
-    setState(() {
-      _loggedInUsername = username;
-    });
+    salesData = fetchSalesData(selectedReportType);
   }
 
   Future<List<SalesData>> fetchSalesData(String reportType) async {
     var db = await connectToDatabase();
     late String query;
 
-    // Using the username in the query to filter data
-    String usernameCondition = " AND s.username = '$_loggedInUsername'";
-
     switch (reportType) {
       case 'Week':
         query = '''
 SELECT 
     Dates.`Date`,
-    DATE_FORMAT(Dates.`Date`, '%a') AS `Day`,
+    DAYNAME(Dates.`Date`) AS `Day`,
     IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`
 FROM (
     SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
@@ -56,20 +58,20 @@ FROM (
 ) AS Dates
 LEFT JOIN (
     SELECT 
-        DATE(c.created) AS `Date`,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales`
-    FROM cart c
-    JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-    WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE()
-    AND c.status != 'void' $usernameCondition
-    GROUP BY DATE(c.created)
+        DATE(ci.created) AS `Date`,
+        ROUND(SUM(ci.total), 0) AS `Total Sales`
+    FROM cart_item ci
+    WHERE ci.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE()
+    GROUP BY DATE(ci.created)
 ) AS DailySales ON Dates.`Date` = DailySales.`Date`
 ORDER BY Dates.`Date` DESC;
+
+
         ''';
         break;
       case 'Month':
         query = '''
-SELECT
+        SELECT
     GeneratedMonths.YearMonth,
     GeneratedMonths.MonthName,
     IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
@@ -80,19 +82,15 @@ FROM (
         SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
         SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL
         SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL
-        SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL
-        SELECT 12 -- Adjusted to cover 13 months including the current month
+        SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11
     ) AS c
 ) AS GeneratedMonths
 LEFT JOIN (
     SELECT 
-        DATE_FORMAT(c.created, '%Y-%m') AS YearMonth,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales` -- Added rounding to ensure integer values
-    FROM cart c
-    JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-    WHERE c.created >= CURDATE() - INTERVAL 12 MONTH
-    AND c.status != 'void' $usernameCondition
-    GROUP BY DATE_FORMAT(c.created, '%Y-%m')
+        DATE_FORMAT(ci.created, '%Y-%m') AS YearMonth,
+        ci.total AS `Total Sales`
+    FROM cart_item ci
+    WHERE ci.created >= CURDATE() - INTERVAL 12 MONTH
 ) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
 GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
 ORDER BY GeneratedMonths.YearMonth DESC;
@@ -101,39 +99,41 @@ ORDER BY GeneratedMonths.YearMonth DESC;
         break;
       case 'Year':
         query = '''
-SELECT
-    GeneratedYears.Year AS `Year`,
-    IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
-FROM (
-    SELECT YEAR(CURDATE()) AS Year
-    UNION ALL SELECT YEAR(CURDATE()) - 1
-    UNION ALL SELECT YEAR(CURDATE()) - 2
-    UNION ALL SELECT YEAR(CURDATE()) - 3
-    UNION ALL SELECT YEAR(CURDATE()) - 4
-    UNION ALL SELECT YEAR(CURDATE()) - 5
-) AS GeneratedYears
-LEFT JOIN (
-    SELECT 
-        YEAR(c.created) AS Year,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales` -- Added rounding to ensure integer values
-    FROM cart c
-    JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-    WHERE c.created >= CURDATE() - INTERVAL 6 YEAR
-    AND c.status != 'void' $usernameCondition
-    GROUP BY YEAR(c.created)
-) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
-GROUP BY GeneratedYears.Year
-ORDER BY GeneratedYears.Year DESC;
+          SELECT
+              GeneratedYears.Year AS `Year`,
+              IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
+          FROM (
+              SELECT YEAR(CURDATE()) AS Year
+              UNION ALL SELECT YEAR(CURDATE()) - 1
+              UNION ALL SELECT YEAR(CURDATE()) - 2
+              UNION ALL SELECT YEAR(CURDATE()) - 3
+              UNION ALL SELECT YEAR(CURDATE()) - 4
+              UNION ALL SELECT YEAR(CURDATE()) - 5
+          ) AS GeneratedYears
+          LEFT JOIN (
+              SELECT 
+                  YEAR(ci.created) AS Year,
+                  ci.total AS `Total Sales`
+              FROM cart_item ci
+              WHERE ci.created >= CURDATE() - INTERVAL 6 YEAR
+          ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
+          GROUP BY GeneratedYears.Year
+          ORDER BY GeneratedYears.Year DESC;
           ''';
         break;
     }
 
     var results = await db.query(query);
+
     return results.map((row) {
       return SalesData(
-        day: row['Day'] ?? row['MonthName']?.toString() ?? row['Year']?.toString(),
+        day: row['Day'] ??
+            row['MonthName']?.toString() ??
+            row['Year']?.toString(),
         date: row['Date'],
-        totalSales: row['Total Sales'] != null ? (row['Total Sales'] as num).toDouble() : null,
+        totalSales: row['Total Sales'] != null
+            ? (row['Total Sales'] as num).toDouble()
+            : null,
       );
     }).toList();
   }
@@ -270,6 +270,7 @@ ORDER BY GeneratedYears.Year DESC;
   }
 
   String _formatDate(DateTime date) {
+    // Format the DateTime object as "dd-mm-yyyy"
     return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year.toString()}';
   }
 }
@@ -277,7 +278,12 @@ ORDER BY GeneratedYears.Year DESC;
 class SalesData {
   final String? day;
   final DateTime? date;
+
   final double? totalSales;
 
-  SalesData({this.day, this.date, this.totalSales});
+  SalesData({
+    this.day,
+    this.date,
+    this.totalSales,
+  });
 }
