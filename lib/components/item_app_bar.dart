@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sales_navigator/cart_page.dart';
 
 class ItemAppBar extends StatelessWidget {
   @override
@@ -17,13 +18,6 @@ class ItemAppBar extends StatelessWidget {
                 size: 30,
               )),
           Spacer(),
-          IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.shopping_cart_outlined,
-                color: Colors.white,
-                size: 30,
-              )),
           IconButton(
               onPressed: () {},
               icon: const Icon(

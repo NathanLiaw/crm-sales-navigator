@@ -42,7 +42,8 @@ class ItemBottomNavBar extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: 138,
+              width: 88
+              ,
             ),
             ElevatedButton(
                 onPressed: () {},
