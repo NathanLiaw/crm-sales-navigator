@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/item_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/db_connection.dart';
 
@@ -231,7 +232,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   right: 0,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle "View Item" button click
+                      _navigateToItemScreen(item['product_name']);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xff0069BA),
@@ -330,6 +331,57 @@ class _RecentOrderState extends State<RecentOrder> {
     );
   }
 
+  void _navigateToItemScreen(String selectedProductName) async {
+    MySqlConnection conn = await connectToDatabase();
+
+    try {
+      final productData = await readData(
+        conn,
+        'product',
+        'status = 1 AND product_name = "$selectedProductName"',
+        '',
+        'id, product_name, photo1, description, sub_category, price_by_uom',
+      );
+
+      if (productData.isNotEmpty) {
+        Map<String, dynamic> product = productData.first;
+
+        int productId = product['id'];
+        String productName = product['product_name'];
+        String itemAssetName = product['photo1'];
+        Blob description = stringToBlob(product['description']);
+        String priceByUom = product['price_by_uom'];
+
+        // Navigate to ItemScreen and pass necessary parameters
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ItemScreen(
+              productId: productId,
+              productName: productName,
+              itemAssetName: itemAssetName,
+              itemDescription: description,
+              priceByUom: priceByUom,
+            ),
+          ),
+        );
+      } else {
+        print('Product not found for name: $selectedProductName');
+      }
+    } catch (e) {
+      print('Error fetching product details: $e');
+    } finally {
+      await conn.close();
+    }
+  }
+
+  Blob stringToBlob(String data) {
+    // Create a Blob instance from the string using Blob.fromString
+    Blob blob = Blob.fromString(data);
+
+    return blob;
+  }
+
   Future<List<Map<String, dynamic>>> _fetchRecentOrders() async {
     try {
       MySqlConnection conn = await connectToDatabase();
@@ -424,16 +476,16 @@ class _RecentOrderState extends State<RecentOrder> {
         String photoPath = results[0]['photo1'];
         // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/' + photoPath.substring(6);
+          photoPath = 'photo/' + photoPath.substring(6);
         }
         return photoPath;
       } else {
         // Return a default placeholder image path if no photo found or photo1 is null
-        return 'asset/no_photo_available.jpg';
+        return 'asset/no_image.jpg';
       }
     } catch (e) {
       print('Error fetching product photo: $e');
-      return 'asset/no_photo_available.jpg'; // Return empty string if an error occurs
+      return 'asset/no_image.jpg'; // Return empty string if an error occurs
     }
   }
 }

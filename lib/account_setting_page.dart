@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_navigator/db_connection.dart';
+import 'db_connection.dart';
 
 class AccountSetting extends StatefulWidget {
   @override
@@ -93,12 +93,14 @@ class _AccountSettingState extends State<AccountSetting> {
           'Account Setting',
           style: TextStyle(color: Colors.white),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              // Handle notifications
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Components/navigation_bar.dart';
+import 'package:sales_navigator/Components/customer_navigation_bar.dart';
 import 'package:sales_navigator/notification_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -11,9 +11,10 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Color(0xff0069BA),
         title: Text(
-          'HomePage',
+          'Sales Navigator',
           style: TextStyle(color: Colors.white),
         ),
         actions: [

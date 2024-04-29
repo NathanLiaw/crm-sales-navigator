@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Components/navigation_bar.dart';
-import 'package:sales_navigator/account_setting_page.dart';
-import 'package:sales_navigator/contact_us_page.dart';
+import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:sales_navigator/sales_report_graph.dart';
+import 'package:sales_navigator/sales_report_page.dart';
+import 'about_us_page.dart';
+import 'account_setting_page.dart';
+import 'contact_us_page.dart';
 import 'package:sales_navigator/recent_order_page.dart';
-import 'package:sales_navigator/terms_and_conditions_page.dart';
-import 'package:sales_navigator/about_us_page.dart';
+import 'terms_and_conditions_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'Components/customer_navigation_bar.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -80,8 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
               buildProfileOption('Account Setting', Icons.settings, context),
               buildProfileOption('Reports', Icons.favorite, context),
               buildProfileOption('Recent Order', Icons.shopping_bag, context),
-              buildProfileOption(
-                  'Terms & Condition', Icons.description, context),
+              buildProfileOption('Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
               SizedBox(height: 20),
@@ -109,6 +111,18 @@ class _ProfilePageState extends State<ProfilePage> {
               }
             });
         }
+        if (title == 'Reports') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => DataAnalyticsPage()),
+          );
+        }
+        if (title == 'Recent Order') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RecentOrder()),
+          );
+        }
         if (title == 'Terms & Condition') {
           Navigator.push(
             context,
@@ -125,12 +139,6 @@ class _ProfilePageState extends State<ProfilePage> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => AboutUs()),
-          );
-        }
-        if (title == 'Recent Order') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => RecentOrder()),
           );
         }
       },

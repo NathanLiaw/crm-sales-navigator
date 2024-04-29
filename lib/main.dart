@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/edit_item_page.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/login_page.dart';
-import 'package:sales_navigator/order_details_page.dart';
-import 'package:sales_navigator/product_page.dart';
+import 'package:sales_navigator/order_submitted_page.dart';
 import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_page.dart';
-// import 'package:sales_navigator/cart_item_sqlite.dart';
+import 'package:sales_navigator/sales_order.dart';
+import 'db_sqlite.dart';
+import 'products_screen.dart';
+import 'item_variations_screen.dart';
 
-Future<void> main() async {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // await DatabaseHelper.importCartItemData();
-  runApp(const MainApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize the database
+  await DatabaseHelper.database;
+
+  runApp(const MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      home: HomePage(),
       routes: {
         '/home': (context) => HomePage(),
-        '/sales': (context) => SalesPage(),
-        '/product': (context) => ProductPage(),
+        '/sales': (context) => SalesOrderPage(),
+        '/product': (context) => ProductsScreen(),
         '/cart': (context) => CartPage(),
         '/login': (context) => LoginPage(),
         '/profile': (context) => ProfilePage(),
