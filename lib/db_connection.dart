@@ -1,17 +1,18 @@
 import 'package:mysql1/mysql1.dart';
+import 'dart:convert';
 
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
     host: '10.0.2.2',
-    port: 3306, // Default MySQL port
+    port: 3306,
     user: 'root',
-    password: '1234',
+    password: '',
     db: 'fyh',
   );
 
   try {
     final conn = await MySqlConnection.connect(settings);
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     print('Connected to MySQL database');
     return conn;
   } catch (e) {
@@ -44,7 +45,26 @@ Future<List<Map<String, dynamic>>> readData(
 
   final results = <Map<String, dynamic>>[];
   for (var row in query) {
-    results.add(Map<String, dynamic>.from(row.fields));
+    final rowMap = Map<String, dynamic>.from(row.fields);
+    // Convert Blob to string if necessary
+    rowMap.forEach((key, value) {
+      if (value is Blob) {
+        final blob = value;
+        // Convert Blob data to List<int>
+        final bytes = blob.toString().codeUnits;
+        // Decode bytes to String
+        final stringValue = utf8.decode(bytes);
+        rowMap[key] = stringValue;
+      }
+
+      // Convert DateTime to String
+      if (value is DateTime) {
+        final dateString =
+            value.toString(); // Using toString() to get default format
+        rowMap[key] = dateString;
+      }
+    });
+    results.add(rowMap);
   }
 
   return results;
@@ -149,9 +169,7 @@ Future<bool> deleteData(
 
   try {
     final result = await connection.query('DELETE FROM $tableName $sqlQuery');
-    if (result != null &&
-        result.affectedRows != null &&
-        result.affectedRows! > 0) {
+    if (result.affectedRows != null && result.affectedRows! > 0) {
       return true;
     } else {
       return false;
@@ -159,5 +177,19 @@ Future<bool> deleteData(
   } catch (e) {
     print('Error deleting data: $e');
     return false;
+  }
+}
+
+Future<List<Map<String, dynamic>>> executeQuery(String query) async {
+  MySqlConnection? conn;
+  try {
+    conn = await connectToDatabase();
+    var results = await conn.query(query);
+    return results.map((row) => row.fields).toList();
+  } catch (e) {
+    print('Error executing query: $e');
+    rethrow;
+  } finally {
+    await conn?.close();
   }
 }

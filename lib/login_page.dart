@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:crypto/crypto.dart';
-import 'package:sales_navigator/home_page.dart';
+import 'home_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_navigator/db_connection.dart';
+import 'db_connection.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
@@ -34,7 +34,7 @@ class LoginPage extends StatelessWidget {
         // Save salesman data to shared preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setInt('id', row['id']);
-        // prefs.setString('area', row['area']);
+        prefs.setInt('area', row['area']);
         prefs.setString('salesmanName', row['salesman_name']);
         prefs.setString('username', row['username']);
         // prefs.setString('password', row['password']);

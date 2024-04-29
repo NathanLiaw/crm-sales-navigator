@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
 
@@ -170,8 +171,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Future<void> voidOrder() async {
     final conn = await connectToDatabase();
     final success = await saveData(conn, 'cart', {
-      'status': 'Void', // 更新状态为 "Void"
-      'id': 100, // 替换为您要更新的 cartID
+      'status': 'Void',
+      'id': 100,
     });
     await conn.close();
     if (success) {

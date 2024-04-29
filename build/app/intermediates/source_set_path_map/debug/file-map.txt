@@ -1,0 +1,28 @@
+com.example.sales_navigator.app-jetified-window-1.0.0-beta04-0 C:\Users\Armann Waganer\.gradle\caches\transforms-3\032f4dff274e516110d9363a9793a3e3\transformed\jetified-window-1.0.0-beta04\res
+com.example.sales_navigator.app-core-1.10.1-1 C:\Users\Armann Waganer\.gradle\caches\transforms-3\0b9c903fef8d2eb2a269c36999ef4a74\transformed\core-1.10.1\res
+com.example.sales_navigator.app-jetified-window-java-1.0.0-beta04-2 C:\Users\Armann Waganer\.gradle\caches\transforms-3\142c24f2530665bb6deb4123ab140714\transformed\jetified-window-java-1.0.0-beta04\res
+com.example.sales_navigator.app-jetified-exoplayer-core-2.18.7-3 C:\Users\Armann Waganer\.gradle\caches\transforms-3\1c54749537a4d1ff3f2079d73b98930f\transformed\jetified-exoplayer-core-2.18.7\res
+com.example.sales_navigator.app-media-1.4.1-4 C:\Users\Armann Waganer\.gradle\caches\transforms-3\24faa39eb01a2b2145f029d9c1646358\transformed\media-1.4.1\res
+com.example.sales_navigator.app-lifecycle-runtime-2.3.1-5 C:\Users\Armann Waganer\.gradle\caches\transforms-3\25a884faa36a531a9e5f369d596bbf88\transformed\lifecycle-runtime-2.3.1\res
+com.example.sales_navigator.app-browser-1.5.0-6 C:\Users\Armann Waganer\.gradle\caches\transforms-3\a3fbb37dd5ef93c98bc80ddf0289d0af\transformed\browser-1.5.0\res
+com.example.sales_navigator.app-jetified-annotation-experimental-1.3.0-7 C:\Users\Armann Waganer\.gradle\caches\transforms-3\ae329bc8a0eb87982c4fe41e3ec5da7f\transformed\jetified-annotation-experimental-1.3.0\res
+com.example.sales_navigator.app-jetified-media2-session-1.2.1-8 C:\Users\Armann Waganer\.gradle\caches\transforms-3\af72863ed300a57bffb75b18c0d4fe34\transformed\jetified-media2-session-1.2.1\res
+com.example.sales_navigator.app-jetified-media2-common-1.2.1-9 C:\Users\Armann Waganer\.gradle\caches\transforms-3\e0d618cbf8999b9c9375c4fa5a28c58b\transformed\jetified-media2-common-1.2.1\res
+com.example.sales_navigator.app-webkit-1.7.0-10 C:\Users\Armann Waganer\.gradle\caches\transforms-3\e2bc4d834f8f919d5ef35a628a89c036\transformed\webkit-1.7.0\res
+com.example.sales_navigator.app-debug-11 C:\projects\flutter_projects\crm-sales-navigator\android\app\src\debug\res
+com.example.sales_navigator.app-main-12 C:\projects\flutter_projects\crm-sales-navigator\android\app\src\main\res
+com.example.sales_navigator.app-pngs-13 C:\projects\flutter_projects\crm-sales-navigator\build\app\generated\res\pngs\debug
+com.example.sales_navigator.app-resValues-14 C:\projects\flutter_projects\crm-sales-navigator\build\app\generated\res\resValues\debug
+com.example.sales_navigator.app-rs-15 C:\projects\flutter_projects\crm-sales-navigator\build\app\generated\res\rs\debug
+com.example.sales_navigator.app-mergeDebugResources-16 C:\projects\flutter_projects\crm-sales-navigator\build\app\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.example.sales_navigator.app-mergeDebugResources-17 C:\projects\flutter_projects\crm-sales-navigator\build\app\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.example.sales_navigator.app-merged_res-18 C:\projects\flutter_projects\crm-sales-navigator\build\app\intermediates\merged_res\debug
+com.example.sales_navigator.app-packaged_res-19 C:\projects\flutter_projects\crm-sales-navigator\build\audio_session\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-20 C:\projects\flutter_projects\crm-sales-navigator\build\just_audio\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-21 C:\projects\flutter_projects\crm-sales-navigator\build\package_info_plus\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-22 C:\projects\flutter_projects\crm-sales-navigator\build\path_provider_android\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-23 C:\projects\flutter_projects\crm-sales-navigator\build\sqflite\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-24 C:\projects\flutter_projects\crm-sales-navigator\build\url_launcher_android\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-25 C:\projects\flutter_projects\crm-sales-navigator\build\video_player_android\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-26 C:\projects\flutter_projects\crm-sales-navigator\build\wakelock_plus\intermediates\packaged_res\debug
+com.example.sales_navigator.app-packaged_res-27 C:\projects\flutter_projects\crm-sales-navigator\build\webview_flutter_android\intermediates\packaged_res\debug

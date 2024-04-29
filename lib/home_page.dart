@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Components/navigation_bar.dart';
+import 'package:sales_navigator/Components/customer_navigation_bar.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
