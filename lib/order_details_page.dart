@@ -183,17 +183,20 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
+class OrderDetailsPage extends StatelessWidget {
+  const OrderDetailsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
-        title: Text(
+        backgroundColor: const Color(0xff0069BA),
+        title: const Text(
           'Order Details',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -204,7 +207,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -233,8 +236,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -248,8 +251,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     child: Text('Fong Yuan Hung Import & Export Sdn Bhd.')),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -261,8 +264,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 Expanded(flex: 5, child: Text('$salesmanName')),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -274,8 +277,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 Expanded(flex: 5, child: Text('$salesOrderId')),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -287,22 +290,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 Expanded(flex: 5, child: Text('$createdDate')),
               ],
             ),
-            SizedBox(height: 16),
-            Expanded(
-              child: Scrollbar(
-                thumbVisibility: true,
-                thickness: 3,
-                child: ListView.builder(
-                  itemCount: orderItems.length,
-                  itemBuilder: (context, index) {
-                    return _buildOrderItem(orderItems[index]);
-                  },
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 16),
+            const Row(
               children: [
                 Text('Subtotal (${orderItems.length} items)',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -310,42 +299,36 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     style: TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('RM$subtotal',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
+            const SizedBox(height: 16),
+            _buildOrderItem(
+              itemName: '2M Hose Reel & Cart',
+              itemModel: 'SX-901-18',
+              unitPrice: 'RM 150.40',
+              quantity: 'Qty: 3',
+              status: 'None',
+              totalPrice: 'RM 450.00',
             ),
-            Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    '*This is not an invoice & prices are not finalised',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: isVoidButtonDisabled ? null : voidOrder,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isVoidButtonDisabled ? Colors.grey : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      side: BorderSide(color: Colors.red, width: 2),
-                    ),
-                    minimumSize: Size(120, 40),
-                  ),
-                  child: Text(
-                    'Void',
-                    style: TextStyle(
-                        color: Colors.red, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+            _buildOrderItem(
+              itemName: '2M Hose Reel & Cart',
+              itemModel: 'SX-901-18',
+              unitPrice: 'RM 100.00',
+              quantity: 'Qty: 3',
+              status: 'No Stock',
+              totalPrice: 'RM 300.00',
+            ),
+            const SizedBox(height: 16),
+            const Text('Subtotal (6 items) RM700.00'),
+            const Text('Total RM700.00'),
+            const SizedBox(height: 16),
+            const Text(
+              '*This is not an invoice & prices are not finalised',
+              style: TextStyle(color: Colors.grey),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Handle "Void" button click
+              },
+              child: const Text('Void', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -357,56 +340,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Image.asset(
-              item.photoPath,
-              width: 80,
-              height: 80,
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.productName,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Unit Price: RM${item.unitPrice}',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Qty: ${item.qty}',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 20),
-        Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Status: ${item.status}',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            Text('Total: RM${item.total}',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        Divider(),
+        Text(itemName),
+        Text(itemModel),
+        Text('Unit Price: $unitPrice $quantity'),
+        Text('Status: $status Total: $totalPrice'),
+        const Divider(),
       ],
     );
   }

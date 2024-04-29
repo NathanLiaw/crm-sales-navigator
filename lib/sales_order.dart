@@ -5,7 +5,6 @@ import 'package:sales_navigator/order_details_page.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -13,9 +12,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sales Report',
+      title: 'Sales Order',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: const Color(0xFF004C87),
+        hintColor: const Color(0xFF004C87),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+        ),
       ),
       home: const SalesOrderPage(),
     );
@@ -34,20 +39,15 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   bool isLoading = true;
   DateTimeRange? dateRange;
   int? selectedDays;
+  int selectedButtonIndex = 3;
   bool isSortedAscending = false;
-
   String loggedInUsername = '';
 
-  @override
+   @override
   void initState() {
     super.initState();
     _loadUserDetails().then((_) {
-      DateTime now = DateTime.now();
-      DateTime startOfToday = DateTime(now.year, now.month, now.day);
-      DateTime endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      dateRange = DateTimeRange(start: startOfToday, end: endOfToday);
-      selectedDays = null;
-      _loadSalesOrders(dateRange: dateRange);
+      _loadSalesOrders();
     });
   }
 
@@ -56,22 +56,22 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     loggedInUsername = prefs.getString('username') ?? '';
   }
 
-  Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
-    setState(() => isLoading = true);
-    String orderByClause =
-        'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
-    String usernameFilter = "AND salesman.username = '$loggedInUsername'";
-    String query;
 
-    if (dateRange != null) {
-      String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
-      String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
-      query = '''
+Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
+  setState(() => isLoading = true);
+  String orderByClause = 'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
+  String usernameFilter = "AND salesman.username = '$loggedInUsername'";
+  String query;
+
+  if (dateRange != null) {
+    String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
+    String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
+    query = '''
      SELECT 
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
-    cart_item.uom, -- Including the unit of measure from cart_item
+    cart_item.uom,
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -87,13 +87,13 @@ WHERE
 
 
     ''';
-    } else if (days != null) {
-      query = '''
+  } else if (days != null) {
+    query = '''
       SELECT 
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
-    cart_item.uom, -- Including the unit of measure from cart_item
+    cart_item.uom
     salesman.salesman_name,
     DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
 FROM 
@@ -108,18 +108,14 @@ WHERE
     $orderByClause;
 
     ''';
-    } else {
-      query = '''
+  } else {
+    query = '''
       SELECT 
     cart.*, 
     cart_item.product_name, 
     cart_item.qty,
-    cart_item.uom, -- Including the unit of measure from cart_item
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
-FROM 
+    cart_item.uom,
     cart
-JOIN 
     cart_item ON cart.session = cart_item.session
 JOIN 
     salesman ON cart.buyer_id = salesman.id
@@ -127,27 +123,34 @@ $usernameFilter
 $orderByClause;
 
     ''';
-    }
-
-    try {
-      orders = await executeQuery(query);
-    } catch (e) {
-      print('Failed to load orders: $e');
-    } finally {
-      setState(() => isLoading = false);
-    }
   }
+
+  try {
+    orders = await executeQuery(query);
+  } catch (e) {
+    print('Failed to load orders: $e');
+  } finally {
+    setState(() => isLoading = false);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         title: const Text(
           'Sales Order',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004C87),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white,
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Column(
         children: <Widget>[
@@ -155,7 +158,6 @@ $orderByClause;
           Expanded(child: _buildSalesOrderList()),
         ],
       ),
-      bottomNavigationBar: CustomNavigationBar(),
     );
   }
 
@@ -184,11 +186,15 @@ $orderByClause;
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        _buildDateButton('Last 7d', 7),
-        const SizedBox(width: 8),
-        _buildDateButton('Last 30d', 30),
-        const SizedBox(width: 8),
-        _buildDateButton('Last 90d', 90),
+        _buildDateButton('All', null, 3),  // Updated to include index
+        const SizedBox(width: 10),
+        _buildDateButton('Last 7d', 7, 0),
+        const SizedBox(width: 10),
+        _buildDateButton('Last 30d', 30, 1),
+        const SizedBox(width: 10),
+        _buildDateButton('Last 90d', 90, 2),
+
+
       ],
     );
   }
@@ -256,19 +262,25 @@ $orderByClause;
     );
   }
 
-  Widget _buildDateButton(String text, int days) {
-    bool isSelected = selectedDays == days;
+  Widget _buildDateButton(String text, int? days, int index) {
+    bool isSelected = selectedButtonIndex == index;
     return TextButton(
       onPressed: () {
-        DateTime now = DateTime.now();
-        DateTime startDate = now.subtract(Duration(days: days));
-        DateTime endDate = now;
-        DateTimeRange newRange = DateTimeRange(start: startDate, end: endDate);
-
         setState(() {
-          selectedDays = days;
-          dateRange = newRange;
-          _loadSalesOrders(days: days, dateRange: newRange);
+          selectedButtonIndex = index;
+          if (days != null) {
+            DateTime now = DateTime.now();
+            DateTime startDate = now.subtract(Duration(days: days));
+            DateTime endDate = now;
+            DateTimeRange newRange = DateTimeRange(start: startDate, end: endDate);
+
+            dateRange = newRange;
+            _loadSalesOrders(days: days, dateRange: newRange);
+          } else {
+            // When 'All' is pressed, remove any date filters
+            dateRange = null;
+            _loadSalesOrders();
+          }
         });
       },
       style: TextButton.styleFrom(
@@ -327,190 +339,196 @@ $orderByClause;
     }
   }
 
-  Widget _buildSalesOrderList() {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    Map<String, List<Map<String, dynamic>>> groupedOrders = {};
-
-    // Group items by order ID
-    for (final item in orders) {
-      String orderId = item['id'].toString();
-      if (!groupedOrders.containsKey(orderId)) {
-        groupedOrders[orderId] = [];
-      }
-      groupedOrders[orderId]!.add(item);
-    }
-
-    List<String> orderIds = groupedOrders.keys.toList();
-
-    return ListView.builder(
-      itemCount: orderIds.length,
-      itemBuilder: (context, index) {
-        String orderId = orderIds[index];
-        List<Map<String, dynamic>> items = groupedOrders[orderId]!;
-        Map<String, dynamic> firstItem = items.first;
-
-        return _buildSalesOrderItem(
-          index: index,
-          orderNumber: orderId,
-          companyName: firstItem['customer_company_name'] ?? 'Unknown Company',
-          creationDate: firstItem['created_date'] != null
-              ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
-              : DateTime.now(),
-          amount: '${firstItem['final_total']?.toStringAsFixed(2) ?? '0.00'}',
-          status: firstItem['status'] ?? 'Unknown Status',
-          items: items, // Pass groupedItems directly
-        );
-      },
-    );
+Widget _buildSalesOrderList() {
+  if (isLoading) {
+    return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _buildSalesOrderItem({
-    required int index,
-    required String orderNumber,
-    required String companyName,
-    required DateTime creationDate,
-    required String amount,
-    required String status,
-    required List<Map<String, dynamic>> items,
-  }) {
-    String getDisplayStatus(String status) {
-      if (status == 'in progress') {
-        return 'Pending';
-      }
-      return status;
+  Map<String, List<Map<String, dynamic>>> groupedOrders = {};
+
+  // Group items by order ID
+  for (final item in orders) {
+    String orderId = item['id'].toString();
+    if (!groupedOrders.containsKey(orderId)) {
+      groupedOrders[orderId] = [];
     }
+    groupedOrders[orderId]!.add(item);
+  }
 
-    Color getStatusColor(String displayStatus) {
-      switch (displayStatus) {
-        case 'Confirm':
-          return Colors.green;
-        case 'Pending':
-          return const Color.fromARGB(255, 38, 0, 255);
-        case 'Void':
-          return Colors.red;
-        default:
-          return Colors.grey;
-      }
-    }
+  List<String> orderIds = groupedOrders.keys.toList();
 
-    Widget getStatusLabel(String status) {
-      String displayStatus = getDisplayStatus(status);
-
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        decoration: BoxDecoration(
-          color: getStatusColor(displayStatus),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          displayStatus,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
+  return ListView.builder(
+    itemCount: orderIds.length,
+    itemBuilder: (context, index) {
+      String orderId = orderIds[index];
+      List<Map<String, dynamic>> items = groupedOrders[orderId]!;
+      Map<String, dynamic> firstItem = items.first;
+      
+      return _buildSalesOrderItem(
+        index: index,
+        orderNumber: orderId,
+        companyName: firstItem['customer_company_name'] ?? 'Unknown Company',
+        creationDate: firstItem['created_date'] != null
+              ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
+              : DateTime.now(),
+        amount: '${firstItem['final_total']?.toStringAsFixed(2) ?? '0.00'}',
+        status: firstItem['status'] ?? 'Unknown Status',
+        items: items,
       );
+    },
+  );
+}
+
+
+
+Widget _buildSalesOrderItem({
+  required int index,
+  required String orderNumber,
+  required String companyName,
+  required DateTime creationDate,
+  required String amount,
+  required String status,
+  required List<Map<String, dynamic>> items,
+}) {
+  String getDisplayStatus(String status) {
+    if (status == 'in progress') {
+      return 'Pending';
     }
+    return status;
+  }
 
-    String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
+  Color getStatusColor(String displayStatus) {
+    switch (displayStatus) {
+      case 'Confirm':
+        return Colors.green;
+      case 'Pending':
+        return const Color.fromARGB(255, 38, 0, 255);
+      case 'Void':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
 
-    return GestureDetector(
-      onTap: () {
-        // Navigate to OrderDetails screen here
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => OrderDetailsPage()),
-        );
-      },
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-        elevation: 4,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${index + 1}. $formattedOrderNumber',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              companyName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'RM $amount',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      getStatusLabel(status),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            ExpansionTile(
-              title: const Text(
-                'Items',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              children: items
-                  .map((item) => Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${item['product_name']} .${item['uom']}   x${item['qty']}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.copy),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-                      ))
-                  .toList(),
-            ),
-          ],
+  Widget getStatusLabel(String status) {
+    String displayStatus = getDisplayStatus(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: getStatusColor(displayStatus),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        displayStatus,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
         ),
       ),
     );
   }
+
+  String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
+
+return Card(
+  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+  elevation: 4,
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Stack(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${index + 1}. $formattedOrderNumber',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  companyName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'RM $amount',
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 76, 175, 80),
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              right: 6,
+              child: getStatusLabel(status),
+            ),
+          ],
+        ),
+      ),
+      ExpansionTile(
+        title: const Text(
+          'Items',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        children: items
+            .map((item) => Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${item['product_name']} ${item['uom']} X${item['qty']}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ))
+            .toList(),
+      ),
+    ],
+  ),
+);
+}
 }
