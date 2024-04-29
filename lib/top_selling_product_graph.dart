@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+void main() {
+  runApp(const MyApp());
+}
+
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +22,7 @@ class MyApp extends StatelessWidget {
 }
 
 class TopSellingProductsPage extends StatefulWidget {
-  const TopSellingProductsPage({Key? key}) : super(key: key);
+  const TopSellingProductsPage({super.key});
 
   @override
   _TopSellingProductsPageState createState() => _TopSellingProductsPageState();
@@ -26,25 +30,27 @@ class TopSellingProductsPage extends StatefulWidget {
 
 class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
   List<Product> products = [];
-  String loggedInUsername = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserDetails().then((_) {
-      _loadTopProducts();
-    });
-  }
+String loggedInUsername = '';
 
-  Future<void> _loadUserDetails() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      loggedInUsername = prefs.getString('username') ?? '';
-    });
-  }
+@override
+void initState() {
+  super.initState();
+  _loadUserDetails().then((_) {
+    _loadTopProducts();
+  });
+}
 
-  Future<void> _loadTopProducts() async {
-    String query = '''
+Future<void> _loadUserDetails() async {
+  final prefs = await SharedPreferences.getInstance();
+  loggedInUsername = prefs.getString('username') ?? '';
+}
+
+
+Future<void> _loadTopProducts() async {
+  // Ensure that 'loggedInUsername' is used to filter data related to the logged-in user
+  // Also, adding a condition to exclude 'void' orders
+  String query = '''
     SELECT 
       ci.product_name, 
       SUM(ci.qty) AS total_qty_sold,
@@ -67,34 +73,34 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
     LIMIT 5;
   ''';
 
-    try {
-      final results = await executeQuery(query);
-      final List<Product> fetchedProducts = results.map((row) => Product(
-            row['product_name'] as String,
-            (row['total_qty_sold'] as num).toInt(),
-            (row['total_sales'] as num).toDouble(),
-          )).toList();
+  try {
+    final results = await executeQuery(query);
+    final List<Product> fetchedProducts = results.map((row) => Product(
+      row['product_name'] as String,
+      (row['total_qty_sold'] as num).toInt(),
+      (row['total_sales'] as num).toDouble(),
+    )).toList();
 
-      setState(() {
-        products = fetchedProducts;
-      });
-    } catch (e) {
-      print('Error fetching top products: $e');
-    }
+    setState(() {
+      products = fetchedProducts;
+    });
+  } catch (e) {
+    print('Error fetching top products: $e');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
-    final maxQuantity = products.fold<int>(
-        0, (max, p) => p.quantity > max ? p.quantity : max);
+    final maxSales = products.fold<double>(
+        0, (max, p) => p.salesOrder > max ? p.salesOrder : max);
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           'Top Selling Products',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
       ),
@@ -151,10 +157,10 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                             final product = products[index];
                             final double maxBarWidth =
                                 MediaQuery.of(context).size.width * 0.8;
-                            final double normalizedQuantity =
-                                product.quantity / maxQuantity;
+                            final double normalizedSalesOrder =
+                                product.salesOrder / maxSales;
                             final double barWidth =
-                                normalizedQuantity * maxBarWidth;
+                                normalizedSalesOrder * maxBarWidth;
                             return Container(
                               padding: const EdgeInsets.symmetric(
                                   vertical: 2, horizontal: 5),
@@ -189,15 +195,15 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                                             child: Text(
                                               '${product.quantity}',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                           Expanded(
                                             flex: 2,
                                             child: Text(
-                                              _formatSalesOrder(product.salesOrder),
+                                              product.salesOrder >= 1000
+                                                  ? 'RM ${(product.salesOrder / 1000).toStringAsFixed(0)}K'
+                                                  : 'RM ${product.salesOrder.toStringAsFixed(0)}',
                                               textAlign: TextAlign.end,
-                                              style: TextStyle(fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                         ],
@@ -222,14 +228,6 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
             )
           : const Center(child: CircularProgressIndicator()),
     );
-  }
-
-  String _formatSalesOrder(double salesOrder) {
-    if (salesOrder >= 1000) {
-      return 'RM ${(salesOrder / 1000).toStringAsFixed(1)}K';
-    } else {
-      return 'RM ${salesOrder.toStringAsFixed(0)}';
-    }
   }
 }
 

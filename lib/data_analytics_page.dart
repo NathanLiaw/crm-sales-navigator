@@ -64,7 +64,8 @@ class DataAnalyticsPage extends StatelessWidget {
                             const CustomerReport()),
                   );
                 },
-                child: Container(
+                child: const SizedBox(
+                  height: 425,
                   child: CustomersGraph(),
                 ),
               ),
