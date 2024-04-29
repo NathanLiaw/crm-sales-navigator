@@ -4,6 +4,9 @@ import 'package:mysql1/mysql1.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/item_screen.dart';
+import 'package:transparent_image/transparent_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_network/image_network.dart';
 import 'package:sales_navigator/data/product.dart';
 import 'package:sales_navigator/item_variations_screen.dart';
 import 'dart:convert';
@@ -12,14 +15,23 @@ class ItemsWidget extends StatelessWidget {
   final int? brandId; // Brand ID to filter products
   final int? subCategoryId;
   final String sortOrder;
+  final int currentPage;
+  final int totalPages;
 
-  ItemsWidget({this.brandId, this.subCategoryId, required this.sortOrder});
+  ItemsWidget({
+    this.brandId,
+    this.subCategoryId,
+    required this.sortOrder,
+    required this.currentPage,
+    required this.totalPages,
+  });
 
-  Future<List<Map<String, dynamic>>> getProductData() async {
+  Future<List<Map<String, dynamic>>> getProductData(
+      {int offset = 0, int limit = 50}) async {
     try {
       final conn = await connectToDatabase();
       String query =
-          'SELECT id, product_name, photo1, description, sub_category, brand, price_by_uom, created, viewed FROM product WHERE status = 1';
+          'SELECT id, product_name, photo1, photo2, photo3, description, sub_category, brand, price_by_uom, created, viewed FROM product WHERE status = 1';
       List<dynamic> parameters = [];
 
       if (brandId != null) {
@@ -45,7 +57,9 @@ class ItemsWidget extends StatelessWidget {
         query += ' ORDER BY viewed DESC';
       }
 
-      query += ' LIMIT 100';
+      query += ' LIMIT ? OFFSET ?';
+      parameters.addAll([limit, offset]);
+
       final results = await conn.query(query, parameters);
       await conn.close();
 
@@ -54,6 +68,8 @@ class ItemsWidget extends StatelessWidget {
                 'id': row['id'],
                 'product_name': row['product_name'],
                 'photo1': row['photo1'],
+                'photo2': row['photo2'],
+                'photo3': row['photo3'],
                 'description': row['description'],
                 'sub_category': row['sub_category'],
                 'brand': row['brand'],
@@ -71,7 +87,11 @@ class ItemsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: getProductData(),
+      future: getProductData(
+        offset: (currentPage - 1) *
+            50, // Calculate the offset based on the current page
+        limit: 50, // Limit to 50 items per page
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -93,11 +113,24 @@ class ItemsWidget extends StatelessWidget {
               final productId = product['id'] as int;
               final productName = product['product_name'] as String;
               final localPath = product['photo1'] as String;
+              final localPath2 = product['photo2'] as String?; // Nullable
+              final localPath3 = product['photo3'] as String?; // Nullable
               final itemDescription = product['description'] as Blob;
-              final assetName =
+
+              final assetName1 =
                   '$localPath'; // Assuming localPath is the file name, e.g., "photo1.jpg"
+              final assetName2 =
+                  localPath2 ?? ''; // Use an empty string if null
+              final assetName3 =
+                  localPath3 ?? ''; // Use an empty string if null
+
+              final photoUrl1 = "https://fyhonlinestore.com.my/$localPath";
+              final photoUrl2 = "https://fyhonlinestore.com.my/$localPath2";
+              final photoUrl3 = "https://fyhonlinestore.com.my/$localPath3";
+
               return Container(
-                padding: const EdgeInsets.only(left: 12, right: 12, top: 10),
+                padding: const EdgeInsets.only(
+                    left: 12, right: 12, top: 10, bottom: 2),
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -113,7 +146,7 @@ class ItemsWidget extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => ItemScreen(
                               productId: productId,
-                              itemAssetName: assetName,
+                              itemAssetNames: [photoUrl1, photoUrl2, photoUrl3],
                               productName: productName,
                               itemDescription: itemDescription,
                               priceByUom: product['price_by_uom'].toString(),
@@ -122,6 +155,8 @@ class ItemsWidget extends StatelessWidget {
                         );
                       },
                       child: Container(
+                        height: 166,
+                        width: 166,
                         margin: EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
@@ -130,11 +165,34 @@ class ItemsWidget extends StatelessWidget {
                             color: Color.fromARGB(255, 0, 76, 135),
                           ),
                         ),
-                        child: Image.asset(
-                          assetName,
+                        child: CachedNetworkImage(
+                          imageUrl: photoUrl1,
                           height: 166,
                           width: 166,
+                          placeholder: (context, url) =>
+                              CircularProgressIndicator(),
+                          errorWidget: (context, url, error) =>
+                              Icon(Icons.error_outline),
                         ),
+
+                        /*ImageNetwork(
+                            image:
+                                "https://fyhonlinestore.com.my/photo/5dc4d4356c6e6.jpg",
+                            height: 166,
+                            width: 166), */
+
+                        /*FadeInImage.memoryNetwork(
+                          placeholder: kTransparentImage,
+                          image: photoUrl1,
+                          height: 166,
+                          width: 166,
+                        ), */
+
+                        /*Image.asset(
+                          assetName1,
+                          height: 166,
+                          width: 166,
+                        ), */
                       ),
                     ),
                     Container(

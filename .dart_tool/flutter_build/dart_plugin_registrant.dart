@@ -13,6 +13,7 @@ import 'package:url_launcher_android/url_launcher_android.dart';
 import 'package:video_player_android/video_player_android.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:path_provider_foundation/path_provider_foundation.dart';
+import 'package:pointer_interceptor_ios/pointer_interceptor_ios.dart';
 import 'package:shared_preferences_foundation/shared_preferences_foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher_ios/url_launcher_ios.dart';
@@ -101,6 +102,15 @@ class _PluginRegistrant {
       } catch (err) {
         print(
           '`path_provider_foundation` threw an error: $err. '
+          'The app may not function as expected until you remove this plugin from pubspec.yaml'
+        );
+      }
+
+      try {
+        PointerInterceptorIOS.registerWith();
+      } catch (err) {
+        print(
+          '`pointer_interceptor_ios` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }

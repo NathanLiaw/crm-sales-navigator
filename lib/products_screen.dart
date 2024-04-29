@@ -26,6 +26,36 @@ class _ProductsScreenState extends State<ProductsScreen> {
   static int? _selectedBrandId;
   int? _selectedSubCategoryId;
   String _currentSortOrder = 'By Name (A to Z)';
+  int _currentPage = 1;
+  int _totalPages = 1;
+
+  Future<int> _getTotalPages() async {
+    try {
+      final conn = await connectToDatabase();
+      String query = 'SELECT COUNT(*) as total FROM product WHERE status = 1';
+      List<dynamic> parameters = [];
+
+      if (_selectedBrandId != null) {
+        query += ' AND brand = ?';
+        parameters.add(_selectedBrandId);
+      } else if (_selectedSubCategoryId != null) {
+        query += ' AND sub_category = ?';
+        parameters.add(_selectedSubCategoryId);
+      }
+
+      final results = await conn.query(query, parameters);
+      await conn.close();
+
+      final totalProducts = results.first['total'] as int;
+      final limit = 50; // Change this if you want a different limit per page
+      final totalPages = (totalProducts / limit).ceil();
+
+      return totalPages;
+    } catch (e) {
+      print('Error fetching total pages: $e');
+      return 1;
+    }
+  }
 
   Future<void> setAreaId(int areaId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -311,10 +341,61 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
             Flexible(
               child: SingleChildScrollView(
-                child: ItemsWidget(
-                  brandId: _selectedBrandId,
-                  subCategoryId: _selectedSubCategoryId,
-                  sortOrder: _currentSortOrder,
+                child: FutureBuilder<int>(
+                  future: _getTotalPages(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    _totalPages = snapshot.data ?? 1;
+
+                    return Column(
+                      children: [
+                        ItemsWidget(
+                          brandId: _selectedBrandId,
+                          subCategoryId: _selectedSubCategoryId,
+                          sortOrder: _currentSortOrder,
+                          currentPage: _currentPage,
+                          totalPages: _totalPages,
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: _currentPage > 1
+                                  ? () {
+                                      setState(() {
+                                        _currentPage--;
+                                      });
+                                    }
+                                  : null,
+                              child: Text('Previous'),
+                            ),
+                            SizedBox(width: 16),
+                            Text('Page $_currentPage of $_totalPages'),
+                            SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: _currentPage < _totalPages
+                                  ? () {
+                                      setState(() {
+                                        _currentPage++;
+                                      });
+                                    }
+                                  : null,
+                              child: Text('Next'),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height:16)
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

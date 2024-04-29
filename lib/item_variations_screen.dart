@@ -195,7 +195,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                           ),
                           ElevatedButton(
                             onPressed: () async {
-                             /* // Create CartItem with current quantity and uom
+                              /* // Create CartItem with current quantity and uom
                               final cartItem = CartItem(
                                 buyerId: await UtilityFunction.getUserId(),
                                 productId: widget.productId,

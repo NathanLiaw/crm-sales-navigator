@@ -45,7 +45,8 @@ class _SearchScreenState extends State<SearchScreen> {
       }
 
       // Construct the WHERE clause based on the conditions
-      String whereClause = conditions.isNotEmpty ? 'WHERE ' + conditions.join(' OR ') : '';
+      String whereClause =
+          conditions.isNotEmpty ? 'WHERE ' + conditions.join(' OR ') : '';
 
       // Step 3: Execute the final query based on the constructed conditions
       final results = await conn.query(
@@ -62,7 +63,8 @@ class _SearchScreenState extends State<SearchScreen> {
       );
 
       setState(() {
-        _searchResults = results.map((result) => result['product_name'] as String).toList();
+        _searchResults =
+            results.map((result) => result['product_name'] as String).toList();
       });
     } catch (e) {
       print('Error performing search: $e');
@@ -107,7 +109,7 @@ class _SearchScreenState extends State<SearchScreen> {
             builder: (context) => ItemScreen(
               productId: productId,
               productName: productName,
-              itemAssetName: itemAssetName,
+              itemAssetNames: [itemAssetName],
               itemDescription: description,
               priceByUom: priceByUom,
             ),
@@ -165,7 +167,6 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,23 +191,25 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: _searchResults.isEmpty
           ? Center(
-        child: Text(
-          _searchQuery.isEmpty ? 'Start typing to search' : 'No results found',
-          style: TextStyle(fontSize: 18),
-        ),
-      )
+              child: Text(
+                _searchQuery.isEmpty
+                    ? 'Start typing to search'
+                    : 'No results found',
+                style: TextStyle(fontSize: 18),
+              ),
+            )
           : ListView.builder(
-        itemCount: _searchResults.length,
-        itemBuilder: (context, index) {
-          final productName = _searchResults[index];
-          return ListTile(
-            title: Text(productName),
-            onTap: () {
-              _navigateToItemScreen(productName);
-            },
-          );
-        },
-      ),
+              itemCount: _searchResults.length,
+              itemBuilder: (context, index) {
+                final productName = _searchResults[index];
+                return ListTile(
+                  title: Text(productName),
+                  onTap: () {
+                    _navigateToItemScreen(productName);
+                  },
+                );
+              },
+            ),
     );
   }
 }
