@@ -322,6 +322,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: CustomNavigationBar(),
     );
   }
 }

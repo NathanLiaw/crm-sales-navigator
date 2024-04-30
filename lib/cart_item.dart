@@ -9,7 +9,7 @@ class CartItem {
   int quantity;
   final int discount;
   final double originalUnitPrice;
-  final double unitPrice;
+  double unitPrice;
   final double total;
   final String cancel;
   final String remark;
@@ -28,7 +28,7 @@ class CartItem {
     this.quantity = 0,
     this.discount = 0,
     this.originalUnitPrice = 0.0,
-    required this.unitPrice,
+    this.unitPrice = 0.0,
     required this.total,
     this.cancel = '',
     this.remark = '',

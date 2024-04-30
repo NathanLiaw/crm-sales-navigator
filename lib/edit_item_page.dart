@@ -24,7 +24,7 @@ class EditItemPage extends StatefulWidget {
 
 class _EditItemPageState extends State<EditItemPage> {
   double originalPrice = 0.0;
-  double discountedPrice = 0.0;
+  double discountPercentage = 0.0;
   TextEditingController priceController = TextEditingController();
   TextEditingController discountController = TextEditingController();
 
@@ -35,12 +35,10 @@ class _EditItemPageState extends State<EditItemPage> {
   }
 
   void calculateDiscountedPrice() {
-    double price = double.tryParse(priceController.text) ?? 0.0;
-    double discountPercentage = double.tryParse(discountController.text.replaceAll('%', '')) ?? 0.0;
-
-    double discountAmount = price * (discountPercentage / 100);
-    discountedPrice = price - discountAmount;
-    print(discountPercentage);
+    double discountAmount = originalPrice * (discountPercentage / 100);
+    double discountedPrice = originalPrice - discountAmount;
+    print(discountedPrice);
+    updateItemPrice(discountedPrice);
   }
 
   Future<void> updateItemPrice(double newPrice) async {
@@ -78,6 +76,12 @@ class _EditItemPageState extends State<EditItemPage> {
           'Edit Item',
           style: TextStyle(color: Color(0xffF8F9FA)),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, originalPrice);
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -85,6 +89,7 @@ class _EditItemPageState extends State<EditItemPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
+              color: Color(0xffcde5f2),
               elevation: 4.0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -240,10 +245,51 @@ class _EditItemPageState extends State<EditItemPage> {
                 const SizedBox(width: 46.0), // Adjust the spacing between buttons
                 ElevatedButton(
                   onPressed: () {
-                    calculateDiscountedPrice();
-                    if (discountedPrice > 0.0) {
-                      updateItemPrice(discountedPrice);
+                    setState(() {
+                      if (priceController.text.trim().isNotEmpty) {
+                        originalPrice = double.parse(priceController.text);
+                      }
+                      if (discountController.text.trim().isNotEmpty) {
+                        discountPercentage = double.parse(discountController.text);
+                      }
+                    });
+
+                    if (discountPercentage > 0.0) {
+                      calculateDiscountedPrice();
                     }
+                    else {
+                      updateItemPrice(originalPrice);
+                    }
+
+                    showDialog(
+                      context: context,
+                      builder: (context) => const AlertDialog(
+                        backgroundColor: Colors.green,
+                        title: Row(
+                          children: [
+                            SizedBox(width: 40),
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Price updated',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+
+                    // Automatically close dialog after 1 second
+                    Future.delayed(const Duration(seconds: 1), () {
+                      Navigator.pop(context); // Close dialog
+                    });
                   },
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsets>(

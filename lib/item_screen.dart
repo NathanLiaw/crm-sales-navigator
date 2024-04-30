@@ -122,7 +122,7 @@ class _ItemScreenState extends State<ItemScreen> {
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            margin: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               children: [
                 Column(
@@ -156,11 +156,6 @@ class _ItemScreenState extends State<ItemScreen> {
                   ],
                 ),
                 Spacer(),
-                IconButton(
-                  iconSize: 38,
-                  onPressed: () {},
-                  icon: const Icon(Icons.thumb_up_alt_outlined),
-                ),
               ],
             ),
           ),
@@ -273,87 +268,6 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: ItemBottomNavBar(),
     );
   }
 }
-
-
-
-/*
-
-ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount:
-                jsonDecode(priceByUom).length, // Decode the JSON string here
-            itemBuilder: (context, index) {
-              final variationData =
-                  jsonDecode(priceByUom).entries.elementAt(index);
-              final variationName = variationData.key;
-              final variationPrices = variationData.value;
-
-              return Container(
-                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                child: Card(
-                  color: Colors.white,
-                  clipBehavior: Clip.hardEdge,
-                  child: InkWell(
-                    splashColor: Colors.blue.withAlpha(30),
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 20),
-                      child: Row(
-                        children: [
-                          // Add Image or Icon here
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  variationName,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromARGB(255, 25, 23, 49),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                ...variationPrices.entries.map((entry) {
-                                  final uom = entry.key;
-                                  final price = entry.value;
-                                  return Text(
-                                    '$uom: RM $price',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          const Color.fromARGB(255, 25, 23, 49),
-                                    ),
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            iconSize: 30,
-                            onPressed: () {},
-                            icon: const Icon(Icons.arrow_forward_ios),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-
-
-
-*/
-

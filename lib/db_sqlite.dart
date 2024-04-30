@@ -8,7 +8,6 @@ class DatabaseHelper {
   static const String productTableName = 'product';
   static const String cartTableName = 'cart';
   static const String cartItemTableName = 'cart_item';
-  static const String cartActiveTableName = 'cart_active';
 
   static Future<Database> get database async {
     if (_database != null) {
@@ -27,30 +26,6 @@ class DatabaseHelper {
       databasePath,
       version: 1,
       onCreate: (db, version) async {
-        // Create the products table
-        // await db.execute(
-        //   '''CREATE TABLE $productTableName(
-        //     id INTEGER PRIMARY KEY,
-        //     sub_category INTEGER,
-        //     brand INTEGER,
-        //     product_name TEXT,
-        //     product_code TEXT,
-        //     price_guide TEXT,
-        //     photo1 TEXT,
-        //     photo2 TEXT,
-        //     photo3 TEXT,
-        //     photo4 TEXT,
-        //     featured TEXT,
-        //     stock TEXT,
-        //     status TEXT,
-        //     description BLOB,
-        //     uom TEXT,
-        //     price_by_uom BLOB,
-        //     stock_by_uom BLOB,
-        //     discount BLOB
-        //   )''',
-        // );
-
         // Create the cart table
         await db.execute(
           '''CREATE TABLE IF NOT EXISTS $cartTableName(
@@ -71,11 +46,9 @@ class DatabaseHelper {
             customer_id INTEGER,
             customer_company_name TEXT,
             customer_discount TEXT,
-            admin_id INTEGER,
-            admin_datetime TEXT,
-            status TEXT,
-            created TEXT,
-            modified TEXT
+            status TEXT(25),
+            created DATETIME,
+            modified DATETIME
           )''',
         );
 
@@ -101,14 +74,6 @@ class DatabaseHelper {
             modified TEXT
           )''',
         );
-
-        // Create the cart_active table
-        // await db.execute(
-        //   '''CREATE TABLE $cartActiveTableName(
-        //     id INTEGER PRIMARY KEY AUTOINCREMENT,
-        //     cart_id INTEGER,
-        //   )''',
-        // );
       },
     );
   }
@@ -155,7 +120,7 @@ class DatabaseHelper {
       String condition,
       String order,
       String field, {
-        List<Object?>? whereArgs, // Define whereArgs as a named parameter
+        List<Object?>? whereArgs,
       }) async {
     String sqlQuery = '';
     String sqlOrder = '';
