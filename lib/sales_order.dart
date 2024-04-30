@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/Components/customer_navigation_bar.dart';
-import 'package:sales_navigator/order_details_page.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -115,7 +113,11 @@ WHERE
     cart_item.product_name, 
     cart_item.qty,
     cart_item.uom,
+    salesman.salesman_name,
+    DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+FROM 
     cart
+JOIN 
     cart_item ON cart.session = cart_item.session
 JOIN 
     salesman ON cart.buyer_id = salesman.id
@@ -300,6 +302,7 @@ $orderByClause;
       ),
     );
   }
+
 
   Future<void> _selectDateRange(BuildContext context,
       {DateTimeRange? predefinedRange}) async {
