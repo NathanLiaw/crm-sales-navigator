@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:crypto/crypto.dart';
-import 'package:sales_navigator/home_page.dart';
+import 'home_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_navigator/db_connection.dart';
+import 'db_connection.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  LoginPage({super.key});
 
   void signIn(BuildContext context) async {
     String username = usernameController.text;
@@ -36,7 +34,7 @@ class LoginPage extends StatelessWidget {
         // Save salesman data to shared preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setInt('id', row['id']);
-        // prefs.setString('area', row['area']);
+        prefs.setInt('area', row['area']);
         prefs.setString('salesmanName', row['salesman_name']);
         prefs.setString('username', row['username']);
         // prefs.setString('password', row['password']);
@@ -48,19 +46,17 @@ class LoginPage extends StatelessWidget {
         // prefs.setString('status', row['status']);
         // prefs.setString('created', row['created']);
         // prefs.setString('modified', row['modified']);
-// After saving other salesman data in shared preferences, save the username
-prefs.setString('username', username);
 
         // Navigate to HomePage and pass salesmanName
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const HomePage(),
+              builder: (context) => HomePage(),
             ));
       } else {
         // If no matching salesman found, display an error message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Invalid username or password. Please try again.'),
           ),
         );
@@ -77,8 +73,8 @@ prefs.setString('username', username);
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Contact Information'),
-          content: const SingleChildScrollView(
+          title: Text('Contact Information'),
+          content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -95,7 +91,7 @@ prefs.setString('username', username);
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Close'),
+              child: Text('Close'),
             ),
           ],
         );
@@ -113,8 +109,8 @@ prefs.setString('username', username);
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.only(top: 30),
-                margin: const EdgeInsets.only(bottom: 20),
+                padding: EdgeInsets.only(top: 30),
+                margin: EdgeInsets.only(bottom: 20),
                 child: Image.asset(
                   'asset/logo/logo_fyh.png',
                   width: 300,
@@ -123,23 +119,23 @@ prefs.setString('username', username);
               ),
               Container(
                 alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                   left: 20,
                 ),
-                child: const Text(
+                child: Text(
                   'Salesman',
                   style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                 ),
               ),
 
               // Email input field
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Container(
                 margin:
-                    const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
+                    EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
                 child: TextFormField(
                   controller: usernameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Username',
                     // hintText: 'fyh@mail.com',
@@ -148,13 +144,13 @@ prefs.setString('username', username);
               ),
 
               // Password input field
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Container(
-                margin: const EdgeInsets.only(top: 10, left: 20, right: 20),
+                margin: EdgeInsets.only(top: 10, left: 20, right: 20),
                 child: TextFormField(
                   controller: passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Password',
                   ),
@@ -162,9 +158,9 @@ prefs.setString('username', username);
               ),
 
               // Sign in button
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Container(
-                margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
+                margin: EdgeInsets.only(top: 20, left: 20, right: 20),
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
@@ -172,12 +168,12 @@ prefs.setString('username', username);
                     signIn(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff0069BA),
+                    backgroundColor: Color(0xff0069BA),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Sign In',
                     style: TextStyle(
                       color: Colors.white,
@@ -187,13 +183,13 @@ prefs.setString('username', username);
               ),
 
               // Forgot password button
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               TextButton(
                 onPressed: () {
                   // Show pop up window
                   showContactInfoDialog(context);
                 },
-                child: const Text(
+                child: Text(
                   'Forgot Password',
                   style: TextStyle(
                     color: Colors.black,

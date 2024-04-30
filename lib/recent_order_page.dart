@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/item_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/db_connection.dart';
 
 class RecentOrder extends StatefulWidget {
-  const RecentOrder({super.key});
-
   @override
   _RecentOrderState createState() => _RecentOrderState();
 }
@@ -13,7 +12,7 @@ class RecentOrder extends StatefulWidget {
 class _RecentOrderState extends State<RecentOrder> {
   bool _isGridView = false;
   int _userId = 0; // Default user ID
-  final bool _isAscending = true; // Track sorting order
+  bool _isAscending = true; // Track sorting order
 
   // Define sorting methods
   final List<String> _sortingMethods = [
@@ -46,13 +45,13 @@ class _RecentOrderState extends State<RecentOrder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff0069BA),
-        title: const Text(
+        backgroundColor: Color(0xff0069BA),
+        title: Text(
           'Recent Order',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -68,7 +67,7 @@ class _RecentOrderState extends State<RecentOrder> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.sort),
+                      icon: Icon(Icons.sort),
                       onPressed: () {
                         _showSortingOptions(context);
                       },
@@ -124,11 +123,11 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchRecentOrders(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No recent orders found.'));
+          return Center(child: Text('No recent orders found.'));
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
@@ -147,14 +146,14 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchRecentOrders(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No recent orders found.'));
+          return Center(child: Text('No recent orders found.'));
         } else {
           return GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
@@ -175,13 +174,13 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchProductPhoto(item['product_name']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           return Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            padding: const EdgeInsets.all(16),
+            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -189,7 +188,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   color: Colors.grey.withOpacity(0.3),
                   spreadRadius: 2,
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
@@ -200,7 +199,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   children: [
                     // photo part
                     Container(
-                      margin: const EdgeInsets.only(right: 16),
+                      margin: EdgeInsets.only(right: 16),
                       child: Image.asset(
                         snapshot.data!,
                         width: 100,
@@ -214,7 +213,7 @@ class _RecentOrderState extends State<RecentOrder> {
                         children: [
                           Text(
                             item['product_name'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -222,7 +221,7 @@ class _RecentOrderState extends State<RecentOrder> {
                                 TextOverflow.ellipsis, // Add overflow handling
                             maxLines: 2, // Display up to two lines
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                         ],
                       ),
                     ),
@@ -233,15 +232,15 @@ class _RecentOrderState extends State<RecentOrder> {
                   right: 0,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle "View Item" button click
+                      _navigateToItemScreen(item['product_name']);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff0069BA),
+                      backgroundColor: Color(0xff0069BA),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'View Item',
                       style: TextStyle(color: Colors.white),
                     ),
@@ -263,12 +262,12 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchProductPhoto(item['product_name']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           return Container(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
+            padding: EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -276,7 +275,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   color: Colors.grey.withOpacity(0.3),
                   spreadRadius: 2,
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
@@ -288,14 +287,14 @@ class _RecentOrderState extends State<RecentOrder> {
                   width: 70,
                   height: 70,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item['product_name'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           // fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -312,14 +311,14 @@ class _RecentOrderState extends State<RecentOrder> {
                     // Handle "View Item" button click
                   },
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(20, 30),
-                    backgroundColor: const Color(0xff0069BA),
+                    minimumSize: Size(20, 30),
+                    backgroundColor: Color(0xff0069BA),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
                   child:
-                      const Text('View Item', style: TextStyle(color: Colors.white)),
+                      Text('View Item', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -330,6 +329,57 @@ class _RecentOrderState extends State<RecentOrder> {
         }
       },
     );
+  }
+
+  void _navigateToItemScreen(String selectedProductName) async {
+    MySqlConnection conn = await connectToDatabase();
+
+    try {
+      final productData = await readData(
+        conn,
+        'product',
+        'status = 1 AND product_name = "$selectedProductName"',
+        '',
+        'id, product_name, photo1, description, sub_category, price_by_uom',
+      );
+
+      if (productData.isNotEmpty) {
+        Map<String, dynamic> product = productData.first;
+
+        int productId = product['id'];
+        String productName = product['product_name'];
+        String itemAssetName = product['photo1'];
+        Blob description = stringToBlob(product['description']);
+        String priceByUom = product['price_by_uom'];
+
+        // Navigate to ItemScreen and pass necessary parameters
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ItemScreen(
+              productId: productId,
+              productName: productName,
+              itemAssetName: itemAssetName,
+              itemDescription: description,
+              priceByUom: priceByUom,
+            ),
+          ),
+        );
+      } else {
+        print('Product not found for name: $selectedProductName');
+      }
+    } catch (e) {
+      print('Error fetching product details: $e');
+    } finally {
+      await conn.close();
+    }
+  }
+
+  Blob stringToBlob(String data) {
+    // Create a Blob instance from the string using Blob.fromString
+    Blob blob = Blob.fromString(data);
+
+    return blob;
   }
 
   Future<List<Map<String, dynamic>>> _fetchRecentOrders() async {
@@ -426,18 +476,16 @@ class _RecentOrderState extends State<RecentOrder> {
         String photoPath = results[0]['photo1'];
         // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/${photoPath.substring(6)}';
+          photoPath = 'photo/' + photoPath.substring(6);
         }
         return photoPath;
       } else {
         // Return a default placeholder image path if no photo found or photo1 is null
-        return 'asset/no_photo_available.jpg';
+        return 'asset/no_image.jpg';
       }
     } catch (e) {
       print('Error fetching product photo: $e');
-      return 'asset/no_photo_available.jpg';
+      return 'asset/no_image.jpg'; // Return empty string if an error occurs
     }
   }
-  
-  readData(MySqlConnection conn, String s, String t, String u, String v) {}
 }

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_navigator/db_connection.dart';
+import 'db_connection.dart';
 
 class AccountSetting extends StatefulWidget {
-  const AccountSetting({super.key});
-
   @override
   _AccountSettingState createState() => _AccountSettingState();
 }
@@ -67,7 +65,7 @@ class _AccountSettingState extends State<AccountSetting> {
 
       // show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Salesman details updated successfully.'),
         ),
       );
@@ -75,7 +73,7 @@ class _AccountSettingState extends State<AccountSetting> {
       print('Error updating salesman details: $e');
       // show error message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Failed to update salesman details. Please try again.'),
         ),
       );
@@ -90,61 +88,63 @@ class _AccountSettingState extends State<AccountSetting> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff0069BA),
-        title: const Text(
+        backgroundColor: Color(0xff0069BA),
+        title: Text(
           'Account Setting',
           style: TextStyle(color: Colors.white),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              // Handle notifications
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Salesman Details',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               controller: nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               controller: phoneNumberController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Phone Number',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               controller: emailController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Cancel button
                 Container(
-                  margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
+                  margin: EdgeInsets.only(top: 20, left: 20, right: 20),
                   child: ElevatedButton(
                     onPressed: () {
                       // Handle cancel button press
@@ -154,10 +154,10 @@ class _AccountSettingState extends State<AccountSetting> {
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
-                          side: const BorderSide(color: Colors.red, width: 2),
+                          side: BorderSide(color: Colors.red, width: 2),
                         ),
-                        minimumSize: const Size(120, 40)),
-                    child: const Text(
+                        minimumSize: Size(120, 40)),
+                    child: Text(
                       'Cancel',
                       style: TextStyle(
                           color: Colors.red, fontWeight: FontWeight.bold),
@@ -167,19 +167,19 @@ class _AccountSettingState extends State<AccountSetting> {
 
                 // Apply button
                 Container(
-                  margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
+                  margin: EdgeInsets.only(top: 20, left: 20, right: 20),
                   child: ElevatedButton(
                     onPressed: () {
                       // Call the update database function
                       updateSalesmanDetailsInDatabase();
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: Color(0xff0069BA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        minimumSize: const Size(120, 40)),
-                    child: const Text(
+                        minimumSize: Size(120, 40)),
+                    child: Text(
                       'Apply',
                       style: TextStyle(color: Colors.white),
                     ),

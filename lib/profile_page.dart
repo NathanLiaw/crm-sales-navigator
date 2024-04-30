@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/Components/CustomNavigationBar.dart';
-import 'package:sales_navigator/account_setting_page.dart';
-import 'package:sales_navigator/contact_us_page.dart';
+import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:sales_navigator/sales_report_graph.dart';
+import 'package:sales_navigator/sales_report_page.dart';
+import 'about_us_page.dart';
+import 'account_setting_page.dart';
+import 'contact_us_page.dart';
 import 'package:sales_navigator/recent_order_page.dart';
-import 'package:sales_navigator/terms_and_conditions_page.dart';
-import 'package:sales_navigator/about_us_page.dart';
+import 'terms_and_conditions_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'Components/customer_navigation_bar.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
-
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -41,14 +42,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff0069BA),
-        title: const Text(
+        backgroundColor: Color(0xff0069BA),
+        title: Text(
           'Profile',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
+            icon: Icon(Icons.notifications, color: Colors.white),
             onPressed: () {
               // Handle notifications
             },
@@ -61,10 +62,10 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Container(
                 alignment: Alignment.center,
-                child: const Text(
+                child: Text(
                   'Welcome,',
                   style: TextStyle(
                     fontSize: 15,
@@ -76,23 +77,22 @@ class _ProfilePageState extends State<ProfilePage> {
                   alignment: Alignment.center,
                   child: Text(
                     '$salesmanName',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   )),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               buildProfileOption('Account Setting', Icons.settings, context),
               buildProfileOption('Reports', Icons.favorite, context),
               buildProfileOption('Recent Order', Icons.shopping_bag, context),
-              buildProfileOption(
-                  'Terms & Condition', Icons.description, context),
+              buildProfileOption('Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
           ),
         ),
       ),
-      bottomNavigationBar: const CustomNavigationBar(),
+      bottomNavigationBar: CustomNavigationBar(),
     );
   }
 
@@ -104,40 +104,46 @@ class _ProfilePageState extends State<ProfilePage> {
           Navigator.push(
             // Navigate to account setting page
             context,
-            MaterialPageRoute(builder: (context) => const AccountSetting()),
-          ).then((value) {
+            MaterialPageRoute(builder: (context) => AccountSetting()),
+          )..then((value) {
               if (value == true) {
                 _getSalesmanName();
               }
             });
         }
-        if (title == 'Terms & Condition') {
+        if (title == 'Reports') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const TermsandConditions()),
-          );
-        }
-        if (title == 'Contact Us') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ContactUs()),
-          );
-        }
-        if (title == 'About Us') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AboutUs()),
+            MaterialPageRoute(builder: (context) => DataAnalyticsPage()),
           );
         }
         if (title == 'Recent Order') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const RecentOrder()),
+            MaterialPageRoute(builder: (context) => RecentOrder()),
+          );
+        }
+        if (title == 'Terms & Condition') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => TermsandConditions()),
+          );
+        }
+        if (title == 'Contact Us') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ContactUs()),
+          );
+        }
+        if (title == 'About Us') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AboutUs()),
           );
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(top: 10),
+        margin: EdgeInsets.only(top: 10),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(5),
@@ -152,7 +158,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget buildLogoutButton() {
     return Container(
-      margin: const EdgeInsets.only(left: 100, right: 100),
+      margin: EdgeInsets.only(left: 100, right: 100),
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
@@ -167,11 +173,11 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(5),
-            side: const BorderSide(color: Colors.red, width: 2),
+            side: BorderSide(color: Colors.red, width: 2),
           ),
         ),
-        child: const Padding(
-          padding: EdgeInsets.only(top: 10, bottom: 10),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 10, bottom: 10),
           child: Text(
             'Log Out',
             style: TextStyle(color: Colors.red),
