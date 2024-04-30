@@ -1,13 +1,71 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sales_navigator/db_sqlite.dart';
 
 class EditItemPage extends StatefulWidget {
-  const EditItemPage({Key? key}) : super(key: key);
+  final int? itemId;
+  final String itemName;
+  final String itemUom;
+  final String itemPhoto;
+  final double itemPrice;
+
+  const EditItemPage({
+    super.key,
+    required this.itemName,
+    required this.itemId,
+    required this.itemUom,
+    required this.itemPhoto,
+    required this.itemPrice,
+  });
 
   @override
   State<EditItemPage> createState() => _EditItemPageState();
 }
 
 class _EditItemPageState extends State<EditItemPage> {
+  double originalPrice = 0.0;
+  double discountPercentage = 0.0;
+  TextEditingController priceController = TextEditingController();
+  TextEditingController discountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    originalPrice = widget.itemPrice;
+  }
+
+  void calculateDiscountedPrice() {
+    double discountAmount = originalPrice * (discountPercentage / 100);
+    double discountedPrice = originalPrice - discountAmount;
+    print(discountedPrice);
+    updateItemPrice(discountedPrice);
+  }
+
+  Future<void> updateItemPrice(double newPrice) async {
+    try {
+      int itemId = widget.itemId ?? 0; // Assuming itemId is not null, otherwise handle accordingly
+
+      Map<String, dynamic> updateData = {
+        'id': itemId,
+        'unit_price': newPrice,
+      };
+
+      int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+      if (rowsAffected > 0) {
+        // Database update successful
+        print('Item price updated successfully');
+        setState(() {
+          originalPrice = newPrice;
+        });
+      } else {
+        // Handle database update failure
+        print('Failed to update item price');
+      }
+    } catch (e) {
+      print('Error updating item price: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,13 +76,20 @@ class _EditItemPageState extends State<EditItemPage> {
           'Edit Item',
           style: TextStyle(color: Color(0xffF8F9FA)),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, originalPrice);
+          },
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
+              color: Color(0xffcde5f2),
               elevation: 4.0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -43,24 +108,42 @@ class _EditItemPageState extends State<EditItemPage> {
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                           // Replace the child with your actual image widget
-                          child: Icon(Icons.image, size: 60, color: Colors.grey[600]),
+                          child: SizedBox(
+                            width: 90,
+                            child: widget.itemPhoto.isNotEmpty
+                                ? Image.asset(
+                              widget.itemPhoto,
+                              height: 90,
+                              width: 90,
+                              fit: BoxFit.cover,
+                            )
+                                : Image.asset(
+                              'asset/no_image.jpg',
+                              height: 90,
+                              width: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 16.0),
                         // Right side: Name and Description
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Item Name',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              width: 200,
+                              child: Text(
+                                '${widget.itemName}',
+                                style: const TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                            SizedBox(height: 8.0),
+                            const SizedBox(height: 8.0),
                             Text(
-                              'Item Description',
-                              style: TextStyle(
+                              '${widget.itemUom}',
+                              style: const TextStyle(
                                 fontSize: 14.0,
                               ),
                             ),
@@ -70,24 +153,25 @@ class _EditItemPageState extends State<EditItemPage> {
                     ),
                     const SizedBox(height: 16.0),
                     // Text fields for Reprice and Discount
-                    const Row(
+                    Row(
                       children: [
                         // Reprice field
-                        Text(
+                        const Text(
                           'Unit Price (RM)',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(width: 8.0), // Spacer
+                        const SizedBox(width: 8.0), // Spacer
                         Expanded(
                           child: SizedBox(
                             height: 36.0,
                             child: TextField(
+                              controller: priceController,
                               decoration: InputDecoration(
-                                hintText: '333.000',
-                                contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                                border: OutlineInputBorder(),
+                                hintText: (originalPrice).toStringAsFixed(3),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                                border: const OutlineInputBorder(),
                               ),
                             ),
                           ),
@@ -95,21 +179,22 @@ class _EditItemPageState extends State<EditItemPage> {
                       ],
                     ),
                     const SizedBox(height: 12.0),
-                    const Row(
+                    Row(
                       children: [
                         // Discount field
-                        Text(
+                        const Text(
                           'Discount',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(width: 50.0), // Spacer
+                        const SizedBox(width: 50.0), // Spacer
                         Expanded(
                           child: SizedBox(
                             height: 36.0,
                             child: TextField(
-                              decoration: InputDecoration(
+                              controller: discountController,
+                              decoration: const InputDecoration(
                                 hintText: '0%',
                                 contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
                                 border: OutlineInputBorder(),
@@ -129,8 +214,10 @@ class _EditItemPageState extends State<EditItemPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    // Handle button 1 press
-                    print('Button 1 pressed');
+                    setState(() {
+                      priceController.clear();
+                      discountController.clear();
+                    });
                   },
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsets>(
@@ -158,8 +245,51 @@ class _EditItemPageState extends State<EditItemPage> {
                 const SizedBox(width: 46.0), // Adjust the spacing between buttons
                 ElevatedButton(
                   onPressed: () {
-                    // Handle button 2 press
-                    print('Button 2 pressed');
+                    setState(() {
+                      if (priceController.text.trim().isNotEmpty) {
+                        originalPrice = double.parse(priceController.text);
+                      }
+                      if (discountController.text.trim().isNotEmpty) {
+                        discountPercentage = double.parse(discountController.text);
+                      }
+                    });
+
+                    if (discountPercentage > 0.0) {
+                      calculateDiscountedPrice();
+                    }
+                    else {
+                      updateItemPrice(originalPrice);
+                    }
+
+                    showDialog(
+                      context: context,
+                      builder: (context) => const AlertDialog(
+                        backgroundColor: Colors.green,
+                        title: Row(
+                          children: [
+                            SizedBox(width: 40),
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Price updated',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+
+                    // Automatically close dialog after 1 second
+                    Future.delayed(const Duration(seconds: 1), () {
+                      Navigator.pop(context); // Close dialog
+                    });
                   },
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsets>(

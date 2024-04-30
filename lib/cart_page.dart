@@ -1,8 +1,15 @@
-import 'package:crm/order_confirmation_page.dart';
+import 'package:sales_navigator/Components/customer_navigation_bar.dart';
+import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/edit_item_page.dart';
+import 'package:sales_navigator/order_confirmation_page.dart';
 import 'package:flutter/material.dart';
+import 'package:sales_navigator/utility_function.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import 'customer.dart';
 import 'customer_details_page.dart';
 import 'cart_item.dart';
+import 'db_sqlite.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -13,18 +20,166 @@ class CartPage extends StatefulWidget {
 
 class _CartPage extends State<CartPage> {
   // Customer Details Section
-  late Customer customer;
+  Customer? customer;
   bool customerSelected = false;
 
   // Cart Section
   List<CartItem> cartItems = [];
+  List<CartItem> selectedCartItems = [];
+  late List<List<String>> productPhotos = [];
+  double total = 0;
+  double subtotal = 0;
+
+  // Tax Section
+  double gst = 0;
+  double sst = 0;
 
   // Edit Cart
   bool editCart = false;
+  bool isChecked = false;
 
   @override
   void initState() {
     super.initState();
+    loadCartItemsAndPhotos();
+    getTax();
+  }
+
+  Future<void> getTax() async {
+    gst = await UtilityFunction.retrieveTax('GST');
+    sst = await UtilityFunction.retrieveTax('SST');
+  }
+
+  Future<void> loadCartItemsAndPhotos() async {
+    try {
+      List<CartItem> items = await readCartItems();
+      setState(() {
+        cartItems = items;
+      });
+      await fetchProductPhotos();
+      calculateTotalAndSubTotal();
+    } catch (e) {
+      print('Error loading cart items and photos: $e');
+      // Handle error here, e.g., show error message to user
+    }
+  }
+
+  Future<List<CartItem>> readCartItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int id = prefs.getInt('id') ?? 0;
+
+    Database database = await DatabaseHelper.database;
+    String cartItemTableName = DatabaseHelper.cartItemTableName;
+    String condition = 'buyer_id = $id';
+    String order = 'created DESC';
+    String field = '*';
+
+    List<Map<String, dynamic>> queryResults =
+    await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
+
+    List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+    return cartItems;
+  }
+
+  Future<void> fetchProductPhotos() async {
+    List<List<String>> photosList = [];
+
+    for (CartItem item in cartItems) {
+      List<Map<String, dynamic>> photos = await getProductPhoto(item.productName);
+      List<String> imagePaths =
+      photos.map((photo) => photo['photo1'].toString()).toList(); // Ensure photo1 is string
+
+      photosList.add(imagePaths);
+    }
+
+    setState(() {
+      productPhotos = photosList;
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getProductPhoto(String productName) async {
+    try {
+      final conn = await connectToDatabase();
+      final results = await conn.query(
+        'SELECT photo1 FROM product WHERE status = 1 AND product_name LIKE ?',
+        ['%$productName%'],
+      );
+      await conn.close();
+
+      return results.map((row) => {'photo1': row['photo1']}).toList();
+    } catch (e) {
+      print('Error fetching product photo: $e');
+      return [];
+    }
+  }
+
+  Future<void> calculateTotalAndSubTotal() async {
+    double calculatedSubtotal = 0;
+
+    // Calculate total and subtotal based on cart items
+    for (CartItem item in cartItems) {
+      calculatedSubtotal += item.unitPrice * item.quantity;
+    }
+
+    // Calculate final total using fetched tax values
+    double finalTotal = calculatedSubtotal * (1 + gst + sst);
+
+    // Update state with calculated values
+    setState(() {
+      total = finalTotal;
+      subtotal = calculatedSubtotal;
+    });
+  }
+
+  Future<void> deleteSelectedCartItems() async {
+    try {
+      // Get the list of cart item IDs to be deleted
+      List<int?> cartItemIds = selectedCartItems.map((item) => item.id).toList();
+
+      // Open the database connection
+      Database database = await DatabaseHelper.database;
+
+      // Delete the selected cart items from the database
+      for (int? cartItemId in cartItemIds) {
+        await DatabaseHelper.deleteData(cartItemId, DatabaseHelper.cartItemTableName);
+      }
+
+      // Reload the cart items after deletion
+      await loadCartItemsAndPhotos();
+
+      // Clear the selected cart items list after successful deletion
+      setState(() {
+        selectedCartItems.clear();
+      });
+
+      // Show a success message or perform any other necessary actions
+      print('Selected cart items deleted successfully');
+    } catch (e) {
+      print('Error deleting selected cart items: $e');
+      // Handle error here, e.g., show error message to user
+    }
+  }
+
+  Future<void> updateItemQuantity(int? id, int quantity) async {
+    try {
+      int? itemId = id ?? 0; // Assuming itemId is not null, otherwise handle accordingly
+
+      Map<String, dynamic> updateData = {
+        'id': itemId,
+        'qty': quantity,
+      };
+
+      int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+      if (rowsAffected > 0) {
+        // Database update successful
+        print('Item quantity updated successfully');
+      } else {
+        // Handle database update failure
+        print('Failed to update item quantity');
+      }
+    } catch (e) {
+      print('Error updating item quantity: $e');
+    }
   }
 
   @override
@@ -44,15 +199,7 @@ class _CartPage extends State<CartPage> {
             ],
           ),
           child: AppBar(
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
+            automaticallyImplyLeading: false,
             title: const Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -72,12 +219,12 @@ class _CartPage extends State<CartPage> {
               TextButton(
                 onPressed: () {
                   setState(() {
-                    editCart = true;
+                    editCart = !editCart; // Toggle editCart state
                   });
                 },
-                child: const Text(
-                  'Edit Cart',
-                  style: TextStyle(
+                child: Text(
+                  editCart ? 'Done' : 'Edit', // Display 'Done' or 'Edit' based on editCart state
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                   ),
@@ -88,153 +235,290 @@ class _CartPage extends State<CartPage> {
           ),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
                   'Customer Details',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                customerSelected
-                    ? CustomerInfo(initialCustomer: customer)
-                    : _buildSelectCustomerCard(context),
-                const SizedBox(height: 32),
-                const Text(
+              ),
+              const SizedBox(height: 8),
+              customerSelected
+                  ? CustomerInfo(initialCustomer: customer!)
+                  : _buildSelectCustomerCard(context),
+              const SizedBox(height: 32),
+              const Padding(
+                padding: EdgeInsets.only(
+                  left: 8.0,
+                ),
+                child: Text(
                   'Cart',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (cartItems.isEmpty)
-                  const Card(
-                    elevation: 6,
-                    color: Color(0xffffffff),
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top: 16.0,
-                        bottom: 16.0,
-                        right: 72.0,
-                        left: 16.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'No products have been selected yet',
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+              ),
+              const SizedBox(height: 8),
+              // Display cart items dynamically
+              if (cartItems.isEmpty)
+                const Card(
+                  elevation: 6,
+                  color: Color(0xffffffff),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: 16.0,
+                      bottom: 16.0,
+                      right: 72.0,
+                      left: 16.0,
                     ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: cartItems.map((item) {
-                      return const Card(
-                        elevation: 6,
+                    child: Row(
+                      children: [
+                        Text(
+                          'No products have been selected yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: List.generate(cartItems.length, (index) {
+                    CartItem item = cartItems[index];
+                    List<String> itemPhotos = productPhotos.isNotEmpty ? productPhotos[index] : [];
+                    bool isSelected = selectedCartItems.contains(item);
+                    final currentQuantity = item.quantity ?? 1;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10.0),
+                      child: Card(
+                        elevation: 2,
                         color: Colors.white,
                         child: Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.only(
+                            top: 8.0,
+                            bottom: 8.0,
+                            left: 6.0,
+                            right: 2.0,
+                          ),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Left side: Placeholder for Image (Commented out for demo)
-                              // Container(
-                              //   width: 100,
-                              //   height: double.infinity,
-                              //   color: Colors.grey[300],
-                              // ),
-                              SizedBox(width: 8), // Spacer between image and text
-                              // Right side: Details Column
+                              if (editCart)  // Conditionally render checkbox if editCart is true
+                                Checkbox(
+                                  value: isSelected,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value != null && value) {
+                                        // Add the item to selectedCartItems when checkbox is checked
+                                        selectedCartItems.add(item);
+                                      } else {
+                                        // Remove the item from selectedCartItems when checkbox is unchecked
+                                        selectedCartItems.remove(item);
+                                      }
+                                    });
+                                  },
+                                ),
+                              SizedBox(
+                                width: 90,
+                                child: itemPhotos.isNotEmpty
+                                    ? Image.asset(
+                                  itemPhotos[0],
+                                  height: 90,
+                                  width: 90,
+                                  fit: BoxFit.cover,
+                                )
+                                    : Image.asset(
+                                  'asset/no_image.jpg',
+                                  height: 90,
+                                  width: 90,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Item name (bold) - Placeholder
-                                    Text(
-                                      'Demo Product Name',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          width: 160,
+                                          child: Text(
+                                            item.productName,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis, // Overflow handling
+                                            maxLines: 3, // Allow up to 2 lines of text
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          onPressed: () async {
+                                            final updatedPrice = await Navigator.push<double?>(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => EditItemPage(
+                                                  itemId: item.id,
+                                                  itemName: item.productName,
+                                                  itemUom: item.uom,
+                                                  itemPhoto: itemPhotos.isNotEmpty ? itemPhotos[0] : '',
+                                                  itemPrice: item.unitPrice,
+                                                ),
+                                              ),
+                                            );
+
+                                            if (updatedPrice != null) {
+                                              setState(() {
+                                                item.unitPrice = updatedPrice;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(height: 4),
-                                    // Variant of the product selected - Placeholder
+                                    const SizedBox(height: 4),
                                     Text(
-                                      'Variant: Demo Variant',
-                                      style: TextStyle(
+                                      'Variant: ${item.uom}',
+                                      style: const TextStyle(
                                         fontSize: 14,
                                       ),
                                     ),
-                                    SizedBox(height: 4),
-                                    // Price of the item - Placeholder
-                                    Text(
-                                      'Price: \$99.99',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                      ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // Display the item price
+                                        Container(
+                                          width: 100,
+                                          child: Text(
+                                            'RM${(item.unitPrice * (item.quantity ?? 1)).toStringAsFixed(3)}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        // Group for quantity controls (IconButton and TextField)
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              iconSize: 28,
+                                              onPressed: () {
+                                                // Decrement quantity when minus button is pressed
+                                                if (currentQuantity > 1) {
+                                                  setState(() {
+                                                    item.quantity = currentQuantity - 1;
+                                                    updateItemQuantity(item.id, item.quantity);
+                                                    calculateTotalAndSubTotal();
+                                                  });
+                                                }
+                                              },
+                                              icon: const Icon(Icons.remove),
+                                            ),
+                                            Container(
+                                              width: 20, // Adjust the width of the TextField container
+                                              child: TextField(
+                                                textAlign: TextAlign.center,
+                                                keyboardType: TextInputType.number,
+                                                controller: TextEditingController(text: currentQuantity.toString()),
+                                                onChanged: (value) {
+                                                  final newValue = int.tryParse(value);
+                                                  if (newValue != null) {
+                                                    setState(() {
+                                                      item.quantity = newValue;
+                                                      updateItemQuantity(item.id, item.quantity);
+                                                      calculateTotalAndSubTotal();
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                            ),
+                                            IconButton(
+                                              iconSize: 28,
+                                              onPressed: () {
+                                                // Increment quantity when plus button is pressed
+                                                setState(() {
+                                                  item.quantity = currentQuantity + 1;
+                                                  updateItemQuantity(item.id, item.quantity);
+                                                  calculateTotalAndSubTotal();
+                                                });
+                                              },
+                                              icon: const Icon(Icons.add),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(height: 8),
                                   ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    );
+                  }),
                 ),
-              ],
-            ),
+            ],
           ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(16.0),
+        ),
+      ),
+      bottomNavigationBar: const CustomNavigationBar(),
+      persistentFooterButtons: [
+        Padding(
+          padding: const EdgeInsets.all(1.0),
+          child: Container(
+            padding: const EdgeInsets.only(
+              left: 8.0,
+              top: 4.0,
+            ),
+            margin: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 1,
-                  color: Colors.black.withOpacity(0.25),
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                ),
-                // Total and Subtotal Row
                 Row(
                   children: [
-                    // Container for Total and Subtotal
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width - 160, // Adjust width as needed
-                      child: const Column(
+                    Expanded(
+                      child: editCart
+                          ? Text(
+                        '${selectedCartItems.length} item(s) selected',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                          : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Total Text
                           Text(
-                            'Total: RM89.000',
-                            style: TextStyle(
+                            'Total: RM${total.toStringAsFixed(3)}',
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          // Subtotal Text
+                          const SizedBox(height: 4),
                           Text(
-                            'Subtotal: RM89.000',
-                            style: TextStyle(
+                            'Subtotal: RM${subtotal.toStringAsFixed(3)}',
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -242,13 +526,65 @@ class _CartPage extends State<CartPage> {
                         ],
                       ),
                     ),
-                    Expanded(
-                      child: ElevatedButton(
+                    if (editCart)
+                      ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const OrderConfirmationPage()),
-                          );
+                          if (selectedCartItems.isNotEmpty) {
+                            deleteSelectedCartItems();
+                          } else {
+                            // Handle case where no items are selected
+                            print('No items selected for deletion');
+                          }
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5.0),
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                    if (!editCart)
+                      ElevatedButton(
+                        onPressed: () {
+                          if (customer != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrderConfirmationPage(
+                                  customer: customer!,
+                                  total: total,
+                                  subtotal: subtotal,
+                                ),
+                              ),
+                            );
+                          } else {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Customer Not Selected'),
+                                  content: const Text('Please select a customer before proceeding.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close the dialog
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }
                         },
                         style: ButtonStyle(
                           backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
@@ -256,6 +592,9 @@ class _CartPage extends State<CartPage> {
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
+                          ),
+                          minimumSize: MaterialStateProperty.all<Size>(
+                            const Size(120, 40), // Adjust the minimum width and height of the button
                           ),
                         ),
                         child: const Text(
@@ -266,20 +605,13 @@ class _CartPage extends State<CartPage> {
                           ),
                         ),
                       ),
-                    ),
                   ],
-                ),
-                // Separator Line
-                Container(
-                  height: 1,
-                  color: Colors.black.withOpacity(0.25),
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -302,7 +634,7 @@ class _CartPage extends State<CartPage> {
       },
       child: const Card(
         color: Colors.white,
-        elevation: 6,
+        elevation: 4,
         child: ListTile(
           title: Text('Select Customer'),
         ),
@@ -414,69 +746,3 @@ class _CustomerInfoState extends State<CustomerInfo> {
     );
   }
 }
-
-// class CustomerSection extends StatefulWidget {
-//   final Customer customer; // Parameter to receive Customer object
-//
-//   const CustomerSection({
-//     Key? key,
-//     required this.customer,
-//   }) : super(key: key);
-//
-//   @override
-//   State<CustomerSection> createState() => _CustomerSectionState();
-// }
-//
-// class _CustomerSectionState extends State<CustomerSection> {
-//   late Customer _customer; // Local variable to store customer data
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _customer = widget.customer; // Initialize local variable with received customer
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Customer Details'),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(
-//               'Name: ${_customer.username}',
-//               style: TextStyle(fontSize: 18),
-//             ),
-//             Text(
-//               'Address: ${_customer.addressLine1}',
-//               style: TextStyle(fontSize: 18),
-//             ),
-//             Text(
-//               'Phone: ${_customer.contactNumber}',
-//               style: TextStyle(fontSize: 18),
-//             ),
-//             Text(
-//               'Email: ${_customer.email}',
-//               style: TextStyle(fontSize: 18),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class CartSection extends StatefulWidget {
-//   final List<CartItem> cartItems;
-//
-//   const CartSection({
-//     Key? key,
-//   }) : super(key: key);
-//
-//   @override
-//   State<CustomerSection> createState() => _CustomerSectionState();
-// }
