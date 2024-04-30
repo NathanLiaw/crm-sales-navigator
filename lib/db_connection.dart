@@ -4,15 +4,15 @@ import 'dart:convert';
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
     host: '10.0.2.2',
-    port: 3306, // Default MySQL port
+    port: 3306,
     user: 'root',
-    password: '901022',
+    password: '',
     db: 'fyh',
   );
 
   try {
     final conn = await MySqlConnection.connect(settings);
-    await Future.delayed(Duration(seconds: 1));  
+    await Future.delayed(const Duration(seconds: 1));
     print('Connected to MySQL database');
     return conn;
   } catch (e) {
@@ -49,7 +49,7 @@ Future<List<Map<String, dynamic>>> readData(
     // Convert Blob to string if necessary
     rowMap.forEach((key, value) {
       if (value is Blob) {
-        final blob = value as Blob;
+        final blob = value;
         // Convert Blob data to List<int>
         final bytes = blob.toString().codeUnits;
         // Decode bytes to String
@@ -59,7 +59,8 @@ Future<List<Map<String, dynamic>>> readData(
 
       // Convert DateTime to String
       if (value is DateTime) {
-        final dateString = value.toString(); // Using toString() to get default format
+        final dateString =
+            value.toString(); // Using toString() to get default format
         rowMap[key] = dateString;
       }
     });
@@ -69,7 +70,8 @@ Future<List<Map<String, dynamic>>> readData(
   return results;
 }
 
-Future<int> countData(MySqlConnection connection, String tableName, String condition) async {
+Future<int> countData(
+    MySqlConnection connection, String tableName, String condition) async {
   String sqlQuery = '';
 
   if (condition.isNotEmpty) {
@@ -77,7 +79,8 @@ Future<int> countData(MySqlConnection connection, String tableName, String condi
   }
 
   try {
-    final queryResult = await connection.query('SELECT COUNT(*) AS count FROM $tableName $sqlQuery');
+    final queryResult = await connection
+        .query('SELECT COUNT(*) AS count FROM $tableName $sqlQuery');
     final rowCount = queryResult.first['count'] as int;
     return rowCount;
   } catch (e) {
@@ -86,7 +89,8 @@ Future<int> countData(MySqlConnection connection, String tableName, String condi
   }
 }
 
-Future<Map<String, dynamic>> readFirst(MySqlConnection connection, String tableName, String condition, String order) async {
+Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
+    String tableName, String condition, String order) async {
   String sqlQuery = '';
   String sqlOrder = '';
 
@@ -99,7 +103,8 @@ Future<Map<String, dynamic>> readFirst(MySqlConnection connection, String tableN
   }
 
   try {
-    final queryResult = await connection.query('SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1');
+    final queryResult = await connection
+        .query('SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1');
     if (queryResult.isNotEmpty) {
       return Map<String, dynamic>.from(queryResult.first.fields);
     } else {
@@ -111,9 +116,11 @@ Future<Map<String, dynamic>> readFirst(MySqlConnection connection, String tableN
   }
 }
 
-Future<bool> saveData(MySqlConnection connection, String tableName, Map<String, dynamic> data) async {
+Future<bool> saveData(MySqlConnection connection, String tableName,
+    Map<String, dynamic> data) async {
   try {
-    final columnsResult = await connection.query('SHOW COLUMNS FROM $tableName');
+    final columnsResult =
+        await connection.query('SHOW COLUMNS FROM $tableName');
     final columns = columnsResult.map((row) => row['Field'] as String).toList();
 
     final List<String> filteredColumns = [];
@@ -127,13 +134,15 @@ Future<bool> saveData(MySqlConnection connection, String tableName, Map<String, 
     }
 
     final String strColumns = filteredColumns.join(', ');
-    final String placeholders = List.filled(filteredColumns.length, '?').join(', ');
+    final String placeholders =
+        List.filled(filteredColumns.length, '?').join(', ');
 
     String sql;
     List<dynamic> params;
     if (data.containsKey('id')) {
       final id = data['id'];
-      final List<String> updates = filteredColumns.map((column) => '$column = ?').toList();
+      final List<String> updates =
+          filteredColumns.map((column) => '$column = ?').toList();
       final String strUpdates = updates.join(', ');
       sql = 'UPDATE $tableName SET $strUpdates WHERE id = ?';
       params = [...filteredValues, id];
@@ -150,7 +159,8 @@ Future<bool> saveData(MySqlConnection connection, String tableName, Map<String, 
   }
 }
 
-Future<bool> deleteData(MySqlConnection connection, String tableName, String condition) async {
+Future<bool> deleteData(
+    MySqlConnection connection, String tableName, String condition) async {
   String sqlQuery = '';
 
   if (condition.isNotEmpty) {
@@ -167,5 +177,19 @@ Future<bool> deleteData(MySqlConnection connection, String tableName, String con
   } catch (e) {
     print('Error deleting data: $e');
     return false;
+  }
+}
+
+Future<List<Map<String, dynamic>>> executeQuery(String query) async {
+  MySqlConnection? conn;
+  try {
+    conn = await connectToDatabase();
+    var results = await conn.query(query);
+    return results.map((row) => row.fields).toList();
+  } catch (e) {
+    print('Error executing query: $e');
+    rethrow;
+  } finally {
+    await conn?.close();
   }
 }

@@ -281,7 +281,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 260),
+                const SizedBox(width: 330),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   child: Column(
