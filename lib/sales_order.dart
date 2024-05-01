@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_navigator/Components/customer_navigation_bar.dart';
+import 'package:sales_navigator/order_details_page.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -53,7 +54,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     final prefs = await SharedPreferences.getInstance();
     loggedInUsername = prefs.getString('username') ?? '';
   }
-
 
 Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
   setState(() => isLoading = true);
@@ -136,23 +136,19 @@ $orderByClause;
   }
 }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Sales Order',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+          ),
         ),
         backgroundColor: const Color(0xFF004C87),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: Colors.white,
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: <Widget>[
@@ -160,6 +156,7 @@ $orderByClause;
           Expanded(child: _buildSalesOrderList()),
         ],
       ),
+      bottomNavigationBar: CustomNavigationBar(),
     );
   }
 
@@ -374,15 +371,13 @@ Widget _buildSalesOrderList() {
         creationDate: firstItem['created_date'] != null
               ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
               : DateTime.now(),
-        amount: '${firstItem['final_total']?.toStringAsFixed(2) ?? '0.00'}',
+        amount: '${firstItem['final_total']?.toStringAsFixed(3) ?? '0.00'}',
         status: firstItem['status'] ?? 'Unknown Status',
         items: items,
       );
     },
   );
 }
-
-
 
 Widget _buildSalesOrderItem({
   required int index,
@@ -434,104 +429,113 @@ Widget _buildSalesOrderItem({
   }
 
   String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
-
-return Card(
-  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-  elevation: 4,
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Stack(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  int orderId = int.parse(orderNumber);
+  return GestureDetector(
+    onTap: () {
+      // Navigate to OrderDetails screen here
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => OrderDetailsPage(cartID: orderId)),
+      );
+    },
+    child: Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      elevation: 4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Stack(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${index + 1}. $formattedOrderNumber',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${index + 1}. $formattedOrderNumber',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      companyName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'RM $amount',
+                                      style: const TextStyle(
+                                        color: Color.fromARGB(255, 76, 175, 80),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  companyName,
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'RM $amount',
-                                  style: const TextStyle(
-                                    color: Color.fromARGB(255, 76, 175, 80),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  right: 6,
+                  child: getStatusLabel(status),
                 ),
               ],
             ),
-            Positioned(
-              right: 6,
-              child: getStatusLabel(status),
+          ),
+          ExpansionTile(
+            title: const Text(
+              'Items',
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
-          ],
-        ),
-      ),
-      ExpansionTile(
-        title: const Text(
-          'Items',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        children: items
-            .map((item) => Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${item['product_name']} ${item['uom']} X${item['qty']}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Color.fromARGB(255, 0, 0, 0),
+            children: items
+                .map((item) => Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${item['product_name']} ${item['uom']} X${item['qty']}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Color.fromARGB(255, 0, 0, 0),
+                              ),
+                            ),
                           ),
-                        ),
+                          IconButton(
+                            icon: const Icon(Icons.copy),
+                            onPressed: () {},
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ))
-            .toList(),
+                    ))
+                .toList(),
+          ),
+        ],
       ),
-    ],
-  ),
-);
+    ),
+  );
 }
 }

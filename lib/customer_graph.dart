@@ -86,7 +86,10 @@ ORDER BY
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          padding: EdgeInsets.only(
+            top: 16.0,
+            left: 16.0,
+          ),
           child: Text(
             'Top Customers',
             style: TextStyle(

@@ -30,20 +30,21 @@ class SalesReport extends StatefulWidget {
 class _SalesReportState extends State<SalesReport> {
   final Map<String, List<SalesData>> _salesDataMap = {};
   String _selectedInterval = 'Weekly';
-  String loggedInUsername = '';  // Add a variable to hold the username
+  String loggedInUsername = ''; // Add a variable to hold the username
 
   @override
   void initState() {
     super.initState();
     _loadUsername().then((_) {
-      _preloadData();  // Load data after username is fetched
+      _preloadData(); // Load data after username is fetched
     });
   }
 
   Future<void> _loadUsername() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      loggedInUsername = prefs.getString('username') ?? 'default_username';  // Default username if not found
+      loggedInUsername = prefs.getString('username') ??
+          'default_username'; // Default username if not found
     });
   }
 
@@ -196,11 +197,9 @@ ORDER BY
       appBar: AppBar(
         title: const Text(
           'Sales Report',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold),
-          
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        automaticallyImplyLeading: false,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -227,42 +226,43 @@ ORDER BY
       body: _salesDataMap[_selectedInterval] != null
           ? _salesDataMap[_selectedInterval]!.isNotEmpty
               ? Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-  child: Align(
-    alignment: Alignment.center,
-    child: ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.95,
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-        height: MediaQuery.of(context).size.height * 0.52,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: LineChart(
-          sampleData(_salesDataMap[_selectedInterval]!),
-        ),
-      ),
-    ),
-  ),
-)
-
+                  padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.95,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 24, horizontal: 18),
+                        height: MediaQuery.of(context).size.height * 0.52,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 2,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: LineChart(
+                          sampleData(_salesDataMap[_selectedInterval]!),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
               : const Center(
                   child: Text('No data available'),
                 )
           : const Center(
               child: CircularProgressIndicator(),
             ),
+
     );
   }
 
@@ -289,18 +289,17 @@ ORDER BY
       ),
       titlesData: FlTitlesData(
         leftTitles: SideTitles(
-  showTitles: true,
-  getTitles: (value) {
-
-    if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)}K';
-    } else {
-      return value.toInt().toString();
-    }
-  },
-  interval: maxY / 6, 
-  reservedSize: 40,
-),
+          showTitles: true,
+          getTitles: (value) {
+            if (value >= 1000) {
+              return '${(value / 1000).toStringAsFixed(1)}K';
+            } else {
+              return value.toInt().toString();
+            }
+          },
+          interval: maxY / 6,
+          reservedSize: 40,
+        ),
         bottomTitles: SideTitles(
           showTitles: true,
           getTitles: (value) {

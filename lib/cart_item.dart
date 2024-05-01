@@ -11,8 +11,8 @@ class CartItem {
   final double originalUnitPrice;
   double unitPrice;
   final double total;
-  final String cancel;
-  final String remark;
+  final String? cancel;
+  final String? remark;
   final String status;
   final DateTime created;
   final DateTime modified;

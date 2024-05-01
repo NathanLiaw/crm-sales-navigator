@@ -1,8 +1,12 @@
+import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/order_submitted_page.dart';
+import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
@@ -11,13 +15,15 @@ class OrderConfirmationPage extends StatefulWidget {
   final Customer customer;
   final double total;
   final double subtotal;
+  final List<CartItem> cartItems;
 
   const OrderConfirmationPage({
-    Key? key,
+    super.key,
     required this.customer,
     required this.total,
     required this.subtotal,
-  }) : super(key: key);
+    required this.cartItems,
+  });
 
   @override
   State<OrderConfirmationPage> createState() => _OrderConfirmationPageState();
@@ -58,6 +64,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     String name = prefs.getString('salesmanName') ?? '';
     int areaId = prefs.getInt('area') ?? 0;
     int id = prefs.getInt('id') ?? 0;
+    String stringOrderOptions = '["' + orderOptions.join('","') + '"]';
 
     try {
       MySqlConnection conn = await connectToDatabase();
@@ -65,6 +72,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       // Retrieve tax values asynchronously
       double gst = await UtilityFunction.retrieveTax('GST');
       double sst = await UtilityFunction.retrieveTax('SST');
+      String areaName = await UtilityFunction.getAreaNameById(areaId);
 
       // Calculate final total using fetched tax values
       double finalTotal = widget.subtotal * (1 + gst + sst);
@@ -80,10 +88,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'final_total': widget.subtotal,
         'total': finalTotal,
         'remark': remark,
-        'order_option': orderOptions,
+        'order_option': stringOrderOptions,
         'buyer_user_group': 'salesman',
         'buyer_area_id': areaId,
-        'buyer_area_name': UtilityFunction.getAreaNameById(areaId),
+        'buyer_area_name': areaName,
         'buyer_id': id,
         'buyer_name': name,
         'customer_id': widget.customer.id,
@@ -109,6 +117,79 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     } catch (e) {
       print('Error creating cart: $e');
     }
+  }
+
+  Future<void> completeCart() async {
+    try {
+      MySqlConnection conn = await connectToDatabase();
+      int cartId = await fetchSalesOrderId();
+      for (CartItem item in widget.cartItems) {
+        // Prepare data to insert into the cart_item table
+        Map<String, dynamic> data = {
+          'cart_id': cartId,
+          'buyer_id': item.buyerId,
+          'customer_id': item.customerId,
+          'product_id': item.productId,
+          'product_name': item.productName,
+          'uom': item.uom,
+          'qty': item.quantity,
+          'discount': item.discount,
+          'ori_unit_price': item.originalUnitPrice,
+          'unit_price': item.unitPrice,
+          'total': item.total,
+          'cancel': item.cancel,
+          'remark': item.remark,
+          'status': 'in progress',
+          'created': item.created.toUtc(),
+          'modified': item.modified.toUtc(),
+        };
+
+        // Save the data into the database
+        bool saved = await saveData(conn, 'cart_item', data);
+
+        Map<String, dynamic> updateData = {
+          'id': item.id,
+          'status': 'Confirm',
+        };
+
+        int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+        if (rowsAffected > 0) {
+          // Database update successful
+          print('Item status updated successfully');
+        }
+
+        if (saved) {
+          print('Item inserted successfully');
+        } else {
+          print('Failed to insert item');
+        }
+      }
+    } catch (e) {
+      print('Error inserting item: $e');
+    }
+  }
+
+  Future<int> fetchSalesOrderId() async {
+    int salesOrderId = 0;
+
+    try {
+      MySqlConnection conn = await connectToDatabase();
+      final result = await readFirst(conn, 'cart', '', 'id DESC'); // Order by id in descending order
+
+      if (result.isNotEmpty) {
+        // Extract the 'id' field from the first row of the result
+        salesOrderId = result['id'] as int;
+      } else {
+        // Handle case where no rows are found
+        print('No sales order ID found in the cart table.');
+      }
+
+      await conn.close(); // Close the database connection
+    } catch (e) {
+      print("Error retrieving sales order ID: $e");
+    }
+
+    return salesOrderId;
   }
 
   @override
@@ -218,7 +299,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                         style: const TextStyle(color: Colors.purple, decoration: TextDecoration.underline),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.pushReplacementNamed(context, 'terms_and_conditions_page');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TermsandConditions(),
+                              ),
+                            );
                           },
                       ),
                       const TextSpan(text: '.'),
@@ -247,16 +333,47 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 children: [
                   Text(
                     'Total: RM${widget.total.toStringAsFixed(3)}',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                   Text(
                     'Subtotal: RM${widget.subtotal.toStringAsFixed(3)}',
-                    style: TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ],
               ),
               ElevatedButton(
-                onPressed: createCart,
+                onPressed: () async{
+                  if (agreedToTerms){
+                    await createCart();
+                    await completeCart();
+                    remarkController.clear();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OrderSubmittedPage(),
+                      ),
+                    );
+                  }
+                  else {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Terms and Conditions'),
+                          content: const Text('Please agree to the terms and conditions before proceeding.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff004c87)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(

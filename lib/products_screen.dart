@@ -224,6 +224,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ],
             ),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -281,7 +282,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 330),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   child: Column(

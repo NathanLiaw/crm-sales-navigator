@@ -17,7 +17,8 @@ class HomePage extends StatelessWidget {
           String salesmanName = snapshot.data!;
           return Scaffold(
             appBar: AppBar(
-              backgroundColor: Color(0xff0069BA),
+              automaticallyImplyLeading: false,
+              backgroundColor: Color(0xff004c87),
               title: Text(
                 'Welcome, $salesmanName',
                 style: TextStyle(color: Colors.white),

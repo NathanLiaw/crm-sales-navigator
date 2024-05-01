@@ -90,17 +90,25 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Top Selling Products',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold),
+        title: Padding(
+          padding: const EdgeInsets.only(
+            left: 0.0,
+            top: 28.0,
+            bottom: 16.0,
+          ),
+          child: const Text(
+            'Top Selling Products',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold),
+          ),
         ),
+        automaticallyImplyLeading: false,
         centerTitle: false,
       ),
       body: products.isNotEmpty
           ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.9,
                 decoration: BoxDecoration(

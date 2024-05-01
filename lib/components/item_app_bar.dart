@@ -20,13 +20,6 @@ class ItemAppBar extends StatelessWidget {
           IconButton(
               onPressed: () {},
               icon: const Icon(
-                Icons.shopping_cart_outlined,
-                color: Colors.white,
-                size: 30,
-              )),
-          IconButton(
-              onPressed: () {},
-              icon: const Icon(
                 Icons.notifications_none_outlined,
                 color: Colors.white,
                 size: 30,

@@ -70,7 +70,7 @@ class _CartPage extends State<CartPage> {
 
     Database database = await DatabaseHelper.database;
     String cartItemTableName = DatabaseHelper.cartItemTableName;
-    String condition = 'buyer_id = $id';
+    String condition = 'buyer_id = $id AND status = "in progress"';
     String order = 'created DESC';
     String field = '*';
 
@@ -273,7 +273,7 @@ class _CartPage extends State<CartPage> {
               if (cartItems.isEmpty)
                 const Card(
                   elevation: 6,
-                  color: Color(0xffffffff),
+                  color: Colors.white,
                   child: Padding(
                     padding: EdgeInsets.only(
                       top: 16.0,
@@ -355,16 +355,18 @@ class _CartPage extends State<CartPage> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Container(
-                                          width: 160,
-                                          child: Text(
-                                            item.productName,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
+                                        Flexible(
+                                          child: Container(
+                                            width: 200,
+                                            child: Text(
+                                              item.productName,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              overflow: TextOverflow.ellipsis, // Overflow handling
+                                              maxLines: 3, // Allow up to 3 lines of text
                                             ),
-                                            overflow: TextOverflow.ellipsis, // Overflow handling
-                                            maxLines: 3, // Allow up to 2 lines of text
                                           ),
                                         ),
                                         IconButton(
@@ -394,7 +396,7 @@ class _CartPage extends State<CartPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Variant: ${item.uom}',
+                                      item.uom,
                                       style: const TextStyle(
                                         fontSize: 14,
                                       ),
@@ -472,6 +474,7 @@ class _CartPage extends State<CartPage> {
                               ),
                             ],
                           ),
+
                         ),
                       ),
                     );
@@ -563,6 +566,7 @@ class _CartPage extends State<CartPage> {
                                   customer: customer!,
                                   total: total,
                                   subtotal: subtotal,
+                                  cartItems: cartItems,
                                 ),
                               ),
                             );

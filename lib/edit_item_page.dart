@@ -43,7 +43,7 @@ class _EditItemPageState extends State<EditItemPage> {
 
   Future<void> updateItemPrice(double newPrice) async {
     try {
-      int itemId = widget.itemId ?? 0; // Assuming itemId is not null, otherwise handle accordingly
+      int itemId = widget.itemId ?? 0;
 
       Map<String, dynamic> updateData = {
         'id': itemId,
@@ -55,7 +55,12 @@ class _EditItemPageState extends State<EditItemPage> {
         // Database update successful
         print('Item price updated successfully');
         setState(() {
-          originalPrice = newPrice;
+          if (newPrice >= 0.00) {
+            originalPrice = newPrice;
+          }
+          else {
+            originalPrice = 0.00;
+          }
         });
       } else {
         // Handle database update failure
@@ -168,6 +173,7 @@ class _EditItemPageState extends State<EditItemPage> {
                             height: 36.0,
                             child: TextField(
                               controller: priceController,
+                              keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: (originalPrice).toStringAsFixed(3),
                                 contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
@@ -194,6 +200,7 @@ class _EditItemPageState extends State<EditItemPage> {
                             height: 36.0,
                             child: TextField(
                               controller: discountController,
+                              keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 hintText: '0%',
                                 contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
