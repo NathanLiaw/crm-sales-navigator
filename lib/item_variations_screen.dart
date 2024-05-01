@@ -39,6 +39,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           'Item Variations',
           style: GoogleFonts.inter(
@@ -87,7 +88,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                               color: const Color.fromARGB(255, 0, 76, 135),
                             ),
                           ),
-                          child: Image.asset(
+                          child: Image.network(
                             widget.itemAssetName,
                             height: 118,
                             width: 118,

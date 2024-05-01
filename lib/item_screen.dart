@@ -121,7 +121,7 @@ class _ItemScreenState extends State<ItemScreen> {
             ),
             child: CachedNetworkImage(
               imageUrl: widget.itemAssetNames[_selectedImageIndex],
-              height: 466,
+              height: 446,
               placeholder: (context, url) => CircularProgressIndicator(),
               errorWidget: (context, url, error) => Icon(Icons.error_outline),
             ),
@@ -138,6 +138,11 @@ class _ItemScreenState extends State<ItemScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: widget.itemAssetNames.length,
               itemBuilder: (context, index) {
+                final assetName = widget.itemAssetNames[index];
+                if (assetName == 'https://haluansama.com/crm-sales/null') {
+                  return SizedBox
+                      .shrink(); // Return an empty container if the asset name is null
+                }
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -147,7 +152,7 @@ class _ItemScreenState extends State<ItemScreen> {
                   child: Container(
                     margin: EdgeInsets.symmetric(horizontal: 8),
                     child: Image.network(
-                      widget.itemAssetNames[index],
+                      assetName,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -191,9 +196,9 @@ class _ItemScreenState extends State<ItemScreen> {
                 ),
                 Spacer(),
                 IconButton(
-                  iconSize: 38,
+                  iconSize: 40,
                   onPressed: () {},
-                  icon: const Icon(Icons.thumb_up_alt_outlined),
+                  icon: const Icon(Icons.shortcut_sharp),
                 ),
               ],
             ),
@@ -230,7 +235,7 @@ class _ItemScreenState extends State<ItemScreen> {
                       return ItemVariationsScreen(
                         productId: widget.productId,
                         productName: widget.productName,
-                        itemAssetName: widget.itemAssetNames[1],
+                        itemAssetName: widget.itemAssetNames[0],
                         priceByUom: _priceDataByArea,
                       );
                     }),
@@ -308,7 +313,6 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: ItemBottomNavBar(),
     );
   }
 }

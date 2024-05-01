@@ -25,9 +25,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
   String searchQuery = '';
   static int? _selectedBrandId;
   int? _selectedSubCategoryId;
+  List<int> _selectedSubCategoryIds = [];
   String _currentSortOrder = 'By Name (A to Z)';
   int _currentPage = 1;
   int _totalPages = 1;
+  int _selectedTabIndex = 0;
+  bool _isFeatured = false;
 
   Future<int> _getTotalPages() async {
     try {
@@ -103,6 +106,33 @@ class _ProductsScreenState extends State<ProductsScreen> {
     } catch (e) {
       print('Error fetching area: $e');
     }
+  }
+
+  void _updateSelectedTab(int index) {
+    setState(() {
+      _selectedTabIndex = index;
+      switch (index) {
+        case 0:
+          _isFeatured = false;
+          _selectedBrandId = null;
+          _selectedSubCategoryId = null;
+          _currentSortOrder = 'By Name (A to Z)';
+
+          break;
+        case 1:
+          _isFeatured = true;
+          _selectedBrandId = null;
+          _selectedSubCategoryId = null;
+
+          break;
+        case 2:
+          _isFeatured = false;
+          _selectedBrandId = null;
+          _selectedSubCategoryId = null;
+          _currentSortOrder = 'Uploaded Date (New to Old)';
+          break;
+      }
+    });
   }
 
   @override
@@ -206,17 +236,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ),
         child: Column(
           children: [
-            SizedBox(height: 10),
+            SizedBox(height: 2),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CategoryButton(
-                  buttonnames: 'All Products',
+                  buttonnames: 'Most Popular',
                   onTap: () {
                     setState(() {
+                      _isFeatured = false;
                       _selectedBrandId = null;
-                      _selectedSubCategoryId =
-                          null; // Reset the brand ID to show all products
+                      _selectedSubCategoryId = null;
+                      _currentSortOrder = 'Most Popular in 3 Months';
+                      // Reset the brand ID to show all products
                     });
                   },
                 ),
@@ -252,93 +284,144 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
               ],
             ),
-            Row(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Column(
-                    children: [
-                      IconButton(
-                        iconSize: 38,
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Container(
-                                height: 380,
-                                width: double.infinity,
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      child: Text(
-                                        'Sort',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    SortPopUp(
-                                      onSortChanged: (newSortOrder) {
-                                        setState(() {
-                                          _currentSortOrder =
-                                              newSortOrder; // Update the sort order
-                                        });
-                                        Navigator.pop(
-                                            context); // Close the bottom sheet
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
-                        icon: const Icon(Icons.sort),
-                      ),
-                      Text(
-                        'Sort',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: const Color.fromARGB(255, 25, 23, 49),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 330),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Column(
-                    children: [
-                      IconButton(
-                        iconSize: 38,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => FilterCategoriesScreen()),
-                          );
-                        },
-                        icon: const Icon(Icons.filter_alt),
-                      ),
-                      Text(
-                        'Filter',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: const Color.fromARGB(255, 25, 23, 49),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ],
+            Divider(
+              color: Color.fromARGB(255, 0, 76, 135),
             ),
+            SizedBox(
+              height: 24,
+              width: 316,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Container(
+                              height: 380,
+                              width: double.infinity,
+                              child: Column(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    child: Text(
+                                      'Sort',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  SortPopUp(
+                                    onSortChanged: (newSortOrder) {
+                                      setState(() {
+                                        _currentSortOrder =
+                                            newSortOrder; // Update the sort order
+                                      });
+                                      Navigator.pop(
+                                          context); // Close the bottom sheet
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.sort),
+                            SizedBox(width: 4),
+                            Text(
+                              'Sort',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: const Color.fromARGB(255, 25, 23, 49),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 48,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  VerticalDivider(
+                    color: Colors.grey,
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final selectedSubCategoryIds = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FilterCategoriesScreen(
+                              initialSelectedSubCategoryIds:
+                                  _selectedSubCategoryIds,
+                            ),
+                          ),
+                        );
+                        if (selectedSubCategoryIds != null) {
+                          setState(() {
+                            _selectedSubCategoryIds =
+                                selectedSubCategoryIds as List<int>;
+                          });
+                        } else {
+                          setState(() {
+                            _selectedSubCategoryIds =
+                                []; // Set _selectedSubCategoryIds to an empty list
+                          });
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 48,
+                            ),
+                            Icon(Icons.filter_alt),
+                            SizedBox(width: 4),
+                            Text(
+                              'Filter',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: const Color.fromARGB(255, 25, 23, 49),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(
+              color: Color.fromARGB(255, 0, 76, 135),
+            ),
+
+            Container(
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (index) => _buildTab(index)),
+              ),
+            ),
+
+            //tab bar
+
             Flexible(
               child: SingleChildScrollView(
                 child: FutureBuilder<int>(
@@ -359,6 +442,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         ItemsWidget(
                           brandId: _selectedBrandId,
                           subCategoryId: _selectedSubCategoryId,
+                          subCategoryIds: _selectedSubCategoryIds,
+                          isFeatured: _isFeatured,
                           sortOrder: _currentSortOrder,
                           currentPage: _currentPage,
                           totalPages: _totalPages,
@@ -368,6 +453,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5.0),
+                                  ),
+                                  backgroundColor:
+                                      const Color.fromARGB(255, 4, 108, 169),
+                                  foregroundColor: Colors.white),
                               onPressed: _currentPage > 1
                                   ? () {
                                       setState(() {
@@ -381,6 +473,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             Text('Page $_currentPage of $_totalPages'),
                             SizedBox(width: 16),
                             ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5.0),
+                                  ),
+                                  backgroundColor:
+                                      const Color.fromARGB(255, 4, 108, 169),
+                                  foregroundColor: Colors.white),
                               onPressed: _currentPage < _totalPages
                                   ? () {
                                       setState(() {
@@ -392,7 +491,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height:16)
+                        SizedBox(height: 16)
                       ],
                     );
                   },
@@ -400,6 +499,40 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTab(int index) {
+    // Define the tab names
+    List<String> tabNames = [
+      'All products',
+      'Featured products',
+      'New products'
+    ];
+
+    // Determine if the tab is selected
+    bool isSelected = _selectedTabIndex == index;
+
+    // Define the style for the selected and unselected tabs
+    return GestureDetector(
+      onTap: () => _updateSelectedTab(index),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 250),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color.fromARGB(255, 12, 119, 206)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          tabNames[index],
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

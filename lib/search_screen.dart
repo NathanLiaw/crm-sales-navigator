@@ -90,7 +90,7 @@ class _SearchScreenState extends State<SearchScreen> {
         'product',
         'status = 1 AND product_name = "$selectedProductName"',
         '',
-        'id, product_name, photo1, description, sub_category, price_by_uom',
+        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
 
       if (productData.isNotEmpty) {
@@ -98,9 +98,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        String itemAssetName = product['photo1'];
+        String itemAssetName1 = product['photo1'];
+        String? itemAssetName2 = product['photo2'];
+        String? itemAssetName3 = product['photo3'];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
+
+        final photoUrl1 = "https://haluansama.com/crm-sales/$itemAssetName1";
+        final photoUrl2 = "https://haluansama.com/crm-sales/$itemAssetName2";
+        final photoUrl3 = "https://haluansama.com/crm-sales/$itemAssetName3";
 
         // Navigate to ItemScreen and pass necessary parameters
         Navigator.push(
@@ -109,7 +115,7 @@ class _SearchScreenState extends State<SearchScreen> {
             builder: (context) => ItemScreen(
               productId: productId,
               productName: productName,
-              itemAssetNames: [itemAssetName],
+              itemAssetNames: [photoUrl1, photoUrl2, photoUrl3],
               itemDescription: description,
               priceByUom: priceByUom,
             ),

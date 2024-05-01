@@ -14,16 +14,20 @@ import 'dart:convert';
 class ItemsWidget extends StatelessWidget {
   final int? brandId; // Brand ID to filter products
   final int? subCategoryId;
+  final List<int>? subCategoryIds;
   final String sortOrder;
   final int currentPage;
   final int totalPages;
+  final bool isFeatured;
 
   ItemsWidget({
     this.brandId,
     this.subCategoryId,
+    this.subCategoryIds,
     required this.sortOrder,
     required this.currentPage,
     required this.totalPages,
+    required this.isFeatured,
   });
 
   Future<List<Map<String, dynamic>>> getProductData(
@@ -31,7 +35,7 @@ class ItemsWidget extends StatelessWidget {
     try {
       final conn = await connectToDatabase();
       String query =
-          'SELECT id, product_name, photo1, photo2, photo3, description, sub_category, brand, price_by_uom, created, viewed FROM product WHERE status = 1';
+          'SELECT id, product_name, photo1, photo2, photo3, description, sub_category, brand, price_by_uom, featured, created, viewed FROM product WHERE status = 1';
       List<dynamic> parameters = [];
 
       if (brandId != null) {
@@ -42,6 +46,14 @@ class ItemsWidget extends StatelessWidget {
       else if (subCategoryId != null) {
         query += ' AND sub_category = ?';
         parameters.add(subCategoryId);
+      }
+
+      if (subCategoryIds?.isNotEmpty ?? false) {
+        query += ' AND sub_category IN (${subCategoryIds!.join(", ")})';
+      }
+
+      if (isFeatured) {
+        query += ' AND featured = "Yes"'; // Add this line
       }
 
       // Add sorting logic based on sortOrder
@@ -74,6 +86,7 @@ class ItemsWidget extends StatelessWidget {
                 'sub_category': row['sub_category'],
                 'brand': row['brand'],
                 'price_by_uom': row['price_by_uom'],
+                'featured': row['featured'],
                 'created': row['created'],
                 'viewed': row['viewed'],
               })
@@ -106,7 +119,7 @@ class ItemsWidget extends StatelessWidget {
         return SingleChildScrollView(
           child: GridView.count(
             physics: NeverScrollableScrollPhysics(),
-            childAspectRatio: 0.68,
+            childAspectRatio: 0.74,
             crossAxisCount: 2,
             shrinkWrap: true,
             children: products.map((product) {
@@ -117,25 +130,26 @@ class ItemsWidget extends StatelessWidget {
               final localPath3 = product['photo3'] as String?; // Nullable
               final itemDescription = product['description'] as Blob;
 
-              final assetName1 =
-                  '$localPath'; // Assuming localPath is the file name, e.g., "photo1.jpg"
-              final assetName2 =
-                  localPath2 ?? ''; // Use an empty string if null
-              final assetName3 =
-                  localPath3 ?? ''; // Use an empty string if null
-
-              final photoUrl1 = "https://fyhonlinestore.com.my/$localPath";
-              final photoUrl2 = "https://fyhonlinestore.com.my/$localPath2";
-              final photoUrl3 = "https://fyhonlinestore.com.my/$localPath3";
+              final photoUrl1 = "https://haluansama.com/crm-sales/$localPath";
+              final photoUrl2 = "https://haluansama.com/crm-sales/$localPath2";
+              final photoUrl3 = "https://haluansama.com/crm-sales/$localPath3";
 
               return Container(
                 padding: const EdgeInsets.only(
                     left: 12, right: 12, top: 10, bottom: 2),
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: [
+                      BoxShadow(
+                        blurStyle: BlurStyle.normal,
+                        color: const Color.fromARGB(75, 117, 117, 117),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]),
                 child: Column(
                   children: [
                     InkWell(
@@ -196,7 +210,8 @@ class ItemsWidget extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.only(bottom: 8),
+                      width: 166,
+                      padding: EdgeInsets.only(top: 16),
                       alignment: Alignment.centerLeft,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -214,9 +229,6 @@ class ItemsWidget extends StatelessWidget {
                                     color:
                                         const Color.fromARGB(255, 25, 23, 49),
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: 2,
                                 ),
                               ],
                             ),
