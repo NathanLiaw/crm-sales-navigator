@@ -37,7 +37,6 @@ class _EditItemPageState extends State<EditItemPage> {
   void calculateDiscountedPrice() {
     double discountAmount = originalPrice * (discountPercentage / 100);
     double discountedPrice = originalPrice - discountAmount;
-    print(discountedPrice);
     updateItemPrice(discountedPrice);
   }
 
@@ -48,6 +47,7 @@ class _EditItemPageState extends State<EditItemPage> {
       Map<String, dynamic> updateData = {
         'id': itemId,
         'unit_price': newPrice,
+        'discount': discountPercentage,
       };
 
       int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');

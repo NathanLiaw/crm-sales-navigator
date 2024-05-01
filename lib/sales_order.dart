@@ -156,13 +156,13 @@ $orderByClause;
           Expanded(child: _buildSalesOrderList()),
         ],
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 
   Widget _buildFilterSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
         children: [
           const SizedBox(height: 10),
@@ -299,7 +299,6 @@ $orderByClause;
       ),
     );
   }
-
 
   Future<void> _selectDateRange(BuildContext context,
       {DateTimeRange? predefinedRange}) async {
@@ -439,7 +438,8 @@ Widget _buildSalesOrderItem({
       );
     },
     child: Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      color: const Color(0xffcde5f2),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       elevation: 4,
       child: Column(

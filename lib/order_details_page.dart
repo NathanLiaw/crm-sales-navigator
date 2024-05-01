@@ -98,10 +98,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         'product_name, unit_price, qty, total, status',
       );
 
-      final createdDateTime =
-      DateTime.parse(createdDateResults.first['created'] as String);
-      final formattedCreatedDate =
-      DateFormat('yyyy-MM-dd').format(createdDateTime);
+      final createdDateTime = DateTime.parse(createdDateResults.first['created'] as String);
+      final formattedCreatedDate = DateFormat('yyyy-MM-dd').format(createdDateTime);
 
       final formattedSalesOrderId = 'SO' + cartId.toString().padLeft(7, '0');
 

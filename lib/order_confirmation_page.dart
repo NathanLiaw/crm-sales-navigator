@@ -128,7 +128,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         Map<String, dynamic> data = {
           'cart_id': cartId,
           'buyer_id': item.buyerId,
-          'customer_id': item.customerId,
+          'customer_id': widget.customer.id,
           'product_id': item.productId,
           'product_name': item.productName,
           'uom': item.uom,

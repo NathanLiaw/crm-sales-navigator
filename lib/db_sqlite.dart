@@ -5,8 +5,6 @@ import 'dart:convert';
 
 class DatabaseHelper {
   static Database? _database;
-  static const String productTableName = 'product';
-  static const String cartTableName = 'cart';
   static const String cartItemTableName = 'cart_item';
 
   static Future<Database> get database async {
@@ -26,39 +24,11 @@ class DatabaseHelper {
       databasePath,
       version: 1,
       onCreate: (db, version) async {
-        // Create the cart table
-        await db.execute(
-          '''CREATE TABLE IF NOT EXISTS $cartTableName(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_type TEXT,
-            expiration_date TEXT,
-            gst REAL,
-            sst REAL,
-            final_total REAL,
-            total REAL,
-            remark TEXT,
-            order_option TEXT,
-            buyer_user_group TEXT,
-            buyer_area_id INTEGER,
-            buyer_area_name TEXT,
-            buyer_id INTEGER,
-            buyer_name TEXT,
-            customer_id INTEGER,
-            customer_company_name TEXT,
-            customer_discount TEXT,
-            status TEXT(25),
-            created DATETIME,
-            modified DATETIME
-          )''',
-        );
-
         // Create the cart_items table
         await db.execute(
           '''CREATE TABLE IF NOT EXISTS $cartItemTableName(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cart_id INTEGER,
             buyer_id INTEGER,
-            customer_id INTEGER,
             product_id INTEGER,
             product_name TEXT,
             uom TEXT,
