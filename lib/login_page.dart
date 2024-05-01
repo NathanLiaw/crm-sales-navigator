@@ -37,15 +37,11 @@ class LoginPage extends StatelessWidget {
         prefs.setInt('area', row['area']);
         prefs.setString('salesmanName', row['salesman_name']);
         prefs.setString('username', row['username']);
-        // prefs.setString('password', row['password']);
         prefs.setString('contactNumber', row['contact_number']);
         prefs.setString('email', row['email']);
-        // prefs.setString('tempPassword', row['temp_password']);
-        // prefs.setString('repriceAuthority', row['reprice_authority']);
-        // prefs.setString('discountAuthority', row['discount_authority']);
-        // prefs.setString('status', row['status']);
-        // prefs.setString('created', row['created']);
-        // prefs.setString('modified', row['modified']);
+        prefs.setString('repriceAuthority', row['reprice_authority']);
+        prefs.setString('discountAuthority', row['discount_authority']);
+        prefs.setInt('status', row['status']);
 
         // Navigate to HomePage and pass salesmanName
         Navigator.pushReplacement(
