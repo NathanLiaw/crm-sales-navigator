@@ -38,16 +38,20 @@ class _CustomerReportState extends State<CustomerReport> {
   int selectedButtonIndex = -1;
   String loggedInUsername = '';
 
-  @override
-  void initState() {
-    super.initState();
-    loadPreferences().then((_) {
+@override
+void initState() {
+  super.initState();
+  loadPreferences().then((_) {
+    setState(() {
       DateTime now = DateTime.now();
       DateTime endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      _selectedDateRange ??= DateTimeRange(start: endOfToday, end: endOfToday);
+      _selectedDateRange = DateTimeRange(start: endOfToday, end: endOfToday);
+      selectedButtonIndex = 3; // Select "All" button by default
       customers = fetchCustomers(isSortedAscending, _selectedDateRange);
     });
-  }
+  });
+}
+
 
 Future<void> loadPreferences() async {
   try {
@@ -144,7 +148,7 @@ Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange
 
 
 Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
-  final bool isCustomRangeSelected = selectedButtonIndex == -1;
+  final bool isAllSelected = selectedButtonIndex == 3;
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +162,12 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
               onPressed: () async {
                 final DateTimeRange? picked = await showDateRangePicker(
                   context: context,
-                  initialDateRange: _selectedDateRange,
+                  initialDateRange: _selectedDateRange != null
+                      ? _selectedDateRange
+                      : DateTimeRange(
+                          start: DateTime.now(),
+                          end: DateTime.now(),
+                        ),
                   firstDate: DateTime(2019),
                   lastDate: DateTime.now(),
                   builder: (BuildContext context, Widget? child) {
@@ -178,7 +187,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
                 if (picked != null && picked != _selectedDateRange) {
                   setState(() {
                     _selectedDateRange = picked;
-                    selectedButtonIndex = 3;
+                    selectedButtonIndex = -1; // Reset to custom range
                     customers =
                         fetchCustomers(isSortedAscending, _selectedDateRange);
                   });
@@ -186,19 +195,19 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
               },
               icon: Icon(
                 Icons.calendar_today,
-                color: isCustomRangeSelected ? Colors.white : Colors.black,
+                color: isAllSelected ? Colors.white : Colors.black,
               ),
               label: Text(
-                formattedDate,
+                isAllSelected ? 'Filter Date' : formattedDate,
                 style: TextStyle(
-                  color: isCustomRangeSelected ? Colors.white : Colors.black,
+                  color: isAllSelected ? Colors.white : Colors.black,
                   fontSize: 15,
                 ),
               ),
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.resolveWith<Color>(
                   (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
+                    if (isAllSelected) {
                       return const Color(0xFF047CBD);
                     }
                     return const Color(0xFFD9D9D9);
@@ -206,7 +215,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
                 ),
                 foregroundColor: MaterialStateProperty.resolveWith<Color>(
                   (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
+                    if (isAllSelected) {
                       return Colors.white;
                     }
                     return Colors.black;
@@ -244,8 +253,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
         alignment: Alignment.centerLeft,
         child: Row(
           children: [
-            _buildTimeFilterButton('All', () => queryAllData(),
-                selectedButtonIndex == 3),
+            _buildTimeFilterButton('All', () => queryAllData(), isAllSelected),
             const SizedBox(width: 10),
             _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
                 selectedButtonIndex == 0),
