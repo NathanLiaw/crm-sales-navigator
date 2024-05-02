@@ -74,7 +74,7 @@ class _CustomerDetails extends State<CustomerDetails> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  customer.username,
+                                  customer.companyName,
                                   style: const TextStyle(
                                     fontSize: 16.0,
                                     fontWeight: FontWeight.bold,
