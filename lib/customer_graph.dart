@@ -39,7 +39,7 @@ SELECT
 FROM 
     cart
 JOIN 
-    cart_item ON cart.session = cart_item.session
+    cart_item ON cart.session = cart_item.session OR ci.cart_id = c.id
 JOIN 
     salesman ON cart.buyer_id = salesman.id
 JOIN 
@@ -86,10 +86,7 @@ ORDER BY
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(
-            top: 16.0,
-            left: 16.0,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             'Top Customers',
             style: TextStyle(
