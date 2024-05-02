@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/brands_screen.dart';
 import 'package:sales_navigator/categories_screen.dart';
@@ -19,18 +20,30 @@ class ProductsScreen extends StatefulWidget {
   State<ProductsScreen> createState() => _ProductsScreenState();
 }
 
-class _ProductsScreenState extends State<ProductsScreen> {
+class _ProductsScreenState extends State<ProductsScreen>
+    with TickerProviderStateMixin {
   late Map<int, String> area = {};
   static late int selectedAreaId;
   String searchQuery = '';
   static int? _selectedBrandId;
   int? _selectedSubCategoryId;
   List<int> _selectedSubCategoryIds = [];
+  List<int> _selectedBrandIds = [];
   String _currentSortOrder = 'By Name (A to Z)';
   int _currentPage = 1;
   int _totalPages = 1;
   int _selectedTabIndex = 0;
   bool _isFeatured = false;
+
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedAreaId = -1;
+    fetchAreaFromDb();
+    _tabController = TabController(length: 4, vsync: this);
+  }
 
   Future<int> _getTotalPages() async {
     try {
@@ -109,37 +122,51 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   void _updateSelectedTab(int index) {
+    _tabController.index = index;
     setState(() {
-      _selectedTabIndex = index;
-      switch (index) {
-        case 0:
-          _isFeatured = false;
-          _selectedBrandId = null;
-          _selectedSubCategoryId = null;
-          _currentSortOrder = 'By Name (A to Z)';
+      _isFeatured = false;
+      _selectedBrandId = null;
+      _selectedSubCategoryId = null;
+      _currentSortOrder = 'By Name (A to Z)';
 
-          break;
+      switch (index) {
         case 1:
           _isFeatured = true;
-          _selectedBrandId = null;
-          _selectedSubCategoryId = null;
-
           break;
         case 2:
-          _isFeatured = false;
-          _selectedBrandId = null;
-          _selectedSubCategoryId = null;
           _currentSortOrder = 'Uploaded Date (New to Old)';
+          break;
+        case 3:
+          _currentSortOrder = 'Most Popular in 3 Months';
           break;
       }
     });
   }
 
+  void _openFilterCategoriesScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FilterCategoriesScreen(
+          initialSelectedSubCategoryIds: _selectedSubCategoryIds,
+          initialSelectedBrandIds: _selectedBrandIds,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedSubCategoryIds = result['selectedSubCategoryIds'];
+        _selectedBrandIds = result['selectedBrandIds'];
+        _currentPage = 1;
+      });
+    }
+  }
+
   @override
-  void initState() {
-    super.initState();
-    selectedAreaId = -1;
-    fetchAreaFromDb();
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -237,53 +264,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         child: Column(
           children: [
             SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CategoryButton(
-                  buttonnames: 'Most Popular',
-                  onTap: () {
-                    setState(() {
-                      _isFeatured = false;
-                      _selectedBrandId = null;
-                      _selectedSubCategoryId = null;
-                      _currentSortOrder = 'Most Popular in 3 Months';
-                      // Reset the brand ID to show all products
-                    });
-                  },
-                ),
-                CategoryButton(
-                  buttonnames: 'Categories',
-                  onTap: () async {
-                    final selectedSubCategoryId = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CategoryScreen()),
-                    );
-                    if (selectedSubCategoryId != null) {
-                      setState(() {
-                        _selectedSubCategoryId = selectedSubCategoryId as int;
-                      });
-                    }
-                  },
-                ),
-                CategoryButton(
-                  buttonnames: 'Brands',
-                  onTap: () async {
-                    final selectedBrandId = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => BrandScreen()),
-                    );
-                    if (selectedBrandId != null) {
-                      setState(() {
-                        // Assuming you have a variable to hold the selected brand ID
-                        // Update the state with the new brand ID
-                        _selectedBrandId = selectedBrandId as int;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
+
             Divider(
               color: Color.fromARGB(255, 0, 76, 135),
             ),
@@ -360,26 +341,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   Expanded(
                     child: InkWell(
                       onTap: () async {
-                        final selectedSubCategoryIds = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FilterCategoriesScreen(
-                              initialSelectedSubCategoryIds:
-                                  _selectedSubCategoryIds,
-                            ),
-                          ),
-                        );
-                        if (selectedSubCategoryIds != null) {
-                          setState(() {
-                            _selectedSubCategoryIds =
-                                selectedSubCategoryIds as List<int>;
-                          });
-                        } else {
-                          setState(() {
-                            _selectedSubCategoryIds =
-                                []; // Set _selectedSubCategoryIds to an empty list
-                          });
-                        }
+                        _openFilterCategoriesScreen();
                       },
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -411,18 +373,180 @@ class _ProductsScreenState extends State<ProductsScreen> {
               color: Color.fromARGB(255, 0, 76, 135),
             ),
 
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (index) => _buildTab(index)),
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  children: [
+                    TabBar(
+                      controller: _tabController,
+                      indicatorColor: const Color.fromARGB(255, 12, 119, 206),
+                      labelColor: const Color.fromARGB(255, 12, 119, 206),
+                      isScrollable: true,
+                      labelStyle: TextStyle(fontSize: 14),
+                      unselectedLabelColor: Colors.black,
+                      tabs: [
+                        Tab(text: 'All products'),
+                        Tab(text: 'Featured Products'),
+                        Tab(text: 'New Products'),
+                        Tab(text: 'Most Popular'),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          ItemsWidget(
+                            brandIds: _selectedBrandIds,
+                            subCategoryId: _selectedSubCategoryId,
+                            subCategoryIds: _selectedSubCategoryIds,
+                            isFeatured: false,
+                            sortOrder: _currentSortOrder == 'By Name (A to Z)'
+                                ? 'By Name (A to Z)'
+                                : _currentSortOrder,
+                          ),
+                          ItemsWidget(
+                            brandIds: _selectedBrandIds,
+                            subCategoryId: _selectedSubCategoryId,
+                            subCategoryIds: _selectedSubCategoryIds,
+                            isFeatured: true,
+                            sortOrder: _currentSortOrder,
+                          ),
+                          ItemsWidget(
+                            brandIds: _selectedBrandIds,
+                            subCategoryId: _selectedSubCategoryId,
+                            subCategoryIds: _selectedSubCategoryIds,
+                            isFeatured: false,
+                            sortOrder: _currentSortOrder ==
+                                    'Uploaded Date (New to Old)'
+                                ? 'Uploaded Date (New to Old)'
+                                : _currentSortOrder,
+                          ),
+                          ItemsWidget(
+                            brandIds: _selectedBrandIds,
+                            subCategoryId: _selectedSubCategoryId,
+                            subCategoryIds: _selectedSubCategoryIds,
+                            isFeatured: false,
+                            sortOrder:
+                                _currentSortOrder == 'Most Popular in 3 Months'
+                                    ? 'Most Popular in 3 Months'
+                                    : _currentSortOrder,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
             //tab bar
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-            Flexible(
+
+/*
+  Widget _buildTab(int index) {
+    // Define the tab names
+    List<String> tabNames = [
+      'All products',
+      'Featured products',
+      'New products',
+      'Most Popular'
+    ];
+
+    // Determine if the tab is selected
+    bool isSelected = _selectedTabIndex == index;
+
+    // Define the style for the selected and unselected tabs
+    return GestureDetector(
+      onTap: () => _updateSelectedTab(index),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 250),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color.fromARGB(255, 12, 119, 206)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          tabNames[index],
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+*/
+
+
+/*
+
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CategoryButton(
+                  buttonnames: 'Most Popular',
+                  onTap: () {
+                    setState(() {
+                      // Reset the brand ID to show all products
+                    });
+                  },
+                ),
+                CategoryButton(
+                  buttonnames: 'Categories',
+                  onTap: () async {
+                    final selectedSubCategoryId = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CategoryScreen()),
+                    );
+                    if (selectedSubCategoryId != null) {
+                      setState(() {
+                        _selectedSubCategoryId = selectedSubCategoryId as int;
+                      });
+                    }
+                  },
+                ),
+                CategoryButton(
+                  buttonnames: 'Brands',
+                  onTap: () async {
+                    final selectedBrandId = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => BrandScreen()),
+                    );
+                    if (selectedBrandId != null) {
+                      setState(() {
+                        // Assuming you have a variable to hold the selected brand ID
+                        // Update the state with the new brand ID
+                        _selectedBrandId = selectedBrandId as int;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+
+
+            */
+
+
+
+//previous item widgets
+
+/*
+
+  Flexible(
               child: SingleChildScrollView(
                 child: FutureBuilder<int>(
                   future: _getTotalPages(),
@@ -440,7 +564,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     return Column(
                       children: [
                         ItemsWidget(
-                          brandId: _selectedBrandId,
+                          brandIds: _selectedBrandIds,
                           subCategoryId: _selectedSubCategoryId,
                           subCategoryIds: _selectedSubCategoryIds,
                           isFeatured: _isFeatured,
@@ -498,43 +622,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildTab(int index) {
-    // Define the tab names
-    List<String> tabNames = [
-      'All products',
-      'Featured products',
-      'New products'
-    ];
 
-    // Determine if the tab is selected
-    bool isSelected = _selectedTabIndex == index;
-
-    // Define the style for the selected and unselected tabs
-    return GestureDetector(
-      onTap: () => _updateSelectedTab(index),
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color.fromARGB(255, 12, 119, 206)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          tabNames[index],
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-}
+*/

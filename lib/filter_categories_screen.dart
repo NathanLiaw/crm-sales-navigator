@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sales_navigator/data/branddata.dart';
 import 'package:sales_navigator/data/categorydata.dart';
 import 'package:sales_navigator/data/sub_categorydata.dart';
 import 'package:sales_navigator/db_connection.dart';
 
 class FilterCategoriesScreen extends StatefulWidget {
   final List<int> initialSelectedSubCategoryIds;
+  final List<int> initialSelectedBrandIds;
 
-  FilterCategoriesScreen({required this.initialSelectedSubCategoryIds});
+  FilterCategoriesScreen({
+    required this.initialSelectedSubCategoryIds,
+    required this.initialSelectedBrandIds,
+  });
 
   @override
   _FilterCategoriesScreenState createState() => _FilterCategoriesScreenState();
@@ -16,13 +21,16 @@ class FilterCategoriesScreen extends StatefulWidget {
 class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
   late List<CategoryData> _categories = [];
   late List<List<SubCategoryData>> _subCategories = [];
+  late List<BrandData> _brands = [];
   int _expandedIndex = -1;
   List<int> selectedSubCategoryIds = [];
+  List<int> _selectedBrandIds = [];
 
   @override
   void initState() {
     super.initState();
     selectedSubCategoryIds = List.from(widget.initialSelectedSubCategoryIds);
+    _selectedBrandIds = List.from(widget.initialSelectedBrandIds);
     _loadData();
   }
 
@@ -30,6 +38,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
     final conn = await connectToDatabase();
     _categories = await fetchCategories(conn);
     _subCategories = await fetchSubCategories(conn);
+    _brands = await fetchBrands(conn); // Fetch brands from the database
     await conn.close();
     setState(() {});
   }
@@ -51,61 +60,87 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       ),
       body: _categories.isEmpty
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final isExpanded = index == _expandedIndex;
-                return ExpansionTile(
+          : ListView(
+              children: [
+                // Display categories and subcategories
+                ..._categories.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final category = entry.value;
+                  final isExpanded = index == _expandedIndex;
+                  return ExpansionTile(
+                    title: Text(
+                      category.category,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onExpansionChanged: (expanded) {
+                      setState(() {
+                        _expandedIndex = expanded ? index : -1;
+                      });
+                    },
+                    children: [
+                      if (isExpanded)
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: _subCategories[index].length,
+                          itemBuilder: (context, subIndex) {
+                            final subCategoryData =
+                                _subCategories[index][subIndex];
+                            return CheckboxListTile(
+                              title: Text(
+                                subCategoryData.subCategory,
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                              value: selectedSubCategoryIds
+                                  .contains(subCategoryData.id),
+                              onChanged: (selected) {
+                                setState(() {
+                                  if (selected!) {
+                                    selectedSubCategoryIds
+                                        .add(subCategoryData.id);
+                                  } else {
+                                    selectedSubCategoryIds
+                                        .remove(subCategoryData.id);
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        ),
+                    ],
+                  );
+                }).toList(),
+                // Display brands
+                ExpansionTile(
                   title: Text(
-                    _categories[index].category,
+                    'Brands',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onExpansionChanged: (expanded) {
-                    setState(() {
-                      _expandedIndex = expanded ? index : -1;
-                    });
-                  },
-                  children: [
-                    if (isExpanded)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: _subCategories[index].length,
-                        itemBuilder: (context, subIndex) {
-                          final subCategoryData =
-                              _subCategories[index][subIndex];
-                          return ListTile(
-                            title: Text(
-                              subCategoryData.subCategory,
-                              style: TextStyle(
-                                color: Colors.black,
-                              ),
-                            ),
-                            trailing: selectedSubCategoryIds
-                                    .contains(subCategoryData.id)
-                                ? Icon(Icons.check)
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                if (selectedSubCategoryIds
-                                    .contains(subCategoryData.id)) {
-                                  selectedSubCategoryIds
-                                      .remove(subCategoryData.id);
-                                } else {
-                                  selectedSubCategoryIds
-                                      .add(subCategoryData.id);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-                  ],
-                );
-              },
+                  children: _brands.map((brand) {
+                    return CheckboxListTile(
+                      title: Text(brand.brand),
+                      value: _selectedBrandIds.contains(brand.id),
+                      onChanged: (selected) {
+                        setState(() {
+                          if (selected!) {
+                            _selectedBrandIds.add(brand.id);
+                          } else {
+                            _selectedBrandIds.remove(brand.id);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
@@ -117,6 +152,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
               onPressed: () {
                 setState(() {
                   selectedSubCategoryIds.clear();
+                  _selectedBrandIds.clear();
                 });
               },
               child: Text(
@@ -136,7 +172,10 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  Navigator.pop(context, selectedSubCategoryIds);
+                  Navigator.pop(context, {
+                    'selectedSubCategoryIds': selectedSubCategoryIds,
+                    'selectedBrandIds': _selectedBrandIds,
+                  });
                 });
               },
               child: Text(
@@ -159,42 +198,3 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
     );
   }
 }
-
-
-/*
-
-TextButton(
-                                onPressed: () {},
-                                child: Text(
-                                  'Complete',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                style: TextButton.styleFrom(
-                                  backgroundColor:
-                                      const Color.fromARGB(255, 4, 108, 169),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(2)),
-                                ),
-                              )
-
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, selectedSubCategoryIds);
-              },
-              child: Text('Apply'),
-            ),
-
-
-
-
- ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  selectedSubCategoryIds.clear();
-                });
-              },
-              child: Text('Remove'),
-            ),
-
-*/
