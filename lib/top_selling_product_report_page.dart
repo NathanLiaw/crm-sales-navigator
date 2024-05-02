@@ -45,12 +45,13 @@ String loggedInUsername = '';
 void initState() {
   super.initState();
   _loadPreferences().then((_) {
-    DateTime now = DateTime.now();
-    DateTime endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    _selectedDateRange = DateTimeRange(start: endOfToday, end: endOfToday);
-    products = fetchProducts(_selectedDateRange);
+    setState(() {
+      selectedButtonIndex = 3; // Set the selected button index to indicate "All" by default
+    });
+    products = fetchProducts(null); // Fetch all products initially
   });
 }
+
 
 
 Future<void> _loadPreferences() async {
@@ -85,12 +86,11 @@ SELECT
 FROM cart_item ci 
 JOIN product p ON ci.product_id = p.id 
 JOIN brand b ON p.brand = b.id 
-JOIN cart ON ci.session = cart.session
+LEFT JOIN cart ON ci.session = cart.session OR ci.cart_id = cart.id
 JOIN salesman ON cart.buyer_id = salesman.id
 WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
 GROUP BY p.id
 ORDER BY TotalQuantitySold $sortOrder;
-
     ''');
 
     if (results.isEmpty) {
@@ -146,6 +146,10 @@ void queryAllData() {
 
 Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
   final bool isCustomRangeSelected = selectedButtonIndex == -1;
+  final bool isTodaySelected = _selectedDateRange == null ||
+      _selectedDateRange!.start == DateTime.now() ||
+      (_selectedDateRange!.start.isBefore(DateTime.now()) &&
+          _selectedDateRange!.end.isAfter(DateTime.now()));
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +193,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
                 color: isCustomRangeSelected ? Colors.white : Colors.black,
               ),
               label: Text(
-                formattedDate,
+                isTodaySelected ? 'Filter Date' : formattedDate,
                 style: TextStyle(
                   color: isCustomRangeSelected ? Colors.white : Colors.black,
                   fontSize: 15,
@@ -262,6 +266,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
     ],
   );
 }
+
 
   Widget _buildTimeFilterButton(
       String text, VoidCallback onPressed, bool isSelected) {
