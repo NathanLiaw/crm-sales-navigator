@@ -42,14 +42,18 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
-        title: Text(
+        automaticallyImplyLeading: false,
+        backgroundColor: const Color(0xff004c87),
+        title: const Text(
           'Profile',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
+            icon: const Icon(Icons.notifications, color: Colors.white),
             onPressed: () {
               // Handle notifications
             },
@@ -62,10 +66,10 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Container(
                 alignment: Alignment.center,
-                child: Text(
+                child: const Text(
                   'Welcome,',
                   style: TextStyle(
                     fontSize: 15,
@@ -77,22 +81,22 @@ class _ProfilePageState extends State<ProfilePage> {
                   alignment: Alignment.center,
                   child: Text(
                     '$salesmanName',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   )),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               buildProfileOption('Account Setting', Icons.settings, context),
               buildProfileOption('Reports', Icons.favorite, context),
               buildProfileOption('Recent Order', Icons.shopping_bag, context),
               buildProfileOption('Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
           ),
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 
@@ -114,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (title == 'Reports') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => DataAnalyticsPage()),
+            MaterialPageRoute(builder: (context) => const DataAnalyticsPage()),
           );
         }
         if (title == 'Recent Order') {
@@ -143,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       },
       child: Container(
-        margin: EdgeInsets.only(top: 10),
+        margin: const EdgeInsets.only(top: 10),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(5),
@@ -158,7 +162,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget buildLogoutButton() {
     return Container(
-      margin: EdgeInsets.only(left: 100, right: 100),
+      margin: const EdgeInsets.only(left: 100, right: 100),
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
@@ -173,11 +177,11 @@ class _ProfilePageState extends State<ProfilePage> {
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(5),
-            side: BorderSide(color: Colors.red, width: 2),
+            side: const BorderSide(color: Colors.red, width: 2),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 10, bottom: 10),
+        child: const Padding(
+          padding: EdgeInsets.only(top: 10, bottom: 10),
           child: Text(
             'Log Out',
             style: TextStyle(color: Colors.red),

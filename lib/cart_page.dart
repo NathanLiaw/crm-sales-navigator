@@ -3,7 +3,6 @@ import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/edit_item_page.dart';
 import 'package:sales_navigator/order_confirmation_page.dart';
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/order_confirmation_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -27,7 +26,6 @@ class _CartPage extends State<CartPage> {
   // Cart Section
   List<CartItem> cartItems = [];
   List<CartItem> selectedCartItems = [];
-  List<Map<int?, double>> updatedCartItemPrice = [];
   late List<List<String>> productPhotos = [];
   double total = 0;
   double subtotal = 0;
@@ -43,17 +41,8 @@ class _CartPage extends State<CartPage> {
   @override
   void initState() {
     super.initState();
-    initializeUpdatedCartItemPrice(); // Initialize the updatedCartItemPrice list
-    loadCartItemsAndPhotos(); // Load cart items and photos
-    getTax(); // Fetch tax values
-  }
-
-  void initializeUpdatedCartItemPrice() {
-    for (CartItem item in cartItems) {
-      int id = item.id ?? 0;
-      double price = item.unitPrice * (item.quantity ?? 1);
-      updatedCartItemPrice.add({id: price});
-    }
+    loadCartItemsAndPhotos();
+    getTax();
   }
 
   Future<void> getTax() async {
@@ -81,7 +70,7 @@ class _CartPage extends State<CartPage> {
 
     Database database = await DatabaseHelper.database;
     String cartItemTableName = DatabaseHelper.cartItemTableName;
-    String condition = 'buyer_id = $id';
+    String condition = 'buyer_id = $id AND status = "in progress"';
     String order = 'created DESC';
     String field = '*';
 
@@ -269,7 +258,7 @@ class _CartPage extends State<CartPage> {
               const SizedBox(height: 32),
               const Padding(
                 padding: EdgeInsets.only(
-
+                  left: 8.0,
                 ),
                 child: Text(
                   'Cart',
@@ -284,7 +273,7 @@ class _CartPage extends State<CartPage> {
               if (cartItems.isEmpty)
                 const Card(
                   elevation: 6,
-                  color: Color(0xffffffff),
+                  color: Colors.white,
                   child: Padding(
                     padding: EdgeInsets.only(
                       top: 16.0,
@@ -311,23 +300,6 @@ class _CartPage extends State<CartPage> {
                     List<String> itemPhotos = productPhotos.isNotEmpty ? productPhotos[index] : [];
                     bool isSelected = selectedCartItems.contains(item);
                     final currentQuantity = item.quantity ?? 1;
-                    double itemPrice = 0; // Last stopped here
-                    if (updatedCartItemPrice.isNotEmpty) {
-                      // Find the map corresponding to the item.id
-                      Map<int?, double>? itemPriceMap = updatedCartItemPrice.firstWhere(
-                            (map) => map.containsKey(item.id),
-                        orElse: () => Map<int, double>(), // Return an empty map if not found
-                      );
-
-                      if (itemPriceMap != null && itemPriceMap.containsKey(item.id)) {
-                        // Access the price using item.id as the key
-                        itemPrice = itemPriceMap[item.id]!;
-                      } else {
-                        print('Price not found for item ${item.id}');
-                      }
-                    } else {
-                      print('No price updates available');
-                    }
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
@@ -383,16 +355,18 @@ class _CartPage extends State<CartPage> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Container(
-                                          width: 160,
-                                          child: Text(
-                                            item.productName,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
+                                        Flexible(
+                                          child: Container(
+                                            width: 200,
+                                            child: Text(
+                                              item.productName,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              overflow: TextOverflow.ellipsis, // Overflow handling
+                                              maxLines: 3, // Allow up to 3 lines of text
                                             ),
-                                            overflow: TextOverflow.ellipsis, // Overflow handling
-                                            maxLines: 3, // Allow up to 2 lines of text
                                           ),
                                         ),
                                         IconButton(
@@ -413,10 +387,7 @@ class _CartPage extends State<CartPage> {
 
                                             if (updatedPrice != null) {
                                               setState(() {
-                                                int itemIndex = cartItems.indexWhere((element) => element.id == item.id);
-                                                if (itemIndex != -1) {
-                                                  updatedCartItemPrice[itemIndex][item.id] = updatedPrice;
-                                                }
+                                                item.unitPrice = updatedPrice;
                                               });
                                             }
                                           },
@@ -425,7 +396,7 @@ class _CartPage extends State<CartPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Variant: ${item.uom}',
+                                      item.uom,
                                       style: const TextStyle(
                                         fontSize: 14,
                                       ),
@@ -438,7 +409,7 @@ class _CartPage extends State<CartPage> {
                                         Container(
                                           width: 100,
                                           child: Text(
-                                            'RM${(itemPrice * (item.quantity ?? 1)).toStringAsFixed(3)}',
+                                            'RM${(item.unitPrice * (item.quantity ?? 1)).toStringAsFixed(3)}',
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -503,6 +474,7 @@ class _CartPage extends State<CartPage> {
                               ),
                             ],
                           ),
+
                         ),
                       ),
                     );
@@ -594,6 +566,7 @@ class _CartPage extends State<CartPage> {
                                   customer: customer!,
                                   total: total,
                                   subtotal: subtotal,
+                                  cartItems: cartItems,
                                 ),
                               ),
                             );

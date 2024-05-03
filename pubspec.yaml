@@ -1,5 +1,5 @@
 name: sales_navigator
-description: "A new Flutter project."
+description: "Sales Navigator - Customer Relationship Management (CRM) Sales Management"
 publish_to: 'none'
 version: 0.1.0
 
@@ -19,6 +19,7 @@ dependencies:
   crypto: any
   flutter_widget_from_html: ^0.14.11
   google_fonts: ^6.2.0
+  timezone: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +32,4 @@ flutter:
     - photo/
     - asset/logo/
     - asset/
+    - asset/photo/

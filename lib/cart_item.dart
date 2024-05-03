@@ -1,18 +1,17 @@
 class CartItem {
-  int? id; // Database-assigned ID
-  int? cartId; // ID of the cart to which this item belongs
-  final int? buyerId; // ID of the buyer (required)
-  final int? customerId; // ID of the customer (required)
-  final int productId; // ID of the product (required)
+  int? id;
+  int? cartId;
+  final int? buyerId;
+  final int productId;
   final String productName;
   final String uom; // Unit of measurement
   int quantity;
   final int discount;
   final double originalUnitPrice;
-  final double unitPrice;
+  double unitPrice;
   final double total;
-  final String cancel;
-  final String remark;
+  final String? cancel;
+  final String? remark;
   final String status;
   final DateTime created;
   final DateTime modified;
@@ -21,14 +20,13 @@ class CartItem {
     this.id,
     this.cartId,
     required this.buyerId,
-    this.customerId,
     required this.productId,
     required this.productName,
     required this.uom,
     this.quantity = 0,
     this.discount = 0,
     this.originalUnitPrice = 0.0,
-    required this.unitPrice,
+    this.unitPrice = 0.0,
     required this.total,
     this.cancel = '',
     this.remark = '',
@@ -43,7 +41,6 @@ class CartItem {
       id: map['id'],
       cartId: map['cart_id'],
       buyerId: map['buyer_id'] ?? 0,
-      customerId: map['customer_id'] ?? 0,
       productId: map['product_id'] ?? 0,
       productName: map['product_name'] ?? '',
       uom: map['uom'] ?? '',
@@ -64,7 +61,6 @@ class CartItem {
   Map<String, dynamic> toMap({bool excludeId = false}) {
     Map<String, dynamic> map = {
       'buyer_id': buyerId,
-      'customer_id': customerId,
       'product_id': productId,
       'product_name': productName,
       'uom': uom,

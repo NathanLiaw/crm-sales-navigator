@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditItemPage extends StatefulWidget {
   final int? itemId;
@@ -24,32 +28,33 @@ class EditItemPage extends StatefulWidget {
 
 class _EditItemPageState extends State<EditItemPage> {
   double originalPrice = 0.0;
-  double discountedPrice = 0.0;
+  double discountPercentage = 0.0;
   TextEditingController priceController = TextEditingController();
   TextEditingController discountController = TextEditingController();
+  bool repriceAuthority = false;
+  bool discountAuthority = false;
 
   @override
   void initState() {
     super.initState();
     originalPrice = widget.itemPrice;
+    checkRepricingAuthority();
   }
 
   void calculateDiscountedPrice() {
-    double price = double.tryParse(priceController.text) ?? 0.0;
-    double discountPercentage = double.tryParse(discountController.text.replaceAll('%', '')) ?? 0.0;
-
-    double discountAmount = price * (discountPercentage / 100);
-    discountedPrice = price - discountAmount;
-    print(discountPercentage);
+    double discountAmount = originalPrice * (discountPercentage / 100);
+    double discountedPrice = originalPrice - discountAmount;
+    updateItemPrice(discountedPrice);
   }
 
   Future<void> updateItemPrice(double newPrice) async {
     try {
-      int itemId = widget.itemId ?? 0; // Assuming itemId is not null, otherwise handle accordingly
+      int itemId = widget.itemId ?? 0;
 
       Map<String, dynamic> updateData = {
         'id': itemId,
         'unit_price': newPrice,
+        'discount': discountPercentage,
       };
 
       int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
@@ -57,7 +62,12 @@ class _EditItemPageState extends State<EditItemPage> {
         // Database update successful
         print('Item price updated successfully');
         setState(() {
-          originalPrice = newPrice;
+          if (newPrice >= 0.00) {
+            originalPrice = newPrice;
+          }
+          else {
+            originalPrice = 0.00;
+          }
         });
       } else {
         // Handle database update failure
@@ -66,6 +76,91 @@ class _EditItemPageState extends State<EditItemPage> {
     } catch (e) {
       print('Error updating item price: $e');
     }
+  }
+
+  Future<void> checkRepricingAuthority() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+
+    if (pref.getString('repriceAuthority') == 'Yes') {
+      repriceAuthority = true;
+    }
+    print(repriceAuthority);
+
+    if (pref.getString('discountAuthority') == 'Yes') {
+      discountAuthority = true;
+    }
+    print(discountAuthority);
+
+  }
+
+  void updatePriceAndAuthority() {
+    setState(() {
+      if (priceController.text.trim().isNotEmpty) {
+        originalPrice = double.parse(priceController.text);
+      }
+      if (discountController.text.trim().isNotEmpty) {
+        discountPercentage = double.parse(discountController.text);
+      }
+    });
+
+    if (!repriceAuthority || !discountAuthority) {
+      if (priceController.text.trim().isNotEmpty){
+        if (repriceAuthority && priceController.text.trim().isNotEmpty) {
+          updateItemPrice(originalPrice);
+        } else {
+          showAlertDialog(
+              'You do not have the authority to reprice item', Colors.red
+          );
+        }
+      }
+      else {
+        if (discountAuthority && discountController.text.trim().isNotEmpty) {
+          if (discountPercentage > 0.0) {
+            calculateDiscountedPrice();
+          }
+        } else {
+          showAlertDialog(
+              'You do not have the authority to discount item', Colors.red
+          );
+        }
+      }
+    } else {
+      showAlertDialog('Price updated', Colors.green);
+    }
+  }
+
+  void showAlertDialog(String message, Color color) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: color,
+        title: Row(
+          children: [
+            SizedBox(width: 4),
+            Icon(
+              Icons.check_circle,
+              color: Colors.white,
+            ),
+            SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Automatically close dialog after 1 second
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pop(context);
+    });
   }
 
   @override
@@ -78,6 +173,12 @@ class _EditItemPageState extends State<EditItemPage> {
           'Edit Item',
           style: TextStyle(color: Color(0xffF8F9FA)),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, originalPrice);
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -85,6 +186,7 @@ class _EditItemPageState extends State<EditItemPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
+              color: Color(0xffcde5f2),
               elevation: 4.0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -163,6 +265,7 @@ class _EditItemPageState extends State<EditItemPage> {
                             height: 36.0,
                             child: TextField(
                               controller: priceController,
+                              keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: (originalPrice).toStringAsFixed(3),
                                 contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
@@ -189,6 +292,7 @@ class _EditItemPageState extends State<EditItemPage> {
                             height: 36.0,
                             child: TextField(
                               controller: discountController,
+                              keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 hintText: '0%',
                                 contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
@@ -240,22 +344,21 @@ class _EditItemPageState extends State<EditItemPage> {
                 const SizedBox(width: 46.0), // Adjust the spacing between buttons
                 ElevatedButton(
                   onPressed: () {
-                    calculateDiscountedPrice();
-                    if (discountedPrice > 0.0) {
-                      updateItemPrice(discountedPrice);
-                    }
+                    updatePriceAndAuthority();
                   },
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsets>(
-                      const EdgeInsets.symmetric(horizontal: 20.0), // Adjust button padding
+                      const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
                     minimumSize: MaterialStateProperty.all<Size>(
-                      const Size(120.0, 40.0), // Set the width and height of Button 2
+                      const Size(120.0, 40.0),
                     ),
-                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff0069ba)),
+                    backgroundColor: MaterialStateProperty.all<Color>(
+                      const Color(0xff0069ba),
+                    ),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5.0), // Adjust border radius
+                        borderRadius: BorderRadius.circular(5.0),
                       ),
                     ),
                   ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/cart_page.dart';
 
 class ItemAppBar extends StatelessWidget {
   @override

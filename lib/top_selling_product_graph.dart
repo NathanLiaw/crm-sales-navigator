@@ -45,26 +45,26 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
 
   Future<void> _loadTopProducts() async {
     String query = '''
-    SELECT 
-      ci.product_name, 
-      SUM(ci.qty) AS total_qty_sold,
-      SUM(ci.qty * ci.unit_price) AS total_sales,
-      s.salesman_name
-    FROM 
-      fyh.cart_item ci
-    JOIN 
-      fyh.cart c ON ci.session = c.session
-    JOIN 
-      fyh.salesman s ON c.buyer_id = s.id
-    WHERE 
-      c.status != 'void' AND
-      s.username = '$loggedInUsername'
-    GROUP BY 
-      ci.product_name, 
-      s.salesman_name
-    ORDER BY 
-      total_qty_sold DESC
-    LIMIT 5;
+SELECT 
+    ci.product_name, 
+    SUM(ci.qty) AS total_qty_sold,
+    SUM(ci.qty * ci.unit_price) AS total_sales,
+    s.salesman_name
+FROM 
+    fyh.cart_item ci
+LEFT JOIN 
+    fyh.cart c ON ci.session = c.session OR ci.cart_id = c.id
+JOIN 
+    fyh.salesman s ON c.buyer_id = s.id
+WHERE 
+    c.status != 'void' AND
+    s.username = '$loggedInUsername'
+GROUP BY 
+    ci.product_name, 
+    s.salesman_name
+ORDER BY 
+    total_qty_sold DESC
+LIMIT 5;
   ''';
 
     try {
