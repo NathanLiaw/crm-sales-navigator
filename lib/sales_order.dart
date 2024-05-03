@@ -103,7 +103,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   FROM 
       cart
   JOIN 
-      cart_item ON cart.session = cart_item.session OR ci.cart_id = c.id
+      cart_item ON cart.session = cart_item.session
   JOIN 
       salesman ON cart.buyer_id = salesman.id
   WHERE 
@@ -124,7 +124,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   FROM 
       cart
   JOIN 
-      cart_item ON cart.session = cart_item.session OR ci.cart_id = c.id
+      cart_item ON cart.session = cart_item.session
   JOIN 
       salesman ON cart.buyer_id = salesman.id
   WHERE 
@@ -145,7 +145,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   FROM 
       cart
   JOIN 
-      cart_item ON cart.session = cart_item.session OR ci.cart_id = c.id
+      cart_item ON cart.session = cart_item.session
   JOIN 
       salesman ON cart.buyer_id = salesman.id
       $usernameFilter
