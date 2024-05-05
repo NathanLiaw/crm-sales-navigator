@@ -6,7 +6,7 @@ Future<MySqlConnection> connectToDatabase() async {
     host: '10.0.2.2',
     port: 3306,
     user: 'root',
-    password: '',
+    password: '123456',
     db: 'fyh',
   );
 
@@ -61,8 +61,7 @@ Future<List<Map<String, dynamic>>> readData(
 
       // Convert DateTime to String
       if (value is DateTime) {
-        final dateString =
-        value.toString(); // Using toString() to get default format
+        final dateString = value.toString();
         rowMap[key] = dateString;
       }
     });
@@ -121,8 +120,7 @@ Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
 Future<bool> saveData(MySqlConnection connection, String tableName,
     Map<String, dynamic> data) async {
   try {
-    final columnsResult =
-    await connection.query('SHOW COLUMNS FROM $tableName');
+    final columnsResult = await connection.query('SHOW COLUMNS FROM $tableName');
     final columns = columnsResult.map((row) => row['Field'] as String).toList();
 
     final List<String> filteredColumns = [];
@@ -136,15 +134,13 @@ Future<bool> saveData(MySqlConnection connection, String tableName,
     }
 
     final String strColumns = filteredColumns.join(', ');
-    final String placeholders =
-    List.filled(filteredColumns.length, '?').join(', ');
+    final String placeholders = List.filled(filteredColumns.length, '?').join(', ');
 
     String sql;
     List<dynamic> params;
     if (data.containsKey('id')) {
       final id = data['id'];
-      final List<String> updates =
-      filteredColumns.map((column) => '$column = ?').toList();
+      final List<String> updates = filteredColumns.map((column) => '$column = ?').toList();
       final String strUpdates = updates.join(', ');
       sql = 'UPDATE $tableName SET $strUpdates WHERE id = ?';
       params = [...filteredValues, id];

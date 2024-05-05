@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sales_navigator/data/brand_data.dart';
+import 'package:sales_navigator/data/branddata.dart';
 import 'package:sales_navigator/db_connection.dart';
 
 class BrandScreen extends StatefulWidget {
@@ -28,6 +28,7 @@ class _BrandScreenState extends State<BrandScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           'Brands',
           style: GoogleFonts.inter(
@@ -58,7 +59,6 @@ class _BrandScreenState extends State<BrandScreen> {
                         // Handle brand selection
                         // You can navigate to a new screen or perform any desired action
                         Navigator.pop(context, _brands[index].id);
-                        print('Selected brand: ${_brands[index].brand}');
                       },
                     ),
                   ],

@@ -5,20 +5,21 @@ import 'package:sales_navigator/item_variations_screen.dart';
 import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sales_navigator/components/item_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemScreen extends StatefulWidget {
   final int productId;
   final String productName;
-  final String itemAssetName;
+  final List<String> itemAssetNames;
   final Blob itemDescription;
   final String priceByUom;
 
   const ItemScreen({
     required this.productId,
     required this.productName,
-    required this.itemAssetName,
+    required this.itemAssetNames,
     required this.itemDescription,
     required this.priceByUom,
   });
@@ -33,13 +34,13 @@ class _ItemScreenState extends State<ItemScreen> {
   double _price = 0.0;
   late Map<int, Map<String, double>> _priceData;
   late String _priceDataByArea;
+  int _selectedImageIndex = 0;
 
   Future<void> getAreaId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _areaId = prefs.getInt('areaId') ?? 0;
     });
-    print("Area ID: $_areaId");
   }
 
   void retrievePriceByUomUsingAreaId() {
@@ -71,7 +72,8 @@ class _ItemScreenState extends State<ItemScreen> {
           Map<String, double> areaPrices = {};
           value.forEach((uom, price) {
             if (price is String) {
-              double parsedPrice = double.tryParse(price.replaceAll(',', '')) ?? 0.0;
+              double parsedPrice =
+                  double.tryParse(price.replaceAll(',', '')) ?? 0.0;
               areaPrices[uom] = parsedPrice;
             }
           });
@@ -117,13 +119,49 @@ class _ItemScreenState extends State<ItemScreen> {
                 color: const Color.fromARGB(255, 0, 76, 135),
               ),
             ),
-            child: Image.asset(
-              widget.itemAssetName,
+            child: CachedNetworkImage(
+              imageUrl: widget.itemAssetNames[_selectedImageIndex],
               height: 446,
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Icon(Icons.error_outline),
+            ),
+
+            /*Image.asset(
+              widget.itemAssetNames[_selectedImageIndex],
+              height: 446,
+            ), */
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.itemAssetNames.length,
+              itemBuilder: (context, index) {
+                final assetName = widget.itemAssetNames[index];
+                if (assetName == 'https://haluansama.com/crm-sales/null') {
+                  return SizedBox
+                      .shrink(); // Return an empty container if the asset name is null
+                }
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedImageIndex = index;
+                    });
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8),
+                    child: Image.network(
+                      assetName,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Row(
               children: [
                 Column(
@@ -157,6 +195,11 @@ class _ItemScreenState extends State<ItemScreen> {
                   ],
                 ),
                 Spacer(),
+                IconButton(
+                  iconSize: 40,
+                  onPressed: () {},
+                  icon: const Icon(Icons.shortcut_sharp),
+                ),
               ],
             ),
           ),
@@ -192,14 +235,15 @@ class _ItemScreenState extends State<ItemScreen> {
                       return ItemVariationsScreen(
                         productId: widget.productId,
                         productName: widget.productName,
-                        itemAssetName: widget.itemAssetName,
+                        itemAssetName: widget.itemAssetNames[0],
                         priceByUom: _priceDataByArea,
                       );
                     }),
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
                   child: Row(
                     children: [
                       Flexible(
@@ -231,19 +275,7 @@ class _ItemScreenState extends State<ItemScreen> {
                       const Spacer(),
                       IconButton(
                         iconSize: 30,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) {
-                              return ItemVariationsScreen(
-                                productId: widget.productId,
-                                productName: widget.productName,
-                                itemAssetName: widget.itemAssetName,
-                                priceByUom: _priceDataByArea,
-                              );
-                            }),
-                          );
-                        },
+                        onPressed: () {},
                         icon: const Icon(Icons.arrow_forward_ios),
                       ),
                     ],

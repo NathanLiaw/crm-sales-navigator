@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/data/sort_list_data.dart';
+import 'package:sales_navigator/data/sortlistdata.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SortPopUp extends StatefulWidget {
@@ -13,7 +13,6 @@ class SortPopUp extends StatefulWidget {
 
 class _SortPopUp extends State<SortPopUp> {
   static String currentSortList = sortLists[0];
-
   @override
   Widget build(BuildContext context) {
     return Container(

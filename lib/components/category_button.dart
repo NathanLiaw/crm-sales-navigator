@@ -3,9 +3,9 @@ import "package:google_fonts/google_fonts.dart";
 
 class CategoryButton extends StatelessWidget {
   const CategoryButton(
-      {super.key, required this.buttonNames, required this.onTap});
+      {super.key, required this.buttonnames, required this.onTap});
 
-  final String buttonNames;
+  final String buttonnames;
   final void Function() onTap;
 
   @override
@@ -23,7 +23,7 @@ class CategoryButton extends StatelessWidget {
               ),
               backgroundColor: Colors.white),
           child: Text(
-            buttonNames,
+            buttonnames,
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w600,
