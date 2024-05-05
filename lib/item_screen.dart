@@ -5,20 +5,21 @@ import 'package:sales_navigator/item_variations_screen.dart';
 import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sales_navigator/components/item_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemScreen extends StatefulWidget {
   final int productId;
   final String productName;
-  final String itemAssetName;
+  final List<String> itemAssetNames;
   final Blob itemDescription;
   final String priceByUom;
 
   const ItemScreen({
     required this.productId,
     required this.productName,
-    required this.itemAssetName,
+    required this.itemAssetNames,
     required this.itemDescription,
     required this.priceByUom,
   });
@@ -33,6 +34,7 @@ class _ItemScreenState extends State<ItemScreen> {
   double _price = 0.0;
   late Map<int, Map<String, double>> _priceData;
   late String _priceDataByArea;
+  int _selectedImageIndex = 0;
 
   Future<void> getAreaId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -70,7 +72,8 @@ class _ItemScreenState extends State<ItemScreen> {
           Map<String, double> areaPrices = {};
           value.forEach((uom, price) {
             if (price is String) {
-              double parsedPrice = double.tryParse(price.replaceAll(',', '')) ?? 0.0;
+              double parsedPrice =
+                  double.tryParse(price.replaceAll(',', '')) ?? 0.0;
               areaPrices[uom] = parsedPrice;
             }
           });
@@ -116,9 +119,45 @@ class _ItemScreenState extends State<ItemScreen> {
                 color: const Color.fromARGB(255, 0, 76, 135),
               ),
             ),
-            child: Image.asset(
-              widget.itemAssetName,
+            child: CachedNetworkImage(
+              imageUrl: widget.itemAssetNames[_selectedImageIndex],
               height: 446,
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Icon(Icons.error_outline),
+            ),
+
+            /*Image.asset(
+              widget.itemAssetNames[_selectedImageIndex],
+              height: 446,
+            ), */
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.itemAssetNames.length,
+              itemBuilder: (context, index) {
+                final assetName = widget.itemAssetNames[index];
+                if (assetName == 'https://haluansama.com/crm-sales/null') {
+                  return SizedBox
+                      .shrink(); // Return an empty container if the asset name is null
+                }
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedImageIndex = index;
+                    });
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8),
+                    child: Image.network(
+                      assetName,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           Container(
@@ -157,9 +196,9 @@ class _ItemScreenState extends State<ItemScreen> {
                 ),
                 Spacer(),
                 IconButton(
-                  iconSize: 38,
+                  iconSize: 40,
                   onPressed: () {},
-                  icon: const Icon(Icons.thumb_up_alt_outlined),
+                  icon: const Icon(Icons.shortcut_sharp),
                 ),
               ],
             ),
@@ -196,14 +235,15 @@ class _ItemScreenState extends State<ItemScreen> {
                       return ItemVariationsScreen(
                         productId: widget.productId,
                         productName: widget.productName,
-                        itemAssetName: widget.itemAssetName,
+                        itemAssetName: widget.itemAssetNames[0],
                         priceByUom: _priceDataByArea,
                       );
                     }),
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
                   child: Row(
                     children: [
                       Flexible(
@@ -273,87 +313,6 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: ItemBottomNavBar(),
     );
   }
 }
-
-
-
-/*
-
-ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount:
-                jsonDecode(priceByUom).length, // Decode the JSON string here
-            itemBuilder: (context, index) {
-              final variationData =
-                  jsonDecode(priceByUom).entries.elementAt(index);
-              final variationName = variationData.key;
-              final variationPrices = variationData.value;
-
-              return Container(
-                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                child: Card(
-                  color: Colors.white,
-                  clipBehavior: Clip.hardEdge,
-                  child: InkWell(
-                    splashColor: Colors.blue.withAlpha(30),
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 20),
-                      child: Row(
-                        children: [
-                          // Add Image or Icon here
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  variationName,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromARGB(255, 25, 23, 49),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                ...variationPrices.entries.map((entry) {
-                                  final uom = entry.key;
-                                  final price = entry.value;
-                                  return Text(
-                                    '$uom: RM $price',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          const Color.fromARGB(255, 25, 23, 49),
-                                    ),
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            iconSize: 30,
-                            onPressed: () {},
-                            icon: const Icon(Icons.arrow_forward_ios),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-
-
-
-*/
-

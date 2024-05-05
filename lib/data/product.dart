@@ -1,6 +1,3 @@
-import 'package:sales_navigator/db_connection.dart';
-import 'package:mysql1/mysql1.dart';
-
 class Product {
   final int id;
   final int subCategory;

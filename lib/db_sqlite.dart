@@ -1,14 +1,11 @@
-/* import 'package:path/path.dart';
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
 
 class DatabaseHelper {
   static Database? _database;
-  static const String productTableName = 'product';
-  static const String cartTableName = 'cart';
   static const String cartItemTableName = 'cart_item';
-  static const String cartActiveTableName = 'cart_active';
 
   static Future<Database> get database async {
     if (_database != null) {
@@ -20,7 +17,6 @@ class DatabaseHelper {
   }
 
   static Future<Database> initDatabase() async {
-    print('db initialised');
     final path = await getDatabasesPath();
     final databasePath = join(path, 'salesNavigator.db');
 
@@ -28,65 +24,12 @@ class DatabaseHelper {
       databasePath,
       version: 1,
       onCreate: (db, version) async {
-        // Create the products table
-        // await db.execute(
-        //   '''CREATE TABLE $productTableName(
-        //     id INTEGER PRIMARY KEY,
-        //     sub_category INTEGER,
-        //     brand INTEGER,
-        //     product_name TEXT,
-        //     product_code TEXT,
-        //     price_guide TEXT,
-        //     photo1 TEXT,
-        //     photo2 TEXT,
-        //     photo3 TEXT,
-        //     photo4 TEXT,
-        //     featured TEXT,
-        //     stock TEXT,
-        //     status TEXT,
-        //     description BLOB,
-        //     uom TEXT,
-        //     price_by_uom BLOB,
-        //     stock_by_uom BLOB,
-        //     discount BLOB
-        //   )''',
-        // );
-
-        // Create the cart table
-        await db.execute(
-          '''CREATE TABLE IF NOT EXISTS $cartTableName(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_type TEXT,
-            expiration_date TEXT,
-            gst REAL,
-            sst REAL,
-            final_total REAL,
-            total REAL,
-            remark TEXT,
-            order_option TEXT,
-            buyer_user_group TEXT,
-            buyer_area_id INTEGER,
-            buyer_area_name TEXT,
-            buyer_id INTEGER,
-            buyer_name TEXT,
-            customer_id INTEGER,
-            customer_company_name TEXT,
-            customer_discount TEXT,
-            admin_id INTEGER,
-            admin_datetime TEXT,
-            status TEXT,
-            created TEXT,
-            modified TEXT
-          )''',
-        );
 
         // Create the cart_items table
         await db.execute(
           '''CREATE TABLE IF NOT EXISTS $cartItemTableName(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cart_id INTEGER,
             buyer_id INTEGER,
-            customer_id INTEGER,
             product_id INTEGER,
             product_name TEXT,
             uom TEXT,
@@ -102,14 +45,6 @@ class DatabaseHelper {
             modified TEXT
           )''',
         );
-
-        // Create the cart_active table
-        // await db.execute(
-        //   '''CREATE TABLE $cartActiveTableName(
-        //     id INTEGER PRIMARY KEY AUTOINCREMENT,
-        //     cart_id INTEGER,
-        //   )''',
-        // );
       },
     );
   }
@@ -156,7 +91,7 @@ class DatabaseHelper {
       String condition,
       String order,
       String field, {
-        List<Object?>? whereArgs, // Define whereArgs as a named parameter
+        List<Object?>? whereArgs,
       }) async {
     String sqlQuery = '';
     String sqlOrder = '';
@@ -196,6 +131,26 @@ class DatabaseHelper {
     return results;
   }
 
+  static Future<int> countData(Database db, String tableName, String condition) async {
+    String sqlQuery = '';
+
+    if (condition.isNotEmpty) {
+      sqlQuery = 'WHERE $condition';
+    }
+
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> queryResult = await db.rawQuery(
+        'SELECT COUNT(*) AS count FROM $tableName $sqlQuery',
+      );
+      final rowCount = queryResult.first['count'] as int;
+      return rowCount;
+    } catch (e) {
+      print('Error counting data: $e');
+      return 0; // Return 0 if an error occurs
+    }
+  }
+
   // Get all data from a specific table
   static Future<List<Map<String, dynamic>>> getAllData(String tableName) async {
     final db = await database;
@@ -215,11 +170,8 @@ class DatabaseHelper {
     );
   }
 
-  // Delete data from a specific table
-  static Future<int> deleteData(int id, String tableName) async {
+  static Future<int> deleteData(int? id, String tableName) async {
     final db = await database;
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
 }
-
-*/

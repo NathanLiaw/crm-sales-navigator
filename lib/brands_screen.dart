@@ -28,6 +28,7 @@ class _BrandScreenState extends State<BrandScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           'Brands',
           style: GoogleFonts.inter(

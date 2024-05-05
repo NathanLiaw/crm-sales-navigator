@@ -84,40 +84,52 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         'session',
       );
 
-      final session = sessionResults.first['session'] as String;
+      String session = '';
+      if (sessionResults.isNotEmpty) {
+        // Check if sessionResults is not empty
+        session = sessionResults.first['session'].toString();
+      }
+
       final cartItemResults = await readData(
         conn,
         'cart_item',
-        'session = "$session"',
+        'session = "$session" OR cart_id = "$cartId"',
         '',
         'product_name, unit_price, qty, total, status',
       );
 
-      final createdDateTime =
-          DateTime.parse(createdDateResults.first['created'] as String);
-      final formattedCreatedDate =
-          DateFormat('yyyy-MM-dd').format(createdDateTime);
+      final createdDateTime = DateTime.parse(createdDateResults.first['created'] as String);
+      final formattedCreatedDate = DateFormat('yyyy-MM-dd').format(createdDateTime);
 
       final formattedSalesOrderId = 'SO' + cartId.toString().padLeft(7, '0');
 
       final items = <OrderItem>[];
       double total = 0.0;
       for (var result in cartItemResults) {
-        final productName = result['product_name'] as String;
-        final unitPrice = result['unit_price'].toString();
-        final qty = result['qty'].toString();
-        final status = result['status'] as String;
-        final itemTotal = result['total'].toString();
-        final photoPath = await fetchProductPhoto(productName);
-        items.add(OrderItem(
-          productName: productName,
-          unitPrice: unitPrice,
-          qty: qty,
-          status: status,
-          total: itemTotal,
-          photoPath: photoPath,
-        ));
-        total += double.parse(itemTotal);
+        final productName = result['product_name'] as String?;
+        final unitPrice = result['unit_price']?.toString() ?? '0.00';
+        final qty = result['qty']?.toString() ?? '0';
+        final status = result['status'] as String?;
+        final itemTotal = result['total']?.toString() ?? '0.00';
+
+        // Fetch photo path asynchronously
+        String photoPath = 'asset/no_image.jpg';
+        if (productName != null) {
+          photoPath = await fetchProductPhoto(productName);
+        }
+
+        // Create OrderItem only if required fields are not null
+        if (productName != null && status != null) {
+          items.add(OrderItem(
+            productName: productName,
+            unitPrice: unitPrice,
+            qty: qty,
+            status: status,
+            total: itemTotal,
+            photoPath: photoPath,
+          ));
+          total += double.parse(itemTotal);
+        }
       }
 
       setState(() {
@@ -224,8 +236,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Future<void> calculateTotalAndSubTotal() async {
     // Calculate final total using fetched tax values
     double finalTotal = subtotal * (1 + gst + sst);
-    print(subtotal);
-    print(finalTotal);
 
     // Update state with calculated values
     setState(() {
@@ -386,10 +396,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('RM${total.toStringAsFixed(3)}',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('RM${total.toStringAsFixed(3)}', style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                   Divider(),

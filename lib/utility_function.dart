@@ -2,19 +2,26 @@ import 'dart:core';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
 
 class UtilityFunction{
   static String calculateExpirationDate() {
-    // Get today's date
-    DateTime now = DateTime.now();
+    // Initialize the time zone data
+    tzdata.initializeTimeZones();
+
+    // Specify the time zone for Kuala Lumpur
+    final kualaLumpur = tz.getLocation('Asia/Kuala_Lumpur');
+
+    // Get today's date in the Kuala Lumpur time zone
+    final now = tz.TZDateTime.now(kualaLumpur);
 
     // Calculate expiration date by adding 7 days
-    DateTime expirationDate = now.add(Duration(days: 7));
+    final expirationDate = now.add(const Duration(days: 7));
 
-    // Format expiration date in 'yyyy-mm-dd' format
-    String formattedExpirationDate = '${expirationDate.year.toString().padLeft(4, '0')}-'
-        '${expirationDate.month.toString().padLeft(2, '0')}-'
-        '${expirationDate.day.toString().padLeft(2, '0')}';
+    // Format expiration date in 'yyyy-MM-dd' format
+    String formattedExpirationDate = DateFormat('yyyy-MM-dd').format(expirationDate);
 
     return formattedExpirationDate;
   }
@@ -29,16 +36,16 @@ class UtilityFunction{
       final results = await readData(
         conn,
         'tax',
-        '$taxType AND status = 1', // Use parameterized query to avoid SQL injection
-        '', // Pass taxType as a parameter
+        'tax_title = "$taxType" AND status = 1',
+        '',
         'tax_in_percent',
       );
 
       await conn.close();
 
       if (results.isNotEmpty) {
-        // Retrieve tax_in_percent from the first row (assuming only one result expected)
-        double taxInPercent = results[0]['tax_in_percent'] as double;
+        // Retrieve tax_in_percent from the first row
+        int taxInPercent = results[0]['tax_in_percent'];
 
         // Calculate final tax percentage (divide taxInPercent by 100)
         double finalTaxPercent = taxInPercent / 100.0;
@@ -56,15 +63,17 @@ class UtilityFunction{
   }
 
   static String getCurrentDateTime() {
-    DateTime now = DateTime.now();
+    // Initialize the time zone data
+    tzdata.initializeTimeZones();
+
+    // Specify the time zone for Kuala Lumpur
+    final kualaLumpur = tz.getLocation('Asia/Kuala_Lumpur');
+
+    // Get the current time in the Kuala Lumpur time zone
+    final now = tz.TZDateTime.now(kualaLumpur);
 
     // Format date and time components
-    String formattedDateTime = '${now.year.toString().padLeft(4, '0')}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')} '
-        '${now.hour.toString().padLeft(2, '0')}:'
-        '${now.minute.toString().padLeft(2, '0')}:'
-        '${now.second.toString().padLeft(2, '0')}';
+    String formattedDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
 
     return formattedDateTime;
   }

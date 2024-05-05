@@ -88,7 +88,7 @@ class _SearchScreenState extends State<SearchScreen> {
         'product',
         'status = 1 AND product_name = "$selectedProductName"',
         '',
-        'id, product_name, photo1, description, sub_category, price_by_uom',
+        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
 
       if (productData.isNotEmpty) {
@@ -96,9 +96,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        String itemAssetName = product['photo1'];
+        String itemAssetName1 = product['photo1'];
+        String? itemAssetName2 = product['photo2'];
+        String? itemAssetName3 = product['photo3'];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
+
+        final photoUrl1 = "https://haluansama.com/crm-sales/$itemAssetName1";
+        final photoUrl2 = "https://haluansama.com/crm-sales/$itemAssetName2";
+        final photoUrl3 = "https://haluansama.com/crm-sales/$itemAssetName3";
 
         // Navigate to ItemScreen and pass necessary parameters
         Navigator.push(
@@ -107,7 +113,7 @@ class _SearchScreenState extends State<SearchScreen> {
             builder: (context) => ItemScreen(
               productId: productId,
               productName: productName,
-              itemAssetName: itemAssetName,
+              itemAssetNames: [photoUrl1, photoUrl2, photoUrl3],
               itemDescription: description,
               priceByUom: priceByUom,
             ),
@@ -165,7 +171,6 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,23 +195,25 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: _searchResults.isEmpty
           ? Center(
-        child: Text(
-          _searchQuery.isEmpty ? 'Start typing to search' : 'No results found',
-          style: TextStyle(fontSize: 18),
-        ),
-      )
+              child: Text(
+                _searchQuery.isEmpty
+                    ? 'Start typing to search'
+                    : 'No results found',
+                style: TextStyle(fontSize: 18),
+              ),
+            )
           : ListView.builder(
-        itemCount: _searchResults.length,
-        itemBuilder: (context, index) {
-          final productName = _searchResults[index];
-          return ListTile(
-            title: Text(productName),
-            onTap: () {
-              _navigateToItemScreen(productName);
-            },
-          );
-        },
-      ),
+              itemCount: _searchResults.length,
+              itemBuilder: (context, index) {
+                final productName = _searchResults[index];
+                return ListTile(
+                  title: Text(productName),
+                  onTap: () {
+                    _navigateToItemScreen(productName);
+                  },
+                );
+              },
+            ),
     );
   }
 }
