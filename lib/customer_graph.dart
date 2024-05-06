@@ -39,7 +39,7 @@ SELECT
 FROM 
     cart
 JOIN 
-    cart_item ON cart.session = cart_item.session
+    cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
 JOIN 
     salesman ON cart.buyer_id = salesman.id 
 JOIN 

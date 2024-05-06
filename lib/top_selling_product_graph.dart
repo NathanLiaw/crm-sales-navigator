@@ -53,9 +53,9 @@ SELECT
 FROM 
     fyh.cart_item ci
 LEFT JOIN 
-    fyh.cart c ON ci.session = c.session OR ci.cart_id = c.id
+    cart c ON ci.session = c.session OR ci.cart_id = c.id
 JOIN 
-    fyh.salesman s ON c.buyer_id = s.id
+    salesman s ON c.buyer_id = s.id
 WHERE 
     c.status != 'void' AND
     s.username = '$loggedInUsername'
