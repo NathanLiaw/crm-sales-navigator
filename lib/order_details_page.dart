@@ -163,7 +163,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (results.isNotEmpty && results[0]['photo1'] != null) {
         String photoPath = results[0]['photo1'];
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'photo/' + photoPath.substring(6);
+          photoPath = 'asset/photo/' + photoPath.substring(6);
         }
         return photoPath;
       } else {

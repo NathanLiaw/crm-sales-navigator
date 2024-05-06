@@ -236,10 +236,13 @@ class _EditItemPageState extends State<EditItemPage> {
                               ),
                             ),
                             const SizedBox(height: 8.0),
-                            Text(
-                              '${widget.itemUom}',
-                              style: const TextStyle(
-                                fontSize: 14.0,
+                            Container(
+                              width: 220,
+                              child: Text(
+                                '${widget.itemUom}',
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                ),
                               ),
                             ),
                           ],
