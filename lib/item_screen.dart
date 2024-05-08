@@ -5,20 +5,22 @@ import 'package:sales_navigator/item_variations_screen.dart';
 import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:sales_navigator/components/item_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
 class ItemScreen extends StatefulWidget {
   final int productId;
   final String productName;
-  final String itemAssetName;
+  final List<String> itemAssetNames;
   final Blob itemDescription;
   final String priceByUom;
 
-  const ItemScreen({super.key,
+  const ItemScreen({
     required this.productId,
     required this.productName,
-    required this.itemAssetName,
+    required this.itemAssetNames,
     required this.itemDescription,
     required this.priceByUom,
   });
@@ -33,6 +35,7 @@ class _ItemScreenState extends State<ItemScreen> {
   double _price = 0.0;
   late Map<int, Map<String, double>> _priceData;
   late String _priceDataByArea;
+  int _selectedImageIndex = 0;
 
   Future<void> getAreaId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -50,6 +53,7 @@ class _ItemScreenState extends State<ItemScreen> {
         _uom = firstEntry.key;
         _price = firstEntry.value;
         _priceDataByArea = jsonEncode(areaData);
+        print(_priceDataByArea);
       } else {
         developer.log('No data found for area ID: $_areaId');
       }
@@ -100,7 +104,7 @@ class _ItemScreenState extends State<ItemScreen> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
         children: [
-          const ItemAppBar(),
+          ItemAppBar(),
           Container(
             decoration: BoxDecoration(
               boxShadow: [
@@ -115,13 +119,49 @@ class _ItemScreenState extends State<ItemScreen> {
                 color: const Color.fromARGB(255, 0, 76, 135),
               ),
             ),
-            child: Image.asset(
-              'asset/${widget.itemAssetName}',
+            child: CachedNetworkImage(
+              imageUrl: widget.itemAssetNames[_selectedImageIndex],
               height: 446,
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Icon(Icons.error_outline),
+            ),
+
+            /*Image.asset(
+              widget.itemAssetNames[_selectedImageIndex],
+              height: 446,
+            ), */
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.itemAssetNames.length,
+              itemBuilder: (context, index) {
+                final assetName = widget.itemAssetNames[index];
+                if (assetName == 'https://haluansama.com/crm-sales/null') {
+                  return SizedBox
+                      .shrink(); // Return an empty container if the asset name is null
+                }
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedImageIndex = index;
+                    });
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8),
+                    child: Image.network(
+                      assetName,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Row(
               children: [
                 Column(
@@ -135,7 +175,7 @@ class _ItemScreenState extends State<ItemScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 25, 23, 49),
+                          color: Color.fromARGB(255, 25, 23, 49),
                         ),
                       ),
                     ),
@@ -154,14 +194,19 @@ class _ItemScreenState extends State<ItemScreen> {
                     ),
                   ],
                 ),
-                const Spacer(),
+                Spacer(),
+                IconButton(
+                  iconSize: 40,
+                  onPressed: () {},
+                  icon: const Icon(Icons.shortcut_sharp),
+                ),
               ],
             ),
           ),
           const Divider(
             height: 24,
             thickness: 1,
-            color: Color.fromARGB(255, 202, 202, 202),
+            color: const Color.fromARGB(255, 202, 202, 202),
           ),
           Container(
             margin: const EdgeInsets.only(left: 10),
@@ -172,12 +217,12 @@ class _ItemScreenState extends State<ItemScreen> {
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: const Color.fromARGB(255, 25, 23, 49),
+                color: Color.fromARGB(255, 25, 23, 49),
               ),
             ),
           ),
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
             child: Card(
               color: Colors.white,
               clipBehavior: Clip.hardEdge,
@@ -190,14 +235,15 @@ class _ItemScreenState extends State<ItemScreen> {
                       return ItemVariationsScreen(
                         productId: widget.productId,
                         productName: widget.productName,
-                        itemAssetName: widget.itemAssetName,
+                        itemAssetName: widget.itemAssetNames[0],
                         priceByUom: _priceDataByArea,
                       );
                     }),
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
                   child: Row(
                     children: [
                       Flexible(
@@ -211,10 +257,10 @@ class _ItemScreenState extends State<ItemScreen> {
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: const Color.fromARGB(255, 25, 23, 49),
+                                color: Color.fromARGB(255, 25, 23, 49),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               '$_uom: RM ${_price.toStringAsFixed(3)}',
                               style: GoogleFonts.inter(
@@ -253,7 +299,7 @@ class _ItemScreenState extends State<ItemScreen> {
           const Divider(
             height: 24,
             thickness: 1,
-            color: Color.fromARGB(255, 202, 202, 202),
+            color: const Color.fromARGB(255, 202, 202, 202),
           ),
           Container(
             margin: const EdgeInsets.only(left: 10),
@@ -271,7 +317,7 @@ class _ItemScreenState extends State<ItemScreen> {
           Container(
             margin: const EdgeInsets.only(left: 10, top: 14),
             child: Container(
-              margin: const EdgeInsets.only(bottom: 28),
+              margin: EdgeInsets.only(bottom: 28),
               child: HtmlWidget(
                 widget.itemDescription.toString(),
               ),

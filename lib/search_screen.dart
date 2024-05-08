@@ -5,8 +5,6 @@ import 'package:sales_navigator/item_screen.dart';
 import 'dart:developer' as developer;
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
-
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }
@@ -19,6 +17,7 @@ class _SearchScreenState extends State<SearchScreen> {
     MySqlConnection conn = await connectToDatabase();
 
     try {
+      // Initialize the list of query conditions
       List<String> conditions = [];
 
       // Step 1: Check if the search query matches any subcategory name
@@ -42,13 +41,13 @@ class _SearchScreenState extends State<SearchScreen> {
         final brandId = brandResults.first.fields['id'] as int;
         conditions.add('p.brand = $brandId');
 
-        // Add an additional condition to prioritize specific brand products
-        // containing the search term
+        // Add an additional condition to prioritize specific brand products containing the search term
         conditions.add('p.product_name LIKE \'%$query%\'');
       }
 
       // Construct the WHERE clause based on the conditions
-      String whereClause = conditions.isNotEmpty ? 'WHERE ${conditions.join(' OR ')}' : '';
+      String whereClause =
+          conditions.isNotEmpty ? 'WHERE ' + conditions.join(' OR ') : '';
 
       // Step 3: Execute the final query based on the constructed conditions
       final results = await conn.query(
@@ -65,7 +64,8 @@ class _SearchScreenState extends State<SearchScreen> {
       );
 
       setState(() {
-        _searchResults = results.map((result) => result['product_name'] as String).toList();
+        _searchResults =
+            results.map((result) => result['product_name'] as String).toList();
       });
     } catch (e) {
       developer.log('Error performing search: $e', error: e);
@@ -91,7 +91,7 @@ class _SearchScreenState extends State<SearchScreen> {
         'product',
         'status = 1 AND product_name = "$selectedProductName"',
         '',
-        'id, product_name, photo1, description, sub_category, price_by_uom',
+        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
 
       if (productData.isNotEmpty) {
@@ -99,9 +99,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        String itemAssetName = product['photo1'];
+        String itemAssetName1 = product['photo1'];
+        String? itemAssetName2 = product['photo2'];
+        String? itemAssetName3 = product['photo3'];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
+
+        final photoUrl1 = "https://haluansama.com/crm-sales/$itemAssetName1";
+        final photoUrl2 = "https://haluansama.com/crm-sales/$itemAssetName2";
+        final photoUrl3 = "https://haluansama.com/crm-sales/$itemAssetName3";
 
         // Navigate to ItemScreen and pass necessary parameters
         Navigator.push(
@@ -110,7 +116,7 @@ class _SearchScreenState extends State<SearchScreen> {
             builder: (context) => ItemScreen(
               productId: productId,
               productName: productName,
-              itemAssetName: itemAssetName,
+              itemAssetNames: [photoUrl1, photoUrl2, photoUrl3],
               itemDescription: description,
               priceByUom: priceByUom,
             ),
@@ -137,11 +143,20 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final conn = await connectToDatabase();
       final results = await conn.query(
-        'SELECT id, product_name, photo1, description, sub_category, '
-            'price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
+        'SELECT id, product_name, photo1, description, sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
         ['%$searchQuery%'],
       );
       await conn.close();
+
+      // Print each product_name
+      results.forEach((row) {
+        print('Product id: ${row['id']}');
+        print('Product name: ${row['product_name']}');
+        print('Product photo: ${row['photo1']}');
+        print('Product desc: ${row['description']}');
+        print('Product sub: ${row['sub_category']}');
+        print('Product price: ${row['price_by_uom']}');
+      });
 
       return results.map((row) {
         return {
@@ -165,7 +180,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: TextField(
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Search...',
             border: InputBorder.none,
           ),
@@ -173,7 +188,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: Icon(Icons.search),
             onPressed: () {
               // Perform search when the search button is pressed
               _performSearch(_searchQuery);
@@ -183,23 +198,25 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: _searchResults.isEmpty
           ? Center(
-        child: Text(
-          _searchQuery.isEmpty ? 'Start typing to search' : 'No results found',
-          style: const TextStyle(fontSize: 18),
-        ),
-      )
+              child: Text(
+                _searchQuery.isEmpty
+                    ? 'Start typing to search'
+                    : 'No results found',
+                style: TextStyle(fontSize: 18),
+              ),
+            )
           : ListView.builder(
-        itemCount: _searchResults.length,
-        itemBuilder: (context, index) {
-          final productName = _searchResults[index];
-          return ListTile(
-            title: Text(productName),
-            onTap: () {
-              _navigateToItemScreen(productName);
-            },
-          );
-        },
-      ),
+              itemCount: _searchResults.length,
+              itemBuilder: (context, index) {
+                final productName = _searchResults[index];
+                return ListTile(
+                  title: Text(productName),
+                  onTap: () {
+                    _navigateToItemScreen(productName);
+                  },
+                );
+              },
+            ),
     );
   }
 }
