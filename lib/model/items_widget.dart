@@ -3,13 +3,14 @@ import 'package:mysql1/mysql1.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/item_screen.dart';
+import 'dart:developer' as developer;
 
 class ItemsWidget extends StatelessWidget {
-  final int? brandId; // Brand ID to filter products
+  final int? brandId;
   final int? subCategoryId;
   final String sortOrder;
 
-  ItemsWidget({this.brandId, this.subCategoryId, required this.sortOrder});
+  const ItemsWidget({super.key, this.brandId, this.subCategoryId, required this.sortOrder});
 
   Future<List<Map<String, dynamic>>> getProductData() async {
     try {
@@ -59,7 +60,7 @@ class ItemsWidget extends StatelessWidget {
               })
           .toList();
     } catch (e) {
-      print('Error fetching product: $e');
+      developer.log('Error fetching product: $e', error: e);
       return [];
     }
   }
@@ -102,7 +103,6 @@ class ItemsWidget extends StatelessWidget {
                   children: [
                     InkWell(
                       onTap: () {
-                        // Navigate to the item_screen.dart page
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -142,7 +142,7 @@ class ItemsWidget extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  productName, // Display product name
+                                  productName,
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 2,
                                   style: GoogleFonts.inter(

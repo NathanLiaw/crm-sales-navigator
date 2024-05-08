@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'db_connection.dart';
 import 'package:mysql1/mysql1.dart';
 import 'customer.dart';
+import 'dart:developer' as developer;
 
 class CustomerDetails extends StatefulWidget {
   final ValueChanged<Customer>? onSelectionChanged;
 
-  const CustomerDetails({Key? key, this.onSelectionChanged}) : super(key: key);
+  const CustomerDetails({super.key, this.onSelectionChanged});
 
   @override
   _CustomerDetailsState createState() => _CustomerDetailsState();
@@ -84,7 +85,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                       ),
                       child: Card(
                         elevation: 2.0,
-                        color: isSelected ? const Color(0xfff8f9fa) : Color(0xffcde5f2),
+                        color: isSelected ? const Color(0xfff8f9fa) : const Color(0xffcde5f2),
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Column(
@@ -172,7 +173,7 @@ Future<List<Customer>> fetchCustomers() async {
       ));
     }
   } catch (e) {
-    print('Error fetching customers: $e');
+    developer.log('Error fetching customers: $e', error: e);
   }
   return fetchedCustomers;
 }

@@ -5,10 +5,13 @@ import 'home_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db_connection.dart';
+import 'dart:developer' as developer;
 
 class LoginPage extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  LoginPage({super.key});
 
   void signIn(BuildContext context) async {
     String username = usernameController.text;
@@ -50,15 +53,14 @@ class LoginPage extends StatelessWidget {
               builder: (context) => HomePage(),
             ));
       } else {
-        // If no matching salesman found, display an error message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Invalid username or password. Please try again.'),
           ),
         );
       }
     } catch (e) {
-      print('Error signing in: $e');
+      developer.log('Error signing in: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -69,8 +71,8 @@ class LoginPage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Contact Information'),
-          content: SingleChildScrollView(
+          title: const Text('Contact Information'),
+          content: const SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -87,7 +89,7 @@ class LoginPage extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Close'),
+              child: const Text('Close'),
             ),
           ],
         );
@@ -105,8 +107,8 @@ class LoginPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: EdgeInsets.only(top: 30),
-                margin: EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(top: 30),
+                margin: const EdgeInsets.only(bottom: 10),
                 child: Image.asset(
                   'asset/logo/logo_fyh.png',
                   width: 300,
@@ -115,23 +117,23 @@ class LoginPage extends StatelessWidget {
               ),
               Container(
                 alignment: Alignment.centerLeft,
-                padding: EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   left: 20,
                 ),
-                child: Text(
+                child: const Text(
                   'Salesman',
                   style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                 ),
               ),
 
               // Email input field
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
                 margin:
-                    EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
+                    const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
                 child: TextFormField(
                   controller: usernameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Username',
                     // hintText: 'fyh@mail.com',
@@ -140,13 +142,13 @@ class LoginPage extends StatelessWidget {
               ),
 
               // Password input field
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                margin: EdgeInsets.only(top: 10, left: 20, right: 20),
+                margin: const EdgeInsets.only(top: 10, left: 20, right: 20),
                 child: TextFormField(
                   controller: passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Password',
                   ),
@@ -154,9 +156,9 @@ class LoginPage extends StatelessWidget {
               ),
 
               // Sign in button
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Container(
-                margin: EdgeInsets.only(top: 20, left: 20, right: 20),
+                margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
@@ -164,12 +166,12 @@ class LoginPage extends StatelessWidget {
                     signIn(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff0069BA),
+                    backgroundColor: const Color(0xff0069BA),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Sign In',
                     style: TextStyle(
                       color: Colors.white,
@@ -179,13 +181,13 @@ class LoginPage extends StatelessWidget {
               ),
 
               // Forgot password button
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
                   // Show pop up window
                   showContactInfoDialog(context);
                 },
-                child: Text(
+                child: const Text(
                   'Forgot Password',
                   style: TextStyle(
                     color: Colors.black,

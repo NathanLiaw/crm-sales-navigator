@@ -1,6 +1,5 @@
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_connection.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
@@ -10,6 +9,7 @@ import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
+import 'dart:developer' as developer;
 
 class OrderConfirmationPage extends StatefulWidget {
   final Customer customer;
@@ -51,10 +51,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
       for (var row in results) {
         fetchedOrderOptions.add(row['order_option'] as String);
-        print(row['order_option']);
       }
     } catch (e) {
-      print('Error fetching order options: $e');
+      developer.log('Error fetching order options: $e', error: e);
     }
     return fetchedOrderOptions;
   }
@@ -64,7 +63,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     String name = prefs.getString('salesmanName') ?? '';
     int areaId = prefs.getInt('area') ?? 0;
     int id = prefs.getInt('id') ?? 0;
-    String stringOrderOptions = '["' + orderOptions.join('","') + '"]';
+    String stringOrderOptions = '["${orderOptions.join('","')}"]';
 
     try {
       MySqlConnection conn = await connectToDatabase();
@@ -106,16 +105,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       bool saved = await saveData(conn, 'cart', cartData);
 
       if (saved) {
-        print('Cart created successfully!');
-        // Additional logic upon successful cart creation
+        developer.log('Cart created successfully');
       } else {
-        print('Failed to create cart.');
-        // Handle failure case
+        developer.log('Failed to create cart');
       }
 
       await conn.close();
     } catch (e) {
-      print('Error creating cart: $e');
+      developer.log('Error creating cart: $e', error: e);
     }
   }
 
@@ -154,18 +151,17 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
         int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
         if (rowsAffected > 0) {
-          // Database update successful
-          print('Item status updated successfully');
+          developer.log('Item status updated successfully');
         }
 
         if (saved) {
-          print('Item inserted successfully');
+          developer.log('Item inserted successfully');
         } else {
-          print('Failed to insert item');
+          developer.log('Failed to insert item');
         }
       }
     } catch (e) {
-      print('Error inserting item: $e');
+      developer.log('Error inserting item: $e', error: e);
     }
   }
 
@@ -174,19 +170,17 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
     try {
       MySqlConnection conn = await connectToDatabase();
-      final result = await readFirst(conn, 'cart', '', 'id DESC'); // Order by id in descending order
+      final result = await readFirst(conn, 'cart', '', 'id DESC');
 
       if (result.isNotEmpty) {
-        // Extract the 'id' field from the first row of the result
         salesOrderId = result['id'] as int;
       } else {
-        // Handle case where no rows are found
-        print('No sales order ID found in the cart table.');
+        developer.log('No sales order ID found in the cart table');
       }
 
-      await conn.close(); // Close the database connection
+      await conn.close();
     } catch (e) {
-      print("Error retrieving sales order ID: $e");
+      developer.log('Error retrieving sales order ID: $e', error: e);
     }
 
     return salesOrderId;
@@ -291,7 +285,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
               Expanded(
                 child: RichText(
                   text: TextSpan(
-                    text: 'By clicking Confirm Order, I confirm that I have read and agree to the ',
+                    text: 'By clicking Confirm Order, I confirm that I have read '
+                        'and agree to the ',
                     style: const TextStyle(color: Colors.black),
                     children: [
                       TextSpan(
@@ -302,7 +297,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => TermsandConditions(),
+                                builder: (context) => const TermsandConditions(),
                               ),
                             );
                           },
@@ -360,7 +355,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text('Terms and Conditions'),
-                          content: const Text('Please agree to the terms and conditions before proceeding.'),
+                          content: const Text('Please agree to the terms and '
+                              'conditions before proceeding.'),
                           actions: [
                             TextButton(
                               onPressed: () {

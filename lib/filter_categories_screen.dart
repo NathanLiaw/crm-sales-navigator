@@ -5,6 +5,8 @@ import 'package:sales_navigator/data/sub_category_data.dart';
 import 'package:sales_navigator/db_connection.dart';
 
 class FilterCategoriesScreen extends StatefulWidget {
+  const FilterCategoriesScreen({super.key});
+
   @override
   _FilterCategoriesScreenState createState() => _FilterCategoriesScreenState();
 }
@@ -42,10 +44,10 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
       ),
       body: _categories.isEmpty
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
               itemCount: _categories.length,
               itemBuilder: (context, index) {
@@ -53,7 +55,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                 return ExpansionTile(
                   title: Text(
                     _categories[index].category,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -67,7 +69,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                     if (isExpanded)
                       ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: _subCategories[index].length,
                         itemBuilder: (context, subIndex) {
                           final subCategory =
@@ -75,13 +77,13 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                           return ListTile(
                             title: Text(
                               subCategory,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.black,
                               ),
                             ),
                             trailing:
                                 selectedSubCategories.contains(subCategory)
-                                    ? Icon(Icons.check)
+                                    ? const Icon(Icons.check)
                                     : null,
                             onTap: () {
                               setState(() {

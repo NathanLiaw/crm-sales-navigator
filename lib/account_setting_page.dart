@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db_connection.dart';
+import 'dart:developer' as developer;
 
 class AccountSetting extends StatefulWidget {
   const AccountSetting({super.key});
@@ -74,15 +75,13 @@ class _AccountSettingState extends State<AccountSetting> {
         ),
       );
     } catch (e) {
-      print('Error updating salesman details: $e');
-      // show error message
+      developer.log('Error updating salesman details: $e', error: e);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to update salesman details. Please try again.'),
         ),
       );
     } finally {
-      // Close the database connection
       await conn.close();
     }
     Navigator.pop(context, true);
@@ -152,7 +151,6 @@ class _AccountSettingState extends State<AccountSetting> {
                   margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle cancel button press
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
@@ -175,7 +173,6 @@ class _AccountSettingState extends State<AccountSetting> {
                   margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Call the update database function
                       updateSalesmanDetailsInDatabase();
                     },
                     style: ElevatedButton.styleFrom(

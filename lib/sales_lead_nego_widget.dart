@@ -1,18 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/create_task_page.dart';
+import 'package:intl/intl.dart';
 
-class NegotiationLeadItem extends StatelessWidget {
-  // final LeadItem leadItem;
+class NegotiationLeadItem extends StatefulWidget {
+  const NegotiationLeadItem({super.key});
 
-  const NegotiationLeadItem({Key? key}) : super(key: key);
+  @override
+  _NegotiationLeadItemState createState() => _NegotiationLeadItemState();
+}
+
+class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
+  String? title;
+  String? description;
+  DateTime? dueDate;
+
+  Future<void> _navigateAndDisplaySelection(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTaskPage(
+          customerName: 'CustomerA',
+          lastPurchasedAmount: 'RM5000',
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        title = result['title'];
+        description = result['description'];
+        dueDate = result['dueDate'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       color: const Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -21,21 +49,21 @@ class NegotiationLeadItem extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   'CustomerA',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.only(left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  margin: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(
+                  child: const Text(
                     'RM5000',
                     style: TextStyle(
                       color: Colors.white,
@@ -44,7 +72,7 @@ class NegotiationLeadItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 PopupMenuButton<String>(
                   onSelected: (String value) {
                     // Perform an action based on the selected value
@@ -52,8 +80,12 @@ class NegotiationLeadItem extends StatelessWidget {
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
-                      value: 'add',
-                      child: Text('Add'),
+                      value: 'view details',
+                      child: Text('View details'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'archive',
+                      child: Text('Archive'),
                     ),
                     const PopupMenuItem<String>(
                       value: 'edit',
@@ -63,6 +95,14 @@ class NegotiationLeadItem extends StatelessWidget {
                       value: 'delete',
                       child: Text('Delete'),
                     ),
+                    const PopupMenuItem<String>(
+                      value: 'complete',
+                      child: Text('Complete'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'undo',
+                      child: Text('Undo'),
+                    ),
                   ],
                   child: const Icon(Icons.more_horiz_outlined,
                       color: Colors.black),
@@ -70,14 +110,14 @@ class NegotiationLeadItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.phone,
                   color: Color(0xff0069BA),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   '(60)10 234568789',
                   style: TextStyle(
@@ -85,12 +125,12 @@ class NegotiationLeadItem extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
+                SizedBox(width: 8),
+                Icon(
                   Icons.email,
                   color: Color(0xff0069BA),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   'abc@gmail.com',
                   style: TextStyle(
@@ -101,13 +141,35 @@ class NegotiationLeadItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Text(
-              'You haven\'t created a task yet! Click the Create Task button to create it.',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
+            if (title != null && description != null && dueDate != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Task Details',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Title: $title'),
+                  const SizedBox(height: 4),
+                  Text('Description: $description'),
+                  const SizedBox(height: 4),
+                  Text(
+                      'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
+                  const SizedBox(height: 16),
+                ],
+              )
+            else
+              const Text(
+                'You haven\'t created a task yet! Click the Create Task button to create it.',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                ),
               ),
-            ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -115,7 +177,7 @@ class NegotiationLeadItem extends StatelessWidget {
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<String>(
                     isExpanded: true,
-                    hint: Text(
+                    hint: const Text(
                       'Negotiation',
                     ),
                     items: ['Negotiation']
@@ -123,7 +185,7 @@ class NegotiationLeadItem extends StatelessWidget {
                               value: item,
                               child: Text(
                                 item,
-                                style: TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ))
                         .toList(),
@@ -141,24 +203,22 @@ class NegotiationLeadItem extends StatelessWidget {
                 ),
               ],
             ),
-            // const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                  onPressed: () {
-                    // 按钮点击时的操作
-                  },
+                  onPressed: () => _navigateAndDisplaySelection(context),
                   child: Text(
-                    'Create Task',
-                    style: TextStyle(
-                        decoration: TextDecoration.underline,
-                        decorationColor: Color(0xff0069BA),
-                        color: Color(0xff0069BA),
-                        fontSize: 14),
+                    title == null ? 'Create Task' : 'Edit Task',
+                    style: const TextStyle(
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0xff0069BA),
+                      color: Color(0xff0069BA),
+                      fontSize: 14,
+                    ),
                   ),
                 ),
-                Text(
+                const Text(
                   'Created on: 04/03/2024',
                   style: TextStyle(
                     color: Colors.grey,

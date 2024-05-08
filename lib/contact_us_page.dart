@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 
 class ContactUs extends StatelessWidget {
+  const ContactUs({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff004c87),
+        backgroundColor: const Color(0xff004c87),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
-        title: Text(
+        title: const Text(
           'Contact Us',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications),
             onPressed: () {
               // Handle notifications
             },
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -46,9 +48,9 @@ class ContactUs extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             Divider(
-              color: Colors.grey, // Customize the color of the divider
-              thickness: 1.0, // Set the thickness of the divider
-              height: 20.0, // Set the height of the divider
+              color: Colors.grey,
+              thickness: 1.0,
+              height: 20.0,
             ),
             SizedBox(height: 16),
             Text(
@@ -70,9 +72,9 @@ class ContactUs extends StatelessWidget {
             Text('FYHKCH@HOTMAIL.COM'),
             SizedBox(height: 16),
             Divider(
-              color: Colors.grey, // Customize the color of the divider
-              thickness: 1.0, // Set the thickness of the divider
-              height: 20.0, // Set the height of the divider
+              color: Colors.grey,
+              thickness: 1.0,
+              height: 20.0,
             ),
             Text(
               'BUSINESS HOURS',

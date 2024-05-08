@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
 }
 
 class TopSellingProductsPage extends StatefulWidget {
-  const TopSellingProductsPage({Key? key}) : super(key: key);
+  const TopSellingProductsPage({super.key});
 
   @override
   _TopSellingProductsPageState createState() => _TopSellingProductsPageState();
@@ -45,26 +46,26 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
 
   Future<void> _loadTopProducts() async {
     String query = '''
-    SELECT 
-      ci.product_name, 
-      SUM(ci.qty) AS total_qty_sold,
-      SUM(ci.qty * ci.unit_price) AS total_sales,
-      s.salesman_name
-    FROM 
-      fyh.cart_item ci
-    JOIN 
-      fyh.cart c ON ci.session = c.session
-    JOIN 
-      fyh.salesman s ON c.buyer_id = s.id
-    WHERE 
-      c.status != 'void' AND
-      s.username = '$loggedInUsername'
-    GROUP BY 
-      ci.product_name, 
-      s.salesman_name
-    ORDER BY 
-      total_qty_sold DESC
-    LIMIT 5;
+SELECT 
+    ci.product_name, 
+    SUM(ci.qty) AS total_qty_sold,
+    SUM(ci.qty * ci.unit_price) AS total_sales,
+    s.salesman_name
+FROM 
+    fyh.cart_item ci
+LEFT JOIN 
+    cart c ON ci.session = c.session OR ci.cart_id = c.id
+JOIN 
+    salesman s ON c.buyer_id = s.id
+WHERE 
+    c.status != 'void' AND
+    s.username = '$loggedInUsername'
+GROUP BY 
+    ci.product_name, 
+    s.salesman_name
+ORDER BY 
+    total_qty_sold DESC
+LIMIT 5;
   ''';
 
     try {
@@ -78,8 +79,8 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
       setState(() {
         products = fetchedProducts;
       });
-    } catch (e) {
-      print('Error fetching top products: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error fetching top products: $e', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -90,25 +91,18 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Padding(
-          padding: const EdgeInsets.only(
-            left: 0.0,
-            top: 28.0,
-            bottom: 16.0,
-          ),
-          child: const Text(
-            'Top Selling Products',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold),
-          ),
+        title: const Text(
+          'Top Selling Products',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         centerTitle: false,
       ),
       body: products.isNotEmpty
           ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.9,
                 decoration: BoxDecoration(
@@ -197,7 +191,7 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                                             child: Text(
                                               '${product.quantity}',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(fontWeight: FontWeight.w600),
+                                              style: const TextStyle(fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                           Expanded(
@@ -205,7 +199,7 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                                             child: Text(
                                               _formatSalesOrder(product.salesOrder),
                                               textAlign: TextAlign.end,
-                                              style: TextStyle(fontWeight: FontWeight.w600),
+                                              style: const TextStyle(fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                         ],

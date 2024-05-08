@@ -3,16 +3,19 @@ import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/db_connection.dart';
+import 'dart:developer' as developer;
 
 class RecentOrder extends StatefulWidget {
+  const RecentOrder({super.key});
+
   @override
   _RecentOrderState createState() => _RecentOrderState();
 }
 
 class _RecentOrderState extends State<RecentOrder> {
   bool _isGridView = false;
-  int _userId = 0; // Default user ID
-  bool _isAscending = true; // Track sorting order
+  int _userId = 0;
+  final bool _isAscending = true;
 
   // Define sorting methods
   final List<String> _sortingMethods = [
@@ -35,7 +38,7 @@ class _RecentOrderState extends State<RecentOrder> {
 
   void _loadUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int userId = prefs.getInt('id') ?? 0; // Default to 0 if userId is not found
+    int userId = prefs.getInt('id') ?? 0;
     setState(() {
       _userId = userId;
     });
@@ -45,13 +48,13 @@ class _RecentOrderState extends State<RecentOrder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff004c87),
-        title: Text(
+        backgroundColor: const Color(0xff004c87),
+        title: const Text(
           'Recent Order',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -67,7 +70,7 @@ class _RecentOrderState extends State<RecentOrder> {
                 Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.sort),
+                      icon: const Icon(Icons.sort),
                       onPressed: () {
                         _showSortingOptions(context);
                       },
@@ -123,11 +126,11 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchRecentOrders(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No recent orders found.'));
+          return const Center(child: Text('No recent orders found.'));
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
@@ -146,14 +149,14 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchRecentOrders(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No recent orders found.'));
+          return const Center(child: Text('No recent orders found.'));
         } else {
           return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
@@ -174,13 +177,13 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchProductPhoto(item['product_name']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           return Container(
-            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            padding: EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -188,7 +191,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   color: Colors.grey.withOpacity(0.3),
                   spreadRadius: 2,
                   blurRadius: 4,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -199,7 +202,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   children: [
                     // photo part
                     Container(
-                      margin: EdgeInsets.only(right: 16),
+                      margin: const EdgeInsets.only(right: 16),
                       child: Image.asset(
                         snapshot.data!,
                         width: 100,
@@ -213,15 +216,15 @@ class _RecentOrderState extends State<RecentOrder> {
                         children: [
                           Text(
                             item['product_name'],
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                             overflow:
-                                TextOverflow.ellipsis, // Add overflow handling
-                            maxLines: 2, // Display up to two lines
+                                TextOverflow.ellipsis,
+                            maxLines: 2,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
@@ -235,12 +238,12 @@ class _RecentOrderState extends State<RecentOrder> {
                       _navigateToItemScreen(item['product_name']);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xff0069BA),
+                      backgroundColor: const Color(0xff0069BA),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'View Item',
                       style: TextStyle(color: Colors.white),
                     ),
@@ -251,7 +254,7 @@ class _RecentOrderState extends State<RecentOrder> {
           );
         } else {
           // No photo found for the product
-          return Container(); // Return an empty container
+          return Container();
         }
       },
     );
@@ -262,12 +265,12 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchProductPhoto(item['product_name']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           return Container(
-            padding: EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -275,7 +278,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   color: Colors.grey.withOpacity(0.3),
                   spreadRadius: 2,
                   blurRadius: 4,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -287,20 +290,20 @@ class _RecentOrderState extends State<RecentOrder> {
                   width: 70,
                   height: 70,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item['product_name'],
-                        style: TextStyle(
+                        style: const TextStyle(
                           // fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
                         overflow:
-                            TextOverflow.ellipsis, // Add overflow handling
-                        maxLines: 1, // Display up to two lines
+                            TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                       // SizedBox(height: 8),
                     ],
@@ -311,14 +314,14 @@ class _RecentOrderState extends State<RecentOrder> {
                     // Handle "View Item" button click
                   },
                   style: ElevatedButton.styleFrom(
-                    minimumSize: Size(20, 30),
-                    backgroundColor: Color(0xff0069BA),
+                    minimumSize: const Size(20, 30),
+                    backgroundColor: const Color(0xff0069BA),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
                   child:
-                      Text('View Item', style: TextStyle(color: Colors.white)),
+                      const Text('View Item', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -366,10 +369,10 @@ class _RecentOrderState extends State<RecentOrder> {
           ),
         );
       } else {
-        print('Product not found for name: $selectedProductName');
+        developer.log('Product not found for name: $selectedProductName', level: 1);
       }
     } catch (e) {
-      print('Error fetching product details: $e');
+      developer.log('Error fetching product details: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -388,7 +391,8 @@ class _RecentOrderState extends State<RecentOrder> {
       final results = await readData(
         conn,
         'cart c JOIN cart_item ci ON ci.session = c.session',
-        'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman" GROUP BY ci.product_name, ci.product_id',
+        'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman" GROUP BY '
+            'ci.product_name, ci.product_id',
         '',
         'ci.product_id, ci.product_name, SUM(ci.total) AS total',
       );
@@ -448,7 +452,7 @@ class _RecentOrderState extends State<RecentOrder> {
 
       return results;
     } catch (e) {
-      print('Error fetching recent orders: $e');
+      developer.log('Error fetching recent orders: $e', error: e);
       return [];
     }
   }
@@ -469,7 +473,7 @@ class _RecentOrderState extends State<RecentOrder> {
         String photoPath = results[0]['photo1'];
         // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/' + photoPath.substring(6);
+          photoPath = 'asset/photo/${photoPath.substring(6)}';
         }
         return photoPath;
       } else {
@@ -477,8 +481,8 @@ class _RecentOrderState extends State<RecentOrder> {
         return 'asset/no_image.jpg';
       }
     } catch (e) {
-      print('Error fetching product photo: $e');
-      return 'asset/no_image.jpg'; // Return empty string if an error occurs
+      developer.log('Error fetching product photo: $e', error: e);
+      return 'asset/no_image.jpg';
     }
   }
 }

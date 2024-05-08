@@ -22,7 +22,7 @@ dependencies:
   timezone: ^0.7.0
   dropdown_button2: ^2.3.9
   email_validator: ^2.1.17
-
+  path: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

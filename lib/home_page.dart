@@ -1,16 +1,16 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/create_lead_page.dart';
+import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
-import 'package:sales_navigator/sales_lead_nego_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -21,6 +21,8 @@ final List<String> tabbarNames = [
 ];
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -28,6 +30,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<LeadItem> leadItems = [];
   List<LeadItem> engagementLeads = [];
+  List<LeadItem> negotiationLeads = [];
+  List<LeadItem> orderProcessingLeads = [];
+  List<LeadItem> closedLeads = [];
   Map<int, DateTime> latestModifiedDates = {};
   Map<int, double> latestTotals = {};
 
@@ -101,7 +106,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('Error fetching lead items: $e');
+      developer.log('Error fetching lead items: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -147,7 +152,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      print('Error fetching create_lead items: $e');
+      developer.log('Error fetching create_lead items: $e', error: e);
     }
   }
 
@@ -163,17 +168,31 @@ class _HomePageState extends State<HomePage> {
         return 'Unknown';
       }
     } catch (e) {
-      print('Error fetching customer name: $e');
+      developer.log('Error fetching customer name: $e', error: e);
       return 'Unknown';
     }
   }
 
-  Future<void> _moveToEngagement(LeadItem leadItem) async {
+  Future<void> _moveTo(LeadItem leadItem, String stage) async {
     setState(() {
       leadItems.remove(leadItem);
-      engagementLeads.add(leadItem);
+      if (stage == 'Engagement') {
+        engagementLeads.add(leadItem);
+        _updateLeadStage(leadItem, 'Engagement');
+      }
+      else if (stage == 'Negotiation') {
+        negotiationLeads.add(leadItem);
+        _updateLeadStage(leadItem, 'Negotiation');
+      }
+      else if (stage == 'Order Processing') {
+        orderProcessingLeads.add(leadItem);
+        _updateLeadStage(leadItem, 'Order Processing');
+      }
+      else if (stage == 'Closed') {
+        closedLeads.add(leadItem);
+        _updateLeadStage(leadItem, 'Closed');
+      }
     });
-    await _updateLeadStage(leadItem, 'Engagement');
   }
 
   Future<void> _updateLeadStage(LeadItem leadItem, String stage) async {
@@ -184,7 +203,7 @@ class _HomePageState extends State<HomePage> {
         [stage, leadItem.customerName],
       );
     } catch (e) {
-      print('Error updating stage: $e');
+      developer.log('Error updating stage: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -218,19 +237,21 @@ class _HomePageState extends State<HomePage> {
             String salesmanName = snapshot.data!;
             return Scaffold(
               appBar: AppBar(
-                backgroundColor: Color(0xff0069BA),
+                backgroundColor: const Color(0xff004c87),
+                iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
+                automaticallyImplyLeading: false,
                 title: Text(
                   'Welcome, $salesmanName',
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 actions: [
                   IconButton(
-                    icon: Icon(Icons.notifications, color: Colors.white),
+                    icon: const Icon(Icons.notifications, color: Colors.white),
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => NotificationsPage()),
+                            builder: (context) => const NotificationsPage()),
                       );
                     },
                   ),
@@ -239,8 +260,8 @@ class _HomePageState extends State<HomePage> {
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
                     child: Text(
                       'Sales Lead Pipeline',
                       style:
@@ -253,33 +274,33 @@ class _HomePageState extends State<HomePage> {
                     tabs: [
                       Tab(text: 'Opportunities(${leadItems.length})'),
                       Tab(text: 'Engagement(${engagementLeads.length})'),
-                      Tab(text: 'Negotiation(0)'),
-                      Tab(text: 'Order Processing(0)'),
-                      Tab(text: 'Closed(0)'),
+                      const Tab(text: 'Negotiation(0)'),
+                      const Tab(text: 'Order Processing(0)'),
+                      const Tab(text: 'Closed(0)'),
                     ],
                     labelStyle:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   Expanded(
                     child: TabBarView(
                       children: [
                         _buildOpportunitiesTab(),
                         _buildEngagementTab(),
-                        Center(child: Text('Negotiation Content')),
-                        Center(child: Text('Order Processing Content')),
-                        Center(child: Text('Closed Content')),
+                        const Center(child: Text('Negotiation Content')),
+                        const Center(child: Text('Order Processing Content')),
+                        const Center(child: Text('Closed Content')),
                       ],
                     ),
                   ),
                 ],
               ),
-              bottomNavigationBar: CustomNavigationBar(),
+              bottomNavigationBar: const CustomNavigationBar(),
               floatingActionButton: _buildFloatingActionButton(context),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
             );
           } else {
-            return Scaffold(
+            return const Scaffold(
               body: Center(
                 child: CircularProgressIndicator(),
               ),
@@ -294,7 +315,7 @@ class _HomePageState extends State<HomePage> {
     return AnimatedBuilder(
       animation: DefaultTabController.of(context),
       builder: (BuildContext context, Widget? child) {
-        final TabController tabController = DefaultTabController.of(context)!;
+        final TabController tabController = DefaultTabController.of(context);
         return tabController.index == 0
             ? FloatingActionButton.extended(
                 onPressed: () {
@@ -307,10 +328,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 },
-                icon: Icon(Icons.add, color: Colors.white),
+                icon: const Icon(Icons.add, color: Colors.white),
                 label:
-                    Text('Create Lead', style: TextStyle(color: Colors.white)),
-                backgroundColor: Color(0xff0069BA),
+                    const Text('Create Lead', style: TextStyle(color: Colors.white)),
+                backgroundColor: const Color(0xff0069BA),
               )
             : Container();
       },
@@ -332,7 +353,7 @@ class _HomePageState extends State<HomePage> {
             // Check if it's the last item
             if (index == leadItems.length - 1)
               // Add additional padding for the last item
-              SizedBox(height: 80),
+              const SizedBox(height: 80),
           ],
         );
       },
@@ -340,125 +361,137 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildLeadItem(LeadItem leadItem) {
-    return Card(
-      color: const Color.fromARGB(255, 205, 229, 242),
-      elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  leadItem.customerName.length > 10
-                      ? leadItem.customerName.substring(0, 6) + '...'
-                      : leadItem.customerName,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Container(
-                  margin: EdgeInsets.only(left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => CustomerInsightPage(
+                customerName: leadItem.customerName,
+            ),
+          ),
+        );
+      },
+      child: Card(
+        color: const Color.fromARGB(255, 205, 229, 242),
+        elevation: 2,
+        margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    leadItem.customerName.length > 10
+                        ? '${leadItem.customerName.substring(0, 6)}...'
+                        : leadItem.customerName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: Text(
-                    leadItem.amount,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                  Container(
+                    margin: const EdgeInsets.only(left: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      leadItem.amount,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                Spacer(),
-                DropdownButton2<String>(
-                  isExpanded: true,
-                  hint: Text('Select Item'),
-                  items: tabbarNames
-                      .map((item) => DropdownMenuItem<String>(
-                            value: item,
-                            child: Text(
-                              item,
-                              style: TextStyle(fontSize: 12),
+                  const Spacer(),
+                  DropdownButton2<String>(
+                    isExpanded: true,
+                    hint: const Text('Select Item'),
+                    items: tabbarNames
+                        .map((item) => DropdownMenuItem<String>(
+                              value: item,
+                              child: Text(
+                                item,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ))
+                        .toList(),
+                    value: leadItem.selectedValue,
+                    onChanged: (String? value) {
+                      if (value == 'Engagement') {
+                        _moveTo(leadItem, 'Engagement');
+                      }
+                    },
+                    buttonStyleData: const ButtonStyleData(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      height: 30,
+                      width: 140,
+                      decoration: BoxDecoration(color: Colors.white),
+                    ),
+                    menuItemStyleData: const MenuItemStyleData(
+                      height: 30,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(leadItem.description),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Text(
+                      leadItem.createdDate,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            // Handle Ignore action
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              side: const BorderSide(color: Colors.red, width: 2),
                             ),
-                          ))
-                      .toList(),
-                  value: leadItem.selectedValue,
-                  onChanged: (String? value) {
-                    if (value == 'Engagement') {
-                      _moveToEngagement(leadItem);
-                    }
-                  },
-                  buttonStyleData: ButtonStyleData(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    height: 30,
-                    width: 140,
-                    decoration: BoxDecoration(color: Colors.white),
-                  ),
-                  menuItemStyleData: MenuItemStyleData(
-                    height: 30,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(leadItem.description),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: Text(
-                    leadItem.createdDate,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle Ignore action
-                        },
-                        child:
-                            Text('Ignore', style: TextStyle(color: Colors.red)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            side: BorderSide(color: Colors.red, width: 2),
+                            minimumSize: const Size(50, 35),
                           ),
-                          minimumSize: Size(50, 35),
+                          child:
+                              const Text('Ignore', style: TextStyle(color: Colors.red)),
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle Accept action
-                        },
-                        child: Text('Accept',
-                            style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xff0069BA),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Handle Accept action
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff0069BA),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            minimumSize: const Size(50, 35),
                           ),
-                          minimumSize: Size(50, 35),
+                          child: const Text('Accept',
+                              style: TextStyle(color: Colors.white)),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

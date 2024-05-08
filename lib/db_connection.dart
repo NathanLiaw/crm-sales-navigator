@@ -1,22 +1,22 @@
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
     host: '10.0.2.2',
     port: 3306,
     user: 'root',
-    password: '',
+    password: '901022',
     db: 'fyh',
   );
 
   try {
     final conn = await MySqlConnection.connect(settings);
     await Future.delayed(const Duration(seconds: 1));
-    print('Connected to MySQL database');
     return conn;
   } catch (e) {
-    print('Failed to connect to MySQL database: $e');
+    developer.log('Failed to connect to MySQL database: $e', error: e);
     throw Exception('Failed to connect to MySQL database');
   }
 }
@@ -43,8 +43,6 @@ Future<List<Map<String, dynamic>>> readData(
     'SELECT $field FROM $tableName $sqlQuery $sqlOrder',
   );
 
-  print('SELECT $field FROM $tableName $sqlQuery $sqlOrder');
-
   final results = <Map<String, dynamic>>[];
   for (var row in query) {
     final rowMap = Map<String, dynamic>.from(row.fields);
@@ -62,7 +60,7 @@ Future<List<Map<String, dynamic>>> readData(
       // Convert DateTime to String
       if (value is DateTime) {
         final dateString =
-        value.toString(); // Using toString() to get default format
+        value.toString();
         rowMap[key] = dateString;
       }
     });
@@ -86,8 +84,8 @@ Future<int> countData(
     final rowCount = queryResult.first['count'] as int;
     return rowCount;
   } catch (e) {
-    print('Error counting data: $e');
-    return 0; // Return 0 if an error occurs
+    developer.log('Error counting data: $e', error: e);
+    return 0;
   }
 }
 
@@ -97,11 +95,11 @@ Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
   String sqlOrder = '';
 
   if (condition.isNotEmpty) {
-    sqlQuery = ' WHERE $condition';
+    sqlQuery = 'WHERE $condition';
   }
 
   if (order.isNotEmpty) {
-    sqlOrder = ' ORDER BY $order';
+    sqlOrder = 'ORDER BY $order';
   }
 
   try {
@@ -110,11 +108,11 @@ Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
     if (queryResult.isNotEmpty) {
       return Map<String, dynamic>.from(queryResult.first.fields);
     } else {
-      return {}; // Return an empty map if no rows are found
+      return {};
     }
   } catch (e) {
-    print('Error reading first row: $e');
-    return {}; // Return an empty map if an error occurs
+    developer.log('Error reading first row: $e', error: e);
+    return {};
   }
 }
 
@@ -152,11 +150,10 @@ Future<bool> saveData(MySqlConnection connection, String tableName,
       sql = 'INSERT INTO $tableName ($strColumns) VALUES ($placeholders)';
       params = filteredValues;
     }
-    print(sql);
     final result = await connection.query(sql, params);
     return result.affectedRows == 1;
   } catch (e) {
-    print('Error saving data: $e');
+    developer.log('Error saving data: $e', error: e);
     return false;
   }
 }
@@ -177,7 +174,7 @@ Future<bool> deleteData(
       return false;
     }
   } catch (e) {
-    print('Error deleting data: $e');
+    developer.log('Error deleting data: $e', error: e);
     return false;
   }
 }
@@ -189,7 +186,7 @@ Future<List<Map<String, dynamic>>> executeQuery(String query) async {
     var results = await conn.query(query);
     return results.map((row) => row.fields).toList();
   } catch (e) {
-    print('Error executing query: $e');
+    developer.log('Error executing query: $e', error: e);
     rethrow;
   } finally {
     await conn?.close();

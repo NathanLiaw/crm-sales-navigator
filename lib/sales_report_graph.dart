@@ -30,13 +30,13 @@ class SalesReport extends StatefulWidget {
 class _SalesReportState extends State<SalesReport> {
   final Map<String, List<SalesData>> _salesDataMap = {};
   String _selectedInterval = 'Weekly';
-  String loggedInUsername = ''; // Add a variable to hold the username
+  String loggedInUsername = '';
 
   @override
   void initState() {
     super.initState();
     _loadUsername().then((_) {
-      _preloadData(); // Load data after username is fetched
+      _preloadData();
     });
   }
 
@@ -44,7 +44,7 @@ class _SalesReportState extends State<SalesReport> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       loggedInUsername = prefs.getString('username') ??
-          'default_username'; // Default username if not found
+          'default_username';
     });
   }
 
@@ -81,100 +81,98 @@ class _SalesReportState extends State<SalesReport> {
     switch (reportType) {
       case 'Week':
         query = '''
-SELECT 
-    Dates.`Date`,
-    DATE_FORMAT(Dates.`Date`, '%a') AS `Day`, -- Short form of the day
-    IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`
-FROM (
-    SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
-    UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-    UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-    UNION ALL SELECT CURDATE()
-) AS Dates
-LEFT JOIN (
-    SELECT 
-        DATE(c.created) AS `Date`,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales`
-    FROM cart c
-    JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-    WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() 
-    AND c.status != 'void' AND s.username = '$loggedInUsername'
-    GROUP BY DATE(c.created)
-) AS DailySales ON Dates.`Date` = DailySales.`Date`
-ORDER BY Dates.`Date` ASC;
+        SELECT 
+            Dates.`Date`,
+            DATE_FORMAT(Dates.`Date`, '%a') AS `Day`, -- Short form of the day
+            IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`
+        FROM (
+            SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
+            UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+            UNION ALL SELECT CURDATE()
+        ) AS Dates
+        LEFT JOIN (
+            SELECT 
+                DATE(c.created) AS `Date`,
+                ROUND(SUM(c.final_total), 0) AS `Total Sales`
+            FROM cart c
+            JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+            WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() 
+            AND c.status != 'void' AND s.username = '$loggedInUsername'
+            GROUP BY DATE(c.created)
+        ) AS DailySales ON Dates.`Date` = DailySales.`Date`
+        ORDER BY Dates.`Date` ASC;
       ''';
         break;
 
       case 'Month':
         query = '''
-SELECT
-    GeneratedMonths.YearMonth,
-    GeneratedMonths.MonthName,
-    IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
-FROM (
-    SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
-           DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
-    FROM (
-        SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
-        SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-    ) AS c
-) AS GeneratedMonths
-LEFT JOIN (
-    SELECT 
-        DATE_FORMAT(c.created, '%Y-%m') AS YearMonth,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales`
-    FROM cart c
-    JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-    WHERE c.created >= CURDATE() - INTERVAL 6 MONTH
-    AND c.status != 'void' AND s.username = '$loggedInUsername'
-    GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
-GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
-ORDER BY GeneratedMonths.YearMonth ASC;
-
+          SELECT
+              GeneratedMonths.YearMonth,
+              GeneratedMonths.MonthName,
+              IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
+          FROM (
+              SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
+                     DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
+              FROM (
+                  SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
+                  SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+              ) AS c
+          ) AS GeneratedMonths
+          LEFT JOIN (
+              SELECT 
+                  DATE_FORMAT(c.created, '%Y-%m') AS YearMonth,
+                  ROUND(SUM(c.final_total), 0) AS `Total Sales`
+              FROM cart c
+              JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+              WHERE c.created >= CURDATE() - INTERVAL 6 MONTH
+              AND c.status != 'void' AND s.username = '$loggedInUsername'
+              GROUP BY DATE_FORMAT(c.created, '%Y-%m')
+          ) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
+          GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
+          ORDER BY GeneratedMonths.YearMonth ASC;
         ''';
         break;
       case 'Year':
         query = '''
-SELECT
-    GeneratedYears.Year AS `Year`,
-    IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
-FROM (
-    SELECT 
-        YEAR(CURDATE()) AS Year
-    UNION ALL SELECT 
-        YEAR(CURDATE()) - 1
-    UNION ALL SELECT 
-        YEAR(CURDATE()) - 2
-    UNION ALL SELECT 
-        YEAR(CURDATE()) - 3
-    UNION ALL SELECT 
-        YEAR(CURDATE()) - 4
-    UNION ALL SELECT 
-        YEAR(CURDATE()) - 5
-) AS GeneratedYears
-LEFT JOIN (
-    SELECT 
-        YEAR(c.created) AS Year,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales`
-    FROM 
-        cart c
-    JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-    WHERE 
-        c.created >= CURDATE() - INTERVAL 6 YEAR
-    AND 
-        c.status != 'void' AND s.username = '$loggedInUsername'
-    GROUP BY 
-        YEAR(c.created)
-) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
-GROUP BY 
-    GeneratedYears.Year
-ORDER BY 
-    GeneratedYears.Year ASC;
-
+          SELECT
+              GeneratedYears.Year AS `Year`,
+              IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
+          FROM (
+              SELECT 
+                  YEAR(CURDATE()) AS Year
+              UNION ALL SELECT 
+                  YEAR(CURDATE()) - 1
+              UNION ALL SELECT 
+                  YEAR(CURDATE()) - 2
+              UNION ALL SELECT 
+                  YEAR(CURDATE()) - 3
+              UNION ALL SELECT 
+                  YEAR(CURDATE()) - 4
+              UNION ALL SELECT 
+                  YEAR(CURDATE()) - 5
+          ) AS GeneratedYears
+          LEFT JOIN (
+              SELECT 
+                  YEAR(c.created) AS Year,
+                  ROUND(SUM(c.final_total), 0) AS `Total Sales`
+              FROM 
+                  cart c
+              JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+              WHERE 
+                  c.created >= CURDATE() - INTERVAL 6 YEAR
+              AND 
+                  c.status != 'void' AND s.username = '$loggedInUsername'
+              GROUP BY 
+                  YEAR(c.created)
+          ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
+          GROUP BY 
+              GeneratedYears.Year
+          ORDER BY 
+              GeneratedYears.Year ASC;
         ''';
         break;
     }
@@ -262,7 +260,6 @@ ORDER BY
           : const Center(
               child: CircularProgressIndicator(),
             ),
-
     );
   }
 

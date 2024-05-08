@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomersGraph extends StatefulWidget {
-  const CustomersGraph({Key? key}) : super(key: key);
+  const CustomersGraph({super.key});
 
   @override
   _CustomersGraphState createState() => _CustomersGraphState();
@@ -33,36 +33,35 @@ class _CustomersGraphState extends State<CustomersGraph> {
     var db = await connectToDatabase();
     var results = await db.query(
         '''
-SELECT 
-    c.company_name,
-    ROUND(SUM(cart.final_total), 0) AS total_cart_value
-FROM 
-    cart
-JOIN 
-    cart_item ON cart.session = cart_item.session
-JOIN 
-    salesman ON cart.buyer_id = salesman.id
-JOIN 
-    (SELECT 
-        c.ID AS customer_id, 
-        c.company_name
-    FROM 
-        customer c
-    JOIN 
-        cart_item ci ON c.ID = ci.customer_id
-    GROUP BY 
-        c.ID, c.company_name
-    ) AS c ON cart.customer_id = c.customer_id
-WHERE 
-    cart.status != 'void' AND
-    salesman.username = '$loggedInUsername' 
-GROUP BY 
-    c.company_name
-ORDER BY 
-    total_cart_value DESC
-    LIMIT 5;
-
-''');
+          SELECT 
+              c.company_name,
+              ROUND(SUM(cart.final_total), 0) AS total_cart_value
+          FROM 
+              cart
+          JOIN 
+              cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+          JOIN 
+              salesman ON cart.buyer_id = salesman.id 
+          JOIN 
+              (SELECT 
+                  c.ID AS customer_id, 
+                  c.company_name
+              FROM 
+                  customer c
+              JOIN 
+                  cart_item ci ON c.ID = ci.customer_id
+              GROUP BY 
+                  c.ID, c.company_name
+              ) AS c ON cart.customer_id = c.customer_id
+          WHERE 
+              cart.status != 'void' AND
+              salesman.username = '$loggedInUsername' 
+          GROUP BY 
+              c.company_name
+          ORDER BY 
+              total_cart_value DESC
+              LIMIT 5;
+    ''');
 
     double sumOfCustomers = 0;
     for (var row in results) {
@@ -86,10 +85,7 @@ ORDER BY
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(
-            top: 16.0,
-            left: 16.0,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             'Top Customers',
             style: TextStyle(
@@ -145,7 +141,7 @@ ORDER BY
 class CustomerBar extends StatelessWidget {
   final Customer customer;
 
-  const CustomerBar({Key? key, required this.customer}) : super(key: key);
+  const CustomerBar({super.key, required this.customer});
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +197,6 @@ class CustomerBar extends StatelessWidget {
     );
   }
 }
-
 
 class Customer {
   final String name;

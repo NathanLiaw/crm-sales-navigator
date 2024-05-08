@@ -12,9 +12,10 @@ import 'components/category_button.dart';
 import 'model/sort_popup.dart';
 import 'model/items_widget.dart';
 import 'db_connection.dart';
+import 'dart:developer' as developer;
 
 class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({Key? key}) : super(key: key);
+  const ProductsScreen({super.key});
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -72,7 +73,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         });
       }
     } catch (e) {
-      print('Error fetching area: $e');
+      developer.log('Error fetching area: $e', error: e);
     }
   }
 
@@ -100,7 +101,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               showModalBottomSheet(
                 context: context,
                 builder: (BuildContext context) {
-                  return Container(
+                  return SizedBox(
                     height: 380,
                     width: double.infinity,
                     child: Column(
@@ -129,7 +130,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SearchScreen()),
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
               ).then((value) {
                 if (value != null) {
                   setState(() {
@@ -236,7 +237,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           showModalBottomSheet(
                             context: context,
                             builder: (BuildContext context) {
-                              return Container(
+                              return SizedBox(
                                 height: 380,
                                 width: double.infinity,
                                 child: Column(

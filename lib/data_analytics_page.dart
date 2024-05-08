@@ -7,6 +7,7 @@ import 'package:sales_navigator/top_selling_product_report_page.dart';
 import 'customer_graph.dart';
 import 'customer_report_page.dart';
 import 'sales_order.dart';
+
 class DataAnalyticsPage extends StatelessWidget {
   const DataAnalyticsPage({super.key});
 
@@ -64,9 +65,7 @@ class DataAnalyticsPage extends StatelessWidget {
                             const CustomerReport()),
                   );
                 },
-                child: Container(
-                  child: CustomersGraph(),
-                ),
+                child: const CustomersGraph(),
               ),
             ),
             Padding(

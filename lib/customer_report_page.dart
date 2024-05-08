@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -55,15 +56,12 @@ Future<void> loadPreferences() async {
     String? username = prefs.getString('username');
     bool? sorted = prefs.getBool('isSortedAscending');
 
-    print('Loaded username from prefs: $username'); 
-    print('Loaded sort order from prefs: $sorted');  
-
     setState(() {
       loggedInUsername = username ?? '';
       isSortedAscending = sorted ?? false;
     });
   } catch (e) {
-    print('Error loading preferences: $e');
+    developer.log('Error loading preferences: $e', error: e);
   }
 }
 
@@ -71,7 +69,8 @@ Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange
   var db = await connectToDatabase();
   var sortOrder = isAscending ? 'ASC' : 'DESC';
   String dateCondition = dateRange != null ? 
-      "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'" : '';
+      "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' "
+          "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'" : '';
   var results = await db.query(
       '''
       SELECT 
@@ -297,7 +296,8 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
   @override
   Widget build(BuildContext context) {
     String formattedDate = _selectedDateRange != null
-        ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
+        ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} '
+        '- ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       appBar: AppBar(

@@ -124,13 +124,13 @@ class _ProfilePageState extends State<ProfilePage> {
         if (title == 'Recent Order') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => RecentOrder()),
+            MaterialPageRoute(builder: (context) => const RecentOrder()),
           );
         }
         if (title == 'Terms & Condition') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => TermsandConditions()),
+            MaterialPageRoute(builder: (context) => const TermsandConditions()),
           );
         }
         if (title == 'Contact Us') {

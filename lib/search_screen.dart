@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/item_screen.dart';
+import 'dart:developer' as developer;
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }
@@ -16,7 +19,6 @@ class _SearchScreenState extends State<SearchScreen> {
     MySqlConnection conn = await connectToDatabase();
 
     try {
-      // Initialize the list of query conditions
       List<String> conditions = [];
 
       // Step 1: Check if the search query matches any subcategory name
@@ -40,12 +42,13 @@ class _SearchScreenState extends State<SearchScreen> {
         final brandId = brandResults.first.fields['id'] as int;
         conditions.add('p.brand = $brandId');
 
-        // Add an additional condition to prioritize specific brand products containing the search term
+        // Add an additional condition to prioritize specific brand products
+        // containing the search term
         conditions.add('p.product_name LIKE \'%$query%\'');
       }
 
       // Construct the WHERE clause based on the conditions
-      String whereClause = conditions.isNotEmpty ? 'WHERE ' + conditions.join(' OR ') : '';
+      String whereClause = conditions.isNotEmpty ? 'WHERE ${conditions.join(' OR ')}' : '';
 
       // Step 3: Execute the final query based on the constructed conditions
       final results = await conn.query(
@@ -65,7 +68,7 @@ class _SearchScreenState extends State<SearchScreen> {
         _searchResults = results.map((result) => result['product_name'] as String).toList();
       });
     } catch (e) {
-      print('Error performing search: $e');
+      developer.log('Error performing search: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -114,10 +117,10 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         );
       } else {
-        print('Product not found for name: $selectedProductName');
+        developer.log('Product not found for name: $selectedProductName', level: 1);
       }
     } catch (e) {
-      print('Error fetching product details: $e');
+      developer.log('Error fetching product details: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -134,20 +137,11 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final conn = await connectToDatabase();
       final results = await conn.query(
-        'SELECT id, product_name, photo1, description, sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
+        'SELECT id, product_name, photo1, description, sub_category, '
+            'price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
         ['%$searchQuery%'],
       );
       await conn.close();
-
-      // Print each product_name
-      results.forEach((row) {
-        print('Product id: ${row['id']}');
-        print('Product name: ${row['product_name']}');
-        print('Product photo: ${row['photo1']}');
-        print('Product desc: ${row['description']}');
-        print('Product sub: ${row['sub_category']}');
-        print('Product price: ${row['price_by_uom']}');
-      });
 
       return results.map((row) {
         return {
@@ -160,11 +154,10 @@ class _SearchScreenState extends State<SearchScreen> {
         };
       }).toList();
     } catch (e) {
-      print('Error fetching product: $e');
+      developer.log('Error fetching product details: $e', error: e);
       return [];
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +165,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: TextField(
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Search...',
             border: InputBorder.none,
           ),
@@ -180,7 +173,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: () {
               // Perform search when the search button is pressed
               _performSearch(_searchQuery);
@@ -192,7 +185,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ? Center(
         child: Text(
           _searchQuery.isEmpty ? 'Start typing to search' : 'No results found',
-          style: TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 18),
         ),
       )
           : ListView.builder(

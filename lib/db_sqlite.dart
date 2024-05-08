@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class DatabaseHelper {
   static Database? _database;
@@ -60,7 +61,7 @@ class DatabaseHelper {
 
     // If the data already exists, skip insertion
     if (existingData.isNotEmpty) {
-      return 0; // Return 0 to indicate no new rows were inserted
+      return 0;
     }
 
     // Flatten nested maps into JSON strings
@@ -105,7 +106,6 @@ class DatabaseHelper {
 
     // Construct the SQL query
     String sql = 'SELECT $field FROM $tableName $sqlQuery $sqlOrder';
-    print('SQL Query: $sql, whereArgs: $whereArgs');
 
     // Execute the query with whereArgs
     List<Map<String, dynamic>> queryResult = await database.rawQuery(sql, whereArgs);
@@ -116,7 +116,7 @@ class DatabaseHelper {
       // Convert Blob to string if necessary
       row.forEach((key, value) {
         if (value is Blob) {
-          final blob = value as Blob;
+          final blob = value;
           // Convert Blob data to List<int>
           final bytes = blob.toString().codeUnits;
           // Decode bytes to String
@@ -145,8 +145,8 @@ class DatabaseHelper {
       final rowCount = queryResult.first['count'] as int;
       return rowCount;
     } catch (e) {
-      print('Error counting data: $e');
-      return 0; // Return 0 if an error occurs
+      developer.log('Error counting data: $e', error: e);
+      return 0;
     }
   }
 

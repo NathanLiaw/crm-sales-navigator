@@ -12,6 +12,7 @@ import 'customer_details_page.dart';
 import 'cart_item.dart';
 import 'db_sqlite.dart';
 import 'package:mysql1/mysql1.dart';
+import 'dart:developer' as developer;
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -61,7 +62,7 @@ class _CartPage extends State<CartPage> {
       await fetchProductPhotos();
       calculateTotalAndSubTotal();
     } catch (e) {
-      print('Error loading cart items and photos: $e');
+      developer.log('Error loading cart items and photos: $e', error: e);
     }
   }
 
@@ -88,7 +89,7 @@ class _CartPage extends State<CartPage> {
     for (CartItem item in cartItems) {
       List<Map<String, dynamic>> photos = await getProductPhoto(item.productName);
       List<String> imagePaths =
-      photos.map((photo) => photo['photo1'].toString()).toList(); // Ensure photo1 is string
+      photos.map((photo) => photo['photo1'].toString()).toList();
 
       photosList.add(imagePaths);
     }
@@ -109,7 +110,7 @@ class _CartPage extends State<CartPage> {
 
       return results.map((row) => {'photo1': row['photo1']}).toList();
     } catch (e) {
-      print('Error fetching product photo: $e');
+      developer.log('Error fetching product photo: $e', error: e);
       return [];
     }
   }
@@ -149,17 +150,14 @@ class _CartPage extends State<CartPage> {
       setState(() {
         selectedCartItems.clear();
       });
-
-      // Show a success message or perform any other necessary actions
-      print('Selected cart items deleted successfully');
     } catch (e) {
-      print('Error deleting selected cart items: $e');
+      developer.log('Error deleting selected cart items: $e', error: e);
     }
   }
 
   Future<void> updateItemQuantity(int? id, int quantity) async {
     try {
-      int? itemId = id ?? 0; // Assuming itemId is not null, otherwise handle accordingly
+      int? itemId = id ?? 0;
 
       Map<String, dynamic> updateData = {
         'id': itemId,
@@ -168,14 +166,13 @@ class _CartPage extends State<CartPage> {
 
       int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
       if (rowsAffected > 0) {
-        // Database update successful
-        print('Item quantity updated successfully');
+        developer.log('Item quantity updated successfully');
+
       } else {
-        // Handle database update failure
-        print('Failed to update item quantity');
+        developer.log('Failed to update item quantity');
       }
     } catch (e) {
-      print('Error updating item quantity: $e');
+      developer.log('Error updating item quantity: $e', error: e);
     }
   }
 
@@ -214,10 +211,10 @@ class _CartPage extends State<CartPage> {
           ),
         );
       } else {
-        print('Product not found for name: $selectedProductName');
+        developer.log('Product not found for name: $selectedProductName');
       }
     } catch (e) {
-      print('Error fetching product details: $e');
+      developer.log('Error fetching product details: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -347,7 +344,7 @@ class _CartPage extends State<CartPage> {
                     CartItem item = cartItems[index];
                     List<String> itemPhotos = productPhotos.isNotEmpty ? productPhotos[index] : [];
                     bool isSelected = selectedCartItems.contains(item);
-                    final currentQuantity = item.quantity ?? 1;
+                    final currentQuantity = item.quantity;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
@@ -408,7 +405,7 @@ class _CartPage extends State<CartPage> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Flexible(
-                                            child: Container(
+                                            child: SizedBox(
                                               width: 200,
                                               child: Text(
                                                 item.productName,
@@ -458,10 +455,10 @@ class _CartPage extends State<CartPage> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           // Display the item price
-                                          Container(
+                                          SizedBox(
                                             width: 100,
                                             child: Text(
-                                              'RM${(item.unitPrice * (item.quantity ?? 1)).toStringAsFixed(3)}',
+                                              'RM${(item.unitPrice * (item.quantity)).toStringAsFixed(3)}',
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -487,7 +484,7 @@ class _CartPage extends State<CartPage> {
                                                 },
                                                 icon: const Icon(Icons.remove),
                                               ),
-                                              Container(
+                                              SizedBox(
                                                 width: 20, // Adjust the width of the TextField container
                                                 child: TextField(
                                                   textAlign: TextAlign.center,
@@ -536,7 +533,7 @@ class _CartPage extends State<CartPage> {
           ),
         ),
       ),
-      bottomNavigationBar: CustomNavigationBar(),
+      bottomNavigationBar: const CustomNavigationBar(),
       persistentFooterButtons: [
         Padding(
           padding: const EdgeInsets.all(1.0),
@@ -586,9 +583,6 @@ class _CartPage extends State<CartPage> {
                         onPressed: () {
                           if (selectedCartItems.isNotEmpty) {
                             deleteSelectedCartItems();
-                          } else {
-                            // Handle case where no items are selected
-                            print('No items selected for deletion');
                           }
                         },
                         style: ButtonStyle(

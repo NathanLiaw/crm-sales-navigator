@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
+import 'dart:developer' as developer;
 
 class UtilityFunction{
   static String calculateExpirationDate() {
@@ -55,9 +56,8 @@ class UtilityFunction{
         // If no tax data found, return the default tax percentage
         return defaultTaxInPercent;
       }
-    } catch (e) {
-      print('Error retrieving tax: $e');
-      // Return default tax percentage or handle error as needed
+    } catch (e, stackTrace) {
+      developer.log('Error retrieving tax: $e', error: e, stackTrace: stackTrace);
       return defaultTaxInPercent;
     }
   }
@@ -95,8 +95,8 @@ class UtilityFunction{
         areaName = row['area'];
       }
 
-    } catch (e) {
-      print('Error retrieving tax: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error retrieving area name: $e', error: e, stackTrace: stackTrace);
     }
 
     return areaName;

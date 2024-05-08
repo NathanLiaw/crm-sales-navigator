@@ -1,14 +1,13 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'dart:developer' as developer;
 
 class OrderDetailsPage extends StatefulWidget {
   final int cartID;
 
-  OrderDetailsPage({required this.cartID});
+  const OrderDetailsPage({super.key, required this.cartID});
 
   @override
   _OrderDetailsPageState createState() => _OrderDetailsPageState();
@@ -101,7 +100,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final createdDateTime = DateTime.parse(createdDateResults.first['created'] as String);
       final formattedCreatedDate = DateFormat('yyyy-MM-dd').format(createdDateTime);
 
-      final formattedSalesOrderId = 'SO' + cartId.toString().padLeft(7, '0');
+      final formattedSalesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
 
       final items = <OrderItem>[];
       double total = 0.0;
@@ -143,7 +142,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         calculateTotalAndSubTotal();
       });
     } catch (e) {
-      print('Failed to fetch order details: $e');
+      developer.log('Failed to fetch order details: $e', error: e);
     } finally {
       await conn.close();
     }
@@ -163,14 +162,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (results.isNotEmpty && results[0]['photo1'] != null) {
         String photoPath = results[0]['photo1'];
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/' + photoPath.substring(6);
+          photoPath = 'asset/photo/${photoPath.substring(6)}';
         }
         return photoPath;
       } else {
         return 'asset/no_image.jpg';
       }
     } catch (e) {
-      print('Error fetching product photo: $e');
+      developer.log('Error fetching product photo: $e', error: e);
       return 'asset/no_image.jpg';
     }
   }
@@ -208,13 +207,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff004c87),
-        title: Text(
+        backgroundColor: const Color(0xff004c87),
+        title: const Text(
           'Order Details',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -226,11 +225,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           future: _orderDetailsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
+              return const Center(
                 child: CircularProgressIndicator(),
               );
             } else if (snapshot.hasError) {
-              return Center(
+              return const Center(
                 child: Text('Failed to fetch order details'),
               );
             } else {
@@ -239,7 +238,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 children: [
                   Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         flex: 2,
                         child: Text(
                           'To: ',
@@ -253,13 +252,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             children: <TextSpan>[
                               TextSpan(
                                 text: '$companyName, ',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black),
                               ),
                               TextSpan(
-                                text: '$address',
-                                style: TextStyle(color: Colors.black),
+                                text: address,
+                                style: const TextStyle(color: Colors.black),
                               ),
                             ],
                           ),
@@ -267,8 +266,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
-                  Row(
+                  const SizedBox(height: 16),
+                  const Row(
                     children: [
                       Expanded(
                         flex: 2,
@@ -283,46 +282,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           Text('Fong Yuan Hung Import & Export Sdn Bhd.')),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         flex: 2,
                         child: Text(
                           'Salesman: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      Expanded(flex: 5, child: Text('$salesmanName')),
+                      Expanded(flex: 5, child: Text(salesmanName)),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         flex: 2,
                         child: Text(
                           'Order ID: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      Expanded(flex: 5, child: Text('$salesOrderId')),
+                      Expanded(flex: 5, child: Text(salesOrderId)),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         flex: 2,
                         child: Text(
                           'Created Date: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      Expanded(flex: 5, child: Text('$createdDate')),
+                      Expanded(flex: 5, child: Text(createdDate)),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Expanded(
                     child: Scrollbar(
                       thumbVisibility: true,
@@ -335,32 +334,32 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Subtotal (${orderItems.length} items)',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'RM${subtotal.toStringAsFixed(3)}',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('RM${total.toStringAsFixed(3)}', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('RM${total.toStringAsFixed(3)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
-                  Divider(),
+                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Text(
                           '*This is not an invoice & prices are not finalised',
                           style: TextStyle(color: Colors.grey),
@@ -373,11 +372,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           isVoidButtonDisabled ? Colors.grey : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
-                            side: BorderSide(color: Colors.red, width: 2),
+                            side: const BorderSide(color: Colors.red, width: 2),
                           ),
-                          minimumSize: Size(120, 40),
+                          minimumSize: const Size(120, 40),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Void',
                           style: TextStyle(
                               color: Colors.red, fontWeight: FontWeight.bold),
@@ -408,29 +407,29 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               width: 80,
               height: 80,
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.productName,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Unit Price: RM${unitPriceConverted.toStringAsFixed(3)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: Text(
                           'Qty: ${item.qty}',
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -441,21 +440,21 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ),
           ],
         ),
-        SizedBox(height: 20),
-        Divider(),
+        const SizedBox(height: 20),
+        const Divider(),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Status: ${item.status}',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: Text('Total: RM${subtotal.toStringAsFixed(3)}',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        Divider(),
+        const Divider(),
       ],
     );
   }

@@ -1,4 +1,3 @@
-
 class Product {
   final int id;
   final int subCategory;

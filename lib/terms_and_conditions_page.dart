@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 
 class TermsandConditions extends StatelessWidget {
+  const TermsandConditions({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff004c87),
+        backgroundColor: const Color(0xff004c87),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
-        title: Text(
+        title: const Text(
           'Terms and Conditions',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications),
             onPressed: () {
               // Handle notifications
             },
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -34,12 +36,14 @@ class TermsandConditions extends StatelessWidget {
               ),
             ),
             Text(
-              'Terms and conditions stated below apply to all visitors and users of FYH Online Store website. You are bound by these terms and conditions as long as you are on fyhstore.com.my.',
+              'Terms and conditions stated below apply to all visitors and users '
+                  'of FYH Online Store website. You are bound by these terms and '
+                  'conditions as long as you are on fyhstore.com.my.',
             ),
             Divider(
-              color: Colors.grey, // Customize the color of the divider
-              thickness: 1.0, // Set the thickness of the divider
-              height: 20.0, // Set the height of the divider
+              color: Colors.grey,
+              thickness: 1.0,
+              height: 20.0,
             ),
             SizedBox(height: 16),
             Text(
@@ -50,12 +54,17 @@ class TermsandConditions extends StatelessWidget {
               ),
             ),
             Text(
-              'The content of terms and conditions may be changed, moved, or deleted at any time. Please be informed that Fong Yuan Hung Imp & Exp Sdn Bhd has the rights to change contents of the terms without any notice. Immediate actions against offender(s) for violating or breaching any rules & regulations stated in the terms.',
+              'The content of terms and conditions may be changed, moved, or '
+                  'deleted at any time. Please be informed that Fong Yuan Hung '
+                  'Imp & Exp Sdn Bhd has the rights to change contents of the '
+                  'terms without any notice. Immediate actions against '
+                  'offender(s) for violating or breaching any rules & regulations '
+                  'stated in the terms.',
             ),
             Divider(
-              color: Colors.grey, // Customize the color of the divider
-              thickness: 1.0, // Set the thickness of the divider
-              height: 20.0, // Set the height of the divider
+              color: Colors.grey,
+              thickness: 1.0,
+              height: 20.0,
             ),
             SizedBox(height: 16),
             Text(
@@ -66,7 +75,13 @@ class TermsandConditions extends StatelessWidget {
               ),
             ),
             Text(
-              'Unless otherwise stated, all materials including images, illustrations, designs, icons, photographs, video clips, written materials, and other materials that appear as part of this site (in other words, "Contents of Site") are copyrights, trademarks, trade dress, or other intellectual properties owned, controlled, or licensed by Fong Yuan Hung Imp & Exp Sdn Bhd.',
+              'Unless otherwise stated, all materials including images, '
+                  'illustrations, designs, icons, photographs, video clips, '
+                  'written materials, and other materials that appear as part '
+                  'of this site (in other words, "Contents of Site") are '
+                  'copyrights, trademarks, trade dress, or other intellectual '
+                  'properties owned, controlled, or licensed by Fong Yuan Hung '
+                  'Imp & Exp Sdn Bhd.',
             ),
           ],
         ),

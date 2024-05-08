@@ -3,9 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 class AreaSelectPopUp extends StatefulWidget {
-  AreaSelectPopUp({Key? key}) : super(key: key);
+  const AreaSelectPopUp({super.key});
 
   @override
   State<AreaSelectPopUp> createState() => _AreaSelectPopUpState();
@@ -19,7 +20,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('areaId', areaId);
     setState(() {
-      selectedAreaId = areaId; // Update the selected area ID
+      selectedAreaId = areaId;
     });
   }
 
@@ -49,7 +50,8 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       int? storedAreaId = prefs.getInt('areaId');
 
-      // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
+      // Set selectedAreaId to the stored areaId if available, otherwise set it
+      // to the first areaId from the query
       if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
         setState(() {
           selectedAreaId = storedAreaId;
@@ -62,7 +64,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
         });
       }
     } catch (e) {
-      print('Error fetching area: $e');
+      developer.log('Error fetching area: $e', error: e);
     }
   }
 
@@ -75,27 +77,25 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: area.entries.map((entry) {
-          int areaId = entry.key;
-          String areaName = entry.value;
+    return Column(
+      children: area.entries.map((entry) {
+        int areaId = entry.key;
+        String areaName = entry.value;
 
-          return RadioListTile<int>(
-            title: Text(
-              areaName,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-              ),
+        return RadioListTile<int>(
+          title: Text(
+            areaName,
+            style: GoogleFonts.inter(
+              fontSize: 18,
             ),
-            value: areaId,
-            groupValue: selectedAreaId,
-            onChanged: (selectedAreaId) {
-              setAreaId(selectedAreaId!);
-            },
-          );
-        }).toList(),
-      ),
+          ),
+          value: areaId,
+          groupValue: selectedAreaId,
+          onChanged: (selectedAreaId) {
+            setAreaId(selectedAreaId!);
+          },
+        );
+      }).toList(),
     );
   }
 }

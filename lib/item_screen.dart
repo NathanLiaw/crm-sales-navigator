@@ -5,8 +5,8 @@ import 'package:sales_navigator/item_variations_screen.dart';
 import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
-import 'package:sales_navigator/components/item_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 class ItemScreen extends StatefulWidget {
   final int productId;
@@ -15,7 +15,7 @@ class ItemScreen extends StatefulWidget {
   final Blob itemDescription;
   final String priceByUom;
 
-  const ItemScreen({
+  const ItemScreen({super.key,
     required this.productId,
     required this.productName,
     required this.itemAssetName,
@@ -39,7 +39,6 @@ class _ItemScreenState extends State<ItemScreen> {
     setState(() {
       _areaId = prefs.getInt('areaId') ?? 0;
     });
-    print("Area ID: $_areaId");
   }
 
   void retrievePriceByUomUsingAreaId() {
@@ -51,12 +50,11 @@ class _ItemScreenState extends State<ItemScreen> {
         _uom = firstEntry.key;
         _price = firstEntry.value;
         _priceDataByArea = jsonEncode(areaData);
-        print(_priceDataByArea);
       } else {
-        print('No data found for area ID: $_areaId');
+        developer.log('No data found for area ID: $_areaId');
       }
     } else {
-      print('Area ID $_areaId not found in price data.');
+      developer.log('Area ID $_areaId not found in price data');
     }
   }
 
@@ -81,7 +79,7 @@ class _ItemScreenState extends State<ItemScreen> {
 
       retrievePriceByUomUsingAreaId();
     } catch (e) {
-      print('Error decoding price data: $e');
+      developer.log('Error decoding price data: $e', error: e);
     }
   }
 
@@ -102,7 +100,7 @@ class _ItemScreenState extends State<ItemScreen> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
         children: [
-          ItemAppBar(),
+          const ItemAppBar(),
           Container(
             decoration: BoxDecoration(
               boxShadow: [
@@ -123,7 +121,7 @@ class _ItemScreenState extends State<ItemScreen> {
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               children: [
                 Column(
@@ -137,7 +135,7 @@ class _ItemScreenState extends State<ItemScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 25, 23, 49),
+                          color: const Color.fromARGB(255, 25, 23, 49),
                         ),
                       ),
                     ),
@@ -156,14 +154,14 @@ class _ItemScreenState extends State<ItemScreen> {
                     ),
                   ],
                 ),
-                Spacer(),
+                const Spacer(),
               ],
             ),
           ),
           const Divider(
             height: 24,
             thickness: 1,
-            color: const Color.fromARGB(255, 202, 202, 202),
+            color: Color.fromARGB(255, 202, 202, 202),
           ),
           Container(
             margin: const EdgeInsets.only(left: 10),
@@ -174,12 +172,12 @@ class _ItemScreenState extends State<ItemScreen> {
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color.fromARGB(255, 25, 23, 49),
+                color: const Color.fromARGB(255, 25, 23, 49),
               ),
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
             child: Card(
               color: Colors.white,
               clipBehavior: Clip.hardEdge,
@@ -213,10 +211,10 @@ class _ItemScreenState extends State<ItemScreen> {
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Color.fromARGB(255, 25, 23, 49),
+                                color: const Color.fromARGB(255, 25, 23, 49),
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               '$_uom: RM ${_price.toStringAsFixed(3)}',
                               style: GoogleFonts.inter(
@@ -255,7 +253,7 @@ class _ItemScreenState extends State<ItemScreen> {
           const Divider(
             height: 24,
             thickness: 1,
-            color: const Color.fromARGB(255, 202, 202, 202),
+            color: Color.fromARGB(255, 202, 202, 202),
           ),
           Container(
             margin: const EdgeInsets.only(left: 10),
@@ -273,7 +271,7 @@ class _ItemScreenState extends State<ItemScreen> {
           Container(
             margin: const EdgeInsets.only(left: 10, top: 14),
             child: Container(
-              margin: EdgeInsets.only(bottom: 28),
+              margin: const EdgeInsets.only(bottom: 28),
               child: HtmlWidget(
                 widget.itemDescription.toString(),
               ),

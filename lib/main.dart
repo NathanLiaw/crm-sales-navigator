@@ -10,7 +10,7 @@ import 'products_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the database
+  // Initialize the SQLite database
   await DatabaseHelper.database;
 
   runApp(const MyApp());

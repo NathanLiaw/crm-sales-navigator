@@ -142,8 +142,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     var db = await connectToDatabase();
 
     if (loggedInUsername.isEmpty) {
-      print('Username is not set.');
-      return; // Return early if the username is not set
+      return;
     }
 
     String formattedStartDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.start);
@@ -154,7 +153,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         COUNT(*) AS Total,
         CASE 
             WHEN c.status = 'confirm' THEN 'Complete'
-            WHEN c.status = 'in progress' THEN 'Pending'
+            WHEN c.status = 'Pending' THEN 'Pending'
             ELSE 'Void'
         END AS status,
         s.username
@@ -460,7 +459,7 @@ class InProgressOrdersWidget extends StatelessWidget {
   Future<List<InProgressOrder>> fetchInProgressOrders() async {
     var db = await connectToDatabase();
     var results = await db.query(
-      'SELECT id, CASE WHEN status = \'in progress\' THEN \'Pending\' ELSE status END AS status, created FROM cart;',
+      'SELECT id, CASE WHEN status = Pending ELSE status END AS status, created FROM cart;',
     );
 
     List<InProgressOrder> inProgressOrders = [];

@@ -3,19 +3,19 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
+import 'dart:developer' as developer;
 
 class EngagementLeadItem extends StatelessWidget {
   final LeadItem leadItem;
 
-  const EngagementLeadItem({Key? key, required this.leadItem})
-      : super(key: key);
+  const EngagementLeadItem({super.key, required this.leadItem});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       color: const Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -32,22 +32,22 @@ class EngagementLeadItem extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.only(left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  margin: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     leadItem.amount,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 PopupMenuButton<String>(
                   onSelected: (String value) {
                     // Perform an action based on the selected value
@@ -91,7 +91,7 @@ class EngagementLeadItem extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   leadItem.contactNumber,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                   ),
@@ -104,7 +104,7 @@ class EngagementLeadItem extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   leadItem.emailAddress,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                   ),
@@ -114,7 +114,7 @@ class EngagementLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               leadItem.description,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 14,
               ),
@@ -125,7 +125,7 @@ class EngagementLeadItem extends StatelessWidget {
               children: [
                 Text(
                   leadItem.createdDate,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
                   ),
@@ -133,14 +133,14 @@ class EngagementLeadItem extends StatelessWidget {
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<String>(
                     isExpanded: true,
-                    hint: Text('Engagement'),
+                    hint: const Text('Engagement'),
                     items: tabbarNames
-                        .skip(1) // 跳过第一个选项 'Opportunities'
+                        .skip(1)
                         .map((item) => DropdownMenuItem<String>(
                               value: item,
                               child: Text(
                                 item,
-                                style: TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ))
                         .toList(),
@@ -168,13 +168,10 @@ class EngagementLeadItem extends StatelessWidget {
 
   void _handleDropdownChange(String? value, LeadItem leadItem) async {
     if (value == 'Negotiation') {
-      // 执行将 leadItem 移动到 Negotiation 标签页的操作
       await _updateLeadStage(leadItem, 'Negotiation');
     } else if (value == 'Order Processing') {
-      // 执行将 leadItem 移动到 Order Processing 标签页的操作
       await _updateLeadStage(leadItem, 'Order Processing');
     } else if (value == 'Closed') {
-      // 执行将 leadItem 移动到 Closed 标签页的操作
       await _updateLeadStage(leadItem, 'Closed');
     }
   }
@@ -186,8 +183,8 @@ class EngagementLeadItem extends StatelessWidget {
         'UPDATE sales_lead SET stage = ? WHERE customer_name = ?',
         [stage, leadItem.customerName],
       );
-    } catch (e) {
-      print('Error updating stage: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error updating stage: $e', error: e, stackTrace: stackTrace);
     } finally {
       await conn.close();
     }
