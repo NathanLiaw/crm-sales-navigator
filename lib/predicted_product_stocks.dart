@@ -160,9 +160,10 @@ Widget build(BuildContext context) {
                             flex: 2,
                             child: Text(
                               'Product Name',
+                              textAlign: TextAlign.left,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 17,
                               ),
                             ),
                           ),
@@ -173,7 +174,7 @@ Widget build(BuildContext context) {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 17,
                               ),
                             ),
                           ),
@@ -184,7 +185,7 @@ Widget build(BuildContext context) {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 17,
                               ),
                             ),
                           ),
