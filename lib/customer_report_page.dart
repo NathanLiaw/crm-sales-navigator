@@ -40,15 +40,17 @@ class _CustomerReportState extends State<CustomerReport> {
   String loggedInUsername = '';
 
   @override
-  void initState() {
-    super.initState();
-    loadPreferences().then((_) {
-      DateTime now = DateTime.now();
-      DateTime endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      _selectedDateRange ??= DateTimeRange(start: endOfToday, end: endOfToday);
+void initState() {
+  super.initState();
+  loadPreferences().then((_) {
+    setState(() {
+      _selectedDateRange = null;
       customers = fetchCustomers(isSortedAscending, _selectedDateRange);
+      selectedButtonIndex = 3;
     });
-  }
+  });
+}
+
 
 Future<void> loadPreferences() async {
   try {
