@@ -7,7 +7,7 @@ Future<MySqlConnection> connectToDatabase() async {
     host: '10.0.2.2',
     port: 3306,
     user: 'root',
-    password: '',
+    password: '901022',
     db: 'fyh',
   );
 

@@ -5,6 +5,8 @@ import 'package:sales_navigator/item_screen.dart';
 import 'dart:developer' as developer;
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }
@@ -41,13 +43,13 @@ class _SearchScreenState extends State<SearchScreen> {
         final brandId = brandResults.first.fields['id'] as int;
         conditions.add('p.brand = $brandId');
 
-        // Add an additional condition to prioritize specific brand products containing the search term
+        // Add an additional condition to prioritize specific brand products
+        // containing the search term
         conditions.add('p.product_name LIKE \'%$query%\'');
       }
 
       // Construct the WHERE clause based on the conditions
-      String whereClause =
-          conditions.isNotEmpty ? 'WHERE ' + conditions.join(' OR ') : '';
+      String whereClause = conditions.isNotEmpty ? 'WHERE ${conditions.join(' OR ')}': '';
 
       // Step 3: Execute the final query based on the constructed conditions
       final results = await conn.query(
@@ -91,7 +93,8 @@ class _SearchScreenState extends State<SearchScreen> {
         'product',
         'status = 1 AND product_name = "$selectedProductName"',
         '',
-        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
+        'id, product_name, photo1, photo2, photo3, description, sub_category, '
+            'price_by_uom',
       );
 
       if (productData.isNotEmpty) {
@@ -143,20 +146,11 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final conn = await connectToDatabase();
       final results = await conn.query(
-        'SELECT id, product_name, photo1, description, sub_category, price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
+        'SELECT id, product_name, photo1, description, sub_category, '
+            'price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
         ['%$searchQuery%'],
       );
       await conn.close();
-
-      // Print each product_name
-      results.forEach((row) {
-        print('Product id: ${row['id']}');
-        print('Product name: ${row['product_name']}');
-        print('Product photo: ${row['photo1']}');
-        print('Product desc: ${row['description']}');
-        print('Product sub: ${row['sub_category']}');
-        print('Product price: ${row['price_by_uom']}');
-      });
 
       return results.map((row) {
         return {
@@ -180,7 +174,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: TextField(
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Search...',
             border: InputBorder.none,
           ),
@@ -188,7 +182,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: () {
               // Perform search when the search button is pressed
               _performSearch(_searchQuery);
@@ -202,7 +196,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 _searchQuery.isEmpty
                     ? 'Start typing to search'
                     : 'No results found',
-                style: TextStyle(fontSize: 18),
+                style: const TextStyle(fontSize: 18),
               ),
             )
           : ListView.builder(

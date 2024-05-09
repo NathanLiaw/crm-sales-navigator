@@ -23,6 +23,7 @@ dependencies:
   dropdown_button2: ^2.3.9
   email_validator: ^2.1.17
   path: any
+  transparent_image: ^2.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

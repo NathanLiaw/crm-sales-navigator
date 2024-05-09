@@ -136,7 +136,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (title == 'Contact Us') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ContactUs()),
+            MaterialPageRoute(builder: (context) => const ContactUs()),
           );
         }
         if (title == 'About Us') {

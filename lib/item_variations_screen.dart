@@ -91,8 +91,8 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                           ),
                           child: Image.network(
                             widget.itemAssetName,
-                            height: 118,
-                            width: 118,
+                            height: 115,
+                            width: 115,
                           ),
                         ),
                         Column(
@@ -104,7 +104,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   SizedBox(
-                                    width: 248,
+                                    width: 200,
                                     child: Text(
                                       widget.productName,
                                       overflow: TextOverflow.ellipsis,
@@ -116,7 +116,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                     ),
                                   ),
                                   SizedBox(
-                                    width: 248,
+                                    width: 200,
                                     child: Text(
                                       uom,
                                       overflow: TextOverflow.ellipsis,

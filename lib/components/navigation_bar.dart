@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'dart:developer' as developer;
 
 class CustomNavigationBar extends StatefulWidget {
   const CustomNavigationBar({super.key});
@@ -196,7 +197,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
 
       return itemCount;
     } catch (e) {
-      print('Error fetching count of cart items $e');
+      developer.log('Error fetching count of cart items: $e', error: e);
       return 0;
     }
   }

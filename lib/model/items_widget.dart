@@ -3,8 +3,8 @@ import 'package:mysql1/mysql1.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/item_screen.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:developer' as developer;
 
 class ItemsWidget extends StatefulWidget {
   final int? brandId; // Brand ID to filter products
@@ -14,7 +14,7 @@ class ItemsWidget extends StatefulWidget {
   final String sortOrder;
   final bool isFeatured;
 
-  ItemsWidget({
+  const ItemsWidget({super.key,
     this.brandId,
     this.subCategoryId,
     this.subCategoryIds,
@@ -30,9 +30,7 @@ class ItemsWidget extends StatefulWidget {
 class _ItemsWidgetState extends State<ItemsWidget> {
   final ScrollController _scrollController = ScrollController();
   List<Map<String, dynamic>> _products = [];
-  int _currentPage = 1;
-  int _totalPages = 1;
-  bool _isLoadingMore = false;
+  final int _currentPage = 1;
 
   @override
   void initState() {
@@ -47,8 +45,6 @@ class _ItemsWidgetState extends State<ItemsWidget> {
   }
 
   Future<void> _loadProducts() async {
-    final totalProducts = await getTotalProductsCount();
-    _totalPages = (totalProducts / 50).ceil();
 
     final products = await getProductData(
       offset: (_currentPage - 1) * 50,
@@ -68,29 +64,11 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
       return results.first['total'] as int;
     } catch (e) {
-      print('Error fetching total products count: $e');
+      developer.log('Error fetching total products count: $e', error: e);
       return 0;
     }
   }
 
-  Future<void> _loadMoreProducts() async {
-    if (_currentPage < _totalPages) {
-      setState(() {
-        _isLoadingMore = true;
-      });
-
-      final products = await getProductData(
-        offset: _currentPage * 50,
-        limit: 50,
-      );
-
-      setState(() {
-        _products.addAll(products);
-        _currentPage++;
-        _isLoadingMore = false;
-      });
-    }
-  }
 
   Future<List<Map<String, dynamic>>> getProductData(
       {int offset = 0, int limit = 50}) async {
@@ -155,7 +133,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
               })
           .toList();
     } catch (e) {
-      print('Error fetching product: $e');
+      developer.log('Error fetching product: $e', error: e);
       return [];
     }
   }
@@ -166,7 +144,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       future: getProductData(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -180,7 +158,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
         return Expanded(
           child: GridView.count(
             controller: _scrollController,
-            physics: AlwaysScrollableScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(),
             childAspectRatio: childAspectRatio,
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -205,13 +183,13 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(2),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         blurStyle: BlurStyle.normal,
-                        color: const Color.fromARGB(75, 117, 117, 117),
+                        color: Color.fromARGB(75, 117, 117, 117),
                         spreadRadius: 1,
                         blurRadius: 4,
-                        offset: const Offset(0, 5),
+                        offset: Offset(0, 5),
                       ),
                     ]),
                 child: Expanded(
@@ -239,12 +217,12 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                         child: Container(
                           height: containerSize,
                           width: containerSize,
-                          margin: EdgeInsets.all(10),
+                          margin: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               width: 1,
-                              color: Color.fromARGB(255, 0, 76, 135),
+                              color: const Color.fromARGB(255, 0, 76, 135),
                             ),
                           ),
                           child: CachedNetworkImage(
@@ -252,15 +230,15 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                             height: containerSize,
                             width: containerSize,
                             placeholder: (context, url) =>
-                                CircularProgressIndicator(),
+                                const CircularProgressIndicator(),
                             errorWidget: (context, url, error) =>
-                                Icon(Icons.error_outline),
+                                const Icon(Icons.error_outline),
                           ),
                         ),
                       ),
                       Container(
                         width: containerSize,
-                        padding: EdgeInsets.only(top: 16),
+                        padding: const EdgeInsets.only(top: 16),
                         alignment: Alignment.centerLeft,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

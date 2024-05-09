@@ -19,7 +19,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CreateTaskPage(
+        builder: (context) => const CreateTaskPage(
           customerName: 'CustomerA',
           lastPurchasedAmount: 'RM5000',
         ),

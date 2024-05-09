@@ -185,7 +185,7 @@ class _CartPage extends State<CartPage> {
         'product',
         'status = 1 AND product_name = "$selectedProductName"',
         '',
-        'id, product_name, photo1, description, sub_category, price_by_uom',
+        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
 
       if (productData.isNotEmpty) {
@@ -193,7 +193,7 @@ class _CartPage extends State<CartPage> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        String itemAssetName = product['photo1'];
+        List<String> itemAssetName = [product['photo1'], product['photo2'], product['photo3'], product['photo4']];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
 
@@ -204,7 +204,7 @@ class _CartPage extends State<CartPage> {
             builder: (context) => ItemScreen(
               productId: productId,
               productName: productName,
-              itemAssetName: itemAssetName,
+              itemAssetNames: itemAssetName,
               itemDescription: description,
               priceByUom: priceByUom,
             ),

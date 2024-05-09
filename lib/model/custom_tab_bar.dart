@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CustomTabBar extends StatefulWidget {
+  const CustomTabBar({super.key});
+
   @override
   _CustomTabBarState createState() => _CustomTabBarState();
 }
@@ -12,7 +14,7 @@ class _CustomTabBarState extends State<CustomTabBar> {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white, // Background color for the whole row
-      padding: EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(3, (index) => _buildTabItem(index)),
@@ -37,8 +39,8 @@ class _CustomTabBarState extends State<CustomTabBar> {
         // Perform any additional actions when a tab is selected
       },
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
-        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.blue

@@ -351,7 +351,7 @@ class _RecentOrderState extends State<RecentOrder> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        String itemAssetName = product['photo1'];
+        List<String> itemAssetNames = [product['photo1'], product['photo2'], product['photo3'], product['photo4']];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
 
@@ -362,7 +362,7 @@ class _RecentOrderState extends State<RecentOrder> {
             builder: (context) => ItemScreen(
               productId: productId,
               productName: productName,
-              itemAssetName: itemAssetName,
+              itemAssetNames: itemAssetNames,
               itemDescription: description,
               priceByUom: priceByUom,
             ),
