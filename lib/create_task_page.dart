@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_connection.dart';
 
 class CreateTaskPage extends StatefulWidget {
   final String customerName;
+  final String contactNumber;
+  final String emailAddress;
+  final String address;
   final String lastPurchasedAmount;
 
-  const CreateTaskPage(
-      {super.key, required this.customerName, required this.lastPurchasedAmount});
+  CreateTaskPage({
+    required this.customerName,
+    required this.contactNumber,
+    required this.emailAddress,
+    required this.address,
+    required this.lastPurchasedAmount,
+  });
 
   @override
   _CreateTaskPageState createState() => _CreateTaskPageState();
@@ -32,13 +43,13 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff0069BA),
-        title: const Text(
+        backgroundColor: Color(0xff0069BA),
+        title: Text(
           'Create Task',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -46,44 +57,17 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //   children: [
-                //     Text(
-                //       'Customer Details',
-                //       style:
-                //           TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                //     ),
-                //     Container(
-                //       margin: EdgeInsets.only(left: 20),
-                //       padding:
-                //           EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                //       decoration: BoxDecoration(
-                //         color: Color(0xff0069BA),
-                //         borderRadius: BorderRadius.circular(4),
-                //       ),
-                //       child: Text(
-                //         'Last purchased: RM5000',
-                //         style: TextStyle(
-                //           color: Colors.white,
-                //           fontWeight: FontWeight.bold,
-                //           fontSize: 12,
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xff0069BA).withOpacity(0.1),
+                    color: Color(0xff0069BA).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -92,7 +76,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Customer Details',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -100,15 +84,15 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                             ),
                           ),
                           Container(
-                            margin: const EdgeInsets.only(left: 20),
-                            padding: const EdgeInsets.symmetric(
+                            margin: EdgeInsets.only(left: 20),
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xff0069BA),
+                              color: Color(0xff0069BA),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'Last purchased: RM5000',
+                            child: Text(
+                              widget.lastPurchasedAmount,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -118,49 +102,48 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      const Row(
+                      SizedBox(height: 16),
+                      Row(
                         children: [
                           Icon(Icons.person, color: Color(0xff0069BA)),
                           SizedBox(width: 10),
                           Text(
-                            'Customer A',
+                            widget.customerName,
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      const Row(
+                      SizedBox(height: 8),
+                      Row(
                         children: [
                           Icon(Icons.phone, color: Color(0xff0069BA)),
                           SizedBox(width: 10),
                           Text(
-                            '(60)10 23456789',
+                            widget.contactNumber,
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      const Row(
+                      SizedBox(height: 8),
+                      Row(
                         children: [
                           Icon(Icons.email, color: Color(0xff0069BA)),
                           SizedBox(width: 10),
                           Text(
-                            'abc@gmail.com',
+                            widget.emailAddress,
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      const Row(
+                      SizedBox(height: 8),
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(Icons.location_on, color: Color(0xff0069BA)),
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Lot 166, Section 63, KTLD, Jalan Datuk Abang Abdul Rahim, '
-                                  'Lorong 3, 93450, Kuching, Sarawak, Malaysia',
+                              widget.address,
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -169,43 +152,49 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 40),
-                const Text(
+                SizedBox(height: 40),
+                Text(
                   'Task Details',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: titleController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Title',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a title';
                     }
+                    if (value.length > 50) {
+                      return 'Title cannot exceed 50 digits';
+                    }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Description',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a description';
                     }
+                    if (value.length > 100) {
+                      return 'Description cannot exceed 100 digits';
+                    }
                     return null;
                   },
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 SizedBox(
                   width: 120,
                   child: InkWell(
                     onTap: () => _selectDate(context),
                     child: InputDecorator(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Due date',
                       ),
                       child: Row(
@@ -219,21 +208,21 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                                   : '',
                             ),
                           ),
-                          const SizedBox(
+                          SizedBox(
                             width: 10,
                           ),
-                          const Icon(Icons.calendar_today),
+                          Icon(Icons.calendar_today),
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
-                const Text(
+                SizedBox(height: 40),
+                Text(
                   'Sales order ID',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
                     SizedBox(
@@ -252,33 +241,39 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                             child: Text(value),
                           );
                         }).toList(),
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Please select a sales order ID';
+                          }
+                          return null;
+                        },
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
+                    SizedBox(width: 10),
+                    Text(
                       '*Select a sales order ID',
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
+                SizedBox(height: 30),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Created date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
                       style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Expiry date: ${DateFormat('dd/MM/yyyy').format(DateTime.now().add(const Duration(days: 60)))}',
+                      'Expiry date: ${DateFormat('dd/MM/yyyy').format(DateTime.now().add(Duration(days: 60)))}',
                       style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
-                const Row(
+                SizedBox(height: 30),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
@@ -307,7 +302,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 60),
+                SizedBox(height: 60),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -319,11 +314,11 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
-                          side: const BorderSide(color: Colors.red, width: 2),
+                          side: BorderSide(color: Colors.red, width: 2),
                         ),
-                        minimumSize: const Size(120, 40),
+                        minimumSize: Size(120, 40),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(
                           color: Colors.red,
@@ -332,8 +327,9 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
+                          await _saveTaskToDatabase();
                           Navigator.pop(context, {
                             'title': titleController.text,
                             'description': descriptionController.text,
@@ -342,13 +338,13 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: Color(0xff0069BA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        minimumSize: const Size(120, 40),
+                        minimumSize: Size(120, 40),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Apply',
                         style: TextStyle(color: Colors.white),
                       ),
@@ -370,37 +366,32 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked != null && picked != selectedDate) {
+    if (picked != null && picked != selectedDate)
       setState(() {
         selectedDate = picked;
       });
-    }
   }
 
-  // Future<void> _saveTaskToDatabase() async {
-  //   // Connect to the database
-  //   MySqlConnection conn = await connectToDatabase();
+  Future<void> _saveTaskToDatabase() async {
+    // Connect to the database
+    MySqlConnection conn = await connectToDatabase();
 
-  //   // Prepare data
-  //   Map<String, dynamic> taskData = {
-  //     'title': titleController.text,
-  //     'description': descriptionController.text,
-  //     'due_date': selectedDate.toString(),
-  //     'sales_order_id': selectedSalesOrderId,
-  //     'quantity': quantityController.text,
-  //     'total': totalController.text,
-  //     'created_date': DateTime.now().toString(),
-  //     'expiry_date': DateTime.now().add(Duration(days: 60)).toString(),
-  //   };
+    // Prepare data
+    String taskTitle = titleController.text;
+    String taskDescription = descriptionController.text;
+    String taskDueDate = selectedDate!.toString();
 
-  //   // Save data to database
-  //   bool success = await saveData(conn, 'tasks', taskData);
-  //   if (success) {
-  //     print('Task data saved successfully.');
-  //   } else {
-  //     print('Failed to save task data.');
-  //   }
-
-  //   await conn.close();
-  // }
+    // Save data to database
+    try {
+      await conn.query(
+        'UPDATE create_lead SET task_title = ?, task_description = ?, task_duedate = ? WHERE customer_name = ?',
+        [taskTitle, taskDescription, taskDueDate, widget.customerName],
+      );
+      print('Task data saved successfully.');
+    } catch (e) {
+      print('Failed to save task data: $e');
+    } finally {
+      await conn.close();
+    }
+  }
 }

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_navigator/home_page.dart';
+import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_connection.dart';
 
 class NegotiationLeadItem extends StatefulWidget {
-  const NegotiationLeadItem({super.key});
+  final LeadItem leadItem;
+  const NegotiationLeadItem({super.key, required this.leadItem});
 
   @override
   _NegotiationLeadItemState createState() => _NegotiationLeadItemState();
@@ -15,13 +19,44 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   String? description;
   DateTime? dueDate;
 
-  Future<void> _navigateAndDisplaySelection(BuildContext context) async {
+  @override
+  void initState() {
+    super.initState();
+    _fetchTaskDetails();
+  }
+
+  Future<void> _fetchTaskDetails() async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      Results results = await conn.query(
+        'SELECT task_title, task_description, task_duedate FROM create_lead WHERE customer_name = ?',
+        [widget.leadItem.customerName],
+      );
+      if (results.isNotEmpty) {
+        var row = results.first;
+        setState(() {
+          title = row['task_title'];
+          description = row['task_description'];
+          dueDate = row['task_duedate'];
+        });
+      }
+    } catch (e) {
+      print('Error fetching task details: $e');
+    } finally {
+      await conn.close();
+    }
+  }
+
+  Future<void> _navigateToCreateTaskPage(BuildContext context) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const CreateTaskPage(
-          customerName: 'CustomerA',
-          lastPurchasedAmount: 'RM5000',
+        builder: (context) => CreateTaskPage(
+          customerName: widget.leadItem.customerName,
+          contactNumber: widget.leadItem.contactNumber,
+          emailAddress: widget.leadItem.emailAddress,
+          address: widget.leadItem.addressLine1,
+          lastPurchasedAmount: widget.leadItem.amount,
         ),
       ),
     );
@@ -49,11 +84,11 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'CustomerA',
-                  style: TextStyle(
+                Text(
+                  widget.leadItem.customerName,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 20,
                   ),
                 ),
                 Container(
@@ -63,9 +98,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'RM5000',
-                    style: TextStyle(
+                  child: Text(
+                    widget.leadItem.amount,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -110,55 +145,72 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               ],
             ),
             const SizedBox(height: 10),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Icon(
+                const Icon(
                   Icons.phone,
                   color: Color(0xff0069BA),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
-                  '(60)10 234568789',
-                  style: TextStyle(
+                  widget.leadItem.contactNumber,
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                   ),
                 ),
-                SizedBox(width: 8),
-                Icon(
+                const SizedBox(width: 8),
+                const Icon(
                   Icons.email,
                   color: Color(0xff0069BA),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
-                  'abc@gmail.com',
-                  style: TextStyle(
+                  widget.leadItem.emailAddress,
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             if (title != null && description != null && dueDate != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Task Details',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                  // Text(
+                  //   'Task Details',
+                  //   style: TextStyle(
+                  //     fontWeight: FontWeight.bold,
+                  //     fontSize: 16,
+                  //   ),
+                  // ),
+                  // SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.date_range, color: Color(0xff0069BA)),
+                      Text(
+                          'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text('Title: $title'),
-                  const SizedBox(height: 4),
-                  Text('Description: $description'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      // Icon(Icons.task, color: Color(0xff0069BA)),
+                      Text(
+                        '${title?.toUpperCase()}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Text(
-                      'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
+                    '$description',
+                    style: const TextStyle(fontSize: 14),
+                  ),
                   const SizedBox(height: 16),
                 ],
               )
@@ -170,7 +222,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   fontSize: 14,
                 ),
               ),
-            const SizedBox(height: 10),
+            // const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -207,7 +259,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                  onPressed: () => _navigateAndDisplaySelection(context),
+                  onPressed: () => _navigateToCreateTaskPage(context),
                   child: Text(
                     title == null ? 'Create Task' : 'Edit Task',
                     style: const TextStyle(
@@ -218,9 +270,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                     ),
                   ),
                 ),
-                const Text(
-                  'Created on: 04/03/2024',
-                  style: TextStyle(
+                Text(
+                  'Created on: ${widget.leadItem.createdDate}',
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
                   ),

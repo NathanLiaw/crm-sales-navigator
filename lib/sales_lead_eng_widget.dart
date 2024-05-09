@@ -3,7 +3,6 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
-import 'dart:developer' as developer;
 
 class EngagementLeadItem extends StatelessWidget {
   final LeadItem leadItem;
@@ -74,6 +73,10 @@ class EngagementLeadItem extends StatelessWidget {
                       value: 'complete',
                       child: Text('Complete'),
                     ),
+                    const PopupMenuItem<String>(
+                      value: 'undo',
+                      child: Text('Undo'),
+                    ),
                   ],
                   child: const Icon(Icons.more_horiz_outlined,
                       color: Colors.black),
@@ -124,7 +127,7 @@ class EngagementLeadItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  leadItem.createdDate,
+                  'Created on: ${leadItem.createdDate}',
                   style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
@@ -135,7 +138,7 @@ class EngagementLeadItem extends StatelessWidget {
                     isExpanded: true,
                     hint: const Text('Engagement'),
                     items: tabbarNames
-                        .skip(1)
+                        .skip(1) // 跳过第一个选项 'Opportunities'
                         .map((item) => DropdownMenuItem<String>(
                               value: item,
                               child: Text(
@@ -168,10 +171,13 @@ class EngagementLeadItem extends StatelessWidget {
 
   void _handleDropdownChange(String? value, LeadItem leadItem) async {
     if (value == 'Negotiation') {
+      // 执行将 leadItem 移动到 Negotiation 标签页的操作
       await _updateLeadStage(leadItem, 'Negotiation');
     } else if (value == 'Order Processing') {
+      // 执行将 leadItem 移动到 Order Processing 标签页的操作
       await _updateLeadStage(leadItem, 'Order Processing');
     } else if (value == 'Closed') {
+      // 执行将 leadItem 移动到 Closed 标签页的操作
       await _updateLeadStage(leadItem, 'Closed');
     }
   }
@@ -180,11 +186,11 @@ class EngagementLeadItem extends StatelessWidget {
     MySqlConnection conn = await connectToDatabase();
     try {
       await conn.query(
-        'UPDATE sales_lead SET stage = ? WHERE customer_name = ?',
+        'UPDATE create_lead SET stage = ? WHERE customer_name = ?',
         [stage, leadItem.customerName],
       );
-    } catch (e, stackTrace) {
-      developer.log('Error updating stage: $e', error: e, stackTrace: stackTrace);
+    } catch (e) {
+      print('Error updating stage: $e');
     } finally {
       await conn.close();
     }

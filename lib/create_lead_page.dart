@@ -3,12 +3,11 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
-import 'dart:developer' as developer;
 
 class CreateLeadPage extends StatefulWidget {
   final Function(String, String, String) onCreateLead;
 
-  const CreateLeadPage({super.key, required this.onCreateLead});
+  CreateLeadPage({required this.onCreateLead});
 
   @override
   _CreateLeadPageState createState() => _CreateLeadPageState();
@@ -28,13 +27,13 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff0069BA),
-        title: const Text(
+        backgroundColor: Color(0xff0069BA),
+        title: Text(
           'Create Lead',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -42,19 +41,19 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
+                Text(
                   'Customer Details',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                 ),
                 TextFormField(
                   controller: customerNameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter customer/company name',
                     prefixIcon: Icon(
                       Icons.person,
@@ -73,7 +72,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 TextFormField(
                   controller: contactNumberController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter contact number',
                     prefixIcon: Icon(Icons.phone, color: Color(0xff0069BA)),
                   ),
@@ -93,7 +92,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 TextFormField(
                   controller: emailAddressController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter email address',
                     prefixIcon: Icon(Icons.email, color: Color(0xff0069BA)),
                   ),
@@ -109,7 +108,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 TextFormField(
                   controller: addressController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter address',
                     prefixIcon:
                         Icon(Icons.location_on, color: Color(0xff0069BA)),
@@ -127,14 +126,14 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24.0),
-                const Text(
+                SizedBox(height: 24.0),
+                Text(
                   'Others',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                 ),
                 TextFormField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Description',
                   ),
                   validator: (value) {
@@ -152,7 +151,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     Expanded(
                       child: TextFormField(
                         controller: amountController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Predicted sales',
                           hintText: 'RM',
                         ),
@@ -160,6 +159,9 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                         validator: (value) {
                           if (value != null && value.isEmpty) {
                             return 'Please enter predicted sales';
+                          }
+                          if (value != null && double.tryParse(value) == null) {
+                            return 'Please enter a valid number';
                           }
                           if (value != null && value.length > 50) {
                             return 'Predicted sales cannot exceed 50 characters';
@@ -170,7 +172,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24.0),
+                SizedBox(height: 24.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -182,11 +184,11 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
-                          side: const BorderSide(color: Colors.red, width: 2),
+                          side: BorderSide(color: Colors.red, width: 2),
                         ),
-                        minimumSize: const Size(120, 40),
+                        minimumSize: Size(120, 40),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(
                           color: Colors.red,
@@ -203,18 +205,18 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                             descriptionController.text,
                             amountController.text,
                           );
-                          _saveLeadToDatabase();
+                          _saveLeadToDatabase(); // Save lead to database
                           Navigator.pop(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: Color(0xff0069BA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        minimumSize: const Size(120, 40),
+                        minimumSize: Size(120, 40),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Create',
                         style: TextStyle(color: Colors.white),
                       ),
@@ -241,23 +243,22 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       'address': addressController.text,
       'description': descriptionController.text,
       'predicted_sales': amountController.text,
-      'stage': 'Opportunities',
-      'so_id': null,
+      'stage': 'Opportunities', // Add the default stage for new leads
+      'so_id': null, // Set SO ID to null initially
     };
 
     // Validate description length
     if (leadData['description'].length > 255) {
-      developer.log('Description cannot exceed 255 characters');
+      print('Description cannot exceed 255 characters.');
       return;
     }
 
     // Save data to database
-    bool success = await saveData(conn, 'sales_lead', leadData);
+    bool success = await saveData(conn, 'create_lead', leadData);
     if (success) {
-      developer.log('Lead data saved successfully');
-
+      print('Lead data saved successfully.');
     } else {
-      developer.log('Failed to save lead data');
+      print('Failed to save lead data.');
     }
 
     await conn.close();

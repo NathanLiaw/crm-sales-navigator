@@ -161,6 +161,7 @@ class _ItemScreenState extends State<ItemScreen> {
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +171,7 @@ class _ItemScreenState extends State<ItemScreen> {
                       child: Text(
                         widget.productName,
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
+                        maxLines: 3,
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

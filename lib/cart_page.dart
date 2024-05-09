@@ -193,7 +193,11 @@ class _CartPage extends State<CartPage> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        List<String> itemAssetName = [product['photo1'], product['photo2'], product['photo3'], product['photo4']];
+        List<String> itemAssetName = [
+          'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
+          'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
+          'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
+        ];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
 
