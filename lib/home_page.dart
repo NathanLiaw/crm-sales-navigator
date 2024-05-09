@@ -8,9 +8,11 @@ import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
+import 'package:sales_navigator/sales_lead_nego_widget.dart';
+import 'package:sales_navigator/sales_lead_order_processing_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:developer' as developer;
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -31,8 +33,6 @@ class _HomePageState extends State<HomePage> {
   List<LeadItem> leadItems = [];
   List<LeadItem> engagementLeads = [];
   List<LeadItem> negotiationLeads = [];
-  List<LeadItem> orderProcessingLeads = [];
-  List<LeadItem> closedLeads = [];
   Map<int, DateTime> latestModifiedDates = {};
   Map<int, double> latestTotals = {};
 
@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      developer.log('Error fetching lead items: $e', error: e);
+      print('Error fetching lead items: $e');
     } finally {
       await conn.close();
     }
@@ -141,9 +141,9 @@ class _HomePageState extends State<HomePage> {
             leadItems.add(leadItem);
           } else if (stage == 'Engagement') {
             engagementLeads.add(leadItem);
+          } else if (stage == 'Negotiation') {
+            negotiationLeads.add(leadItem);
           }
-          // else if (stage == 'Negotiation') {
-          //   negotiationLeads.add(leadItem);
           // } else if (stage == 'Order Processing') {
           //   orderProcessingLeads.add(leadItem);
           // } else if (stage == 'Closed') {
@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      developer.log('Error fetching create_lead items: $e', error: e);
+      print('Error fetching sales_lead items: $e');
     }
   }
 
@@ -168,31 +168,25 @@ class _HomePageState extends State<HomePage> {
         return 'Unknown';
       }
     } catch (e) {
-      developer.log('Error fetching customer name: $e', error: e);
+      print('Error fetching customer name: $e');
       return 'Unknown';
     }
   }
 
-  Future<void> _moveTo(LeadItem leadItem, String stage) async {
+  Future<void> _moveToEngagement(LeadItem leadItem) async {
     setState(() {
       leadItems.remove(leadItem);
-      if (stage == 'Engagement') {
-        engagementLeads.add(leadItem);
-        _updateLeadStage(leadItem, 'Engagement');
-      }
-      else if (stage == 'Negotiation') {
-        negotiationLeads.add(leadItem);
-        _updateLeadStage(leadItem, 'Negotiation');
-      }
-      else if (stage == 'Order Processing') {
-        orderProcessingLeads.add(leadItem);
-        _updateLeadStage(leadItem, 'Order Processing');
-      }
-      else if (stage == 'Closed') {
-        closedLeads.add(leadItem);
-        _updateLeadStage(leadItem, 'Closed');
-      }
+      engagementLeads.add(leadItem);
     });
+    await _updateLeadStage(leadItem, 'Engagement');
+  }
+
+  Future<void> _moveToNegotiation(LeadItem leadItem) async {
+    setState(() {
+      leadItems.remove(leadItem);
+      negotiationLeads.add(leadItem);
+    });
+    await _updateLeadStage(leadItem, 'Negotiation');
   }
 
   Future<void> _updateLeadStage(LeadItem leadItem, String stage) async {
@@ -203,7 +197,7 @@ class _HomePageState extends State<HomePage> {
         [stage, leadItem.customerName],
       );
     } catch (e) {
-      developer.log('Error updating stage: $e', error: e);
+      print('Error updating stage: $e');
     } finally {
       await conn.close();
     }
@@ -237,9 +231,8 @@ class _HomePageState extends State<HomePage> {
             String salesmanName = snapshot.data!;
             return Scaffold(
               appBar: AppBar(
-                backgroundColor: const Color(0xff004c87),
-                iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
                 automaticallyImplyLeading: false,
+                backgroundColor: const Color(0xff004c87),
                 title: Text(
                   'Welcome, $salesmanName',
                   style: const TextStyle(color: Colors.white),
@@ -274,7 +267,7 @@ class _HomePageState extends State<HomePage> {
                     tabs: [
                       Tab(text: 'Opportunities(${leadItems.length})'),
                       Tab(text: 'Engagement(${engagementLeads.length})'),
-                      const Tab(text: 'Negotiation(0)'),
+                      Tab(text: 'Negotiation(${negotiationLeads.length})'),
                       const Tab(text: 'Order Processing(0)'),
                       const Tab(text: 'Closed(0)'),
                     ],
@@ -286,9 +279,9 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         _buildOpportunitiesTab(),
                         _buildEngagementTab(),
-                        const Center(child: Text('Negotiation Content')),
-                        const Center(child: Text('Order Processing Content')),
-                        const Center(child: Text('Closed Content')),
+                        _buildNegotiationTab(),
+                        _buildOrderProcessingTab(),
+                        _buildClosedTab(),
                       ],
                     ),
                   ),
@@ -366,8 +359,8 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => CustomerInsightPage(
-                customerName: leadItem.customerName,
+            builder: (context) => CustomerInsightPage(
+              customerName: leadItem.customerName,
             ),
           ),
         );
@@ -410,7 +403,7 @@ class _HomePageState extends State<HomePage> {
                   const Spacer(),
                   DropdownButton2<String>(
                     isExpanded: true,
-                    hint: const Text('Select Item'),
+                    hint: const Text('Opportunities', style: TextStyle(fontSize: 14)),
                     items: tabbarNames
                         .map((item) => DropdownMenuItem<String>(
                               value: item,
@@ -423,17 +416,19 @@ class _HomePageState extends State<HomePage> {
                     value: leadItem.selectedValue,
                     onChanged: (String? value) {
                       if (value == 'Engagement') {
-                        _moveTo(leadItem, 'Engagement');
+                        _moveToEngagement(leadItem);
+                      } else if (value == 'Negotiation') {
+                        _moveToNegotiation(leadItem);
                       }
                     },
                     buttonStyleData: const ButtonStyleData(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      height: 30,
-                      width: 140,
+                      height: 40,
+                      width: 150,
                       decoration: BoxDecoration(color: Colors.white),
                     ),
                     menuItemStyleData: const MenuItemStyleData(
-                      height: 30,
+                      height: 50,
                     ),
                   ),
                 ],
@@ -503,6 +498,36 @@ class _HomePageState extends State<HomePage> {
       itemBuilder: (context, index) {
         LeadItem leadItem = engagementLeads[index];
         return EngagementLeadItem(leadItem: leadItem);
+      },
+    );
+  }
+
+  Widget _buildNegotiationTab() {
+    return ListView.builder(
+      itemCount: negotiationLeads.length,
+      itemBuilder: (context, index) {
+        LeadItem leadItem = negotiationLeads[index];
+        return NegotiationLeadItem(leadItem: leadItem);
+      },
+    );
+  }
+
+  Widget _buildOrderProcessingTab() {
+    return ListView.builder(
+      itemCount: 1,
+      itemBuilder: (context, index) {
+        return const OrderProcessingLeadItem(
+          status: 'Pending',
+        );
+      },
+    );
+  }
+
+  Widget _buildClosedTab() {
+    return ListView.builder(
+      itemCount: 1,
+      itemBuilder: (context, index) {
+        return const ClosedLeadItem();
       },
     );
   }
