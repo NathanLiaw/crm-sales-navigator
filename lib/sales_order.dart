@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
+import 'package:sales_navigator/cart_item.dart';
+import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
+import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db_connection.dart';
 import 'customer_details_page.dart';
@@ -54,6 +57,55 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     });
   }
 
+  Future<void> insertItemIntoCart(CartItem cartItem) async {
+    int itemId = cartItem.productId;
+    String uom = cartItem.uom;
+
+    try {
+      const tableName = 'cart_item';
+      final condition = "product_id = $itemId AND uom = '$uom' AND status = 'in progress'";
+      const order = '';
+      const field = '*';
+
+      final db = await DatabaseHelper.database;
+
+      // Read data from the database based on the provided condition
+      final result = await DatabaseHelper.readData(
+        db,
+        tableName,
+        condition,
+        order,
+        field,
+      );
+
+      // Check if the result contains any existing items
+      if (result.isNotEmpty) {
+        // Item already exists, update the quantity
+        final existingItem = result.first;
+        final updatedQuantity = existingItem['qty'] + cartItem.quantity;
+
+        // Prepare the data map for update
+        final data = {
+          'id': existingItem['id'],
+          'qty': updatedQuantity,
+          'modified': UtilityFunction.getCurrentDateTime(),
+        };
+
+        // Call the updateData function to perform the update operation
+        await DatabaseHelper.updateData(data, tableName);
+
+        developer.log('Cart item quantity updated successfully');
+      } else {
+        // Item does not exist, insert it as a new item
+        final cartItemMap = cartItem.toMap(excludeId: true);
+        await DatabaseHelper.insertData(cartItemMap, tableName);
+        developer.log('New cart item inserted successfully');
+      }
+    } catch (e) {
+      developer.log('Error inserting or updating cart item: $e', error: e);
+    }
+  }
+
   Future<void> _loadUserDetails() async {
     final prefs = await SharedPreferences.getInstance();
     loggedInUsername = prefs.getString('username') ?? '';
@@ -61,19 +113,18 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Future<void> _selectCustomer() async {
     final Customer? result = await Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => CustomerDetails(
-      onSelectionChanged: _updateSelectedCustomer,
+    context,
+    MaterialPageRoute(
+      builder: (context) => CustomerDetails(
+        onSelectionChanged: _updateSelectedCustomer,
+      ),
     ),
-  ),
-);
-
+  );
 
     if (result != null) {
       setState(() {
         selectedCustomer = result;
-        _loadSalesOrders();  // Refresh orders with the selected customer
+        _loadSalesOrders();
       });
     }
   }
@@ -101,6 +152,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       cart_item.product_name, 
       cart_item.qty,
       cart_item.uom,
+      cart_item.ori_unit_price,
       salesman.salesman_name,
       DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
       FROM 
@@ -122,6 +174,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       cart_item.product_name, 
       cart_item.qty,
       cart_item.uom,
+      cart_item.ori_unit_price,
       salesman.salesman_name,
       DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
       FROM 
@@ -143,6 +196,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       cart_item.product_name, 
       cart_item.qty,
       cart_item.uom,
+      cart_item.ori_unit_price,
       salesman.salesman_name,
       DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
       FROM 
@@ -237,16 +291,14 @@ Widget _buildCustomerPicker() {
   );
 }
 
-
-
 Widget _buildQuickAccessDateButtons() {
     return Padding(
-        padding: const EdgeInsets.only(left: 16.0),  // Uniform left padding for the row
+        padding: const EdgeInsets.only(left: 16.0),
         child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
                 _buildDateButton('All', null, 3),
-                const SizedBox(width: 10),  // Maintain spacing between buttons
+                const SizedBox(width: 10),
                 _buildDateButton('Last 7d', 7, 0),
                 const SizedBox(width: 10),
                 _buildDateButton('Last 30d', 30, 1),
@@ -580,7 +632,58 @@ Widget _buildQuickAccessDateButtons() {
                             ),
                             IconButton(
                               icon: const Icon(Icons.copy),
-                              onPressed: () {},
+                              onPressed: () async {
+                                final cartItem = CartItem(
+                                  buyerId: await UtilityFunction.getUserId(),
+                                  productId: item['id'],
+                                  productName: item['product_name'],
+                                  uom: item['uom'],
+                                  quantity: item['qty'],
+                                  discount: 0,
+                                  originalUnitPrice: item['ori_unit_price'],
+                                  unitPrice: item['ori_unit_price'],
+                                  total: item['ori_unit_price'] * item['qty'],
+                                  cancel: null,
+                                  remark: null,
+                                  status: 'in progress',
+                                  created: DateTime.now(),
+                                  modified: DateTime.now(),
+                                );
+
+                                // // Insert CartItem into database
+                                await insertItemIntoCart(cartItem);
+
+                                // Show success dialog
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => const AlertDialog(
+                                    backgroundColor: Colors.green,
+                                    title: Row(
+                                      children: [
+                                        SizedBox(width: 20),
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Item copied to cart',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+
+                                // Automatically close dialog after 1 second
+                                Future.delayed(const Duration(seconds: 1), () {
+                                  Navigator.pop(context);
+                                });
+                              },
                             ),
                           ],
                         ),

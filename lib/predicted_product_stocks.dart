@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'db_connection.dart';
+import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
 }
 
 class PredictedProductsTarget extends StatefulWidget {
-  const PredictedProductsTarget({Key? key}) : super(key: key);
+  const PredictedProductsTarget({super.key});
 
   @override
   _PredictedProductsTargetState createState() =>
@@ -109,7 +109,6 @@ LIMIT 5;
 
 
   @override
-  @override
 Widget build(BuildContext context) {
   final maxQuantity =
       products.fold<int>(0, (max, p) => p.quantity > max ? p.quantity : max);
@@ -117,13 +116,13 @@ Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      title: Padding(
-        padding: const EdgeInsets.only(
+      title: const Padding(
+        padding: EdgeInsets.only(
           left: 0.0,
           top: 28.0,
           bottom: 16.0,
         ),
-        child: const Text(
+        child: Text(
           'Product Forecast',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
@@ -151,8 +150,8 @@ Widget build(BuildContext context) {
               child: Center(
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(18),
+                    const Padding(
+                      padding: EdgeInsets.all(18),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -227,7 +226,7 @@ Widget build(BuildContext context) {
                                           child: Text(
                                             product.name,
                                             textAlign: TextAlign.left,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                             ),
                                             maxLines: 2,
@@ -240,7 +239,7 @@ Widget build(BuildContext context) {
                                             '${product.predictedStock}',
                                             textAlign: TextAlign.center,
                                             style:
-                                                TextStyle(fontWeight: FontWeight.w600),
+                                                const TextStyle(fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                         Expanded(
@@ -249,7 +248,7 @@ Widget build(BuildContext context) {
                                             'RM ${product.predictedSales}',
                                             textAlign: TextAlign.center,
                                             style:
-                                                TextStyle(fontWeight: FontWeight.w600),
+                                                const TextStyle(fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                       ],
@@ -272,7 +271,7 @@ Widget build(BuildContext context) {
               ),
             ),
           )
-        : Center(child: CircularProgressIndicator()),
+        : const Center(child: CircularProgressIndicator()),
   );
 
   }

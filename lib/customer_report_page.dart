@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'db_connection.dart';
+import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
@@ -114,7 +114,6 @@ Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange
   return customersList;
 }
 
-
   void toggleSortOrder() {
     setState(() {
       isSortedAscending = !isSortedAscending;
@@ -142,7 +141,6 @@ Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange
     customers = fetchCustomers(isSortedAscending, _selectedDateRange);
   });
 }
-
 
 Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
   final bool isCustomRangeSelected = selectedButtonIndex == -1;
@@ -263,7 +261,6 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
     ],
   );
 }
-
 
   Widget _buildTimeFilterButton(
       String text, VoidCallback onPressed, bool isSelected) {
