@@ -47,26 +47,26 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
   Future<void> _loadTopProducts() async {
     String query = '''
     SELECT 
-  ci.product_name, 
-  SUM(ci.qty) AS total_qty_sold,
-  SUM(ci.qty * ci.unit_price) AS total_sales,
-  s.salesman_name
-FROM 
-  fyh.cart_item ci
-JOIN 
-  fyh.cart c ON ci.session = c.session OR c.id = ci.cart_id
-JOIN 
-  fyh.salesman s ON c.buyer_id = s.id
-WHERE 
-  c.status != 'void' AND
-  s.username = '$loggedInUsername' AND
-  ci.created >= DATE_SUB(NOW(), INTERVAL 2 MONTH)
-GROUP BY 
-  ci.product_name, 
-  s.salesman_name
-ORDER BY 
-  total_qty_sold DESC
-LIMIT 5;
+      ci.product_name, 
+      SUM(ci.qty) AS total_qty_sold,
+      SUM(ci.qty * ci.unit_price) AS total_sales,
+      s.salesman_name
+    FROM 
+      fyh.cart_item ci
+    JOIN 
+      fyh.cart c ON ci.session = c.session OR c.id = ci.cart_id
+    JOIN 
+      fyh.salesman s ON c.buyer_id = s.id
+    WHERE 
+      c.status != 'void' AND
+      s.username = '$loggedInUsername' AND
+      ci.created >= DATE_SUB(NOW(), INTERVAL 2 MONTH)
+    GROUP BY 
+      ci.product_name, 
+      s.salesman_name
+    ORDER BY 
+      total_qty_sold DESC
+    LIMIT 5;
   ''';
 
     try {
@@ -83,7 +83,7 @@ LIMIT 5;
 
       setState(() {
         products = fetchedProducts;
-        predictSalesAndStock();  // Calculate predictions
+        predictSalesAndStock();
       });
     } catch (e) {
       print('Error fetching top products: $e');
@@ -91,19 +91,15 @@ LIMIT 5;
   }
 
   void predictSalesAndStock() {
-  int period = 2;  // We have 2 months of historical data
+  int period = 2;
   
   for (var product in products) {
     // Calculate average monthly sales and quantity
     double avgMonthlySales = product.salesOrder / period;
     double avgMonthlyQuantity = product.quantity / period;
-
-    // Assuming a growth rate based on some business logic or previous trend analysis; here a placeholder of 5% growth
     double growthRate = 1.05; // 5% growth
-
-    // Project next month's sales and quantity based on the average and assumed growth
     product.predictedSales = (avgMonthlySales * growthRate).round();
-    product.predictedStock = (avgMonthlyQuantity * growthRate * 1.2).round();  // 20% buffer on top of the predicted sales
+    product.predictedStock = (avgMonthlyQuantity * growthRate * 1.2).round();  
   }
 }
 

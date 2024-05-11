@@ -6,6 +6,7 @@ import 'package:sales_navigator/top_selling_product_graph.dart';
 import 'package:sales_navigator/top_selling_product_report_page.dart';
 import 'package:sales_navigator/predicted_product_stocks.dart';
 import 'package:sales_navigator/customer_sales_prediction.dart';
+import 'package:sales_navigator/sales_forecast_graph.dart';
 import 'customer_graph.dart';
 import 'customer_report_page.dart';
 import 'sales_order.dart';
@@ -39,6 +40,23 @@ class DataAnalyticsPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const SalesReportPage()), 
+                  );
+                },
+                child: const SizedBox(
+                  height: 425,
+                  child: SalesForecastGraph(),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
@@ -123,10 +141,4 @@ class DataAnalyticsPage extends StatelessWidget {
       ),
     );
   }
-}
-
-void main() {
-  runApp(const MaterialApp(
-    home: DataAnalyticsPage(),
-  ));
 }

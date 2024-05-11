@@ -60,6 +60,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ROUND(SUM(c.final_total), 0) AS `Total Sales`
               FROM cart c
               JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+              JOIN 
+            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE()
               AND c.status != 'void' $usernameCondition
               GROUP BY DATE(c.created)
@@ -90,6 +92,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ROUND(SUM(c.final_total), 0) AS `Total Sales`
               FROM cart c
               JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+              JOIN 
+            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE c.created >= CURDATE() - INTERVAL 12 MONTH
               AND c.status != 'void' $usernameCondition
               GROUP BY DATE_FORMAT(c.created, '%Y-%m')
@@ -117,6 +121,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
                     ROUND(SUM(c.final_total), 0) AS `Total Sales`
                 FROM cart c
                 JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+                JOIN 
+            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
                 WHERE c.created >= CURDATE() - INTERVAL 6 YEAR
                 AND c.status != 'void' $usernameCondition
                 GROUP BY YEAR(c.created)
