@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/brands_screen.dart';
-import 'package:sales_navigator/categories_screen.dart';
+
 import 'package:sales_navigator/filter_categories_screen.dart';
 import 'package:sales_navigator/model/area_select_popup.dart';
 import 'package:sales_navigator/search_screen.dart';
@@ -31,8 +30,7 @@ class _ProductsScreenState extends State<ProductsScreen>
   List<int> _selectedBrandIds = [];
   String _currentSortOrder = 'By Name (A to Z)';
   Key _tabBarViewKey = UniqueKey();
-  int _currentPage = 1;
-  int _totalPages = 1;
+
   int _selectedTabIndex = 0;
   bool _isFeatured = false;
 
@@ -44,34 +42,6 @@ class _ProductsScreenState extends State<ProductsScreen>
     selectedAreaId = -1;
     fetchAreaFromDb();
     _tabController = TabController(length: 4, vsync: this);
-  }
-
-  Future<int> _getTotalPages() async {
-    try {
-      final conn = await connectToDatabase();
-      String query = 'SELECT COUNT(*) as total FROM product WHERE status = 1';
-      List<dynamic> parameters = [];
-
-      if (_selectedBrandId != null) {
-        query += ' AND brand = ?';
-        parameters.add(_selectedBrandId);
-      } else if (_selectedSubCategoryId != null) {
-        query += ' AND sub_category = ?';
-        parameters.add(_selectedSubCategoryId);
-      }
-
-      final results = await conn.query(query, parameters);
-      await conn.close();
-
-      final totalProducts = results.first['total'] as int;
-      final limit = 50; // Change this if you want a different limit per page
-      final totalPages = (totalProducts / limit).ceil();
-
-      return totalPages;
-    } catch (e) {
-      print('Error fetching total pages: $e');
-      return 1;
-    }
   }
 
   Future<void> setAreaId(int areaId) async {
@@ -138,7 +108,6 @@ class _ProductsScreenState extends State<ProductsScreen>
         _selectedSubCategoryIds =
             result['selectedSubCategoryIds'] ?? _selectedSubCategoryIds;
         _selectedBrandIds = result['selectedBrandIds'] ?? _selectedBrandIds;
-        _currentPage = 1;
         print('Selected Brand IDs: $_selectedBrandIds');
         print('Selected Subcategory IDs: $_selectedSubCategoryIds');
         _tabBarViewKey = UniqueKey(); // Change the key to force rebuild

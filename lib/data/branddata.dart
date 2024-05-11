@@ -5,16 +5,12 @@ class BrandData {
   final String brand;
   final int position;
   final String status;
-  final DateTime created;
-  final DateTime modified;
 
   BrandData({
     required this.id,
     required this.brand,
     required this.position,
     required this.status,
-    required this.created,
-    required this.modified,
   });
 
   factory BrandData.fromRow(ResultRow row) {
@@ -23,8 +19,6 @@ class BrandData {
       brand: row['brand'] as String,
       position: row['position'] as int,
       status: row['status'] as String,
-      created: row['created'] as DateTime,
-      modified: row['modified'] as DateTime,
     );
   }
 }

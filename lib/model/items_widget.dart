@@ -30,9 +30,6 @@ class ItemsWidget extends StatefulWidget {
 class _ItemsWidgetState extends State<ItemsWidget> {
   final ScrollController _scrollController = ScrollController();
   List<Map<String, dynamic>> _products = [];
-  int _currentPage = 1;
-  int _totalPages = 1;
-  bool _isLoadingMore = false;
 
   @override
   void initState() {
@@ -47,13 +44,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
   }
 
   Future<void> _loadProducts() async {
-    final totalProducts = await getTotalProductsCount();
-    _totalPages = (totalProducts / 50).ceil();
-
-    final products = await getProductData(
-      offset: (_currentPage - 1) * 50,
-      limit: 50,
-    );
+    final products = await getProductData();
     setState(() {
       _products = products;
     });
@@ -73,27 +64,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
     }
   }
 
-  Future<void> _loadMoreProducts() async {
-    if (_currentPage < _totalPages) {
-      setState(() {
-        _isLoadingMore = true;
-      });
-
-      final products = await getProductData(
-        offset: _currentPage * 50,
-        limit: 50,
-      );
-
-      setState(() {
-        _products.addAll(products);
-        _currentPage++;
-        _isLoadingMore = false;
-      });
-    }
-  }
-
   Future<List<Map<String, dynamic>>> getProductData(
-      {int offset = 0, int limit = 50}) async {
+      {int offset = 0, int limit = 481}) async {
     try {
       final conn = await connectToDatabase();
       String query =
@@ -219,22 +191,27 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                     children: [
                       InkWell(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ItemScreen(
-                                productId: productId,
-                                itemAssetNames: [
-                                  photoUrl1,
-                                  photoUrl2,
-                                  photoUrl3
-                                ],
-                                productName: productName,
-                                itemDescription: itemDescription,
-                                priceByUom: product['price_by_uom'].toString(),
+                          try {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ItemScreen(
+                                  productId: productId,
+                                  itemAssetNames: [
+                                    photoUrl1,
+                                    photoUrl2,
+                                    photoUrl3
+                                  ],
+                                  productName: productName,
+                                  itemDescription: itemDescription,
+                                  priceByUom:
+                                      product['price_by_uom'].toString(),
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } catch (e) {
+                            print('Error navigating to ItemScreen: $e');
+                          }
                         },
                         child: Container(
                           height: containerSize,
