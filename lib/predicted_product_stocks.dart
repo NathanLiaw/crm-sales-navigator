@@ -111,21 +111,16 @@ Widget build(BuildContext context) {
 
   return Scaffold(
     appBar: AppBar(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      title: const Padding(
-        padding: EdgeInsets.only(
-          left: 0.0,
-          top: 28.0,
-          bottom: 16.0,
-        ),
-        child: Text(
+      backgroundColor: Colors.white,
+        title: const Text(
           'Product Forecast',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold),
         ),
+        automaticallyImplyLeading: false,
+        centerTitle: false,
       ),
-      automaticallyImplyLeading: false,
-      centerTitle: false,
-    ),
     body: products.isNotEmpty
         ? Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),

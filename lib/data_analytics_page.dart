@@ -52,7 +52,7 @@ class DataAnalyticsPage extends StatelessWidget {
                   );
                 },
                 child: const SizedBox(
-                  height: 425,
+                  height: 525,
                   child: SalesForecastGraph(),
                 ),
               ),
@@ -111,12 +111,12 @@ class DataAnalyticsPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>const SalesOrderPage()),
+                        builder: (context) =>const CustomerSalesPredictionPage()),
                   );
                 },
                 child: const SizedBox(
-                  height: 425,
-                  child: OrderStatusWidget(),
+                  height: 450,
+                  child: PredictedProductsTarget()
                 ),
               ),
             ),
@@ -127,12 +127,12 @@ class DataAnalyticsPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>const CustomerSalesPredictionPage()),
+                        builder: (context) =>const SalesOrderPage()),
                   );
                 },
                 child: const SizedBox(
-                  height: 450,
-                  child: PredictedProductsTarget()
+                  height: 425,
+                  child: OrderStatusWidget(),
                 ),
               ),
             ),
