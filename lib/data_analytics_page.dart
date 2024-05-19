@@ -48,7 +48,7 @@ class DataAnalyticsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            const SalesReportPage()), 
+                            const CustomerSalesPredictionPage()), 
                   );
                 },
                 child: const SizedBox(

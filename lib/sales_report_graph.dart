@@ -106,7 +106,7 @@ class _SalesReportState extends State<SalesReport> {
             AND c.status != 'void' AND s.username = '$loggedInUsername'
             GROUP BY DATE(c.created)
         ) AS DailySales ON Dates.`Date` = DailySales.`Date`
-        ORDER BY Dates.`Date` ASC;
+        ORDER BY Dates.`Date` DESC;
       ''';
         break;
 

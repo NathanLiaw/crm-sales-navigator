@@ -389,10 +389,11 @@ Widget build(BuildContext context) {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '    Total Sales: RM ${product.totalSales}',
+                                    '    Total Sales: ${product.totalSalesDisplay}',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 16),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -444,5 +445,7 @@ class Product {
   });
 
   String get totalSalesDisplay =>
-      'RM ${NumberFormat("#,##0", "en_US").format(totalSales)}';
+    NumberFormat.currency(symbol: 'RM', decimalDigits: 2, locale: 'en_US').format(totalSales);
+
+
 }

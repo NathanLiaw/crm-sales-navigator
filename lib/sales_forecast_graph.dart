@@ -109,64 +109,61 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Sales Forecast',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Sales Forecast',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 16),
-          FutureBuilder<List<SalesForecast>>(
-            future: salesForecasts,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else if (snapshot.hasData) {
-                final currentMonthData = snapshot.data!.firstWhere(
-                  (forecast) => forecast.purchaseMonth == DateTime.now().month,
-                  orElse: () => SalesForecast(
-                    salesmanId: 0,
-                    salesmanName: '',
-                    purchaseMonth: DateTime.now().month,
-                    purchaseYear: DateTime.now().year,
-                    totalSales: 0.0,
-                    cartQuantity: 0,
-                    previousMonthSales: 0.0,
-                    previousCartQuantity: 0,
-                  ),
-                );
+            SizedBox(height: 16),
+            FutureBuilder<List<SalesForecast>>(
+              future: salesForecasts,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else if (snapshot.hasData) {
+                  final currentMonthData = snapshot.data!.firstWhere(
+                    (forecast) =>
+                        forecast.purchaseMonth == DateTime.now().month,
+                    orElse: () => SalesForecast(
+                      salesmanId: 0,
+                      salesmanName: '',
+                      purchaseMonth: DateTime.now().month,
+                      purchaseYear: DateTime.now().year,
+                      totalSales: 0.0,
+                      cartQuantity: 0,
+                      previousMonthSales: 0.0,
+                      previousCartQuantity: 0,
+                    ),
+                  );
 
-                if (currentMonthData != null) {
                   return EditableSalesTargetCard(
                     currentSales: currentMonthData.totalSales,
-                    predictedTarget:
-                        70850.0,
+                    predictedTarget: 70850.0,
                     cartQuantity: currentMonthData.cartQuantity,
-                    stockNeeded:
-                        3000,
+                    stockNeeded: 3000,
                     previousMonthSales: currentMonthData.previousMonthSales,
                     previousCartQuantity: currentMonthData.previousCartQuantity,
                     loggedInUsername: loggedInUsername,
                   );
                 } else {
-                  return Text('No data available for the current month');
+                  return CircularProgressIndicator(); // Or any other appropriate widget
                 }
-              } else {
-                return Text('No data');
-              }
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -290,7 +287,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 ),
                 const SizedBox(height: 8.0),
                 Text(
-                  'Current Sales: RM ${widget.currentSales.toStringAsFixed(2)}',
+                  'Current Sales: ${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
                   style: const TextStyle(
                       fontSize: 17.0,
                       fontWeight: FontWeight.w500,
@@ -319,7 +316,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
             runSpacing: 10,
             children: [
               SizedBox(
-                width: 180,
+                width: 187,
                 height: 125,
                 child: InfoBox(
                   label: 'Monthly Revenue',
@@ -332,7 +329,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 ),
               ),
               SizedBox(
-                width: 180,
+                width: 187,
                 height: 125,
                 child: InfoBox(
                   label: 'Predicted Target',
@@ -344,20 +341,19 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 ),
               ),
               SizedBox(
-                width: 180,
+                width: 187,
                 height: 125,
-                child: 
-              InfoBox(
-                label: 'Stock Sold',
-                value: '${widget.cartQuantity}',
-                currentValue: widget.cartQuantity.toDouble(),
-                previousValue: widget.previousCartQuantity.toDouble(),
-                isUp: true,
-                isDown: false,
-              ),
+                child: InfoBox(
+                  label: 'Stock Sold',
+                  value: '${widget.cartQuantity}',
+                  currentValue: widget.cartQuantity.toDouble(),
+                  previousValue: widget.previousCartQuantity.toDouble(),
+                  isUp: true,
+                  isDown: false,
+                ),
               ),
               SizedBox(
-                width: 180,
+                width: 187,
                 height: 125,
                 child: InfoBox(
                   label: 'Predicted Stock',
@@ -455,7 +451,7 @@ class InfoBox extends StatelessWidget {
     double previousSales = previousValue ?? 0.0;
     double change = 0.0;
 
-    if (previousSales != 0.0 && currentValue != null) {
+    if (!currentValue.isNaN && !previousSales.isNaN && previousSales != 0.0) {
       change = ((currentValue - previousSales) / previousSales) * 100;
     } else {
       change = 0.0;
