@@ -3,6 +3,8 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 class CreateTaskPage extends StatefulWidget {
   final String customerName;
@@ -10,6 +12,10 @@ class CreateTaskPage extends StatefulWidget {
   final String emailAddress;
   final String address;
   final String lastPurchasedAmount;
+  final String? existingTitle;
+  final String? existingDescription;
+  final DateTime? existingDueDate;
+  final bool showTaskDetails;
 
   CreateTaskPage({
     required this.customerName,
@@ -17,6 +23,10 @@ class CreateTaskPage extends StatefulWidget {
     required this.emailAddress,
     required this.address,
     required this.lastPurchasedAmount,
+    this.existingTitle,
+    this.existingDescription,
+    this.existingDueDate,
+    this.showTaskDetails = true,
   });
 
   @override
@@ -30,13 +40,107 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   final TextEditingController totalController = TextEditingController();
   DateTime? selectedDate = DateTime.now();
   String? selectedSalesOrderId;
+  String? expirationDate;
+  String? createdDate;
+  String? total;
+  List<String> salesOrderIds = [];
+  String? formattedCreatedDate;
+  String? quantity;
 
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    selectedDate = DateTime.now();
+    selectedDate = widget.existingDueDate ?? DateTime.now();
+    titleController.text = widget.existingTitle ?? '';
+    descriptionController.text = widget.existingDescription ?? '';
+    fetchSalesOrderIds().then((value) {
+      setState(() {
+        salesOrderIds = value;
+      });
+    });
+    _fetchSalesOrderDetails(selectedSalesOrderId);
+  }
+
+  Future<void> _fetchSalesOrderDetails(String? salesOrderId) async {
+    if (salesOrderId == null) return;
+
+    try {
+      MySqlConnection conn = await connectToDatabase();
+      Results results = await conn.query(
+        'SELECT created, expiration_date, total, session FROM cart WHERE id = ?',
+        [int.parse(salesOrderId)],
+      );
+      if (results.isNotEmpty) {
+        var row = results.first;
+        String session = row['session'].toString();
+
+        // get the qty sum in the cart_item table based on session
+        Results quantityResults = await conn.query(
+          'SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ?',
+          [session],
+        );
+        String totalQuantity = quantityResults.first['total_qty'].toString();
+
+        setState(() {
+          createdDate = row['created'].toString();
+          expirationDate = row['expiration_date'].toString();
+          total = row['total'].toString();
+          quantity = totalQuantity;
+          formattedCreatedDate = _formatDate(createdDate!);
+        });
+      }
+      await conn.close();
+    } catch (e) {
+      developer.log('Error fetching sales order details: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSalesOrderDropdown(
+      String customerName) async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    int buyerId = pref.getInt('id') ?? 1;
+
+    try {
+      MySqlConnection conn = await connectToDatabase();
+
+      String condition =
+          'buyer_id = $buyerId AND customer_company_name = "$customerName" '
+          'AND status = "Pending" AND CURDATE() >= expiration_date';
+
+      List<Map<String, dynamic>> salesOrders = await readData(
+        conn,
+        'cart',
+        condition,
+        '',
+        '*',
+      );
+      await conn.close();
+
+      return salesOrders;
+    } catch (e) {
+      developer.log('Error fetching sales orders: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchSalesOrderIds() async {
+    try {
+      List<Map<String, dynamic>> salesOrders =
+          await fetchSalesOrderDropdown(widget.customerName);
+      setState(() {
+        salesOrderIds = salesOrders.map((order) {
+          final formattedSalesOrderId =
+              'SO' + order['id'].toString().padLeft(7, '0');
+          final orderId = order['id'];
+          return orderId.toString();
+        }).toList();
+      });
+    } catch (e) {
+      developer.log('Error fetching sales order IDs: $e');
+    }
+    return salesOrderIds;
   }
 
   @override
@@ -152,71 +256,75 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 40),
-                Text(
-                  'Task Details',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                SizedBox(height: 8),
-                TextFormField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Title',
+                if (widget.showTaskDetails) ...[
+                  SizedBox(height: 40),
+                  Text(
+                    'Task Details',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a title';
-                    }
-                    if (value.length > 50) {
-                      return 'Title cannot exceed 50 digits';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
+                  SizedBox(height: 8),
+                  TextFormField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                    ),
+                    validator: (value) {
+                      if (value != null && value.length > 50) {
+                        return 'Title cannot exceed 50 digits';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a description';
-                    }
-                    if (value.length > 100) {
-                      return 'Description cannot exceed 100 digits';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 8),
-                SizedBox(
-                  width: 120,
-                  child: InkWell(
-                    onTap: () => _selectDate(context),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Due date',
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          IntrinsicWidth(
-                            child: Text(
-                              selectedDate != null
-                                  ? DateFormat('dd/MM/yyyy')
-                                      .format(selectedDate!)
-                                  : '',
+                  Text(
+                    '*Ignore this part if directly to Order Processing',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  TextFormField(
+                    controller: descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                    ),
+                    validator: (value) {
+                      if (value != null && value.length > 100) {
+                        return 'Description cannot exceed 100 digits';
+                      }
+                      return null;
+                    },
+                  ),
+                  Text(
+                    '*Ignore this part if directly to Order Processing',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  SizedBox(
+                    width: 120,
+                    child: InkWell(
+                      onTap: () => _selectDate(context),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Due date',
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            IntrinsicWidth(
+                              child: Text(
+                                selectedDate != null
+                                    ? DateFormat('dd/MM/yyyy')
+                                        .format(selectedDate!)
+                                    : '',
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Icon(Icons.calendar_today),
-                        ],
+                            SizedBox(
+                              width: 10,
+                            ),
+                            Icon(Icons.calendar_today),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
                 SizedBox(height: 40),
                 Text(
                   'Sales order ID',
@@ -233,20 +341,21 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                           setState(() {
                             selectedSalesOrderId = newValue;
                           });
+                          _fetchSalesOrderDetails(newValue);
                         },
-                        items: <String>['SO000007', 'SO000008', 'SO000009']
-                            .map<DropdownMenuItem<String>>((String value) {
+                        items: salesOrderIds.map((String id) {
+                          String formattedId = 'SO' + id.padLeft(7, '0');
                           return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
+                            value: id,
+                            child: Text(formattedId),
                           );
                         }).toList(),
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a sales order ID';
-                          }
-                          return null;
-                        },
+                        // validator: (value) {
+                        //   if (value == null) {
+                        //     return 'Please select a sales order ID';
+                        //   }
+                        //   return null;
+                        // },
                       ),
                     ),
                     SizedBox(width: 10),
@@ -261,12 +370,12 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Created date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                      'Created date: ${formattedCreatedDate ?? ''}',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Expiry date: ${DateFormat('dd/MM/yyyy').format(DateTime.now().add(Duration(days: 60)))}',
+                      'Expiry date: ${expirationDate ?? ''}',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -285,7 +394,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               fontWeight: FontWeight.bold,
                               color: Color(0xff0069BA)),
                         ),
-                        Text('6 items'),
+                        Text(quantity != null ? '$quantity items' : ''),
                       ],
                     ),
                     Row(
@@ -297,7 +406,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               fontWeight: FontWeight.bold,
                               color: Color(0xff0069BA)),
                         ),
-                        Text('RM500'),
+                        Text(total != null ? 'RM$total' : ''),
                       ],
                     ),
                   ],
@@ -329,12 +438,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ElevatedButton(
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          await _saveTaskToDatabase();
-                          Navigator.pop(context, {
-                            'title': titleController.text,
-                            'description': descriptionController.text,
-                            'dueDate': selectedDate,
-                          });
+                          final result = await _saveTaskToDatabase();
+                          Navigator.pop(context, result);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -372,26 +477,51 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       });
   }
 
-  Future<void> _saveTaskToDatabase() async {
-    // Connect to the database
+  Future<Map<String, Object?>> _saveTaskToDatabase() async {
     MySqlConnection conn = await connectToDatabase();
 
-    // Prepare data
     String taskTitle = titleController.text;
     String taskDescription = descriptionController.text;
-    String taskDueDate = selectedDate!.toString();
+    String taskDueDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
+    String salesOrderId = selectedSalesOrderId ?? '';
+    int? quantityInt = quantity != null ? int.parse(quantity!) : null;
 
-    // Save data to database
     try {
       await conn.query(
-        'UPDATE create_lead SET task_title = ?, task_description = ?, task_duedate = ? WHERE customer_name = ?',
-        [taskTitle, taskDescription, taskDueDate, widget.customerName],
+        'UPDATE sales_lead SET task_title = ?, task_description = ?, task_duedate = ?, so_id = ?, quantity = ? WHERE customer_name = ?',
+        [
+          taskTitle,
+          taskDescription,
+          taskDueDate,
+          salesOrderId.isEmpty ? null : salesOrderId,
+          quantityInt,
+          widget.customerName
+        ],
       );
-      print('Task data saved successfully.');
+      developer.log('Task data saved successfully.');
+      return {
+        'title': titleController.text,
+        'description': descriptionController.text,
+        'dueDate': selectedDate,
+        'salesOrderId': salesOrderId.isEmpty ? null : salesOrderId,
+        'quantity': quantity,
+      };
     } catch (e) {
-      print('Failed to save task data: $e');
+      developer.log('Failed to save task data: $e');
+      return {
+        'error': 'Failed to save task data',
+      };
     } finally {
       await conn.close();
     }
+  }
+
+  String _formatDate(String dateString) {
+    if (dateString.isEmpty) {
+      return '';
+    }
+    DateTime parsedDate = DateTime.parse(dateString);
+    DateFormat formatter = DateFormat('yyyy-MM-dd');
+    return formatter.format(parsedDate);
   }
 }
