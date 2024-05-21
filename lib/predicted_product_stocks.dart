@@ -77,7 +77,7 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
                 row['product_name'] as String,
                 (row['total_qty_sold'] as num).toInt(),
                 (row['total_sales'] as num).toDouble(),
-                0, 
+                0,
                 0,
               ))
           .toList();
@@ -93,13 +93,25 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
 
   void predictSalesAndStock() {
     int period = 2;
-  
+
     for (var product in products) {
       double avgMonthlySales = product.salesOrder / period;
       double avgMonthlyQuantity = product.quantity / period;
-      double growthRate = 1.05;
-      product.predictedSales = (avgMonthlySales * growthRate).round();
-      product.predictedStock = (avgMonthlyQuantity * growthRate * 1.2).round();  
+      double predictedSales = avgMonthlySales;
+      double predictedStock = avgMonthlyQuantity;
+
+      if (product.salesOrder > avgMonthlySales) {
+        double growthRate = product.salesOrder / avgMonthlySales;
+        predictedSales = avgMonthlySales * growthRate;
+        predictedStock = avgMonthlyQuantity * growthRate * 1.2; 
+      } else if (product.salesOrder < avgMonthlySales) {
+        double lossRate = avgMonthlySales / product.salesOrder;
+        predictedSales = avgMonthlySales / lossRate;
+        predictedStock = avgMonthlyQuantity / lossRate * 1.2; 
+      }
+
+      product.predictedSales = predictedSales.round();
+      product.predictedStock = predictedStock.round();
     }
   }
 

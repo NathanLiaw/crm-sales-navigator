@@ -20,19 +20,17 @@ class DataAnalyticsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Data Analytics',
-          style: TextStyle(color: Colors.white), 
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004C87),
         leading: Theme(
           data: Theme.of(context).copyWith(
-            iconTheme: const IconThemeData(
-                color: Colors.white),
+            iconTheme: const IconThemeData(color: Colors.white),
           ),
           child: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.pop(
-                  context);
+              Navigator.pop(context);
             },
           ),
         ),
@@ -48,7 +46,7 @@ class DataAnalyticsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            const CustomerSalesPredictionPage()), 
+                            const CustomerSalesPredictionPage()),
                   );
                 },
                 child: const SizedBox(
@@ -63,9 +61,7 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const SalesReportPage()), 
+                    MaterialPageRoute(builder: (context) => const SalesReportPage()),
                   );
                 },
                 child: const SizedBox(
@@ -80,9 +76,7 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const CustomerReport()),
+                    MaterialPageRoute(builder: (context) => const CustomerReport()),
                   );
                 },
                 child: const CustomersGraph(),
@@ -94,8 +88,7 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const ProductReport()),
+                    MaterialPageRoute(builder: (context) => const ProductReport()),
                   );
                 },
                 child: const SizedBox(
@@ -110,13 +103,12 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) =>const CustomerSalesPredictionPage()),
+                    MaterialPageRoute(builder: (context) => const CustomerSalesPredictionPage()),
                   );
                 },
                 child: const SizedBox(
                   height: 450,
-                  child: PredictedProductsTarget()
+                  child: PredictedProductsTarget(),
                 ),
               ),
             ),
@@ -126,8 +118,7 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) =>const SalesOrderPage()),
+                    MaterialPageRoute(builder: (context) => const SalesOrderPage()),
                   );
                 },
                 child: const SizedBox(

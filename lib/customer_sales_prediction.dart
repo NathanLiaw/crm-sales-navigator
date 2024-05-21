@@ -75,9 +75,9 @@ class _CustomerSalesPredictionPageState
         SELECT 
           p.id AS ProductID, 
           p.product_name AS ProductName,
-          SUM(ci.qty) AS TotalQuantitySold, 
-          SUM(ci.total) AS TotalSalesValue, 
-          MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate,
+          ci.qty AS QuantitySold, 
+          ci.total AS SalesValue, 
+          DATE_FORMAT(ci.created, '%Y-%m-%d') AS SaleDate,
           c.customer_company_name AS CustomerCompanyName,
           ci.uom AS UnitOfMeasure
         FROM cart_item ci 
@@ -86,40 +86,54 @@ class _CustomerSalesPredictionPageState
         JOIN salesman ON cart.buyer_id = salesman.id
         JOIN cart c ON ci.session = c.session OR ci.id = c.id
         WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
-        GROUP BY p.id, p.product_name, c.customer_company_name, ci.uom
-        ORDER BY TotalQuantitySold $sortOrder;
+        ORDER BY ci.created $sortOrder;
       ''');
 
       if (results.isEmpty) {
         developer.log('No data found', level: 1);
       }
 
-      Map<String, List<CustomerSalesData>> groupedData = {};
+      List<CustomerSalesData> salesData = [];
       for (var row in results) {
-        String customerCompanyName = row['CustomerCompanyName'];
-        if (!groupedData.containsKey(customerCompanyName)) {
-          groupedData[customerCompanyName] = [];
-        }
-        groupedData[customerCompanyName]!.add(
-          CustomerSalesData(
-            productId: row['ProductID'],
-            productName: row['ProductName'],
-            totalQuantitySold: row['TotalQuantitySold'].toInt(),
-            totalSalesValue: row['TotalSalesValue'].toDouble(),
-            saleDate: DateTime.parse(row['SaleDate']),
-            customerCompanyName: customerCompanyName,
-            unitOfMeasure: row['UnitOfMeasure'],
-          ),
-        );
+        salesData.add(CustomerSalesData(
+          productId: row['ProductID'],
+          productName: row['ProductName'],
+          totalQuantitySold: row['QuantitySold'].toInt(),
+          totalSalesValue: row['SalesValue'].toDouble(),
+          saleDate: DateTime.parse(row['SaleDate']),
+          customerCompanyName: row['CustomerCompanyName'],
+          unitOfMeasure: row['UnitOfMeasure'],
+        ));
       }
 
-      return groupedData.entries
-          .expand((entry) => entry.value.take(5))
-          .toList();
+      return salesData;
     } catch (e, stackTrace) {
       developer.log('Error fetching data: $e', error: e, stackTrace: stackTrace);
       return [];
     }
+  }
+
+  List<CustomerSalesData> calculateMovingAverage(List<CustomerSalesData> data, int windowSize) {
+    List<CustomerSalesData> movingAverages = [];
+
+    for (int i = 0; i <= data.length - windowSize; i++) {
+      var window = data.sublist(i, i + windowSize);
+
+      double avgSalesValue = window.map((e) => e.totalSalesValue).reduce((a, b) => a + b) / windowSize;
+      double avgQuantitySold = window.map((e) => e.totalQuantitySold).reduce((a, b) => a + b) / windowSize;
+
+      movingAverages.add(CustomerSalesData(
+        productId: window.last.productId,
+        productName: window.last.productName,
+        totalQuantitySold: avgQuantitySold.round(),
+        totalSalesValue: avgSalesValue,
+        saleDate: window.last.saleDate,
+        customerCompanyName: window.last.customerCompanyName,
+        unitOfMeasure: window.last.unitOfMeasure,
+      ));
+    }
+
+    return movingAverages;
   }
 
   void toggleSortOrder() {
@@ -166,6 +180,7 @@ class _CustomerSalesPredictionPageState
 
                   return ListView(
                     children: groupedData.entries.map((entry) {
+                      var movingAverageData = calculateMovingAverage(entry.value, 3);
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         child: Container(
@@ -191,7 +206,7 @@ class _CustomerSalesPredictionPageState
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
-                                    'Predicted Sales: RM${NumberFormat('#,##0').format(20000)}',
+                                    'Predicted Sales: RM${NumberFormat('#,##0').format(movingAverageData.last.totalSalesValue)}',
                                     style: const TextStyle(
                                       color: Color(0xFF487C08),
                                       fontSize: 15,
@@ -199,7 +214,7 @@ class _CustomerSalesPredictionPageState
                                     ),
                                   ),
                                   Text(
-                                    'Predicted Stock: ${NumberFormat('#,##0').format(2000)}',
+                                    'Predicted Stock: ${NumberFormat('#,##0').format(movingAverageData.last.totalQuantitySold)}',
                                     style: const TextStyle(
                                       color: Color(0xFF004072),
                                       fontSize: 15,
@@ -213,7 +228,7 @@ class _CustomerSalesPredictionPageState
                               Container(
                                 color: const Color(0xFFE1F5FE),
                                 child: Column(
-                                  children: entry.value.take(5).map((salesData) {
+                                  children: movingAverageData.take(5).map((salesData) {
                                     return Column(
                                       children: [
                                         Padding(
@@ -265,7 +280,7 @@ class _CustomerSalesPredictionPageState
                                             ],
                                           ),
                                         ),
-                                        if (entry.value.indexOf(salesData) != entry.value.length - 1)
+                                        if (movingAverageData.indexOf(salesData) != movingAverageData.length - 1)
                                           const Divider(
                                             color: Colors.grey,
                                             thickness: 1,

@@ -11,14 +11,16 @@ class SalesForecastGraph extends StatefulWidget {
 }
 
 class _SalesForecastGraphState extends State<SalesForecastGraph> {
-  late Future<List<SalesForecast>> salesForecasts;
+  Future<List<SalesForecast>>? salesForecasts; 
   String loggedInUsername = '';
 
   @override
   void initState() {
     super.initState();
     _loadUserDetails().then((_) {
-      salesForecasts = fetchSalesForecasts();
+      setState(() {
+        salesForecasts = fetchSalesForecasts();
+      });
     });
   }
 
@@ -53,7 +55,8 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
       GROUP BY 
         salesman.id, Purchase_Month, Purchase_Year
       ORDER BY 
-        Purchase_Year DESC, Purchase_Month DESC;
+        Purchase_Year DESC, Purchase_Month DESC
+      LIMIT 2;  -- Fetch only the last two months
     ''');
 
     List<SalesForecast> forecasts = [];
@@ -63,33 +66,9 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
       final purchaseMonth = row['Purchase_Month'] as int;
       final purchaseYear = row['Purchase_Year'] as int;
       final totalSales = (row['Total_Sales'] as num).toDouble();
-      final cartQuantity = (row['Cart_Quantity'] as num).toInt();
-
-      var previousMonthResults = await db.query('''
-        SELECT 
-          COALESCE(SUM(cart.final_total), 0) AS Previous_Month_Sales,
-          COALESCE(SUM(cart_item.qty), 0) AS Previous_Cart_Quantity
-        FROM 
-          cart
-        JOIN 
-          salesman ON cart.buyer_id = salesman.id 
-        JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-        WHERE 
-          cart.buyer_user_group != 'customer' 
-          AND cart.status != 'void' 
-          AND cart_item.status != 'void' 
-          AND salesman.username = '$loggedInUsername'
-          AND MONTH(cart.created) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) 
-          AND YEAR(cart.created) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH);
-      ''');
-
-      final previousMonthSales =
-          (previousMonthResults.first['Previous_Month_Sales'] as num)
-              .toDouble();
-      final previousCartQuantity =
-          (previousMonthResults.first['Previous_Cart_Quantity'] as num).toInt();
-
+      final cartQuantity = (row['Cart_Quantity'] is num && (row['Cart_Quantity'] as num).isFinite)
+          ? (row['Cart_Quantity'] as num).toInt()
+          : 0;
       forecasts.add(SalesForecast(
         salesmanId: salesmanId,
         salesmanName: salesmanName,
@@ -97,12 +76,36 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
         purchaseYear: purchaseYear,
         totalSales: totalSales,
         cartQuantity: cartQuantity,
-        previousMonthSales: previousMonthSales,
-        previousCartQuantity: previousCartQuantity,
+        previousMonthSales: 0.0,
+        previousCartQuantity: 0,  
       ));
     }
 
+    double predictedTarget = 0.0;
+    int stockNeeded = 0;
+
+    if (forecasts.length == 2) {
+      predictedTarget = (forecasts[0].totalSales + forecasts[1].totalSales) / 2;
+      stockNeeded = ((forecasts[0].cartQuantity + forecasts[1].cartQuantity) / 2).round();
+    }
+
     await db.close();
+
+    if (forecasts.isNotEmpty) {
+      forecasts[0] = SalesForecast(
+        salesmanId: forecasts[0].salesmanId,
+        salesmanName: forecasts[0].salesmanName,
+        purchaseMonth: forecasts[0].purchaseMonth,
+        purchaseYear: forecasts[0].purchaseYear,
+        totalSales: forecasts[0].totalSales,
+        cartQuantity: forecasts[0].cartQuantity,
+        previousMonthSales: forecasts[1].totalSales,
+        previousCartQuantity: forecasts[1].cartQuantity,
+        predictedTarget: predictedTarget,
+        stockNeeded: stockNeeded,
+      );
+    }
+
     return forecasts;
   }
 
@@ -145,20 +148,22 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                       cartQuantity: 0,
                       previousMonthSales: 0.0,
                       previousCartQuantity: 0,
+                      predictedTarget: 0.0,
+                      stockNeeded: 0,
                     ),
                   );
 
                   return EditableSalesTargetCard(
                     currentSales: currentMonthData.totalSales,
-                    predictedTarget: 70850.0,
+                    predictedTarget: currentMonthData.predictedTarget,
                     cartQuantity: currentMonthData.cartQuantity,
-                    stockNeeded: 3000,
+                    stockNeeded: currentMonthData.stockNeeded,
                     previousMonthSales: currentMonthData.previousMonthSales,
                     previousCartQuantity: currentMonthData.previousCartQuantity,
                     loggedInUsername: loggedInUsername,
                   );
                 } else {
-                  return CircularProgressIndicator(); // Or any other appropriate widget
+                  return CircularProgressIndicator();
                 }
               },
             ),
@@ -233,6 +238,20 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
 
   @override
   Widget build(BuildContext context) {
+    double salesTargetValue = 0.0;
+    try {
+      salesTargetValue =
+          double.parse(_salesTarget.replaceAll(RegExp(r'[^\d.]'), ''));
+    } catch (e) {
+      salesTargetValue = 1.0; // Avoid division by zero or NaN
+    }
+
+    double progressValue = (widget.currentSales / salesTargetValue)
+        .clamp(0.0, 1.0); // Ensure value is between 0 and 1
+
+    double completionPercentage = (widget.currentSales / salesTargetValue) * 100;
+    completionPercentage = completionPercentage.clamp(0, 100);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -277,7 +296,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                     ),
                     const SizedBox(width: 16.0),
                     Text(
-                      '${((widget.currentSales / double.parse(_salesTarget.replaceAll(RegExp(r'[^\d.]'), ''))) * 100).toStringAsFixed(0)}% Complete',
+                      '${completionPercentage.toStringAsFixed(0)}% Complete',
                       style: const TextStyle(
                           fontSize: 15.0,
                           fontWeight: FontWeight.w500,
@@ -295,9 +314,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 ),
                 const SizedBox(height: 8.0),
                 LinearProgressIndicator(
-                  value: widget.currentSales /
-                      double.parse(
-                          _salesTarget.replaceAll(RegExp(r'[^\d.]'), '')),
+                  value: progressValue,
                   minHeight: 14.0,
                   backgroundColor: Color.fromRGBO(112, 112, 112, 0.37),
                   valueColor: const AlwaysStoppedAnimation<Color>(
@@ -324,8 +341,11 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                       '${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
                   currentValue: widget.currentSales,
                   previousValue: widget.previousMonthSales,
-                  isUp: true,
-                  isDown: false,
+                  isUp: widget.currentSales >= widget.previousMonthSales,
+                  isDown: widget.currentSales < widget.previousMonthSales,
+                  backgroundColor: Color(0x300F9D58),
+                  textColor: Color(0xFF508155),
+                  fromLastMonthTextColor: Colors.black87,
                 ),
               ),
               SizedBox(
@@ -334,10 +354,13 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 child: InfoBox(
                   label: 'Predicted Target',
                   value: 'RM ${widget.predictedTarget.toStringAsFixed(2)}',
-                  currentValue: 0,
-                  previousValue: 0,
-                  isUp: true,
-                  isDown: false,
+                  currentValue: widget.predictedTarget,
+                  previousValue: widget.previousMonthSales,
+                  isUp: widget.predictedTarget >= widget.previousMonthSales,
+                  isDown: widget.predictedTarget < widget.previousMonthSales,
+                  backgroundColor: Color(0x49004C87),
+                  textColor: Color(0xFF004C87),
+                  fromLastMonthTextColor: Colors.black87,
                 ),
               ),
               SizedBox(
@@ -348,8 +371,11 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   value: '${widget.cartQuantity}',
                   currentValue: widget.cartQuantity.toDouble(),
                   previousValue: widget.previousCartQuantity.toDouble(),
-                  isUp: true,
-                  isDown: false,
+                  isUp: widget.cartQuantity >= widget.previousCartQuantity,
+                  isDown: widget.cartQuantity < widget.previousCartQuantity,
+                  backgroundColor: Color(0xFF004C87),
+                  textColor: Colors.white,
+                  fromLastMonthTextColor: Colors.white,
                 ),
               ),
               SizedBox(
@@ -358,10 +384,13 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 child: InfoBox(
                   label: 'Predicted Stock',
                   value: '${widget.stockNeeded}',
-                  currentValue: 0,
-                  previousValue: 0,
-                  isUp: true,
-                  isDown: false,
+                  currentValue: widget.stockNeeded.toDouble(),
+                  previousValue: widget.previousCartQuantity.toDouble(),
+                  isUp: widget.stockNeeded >= widget.previousCartQuantity,
+                  isDown: widget.stockNeeded < widget.previousCartQuantity,
+                  backgroundColor: Color(0xFF709640),
+                  textColor: Colors.white,
+                  fromLastMonthTextColor: Colors.white,
                 ),
               ),
             ],
@@ -435,6 +464,9 @@ class InfoBox extends StatelessWidget {
   final double? previousValue;
   final bool isUp;
   final bool isDown;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color fromLastMonthTextColor;
 
   const InfoBox({
     Key? key,
@@ -444,6 +476,9 @@ class InfoBox extends StatelessWidget {
     this.previousValue,
     this.isUp = false,
     this.isDown = false,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.fromLastMonthTextColor,
   }) : super(key: key);
 
   @override
@@ -461,30 +496,19 @@ class InfoBox extends StatelessWidget {
 
     bool isIncrease = change >= 0;
 
-    Color backgroundColor = Colors.white;
-    if (label == 'Monthly Revenue') {
-      backgroundColor = Color.fromARGB(255, 229, 255, 224);
-    } else if (label == 'Predicted Target') {
-      backgroundColor = Color.fromARGB(255, 222, 247, 255);
-    } else if (label == 'Stock Sold') {
-      backgroundColor = Color.fromARGB(255, 222, 247, 255);
-    } else if (label == 'Predicted Stock') {
-      backgroundColor = Color.fromARGB(255, 229, 255, 224);
-    }
-
     Widget icon;
     switch (label) {
       case 'Monthly Revenue':
-        icon = Icon(Icons.monetization_on);
+        icon = Icon(Icons.monetization_on, color: Color(0xFF508155)); 
         break;
       case 'Predicted Target':
-        icon = Icon(Icons.gps_fixed);
+        icon = Icon(Icons.gps_fixed, color: Color(0xFF004C87));
         break;
       case 'Stock Sold':
-        icon = Icon(Icons.outbox);
+        icon = Icon(Icons.outbox, color: Colors.white); 
         break;
       case 'Predicted Stock':
-        icon = Icon(Icons.inbox);
+        icon = Icon(Icons.inbox, color: Colors.white);
         break;
       default:
         icon = SizedBox.shrink();
@@ -512,17 +536,17 @@ class InfoBox extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: textColor)),
               icon,
             ],
           ),
           SizedBox(height: 5),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black)),
+                  color: textColor)),
           if (isUp || isDown) ...[
             Text(
               '${isIncrease ? '▲ Up' : '▼ Down'} ${change.abs().toStringAsFixed(1)}%',
@@ -532,10 +556,10 @@ class InfoBox extends StatelessWidget {
               ),
             ),
             SizedBox(height: 5),
-            const Text(
+            Text(
               'From Last Month',
               style: TextStyle(
-                  color: Colors.black87,
+                  color: fromLastMonthTextColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w500),
             ),
@@ -555,6 +579,8 @@ class SalesForecast {
   final int cartQuantity;
   final double previousMonthSales;
   final int previousCartQuantity;
+  final double predictedTarget;
+  final int stockNeeded;
 
   SalesForecast({
     required this.salesmanId,
@@ -565,5 +591,7 @@ class SalesForecast {
     required this.cartQuantity,
     required this.previousMonthSales,
     required this.previousCartQuantity,
+    this.predictedTarget = 0.0,
+    this.stockNeeded = 0,
   });
 }
