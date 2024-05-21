@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/customer_details_page.dart';
 import 'package:sales_navigator/db_connection.dart';
+import 'dart:developer' as developer;
 
 class CreateLeadPage extends StatefulWidget {
   final Function(String, String, String) onCreateLead;
@@ -51,6 +53,16 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                   'Customer Details',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                 ),
+                TextButton(
+                  onPressed: _selectCustomer,
+                  child: const Text(
+                    'Select Customer',
+                    style: TextStyle(
+                      color: Color(0xff0069BA),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
                 TextFormField(
                   controller: customerNameController,
                   decoration: InputDecoration(
@@ -84,8 +96,8 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter contact number';
                     }
-                    if (value.length > 10) {
-                      return 'Contact number cannot exceed 10 digits';
+                    if (value.length > 11) {
+                      return 'Contact number cannot exceed 11 digits';
                     }
                     return null;
                   },
@@ -113,15 +125,15 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     prefixIcon:
                         Icon(Icons.location_on, color: Color(0xff0069BA)),
                   ),
-                  maxLength: 100,
+                  maxLength: 200,
                   maxLines: 2,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter address';
                     }
                     List<String> words = value.split(' ');
-                    if (words.length > 100) {
-                      return 'Address cannot exceed 100 words';
+                    if (words.length > 200) {
+                      return 'Address cannot exceed 200 words';
                     }
                     return null;
                   },
@@ -205,7 +217,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                             descriptionController.text,
                             amountController.text,
                           );
-                          _saveLeadToDatabase(); // Save lead to database
+                          _saveLeadToDatabase();
                           Navigator.pop(context);
                         }
                       },
@@ -231,11 +243,24 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
     );
   }
 
+  Future<void> _selectCustomer() async {
+    final selectedCustomer = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CustomerDetails()),
+    );
+    if (selectedCustomer != null) {
+      setState(() {
+        customerNameController.text = selectedCustomer.companyName;
+        contactNumberController.text = selectedCustomer.contactNumber;
+        emailAddressController.text = selectedCustomer.email;
+        addressController.text = selectedCustomer.addressLine1;
+      });
+    }
+  }
+
   Future<void> _saveLeadToDatabase() async {
-    // Connect to the database
     MySqlConnection conn = await connectToDatabase();
 
-    // Prepare data
     Map<String, dynamic> leadData = {
       'customer_name': customerNameController.text,
       'contact_number': contactNumberController.text,
@@ -244,21 +269,23 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       'description': descriptionController.text,
       'predicted_sales': amountController.text,
       'stage': 'Opportunities', // Add the default stage for new leads
-      'so_id': null, // Set SO ID to null initially
+      'so_id': null,
+      'created_date':
+          DateTime.now().toString(), // Add the current date as created_date
     };
 
     // Validate description length
     if (leadData['description'].length > 255) {
-      print('Description cannot exceed 255 characters.');
+      developer.log('Description cannot exceed 255 characters.');
       return;
     }
 
     // Save data to database
-    bool success = await saveData(conn, 'create_lead', leadData);
+    bool success = await saveData(conn, 'sales_lead', leadData);
     if (success) {
-      print('Lead data saved successfully.');
+      developer.log('Lead data saved successfully.');
     } else {
-      print('Failed to save lead data.');
+      developer.log('Failed to save lead data.');
     }
 
     await conn.close();

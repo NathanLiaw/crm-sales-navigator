@@ -1,20 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
+import 'dart:developer' as developer;
+
+import 'package:url_launcher/url_launcher.dart';
 
 class EngagementLeadItem extends StatelessWidget {
   final LeadItem leadItem;
+  final VoidCallback onMoveToNegotiation;
+  final Function(LeadItem) onDeleteLead;
+  final Function(LeadItem, String) onUndoLead;
+  final Function(LeadItem) onComplete;
+  final Function(LeadItem, String, String?) onMoveToOrderProcessing;
 
-  const EngagementLeadItem({super.key, required this.leadItem});
+  const EngagementLeadItem({
+    Key? key,
+    required this.leadItem,
+    required this.onMoveToNegotiation,
+    required this.onDeleteLead,
+    required this.onUndoLead,
+    required this.onComplete,
+    required this.onMoveToOrderProcessing,
+  }) : super(key: key);
+
+  Future<void> _launchURL(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  String _formatCurrency(String amount) {
+    final formatter = NumberFormat("#,##0.00", "en_US");
+    return formatter.format(double.parse(amount));
+  }
 
   @override
   Widget build(BuildContext context) {
+    String formattedAmount = _formatCurrency(leadItem.amount.substring(2));
+
     return Card(
       color: const Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
-      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
+      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -24,46 +57,84 @@ class EngagementLeadItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  leadItem.customerName,
+                  leadItem.customerName.length > 10
+                      ? leadItem.customerName.substring(0, 15) + '...'
+                      : leadItem.customerName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 20,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Container(
-                  margin: const EdgeInsets.only(left: 20),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  margin: EdgeInsets.only(left: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    leadItem.amount,
-                    style: const TextStyle(
+                    'RM$formattedAmount',
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
                 ),
-                const Spacer(),
+                Spacer(),
                 PopupMenuButton<String>(
-                  onSelected: (String value) {
-                    // Perform an action based on the selected value
+                  onSelected: (String value) async {
+                    if (value == 'delete') {
+                      bool confirmDelete = await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Confirm Delete'),
+                            content: Text(
+                                'Are you sure you want to delete this sales lead?'),
+                            actions: [
+                              TextButton(
+                                child: Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.of(context).pop(false);
+                                },
+                              ),
+                              TextButton(
+                                child: Text('Confirm'),
+                                onPressed: () {
+                                  Navigator.of(context).pop(true);
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (confirmDelete == true) {
+                        MySqlConnection conn = await connectToDatabase();
+                        try {
+                          await conn.query(
+                            'DELETE FROM sales_lead WHERE customer_name = ?',
+                            [leadItem.customerName],
+                          );
+                          onDeleteLead(leadItem);
+                        } catch (e) {
+                          developer.log('Error deleting lead item: $e');
+                        } finally {
+                          await conn.close();
+                        }
+                      }
+                    }
+                    if (value == 'complete') {
+                      onComplete(leadItem);
+                    }
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
                       value: 'view details',
                       child: Text('View details'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'archive',
-                      child: Text('Archive'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Text('Edit'),
                     ),
                     const PopupMenuItem<String>(
                       value: 'delete',
@@ -73,9 +144,35 @@ class EngagementLeadItem extends StatelessWidget {
                       value: 'complete',
                       child: Text('Complete'),
                     ),
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: 'undo',
                       child: Text('Undo'),
+                      onTap: () async {
+                        MySqlConnection conn = await connectToDatabase();
+                        try {
+                          Results results = await conn.query(
+                            'SELECT previous_stage FROM sales_lead WHERE customer_name = ?',
+                            [leadItem.customerName],
+                          );
+                          if (results.isNotEmpty) {
+                            String? previousStage =
+                                results.first['previous_stage'];
+                            if (previousStage != null &&
+                                previousStage.isNotEmpty) {
+                              onUndoLead(leadItem, previousStage);
+                              leadItem.stage = previousStage;
+                              await conn.query(
+                                'UPDATE sales_lead SET previous_stage = NULL WHERE customer_name = ?',
+                                [leadItem.customerName],
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          developer.log('Error checking previous stage: $e');
+                        } finally {
+                          await conn.close();
+                        }
+                      },
                     ),
                   ],
                   child: const Icon(Icons.more_horiz_outlined,
@@ -87,29 +184,53 @@ class EngagementLeadItem extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.phone,
-                  color: Color(0xff0069BA),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  leadItem.contactNumber,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
+                GestureDetector(
+                  onTap: leadItem.contactNumber.isNotEmpty
+                      ? () => _launchURL('tel:${leadItem.contactNumber}')
+                      : null,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.phone,
+                        color: Color(0xff0069BA),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        leadItem.contactNumber.isNotEmpty
+                            ? leadItem.contactNumber
+                            : 'XXX-XXXXXXX',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.email,
-                  color: Color(0xff0069BA),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  leadItem.emailAddress,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: leadItem.emailAddress.isNotEmpty
+                      ? () => _launchURL('mailto:${leadItem.emailAddress}')
+                      : null,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.email,
+                        color: Color(0xff0069BA),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        leadItem.emailAddress.isNotEmpty
+                            ? leadItem.emailAddress
+                            : 'XXX@domain.com',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -117,7 +238,7 @@ class EngagementLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               leadItem.description,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.black,
                 fontSize: 14,
               ),
@@ -128,7 +249,7 @@ class EngagementLeadItem extends StatelessWidget {
               children: [
                 Text(
                   'Created on: ${leadItem.createdDate}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
                   ),
@@ -136,20 +257,27 @@ class EngagementLeadItem extends StatelessWidget {
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<String>(
                     isExpanded: true,
-                    hint: const Text('Engagement'),
+                    hint: Text('Engagement'),
                     items: tabbarNames
-                        .skip(1) // 跳过第一个选项 'Opportunities'
+                        .skip(1)
                         .map((item) => DropdownMenuItem<String>(
                               value: item,
                               child: Text(
                                 item,
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: 12),
                               ),
                             ))
                         .toList(),
                     value: 'Engagement',
-                    onChanged: (value) =>
-                        _handleDropdownChange(value, leadItem),
+                    onChanged: (value) {
+                      if (value == 'Negotiation') {
+                        onMoveToNegotiation();
+                      } else if (value == 'Closed') {
+                        onComplete(leadItem);
+                      } else if (value == 'Order Processing') {
+                        _navigateToCreateTaskPage(context, false);
+                      }
+                    },
                     buttonStyleData: const ButtonStyleData(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       height: 32,
@@ -169,15 +297,38 @@ class EngagementLeadItem extends StatelessWidget {
     );
   }
 
+  Future<void> _navigateToCreateTaskPage(
+      BuildContext context, bool showTaskDetails) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTaskPage(
+          customerName: leadItem.customerName,
+          contactNumber: leadItem.contactNumber,
+          emailAddress: leadItem.emailAddress,
+          address: leadItem.addressLine1,
+          lastPurchasedAmount: leadItem.amount,
+          showTaskDetails: showTaskDetails,
+        ),
+      ),
+    );
+
+    if (result != null && result['error'] == null) {
+      // Move EngagementLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
+      if (result['salesOrderId'] != null) {
+        String salesOrderId = result['salesOrderId'] as String;
+        String? quantity = result['quantity'] as String?;
+        await onMoveToOrderProcessing(leadItem, salesOrderId, quantity);
+      }
+    }
+  }
+
   void _handleDropdownChange(String? value, LeadItem leadItem) async {
     if (value == 'Negotiation') {
-      // 执行将 leadItem 移动到 Negotiation 标签页的操作
       await _updateLeadStage(leadItem, 'Negotiation');
     } else if (value == 'Order Processing') {
-      // 执行将 leadItem 移动到 Order Processing 标签页的操作
       await _updateLeadStage(leadItem, 'Order Processing');
     } else if (value == 'Closed') {
-      // 执行将 leadItem 移动到 Closed 标签页的操作
       await _updateLeadStage(leadItem, 'Closed');
     }
   }
@@ -186,11 +337,11 @@ class EngagementLeadItem extends StatelessWidget {
     MySqlConnection conn = await connectToDatabase();
     try {
       await conn.query(
-        'UPDATE create_lead SET stage = ? WHERE customer_name = ?',
+        'UPDATE sales_lead SET stage = ? WHERE customer_name = ?',
         [stage, leadItem.customerName],
       );
     } catch (e) {
-      print('Error updating stage: $e');
+      developer.log('Error updating stage: $e');
     } finally {
       await conn.close();
     }

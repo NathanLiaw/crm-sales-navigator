@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
 
-class ClosedLeadItem extends StatelessWidget {
+class OrderProcessingLeadItem extends StatelessWidget {
   final LeadItem leadItem;
-  final String formattedCreatedDate;
-  final String expirationDate;
-  final String total;
-  final String quantity;
+  final String status;
+  final Function(LeadItem) onMoveToClosed;
 
-  const ClosedLeadItem({
+  const OrderProcessingLeadItem({
     Key? key,
     required this.leadItem,
-    required this.formattedCreatedDate,
-    required this.expirationDate,
-    required this.total,
-    required this.quantity,
+    required this.status,
+    required this.onMoveToClosed,
   }) : super(key: key);
 
   Future<void> _launchURL(String url) async {
@@ -27,9 +23,12 @@ class ClosedLeadItem extends StatelessWidget {
     }
   }
 
-  String _formatCurrency(double amount) {
+  String _formatCurrency(String amount) {
+    if (amount == 'Unknown') {
+      return amount;
+    }
     final formatter = NumberFormat("#,##0.00", "en_US");
-    return formatter.format(amount);
+    return formatter.format(double.parse(amount));
   }
 
   @override
@@ -37,10 +36,19 @@ class ClosedLeadItem extends StatelessWidget {
     String formattedSalesOrderId = leadItem.salesOrderId != null
         ? 'SO' + leadItem.salesOrderId!.padLeft(7, '0')
         : '';
-    double formattedTotal = double.parse(total);
+
+    List<String> statusInfo = status.split('|');
+    String orderStatus = statusInfo[0];
+    String createdDate = statusInfo[1];
+    String expirationDate = statusInfo[2];
+    String total = statusInfo[3];
+    String formattedCreatedDate = _formatDate(createdDate);
+    String formattedTotal = _formatCurrency(total);
 
     return Card(
-      color: Color.fromARGB(255, 205, 229, 242),
+      color: orderStatus == 'Pending'
+          ? Color.fromARGB(255, 255, 237, 188)
+          : Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
       margin: EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
@@ -52,8 +60,8 @@ class ClosedLeadItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  leadItem.customerName.length > 15
-                      ? leadItem.customerName.substring(0, 15) + '...'
+                  leadItem.customerName.length > 24
+                      ? leadItem.customerName.substring(0, 24) + '...'
                       : leadItem.customerName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -61,40 +69,24 @@ class ClosedLeadItem extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(width: 10),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: orderStatus == 'Pending'
+                        ? Color.fromARGB(255, 255, 195, 31)
+                        : Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Closed',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Spacer(),
-                PopupMenuButton<String>(
-                  onSelected: (String value) {
-                    // Perform an action based on the selected value
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'view details',
-                      child: Text('View details'),
+                  child: Text(
+                    orderStatus,
+                    style: TextStyle(
+                      color: orderStatus == 'Pending'
+                          ? Colors.black
+                          : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
-                  ],
-                  child: const Icon(Icons.more_horiz_outlined,
-                      color: Colors.black),
+                  ),
                 ),
               ],
             ),
@@ -161,23 +153,55 @@ class ClosedLeadItem extends StatelessWidget {
             SizedBox(
               height: 8,
             ),
-            Text('Created date: $formattedCreatedDate'),
+            Text('Created date: ${formattedCreatedDate}'),
             Text('Expiry date: $expirationDate'),
             const SizedBox(height: 8),
             Text(
               leadItem.quantity != null
-                  ? 'Quantity: $quantity items      Total: RM${_formatCurrency(formattedTotal)}'
-                  : 'Quantity: Unknown      Total: RM${_formatCurrency(formattedTotal)}',
+                  ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
+                  : 'Quantity: Unknown      Total: RM$formattedTotal',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Visibility(
+                  visible: orderStatus == 'Confirm',
+                  child: ElevatedButton(
+                    onPressed: () => onMoveToClosed(leadItem),
+                    child:
+                        Text('Confirm', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xff0069BA),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      minimumSize: Size(50, 35),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                TextButton(
+                  onPressed: () {},
+                  child: Text(
+                    'View Order',
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0xff0069BA),
+                      color: Color(0xff0069BA),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
                 Text(
                   'Created on: ${leadItem.createdDate}',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Colors.grey,
                     fontSize: 14,
                   ),
                 ),
@@ -187,5 +211,14 @@ class ClosedLeadItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDate(String dateString) {
+    if (dateString == 'Unknown') {
+      return dateString;
+    }
+    DateTime parsedDate = DateTime.parse(dateString);
+    DateFormat formatter = DateFormat('yyyy-MM-dd');
+    return formatter.format(parsedDate);
   }
 }
