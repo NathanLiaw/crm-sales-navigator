@@ -15,6 +15,7 @@ class CartItem {
   final String status;
   final DateTime created;
   final DateTime modified;
+  double? previousPrice;
 
   CartItem({
     this.id,

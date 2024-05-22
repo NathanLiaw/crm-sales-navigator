@@ -58,6 +58,7 @@ class _CartPage extends State<CartPage> {
       List<CartItem> items = await readCartItems();
       setState(() {
         cartItems = items;
+        updateCartItemsWithLatestPrices();
       });
       await fetchProductPhotos();
       calculateTotalAndSubTotal();
@@ -231,6 +232,48 @@ class _CartPage extends State<CartPage> {
     return blob;
   }
 
+  // Function to retrieve the latest prices for all products in cartItems
+  Future<Map<int, double>> retrieveLatestPrices(List<int> productIds) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      // Construct a query to get the latest price for each product in the list
+      var results = await conn.query(
+          'SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC'
+      );
+
+      // Use a map to store the latest price for each product
+      Map<int, double> latestPrices = {};
+      for (var row in results) {
+        int productId = row['product_id'];
+        if (!latestPrices.containsKey(productId)) {
+          latestPrices[productId] = row['unit_price'];
+        }
+      }
+      return latestPrices;
+    } finally {
+      await conn.close();
+    }
+  }
+
+  // Function to update cart items with the latest prices
+  Future<void> updateCartItemsWithLatestPrices() async {
+    if (cartItems.isEmpty) {
+      developer.log('Cart is empty. No products to update.');
+      return;
+    }
+
+    List<int> productIds = cartItems.map((item) => item.productId).toList();
+    Map<int, double> latestPrices = await retrieveLatestPrices(productIds);
+
+    for (var item in cartItems) {
+      if (latestPrices.containsKey(item.productId)) {
+        item.previousPrice = latestPrices[item.productId]!;
+      } else {
+        developer.log('No price found for product ID ${item.productId}');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -387,8 +430,8 @@ class _CartPage extends State<CartPage> {
                                 SizedBox(
                                   width: 90,
                                   child: itemPhotos.isNotEmpty
-                                      ? Image.asset(
-                                    'asset/${itemPhotos[0]}',
+                                      ? Image.network(
+                                    'https://haluansama.com/crm-sales/${itemPhotos[0]}',
                                     height: 90,
                                     width: 90,
                                     fit: BoxFit.cover,
@@ -448,77 +491,132 @@ class _CartPage extends State<CartPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        item.uom,
-                                        style: const TextStyle(
-                                          fontSize: 14,
+                                      SizedBox(
+                                        width: 240,
+                                        child: Text(
+                                          item.uom,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                          ),
+                                          softWrap: true,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          // Display the item price
-                                          SizedBox(
-                                            width: 100,
-                                            child: Text(
-                                              'RM${(item.unitPrice * (item.quantity)).toStringAsFixed(3)}',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.green,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          // Group for quantity controls (IconButton and TextField)
-                                          Row(
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              IconButton(
-                                                iconSize: 28,
-                                                onPressed: () {
-                                                  // Decrement quantity when minus button is pressed
-                                                  if (currentQuantity > 1) {
-                                                    setState(() {
-                                                      item.quantity = currentQuantity - 1;
-                                                      updateItemQuantity(item.id, item.quantity);
-                                                      calculateTotalAndSubTotal();
-                                                    });
-                                                  }
-                                                },
-                                                icon: const Icon(Icons.remove),
+                                              // Display the item price
+                                              Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 150, // Set your desired width here
+                                                      child: Row(
+                                                        children: [
+                                                          Flexible(
+                                                            child: Row(
+                                                              mainAxisAlignment: MainAxisAlignment.start,
+                                                              children: [
+                                                                Text(
+                                                                  'RM${(item.unitPrice * (item.quantity)).toStringAsFixed(3)}',
+                                                                  style: const TextStyle(
+                                                                    fontSize: 16,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Colors.green,
+                                                                  ),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                                if (item.previousPrice != null) // Check if previousPrice is not null
+                                                                  Text(
+                                                                    item.unitPrice - item.previousPrice! > 0 ? ' ▲' : (item.unitPrice - item.previousPrice! < 0 ? ' ▼' : ''),
+                                                                    style: TextStyle(
+                                                                      color: (item.unitPrice - item.previousPrice! > 0) ? Colors.red : ((item.unitPrice - item.previousPrice! < 0) ? Colors.green : null),
+                                                                    ),
+                                                                  ),
+                                                                if (item.previousPrice != null && (item.unitPrice - item.previousPrice!) != 0) // Check if previousPrice is not null and price difference is not 0
+                                                                  Text(
+                                                                    '${((item.unitPrice - item.previousPrice!) / item.previousPrice! * 100).toStringAsFixed(0)}%',
+                                                                    style: const TextStyle(
+                                                                      fontSize: 12,
+                                                                    ),
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ]
                                               ),
                                               SizedBox(
-                                                width: 20, // Adjust the width of the TextField container
-                                                child: TextField(
-                                                  textAlign: TextAlign.center,
-                                                  keyboardType: TextInputType.number,
-                                                  controller: TextEditingController(text: currentQuantity.toString()),
-                                                  onChanged: (value) {
-                                                    final newValue = int.tryParse(value);
-                                                    if (newValue != null) {
+                                                child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
+                                                    ? Text(
+                                                  'RM${(item.previousPrice! * item.quantity).toStringAsFixed(3)}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.grey,
+                                                    decoration: TextDecoration.lineThrough,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                )
+                                                    : const SizedBox.shrink(),
+                                              ),
+                                            ],
+                                          ),
+                                          // Group for quantity controls (IconButton and TextField)
+                                          Visibility(
+                                            visible: !editCart, // Set visibility based on the value of editCart
+                                            child: Row(
+                                              children: [
+                                                IconButton(
+                                                  iconSize: 28,
+                                                  onPressed: () {
+                                                    // Decrement quantity when minus button is pressed
+                                                    if (currentQuantity > 1) {
                                                       setState(() {
-                                                        item.quantity = newValue;
+                                                        item.quantity = currentQuantity - 1;
                                                         updateItemQuantity(item.id, item.quantity);
                                                         calculateTotalAndSubTotal();
                                                       });
                                                     }
                                                   },
+                                                  icon: const Icon(Icons.remove),
                                                 ),
-                                              ),
-                                              IconButton(
-                                                iconSize: 28,
-                                                onPressed: () {
-                                                  // Increment quantity when plus button is pressed
-                                                  setState(() {
-                                                    item.quantity = currentQuantity + 1;
-                                                    updateItemQuantity(item.id, item.quantity);
-                                                    calculateTotalAndSubTotal();
-                                                  });
-                                                },
-                                                icon: const Icon(Icons.add),
-                                              ),
-                                            ],
+                                                SizedBox(
+                                                  width: 20, // Adjust the width of the TextField container
+                                                  child: TextField(
+                                                    textAlign: TextAlign.center,
+                                                    keyboardType: TextInputType.number,
+                                                    controller: TextEditingController(text: currentQuantity.toString()),
+                                                    onChanged: (value) {
+                                                      final newValue = int.tryParse(value);
+                                                      if (newValue != null) {
+                                                        setState(() {
+                                                          item.quantity = newValue;
+                                                          updateItemQuantity(item.id, item.quantity);
+                                                          calculateTotalAndSubTotal();
+                                                        });
+                                                      }
+                                                    },
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  iconSize: 28,
+                                                  onPressed: () {
+                                                    // Increment quantity when plus button is pressed
+                                                    setState(() {
+                                                      item.quantity = currentQuantity + 1;
+                                                      updateItemQuantity(item.id, item.quantity);
+                                                      calculateTotalAndSubTotal();
+                                                    });
+                                                  },
+                                                  icon: const Icon(Icons.add),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),

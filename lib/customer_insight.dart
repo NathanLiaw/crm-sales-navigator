@@ -5,6 +5,7 @@ import 'package:sales_navigator/customer_graph.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:sales_navigator/item_screen.dart';
+import 'package:sales_navigator/recent_order_page.dart';
 import 'package:sales_navigator/sales_report_graph.dart';
 import 'dart:developer' as developer;
 import 'package:cached_network_image/cached_network_image.dart';
@@ -22,13 +23,14 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
   late Future<Customer.Customer> customerFuture;
   late Future<List<Map<String, dynamic>>> salesDataFuture;
   late Future<List<Map<String, dynamic>>> productsFuture;
+  late int customerId = 0;
 
   @override
   void initState() {
     super.initState();
     customerFuture = fetchCustomer();
     salesDataFuture = fetchSalesDataByCustomer();
-    productsFuture = fetchProductsByCustomer();
+    productsFuture = fetchProductsByCustomer(customerId);
   }
 
   Future<Customer.Customer> fetchCustomer() async {
@@ -44,6 +46,9 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
 
       if (results.isNotEmpty) {
         var row = results;
+        setState(() {
+          customerId = row['id'];
+        });
         return Customer.Customer(
           id: row['id'] as int?,
           area: row['area'] as int,
@@ -83,7 +88,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchProductsByCustomer() async {
+  Future<List<Map<String, dynamic>>> fetchProductsByCustomer(int customerId) async {
     try {
       MySqlConnection conn = await connectToDatabase();
       final results = await conn.query('''
@@ -91,14 +96,15 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
       FROM cart_item ci
       JOIN product p ON ci.product_id = p.id
       JOIN (
-          SELECT product_id, MIN(uom) AS first_uom
-          FROM cart_item
-          WHERE customer_id = 6
-          GROUP BY product_id
+        SELECT product_id, MIN(uom) AS first_uom
+        FROM cart_item
+        WHERE customer_id = $customerId
+        GROUP BY product_id
       ) AS first_uom_per_product ON ci.product_id = first_uom_per_product.product_id
           AND ci.uom = first_uom_per_product.first_uom
-      WHERE ci.customer_id = 6 AND p.status = 1
+      WHERE ci.customer_id = $customerId AND p.status = 1
       GROUP BY p.product_name, p.photo1, ci.uom
+      LIMIT 10
     ''');
       await conn.close();
       return results.map((row) => {
@@ -291,7 +297,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 48.0),
                   const Text(
                     'Past Sales',
                     style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
@@ -301,6 +307,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                     height: 400.0,
                     child: SalesReport(),
                   ),
+                  const SizedBox(height: 16),
                   const SizedBox(
                     height: 180.0,
                     child: CustomersGraph(),
@@ -313,20 +320,26 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                         'Recent Purchases',
                         style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
                       ),
-                      Container(
-                        child: const Row(
-                          children: [
-                            Text(
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id!,)),
+                              );
+                            },
+                            child: const Text(
                               'View more',
                               style: TextStyle(fontSize: 16.0, color: Colors.grey),
                             ),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 24,
-                              color: Colors.grey,
-                            ),
-                          ],
-                        ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            size: 24,
+                            color: Colors.grey,
+                          ),
+                        ],
                       ),
                     ]
                   ),
@@ -345,7 +358,6 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
 
                         return GestureDetector(
                           onTap: () {
-                            print(productName);
                             _navigateToItemScreen(productName);
                           },
                           child: Card(
