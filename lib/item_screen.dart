@@ -47,7 +47,6 @@ class _ItemScreenState extends State<ItemScreen> {
     if (_priceData.containsKey(_areaId)) {
       Map<String, double> areaData = _priceData[_areaId]!;
       if (areaData.isNotEmpty) {
-        // Assuming you want to retrieve the first entry's key and value
         MapEntry<String, double> firstEntry = areaData.entries.first;
         _uom = firstEntry.key;
         _price = firstEntry.value;
@@ -56,7 +55,7 @@ class _ItemScreenState extends State<ItemScreen> {
         developer.log('No data found for area ID: $_areaId');
       }
     } else {
-      developer.log('Area ID $_areaId not found in price data');
+      developer.log('Area ID $_areaId not found in price data.');
     }
   }
 
@@ -71,7 +70,8 @@ class _ItemScreenState extends State<ItemScreen> {
           Map<String, double> areaPrices = {};
           value.forEach((uom, price) {
             if (price is String) {
-              double parsedPrice = double.tryParse(price.replaceAll(',', '')) ?? 0.0;
+              double parsedPrice =
+                  double.tryParse(price.replaceAll(',', '')) ?? 0.0;
               areaPrices[uom] = parsedPrice;
             }
           });
@@ -81,7 +81,7 @@ class _ItemScreenState extends State<ItemScreen> {
 
       retrievePriceByUomUsingAreaId();
     } catch (e) {
-      developer.log('Error decoding price data: $e', error: e);
+      developer.log('Error decoding price data: $e');
     }
   }
 
@@ -123,11 +123,6 @@ class _ItemScreenState extends State<ItemScreen> {
               placeholder: (context, url) => const CircularProgressIndicator(),
               errorWidget: (context, url, error) => const Icon(Icons.error_outline),
             ),
-
-            /*Image.asset(
-              widget.itemAssetNames[_selectedImageIndex],
-              height: 446,
-            ), */
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -139,7 +134,7 @@ class _ItemScreenState extends State<ItemScreen> {
                 final assetName = widget.itemAssetNames[index];
                 if (assetName == 'https://haluansama.com/crm-sales/null') {
                   return const SizedBox
-                      .shrink(); // Return an empty container if the asset name is null
+                      .shrink();
                 }
                 return GestureDetector(
                   onTap: () {
@@ -161,17 +156,15 @@ class _ItemScreenState extends State<ItemScreen> {
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 300,
                       child: Text(
                         widget.productName,
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
+                        maxLines: 2,
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -243,7 +236,7 @@ class _ItemScreenState extends State<ItemScreen> {
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
                   child: Row(
                     children: [
                       Flexible(
@@ -275,19 +268,7 @@ class _ItemScreenState extends State<ItemScreen> {
                       const Spacer(),
                       IconButton(
                         iconSize: 30,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) {
-                              return ItemVariationsScreen(
-                                productId: widget.productId,
-                                productName: widget.productName,
-                                itemAssetName: widget.itemAssetNames[0],
-                                priceByUom: _priceDataByArea,
-                              );
-                            }),
-                          );
-                        },
+                        onPressed: () {},
                         icon: const Icon(Icons.arrow_forward_ios),
                       ),
                     ],

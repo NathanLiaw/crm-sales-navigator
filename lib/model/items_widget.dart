@@ -30,7 +30,6 @@ class ItemsWidget extends StatefulWidget {
 class _ItemsWidgetState extends State<ItemsWidget> {
   final ScrollController _scrollController = ScrollController();
   List<Map<String, dynamic>> _products = [];
-  final int _currentPage = 1;
 
   @override
   void initState() {
@@ -45,11 +44,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
   }
 
   Future<void> _loadProducts() async {
-
-    final products = await getProductData(
-      offset: (_currentPage - 1) * 50,
-      limit: 50,
-    );
+    final products = await getProductData();
     setState(() {
       _products = products;
     });
@@ -64,14 +59,13 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
       return results.first['total'] as int;
     } catch (e) {
-      developer.log('Error fetching total products count: $e', error: e);
+      developer.log('Error fetching total products count: $e');
       return 0;
     }
   }
 
-
   Future<List<Map<String, dynamic>>> getProductData(
-      {int offset = 0, int limit = 50}) async {
+      {int offset = 0, int limit = 481}) async {
     try {
       final conn = await connectToDatabase();
       String query =
@@ -118,22 +112,22 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
       return results
           .map((row) => {
-                'id': row['id'],
-                'product_name': row['product_name'],
-                'photo1': row['photo1'],
-                'photo2': row['photo2'],
-                'photo3': row['photo3'],
-                'description': row['description'],
-                'sub_category': row['sub_category'],
-                'brand': row['brand'],
-                'price_by_uom': row['price_by_uom'],
-                'featured': row['featured'],
-                'created': row['created'],
-                'viewed': row['viewed'],
-              })
+        'id': row['id'],
+        'product_name': row['product_name'],
+        'photo1': row['photo1'],
+        'photo2': row['photo2'],
+        'photo3': row['photo3'],
+        'description': row['description'],
+        'sub_category': row['sub_category'],
+        'brand': row['brand'],
+        'price_by_uom': row['price_by_uom'],
+        'featured': row['featured'],
+        'created': row['created'],
+        'viewed': row['viewed'],
+      })
           .toList();
     } catch (e) {
-      developer.log('Error fetching product: $e', error: e);
+      developer.log('Error fetching product: $e');
       return [];
     }
   }
@@ -197,22 +191,27 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                     children: [
                       InkWell(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ItemScreen(
-                                productId: productId,
-                                itemAssetNames: [
-                                  photoUrl1,
-                                  photoUrl2,
-                                  photoUrl3
-                                ],
-                                productName: productName,
-                                itemDescription: itemDescription,
-                                priceByUom: product['price_by_uom'].toString(),
+                          try {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ItemScreen(
+                                  productId: productId,
+                                  itemAssetNames: [
+                                    photoUrl1,
+                                    photoUrl2,
+                                    photoUrl3
+                                  ],
+                                  productName: productName,
+                                  itemDescription: itemDescription,
+                                  priceByUom:
+                                  product['price_by_uom'].toString(),
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } catch (e) {
+                            developer.log('Error navigating to ItemScreen: $e');
+                          }
                         },
                         child: Container(
                           height: containerSize,
@@ -254,7 +253,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color:
-                                          const Color.fromARGB(255, 25, 23, 49),
+                                      const Color.fromARGB(255, 25, 23, 49),
                                     ),
                                   ),
                                 ],

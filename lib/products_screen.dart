@@ -6,7 +6,7 @@ import 'package:sales_navigator/model/area_select_popup.dart';
 import 'package:sales_navigator/search_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_navigator/model/Sort_popup.dart';
+import 'package:sales_navigator/model/sort_popup.dart';
 import 'model/items_widget.dart';
 import 'db_connection.dart';
 import 'dart:developer' as developer;
@@ -61,9 +61,9 @@ class _ProductsScreenState extends State<ProductsScreen>
       await conn.close();
 
       areaMap = Map.fromEntries(results.map((row) => MapEntry<int, String>(
-            row['id'],
-            row['area'] ?? '',
-          )));
+        row['id'],
+        row['area'] ?? '',
+      )));
 
       setState(() {
         area = areaMap;
@@ -83,7 +83,7 @@ class _ProductsScreenState extends State<ProductsScreen>
         });
       }
     } catch (e) {
-      developer.log('Error fetching area: $e', error: e);
+      developer.log('Error fetching area: $e');
     }
   }
 
@@ -201,7 +201,7 @@ class _ProductsScreenState extends State<ProductsScreen>
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SearchScreen()),
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
               ).then((value) {
                 if (value != null) {
                   setState(() {
@@ -230,16 +230,16 @@ class _ProductsScreenState extends State<ProductsScreen>
             ),
           ),
           actions: <Widget>[
-            IconButton(
-              icon: const Icon(
-                Icons.notifications,
-                size: 34,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                // Add your onPressed logic here
-              },
-            ),
+            // IconButton(
+            //   icon: const Icon(
+            //     Icons.notifications,
+            //     size: 34,
+            //     color: Colors.white,
+            //   ),
+            //   onPressed: () {
+            //     // Add your onPressed logic here
+            //   },
+            // ),
           ],
         ),
       ),
@@ -291,7 +291,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                                             UniqueKey(); // Change the key to force rebuild
                                       });
                                       Navigator.pop(
-                                          context);
+                                          context); // Close the bottom sheet
                                     },
                                   ),
                                 ],
