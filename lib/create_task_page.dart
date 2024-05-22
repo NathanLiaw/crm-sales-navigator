@@ -77,7 +77,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
         // get the qty sum in the cart_item table based on session
         Results quantityResults = await conn.query(
-          'SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = "?" OR cart_id = ?',
+          "SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = '?' OR cart_id = ?",
           [session, int.parse(salesOrderId)],
         );
         String totalQuantity = quantityResults.first['total_qty'].toString();
@@ -105,8 +105,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       MySqlConnection conn = await connectToDatabase();
 
       String condition =
-          'buyer_id = $buyerId AND customer_company_name = "$customerName" '
-          'AND status = "Pending" AND CURDATE() >= expiration_date';
+          "buyer_id = $buyerId AND customer_company_name = '$customerName' "
+          "AND status = 'Pending' AND CURDATE() >= expiration_date";
 
       List<Map<String, dynamic>> salesOrders = await readData(
         conn,

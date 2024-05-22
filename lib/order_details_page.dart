@@ -92,7 +92,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final cartItemResults = await readData(
         conn,
         'cart_item',
-        'session = "$session" OR cart_id = "$cartId"',
+        "session = '$session' OR cart_id = '$cartId'",
         '',
         'product_name, unit_price, qty, total, status',
       );
@@ -154,7 +154,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final results = await readData(
         conn,
         'product',
-        'product_name = "$productName"',
+        "product_name = '$productName'",
         '',
         'photo1',
       );
@@ -162,10 +162,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (results.isNotEmpty && results[0]['photo1'] != null) {
         String photoPath = results[0]['photo1'];
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/${photoPath.substring(6)}';
+          photoPath = 'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
         }
         return photoPath;
       } else {
+        // Return a valid URI for the asset image
         return 'asset/no_image.jpg';
       }
     } catch (e) {
@@ -402,10 +403,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(
+            (item.photoPath.isNotEmpty && Uri.parse(item.photoPath).isAbsolute)
+                ? Image.network(
               item.photoPath,
-              width: 80,
               height: 80,
+              width: 80,
+            )
+                : Image.asset(
+              'asset/no_image.jpg',
+              height: 80,
+              width: 80,
             ),
             const SizedBox(width: 10),
             Expanded(

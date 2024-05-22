@@ -201,8 +201,8 @@ class _EditItemPageState extends State<EditItemPage> {
                           child: SizedBox(
                             width: 90,
                             child: widget.itemPhoto.isNotEmpty
-                                ? Image.asset(
-                              'asset/${widget.itemPhoto}',
+                                ? Image.network(
+                              'https://haluansama.com/crm-sales/${widget.itemPhoto}',
                               height: 90,
                               width: 90,
                               fit: BoxFit.cover,

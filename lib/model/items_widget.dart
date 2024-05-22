@@ -73,23 +73,23 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       List<dynamic> parameters = [];
 
       if (widget.brandId != null) {
-        query += ' AND brand = ?';
+        query += " AND brand = ?";
         parameters.add(widget.brandId);
       } else if (widget.subCategoryId != null) {
-        query += ' AND sub_category = ?';
+        query += " AND sub_category = ?";
         parameters.add(widget.subCategoryId);
       }
 
       if (widget.brandIds?.isNotEmpty ?? false) {
-        query += ' AND brand IN (${widget.brandIds!.join(", ")})';
+        query += " AND brand IN (${widget.brandIds!.join(', ')})";
       }
 
       if (widget.subCategoryIds?.isNotEmpty ?? false) {
-        query += ' AND sub_category IN (${widget.subCategoryIds!.join(", ")})';
+        query += " AND sub_category IN (${widget.subCategoryIds!.join(', ')})";
       }
 
       if (widget.isFeatured) {
-        query += ' AND featured = "Yes"';
+        query += " AND featured = 'Yes'";
       }
 
       if (widget.sortOrder == 'By Name (A to Z)') {

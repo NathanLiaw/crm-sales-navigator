@@ -37,7 +37,7 @@ class UtilityFunction{
       final results = await readData(
         conn,
         'tax',
-        'tax_title = "$taxType" AND status = 1',
+        "tax_title = '$taxType' AND status = 1",
         '',
         'tax_in_percent',
       );
@@ -85,7 +85,7 @@ class UtilityFunction{
       final results = await readData(
         conn,
         'area',
-        'id="$id" AND status = 1',
+        "id='$id' AND status = 1",
         '',
         'area',
       );

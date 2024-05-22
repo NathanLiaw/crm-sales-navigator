@@ -30,6 +30,7 @@ class _CartPage extends State<CartPage> {
   // Cart Section
   List<CartItem> cartItems = [];
   List<CartItem> selectedCartItems = [];
+  late int totalCartItems = 0;
   late List<List<String>> productPhotos = [];
   double total = 0;
   double subtotal = 0;
@@ -74,13 +75,16 @@ class _CartPage extends State<CartPage> {
 
     Database database = await DatabaseHelper.database;
     String cartItemTableName = DatabaseHelper.cartItemTableName;
-    String condition = 'buyer_id = $id AND status = "in progress"';
+    String condition = "buyer_id = $id AND status = 'in progress'";
     String order = 'created DESC';
     String field = '*';
 
     List<Map<String, dynamic>> queryResults =
     await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
 
+    setState(() {
+      totalCartItems = queryResults.length;
+    });
     List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
     return cartItems;
   }
@@ -185,7 +189,7 @@ class _CartPage extends State<CartPage> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
         'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
@@ -239,7 +243,7 @@ class _CartPage extends State<CartPage> {
     try {
       // Construct a query to get the latest price for each product in the list
       var results = await conn.query(
-          'SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC'
+          "SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC"
       );
 
       // Use a map to store the latest price for each product
@@ -270,7 +274,7 @@ class _CartPage extends State<CartPage> {
       if (latestPrices.containsKey(item.productId)) {
         item.previousPrice = latestPrices[item.productId]!;
       } else {
-        developer.log('No price found for product ID ${item.productId}');
+        developer.log('No previous price found for product ID ${item.productId}');
       }
     }
   }
@@ -352,13 +356,13 @@ class _CartPage extends State<CartPage> {
                   ? CustomerInfo(initialCustomer: customer!)
                   : _buildSelectCustomerCard(context),
               const SizedBox(height: 32),
-              const Padding(
-                padding: EdgeInsets.only(
+              Padding(
+                padding: const EdgeInsets.only(
                   left: 8.0,
                 ),
                 child: Text(
-                  'Cart',
-                  style: TextStyle(
+                  'Cart ($totalCartItems)',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -434,7 +438,7 @@ class _CartPage extends State<CartPage> {
                                   ),
                                 SizedBox(
                                   width: 90,
-                                  child: itemPhotos.isNotEmpty
+                                  child: (itemPhotos.isNotEmpty)
                                       ? Image.network(
                                     'https://haluansama.com/crm-sales/${itemPhotos[0]}',
                                     height: 90,

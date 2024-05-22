@@ -44,7 +44,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       final results = await readData(
         conn,
         'order_option',
-        'order_type="Sales Order" AND status=1',
+        "order_type='Sales Order' AND status=1",
         '',
         '*',
       );

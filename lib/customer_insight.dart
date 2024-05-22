@@ -29,7 +29,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
   void initState() {
     super.initState();
     customerFuture = fetchCustomer();
-    salesDataFuture = fetchSalesDataByCustomer();
+    salesDataFuture = fetchSalesDataByCustomer(customerId);
     productsFuture = fetchProductsByCustomer(customerId);
   }
 
@@ -70,13 +70,13 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchSalesDataByCustomer() async {
+  Future<List<Map<String, dynamic>>> fetchSalesDataByCustomer(int customerId) async {
     try {
       MySqlConnection conn = await connectToDatabase();
       final results = await readData(
         conn,
         'cart',
-        'created >= DATE_SUB(NOW(), INTERVAL 12 MONTH) AND customer_id = 6 GROUP BY YEAR(created), MONTH(created)',
+        'created >= DATE_SUB(NOW(), INTERVAL 12 MONTH) AND customer_id = $customerId GROUP BY YEAR(created), MONTH(created)',
         'sales_year DESC, sales_month DESC;',
         'YEAR(created) AS sales_year, MONTH(created) AS sales_month, SUM(final_total) AS total_sales',
       );
@@ -125,7 +125,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
         'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );

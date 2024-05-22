@@ -48,7 +48,7 @@ Future<List<Map<String, dynamic>>> readData(
   }
 
   final query = await connection.query(
-    'SELECT $field FROM $tableName $sqlQuery $sqlOrder',
+    "SELECT $field FROM $tableName $sqlQuery $sqlOrder",
   );
 
   final results = <Map<String, dynamic>>[];
@@ -112,7 +112,7 @@ Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
 
     try {
       final queryResult = await connection
-          .query('SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1');
+          .query("SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1");
       if (queryResult.isNotEmpty) {
         return Map<String, dynamic>.from(queryResult.first.fields);
       } else {
