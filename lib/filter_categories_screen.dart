@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sales_navigator/data/brand_data.dart';
-import 'package:sales_navigator/data/category_data.dart';
-import 'package:sales_navigator/data/sub_category_data.dart';
+import 'package:sales_navigator/data/branddata.dart';
+import 'package:sales_navigator/data/categorydata.dart';
+import 'package:sales_navigator/data/sub_categorydata.dart';
 import 'package:sales_navigator/db_connection.dart';
 
 class FilterCategoriesScreen extends StatefulWidget {
   final List<int> initialSelectedSubCategoryIds;
   final List<int> initialSelectedBrandIds;
 
-  const FilterCategoriesScreen({super.key,
+  FilterCategoriesScreen({
     required this.initialSelectedSubCategoryIds,
     required this.initialSelectedBrandIds,
   });
@@ -47,7 +47,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           'Filter Categories',
           style: GoogleFonts.inter(
@@ -56,10 +56,10 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: Color.fromARGB(255, 0, 76, 135),
       ),
       body: _categories.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : ListView(
               children: [
                 // Display categories and subcategories
@@ -70,7 +70,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                   return ExpansionTile(
                     title: Text(
                       category.category,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -84,7 +84,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                       if (isExpanded)
                         ListView.builder(
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                          physics: NeverScrollableScrollPhysics(),
                           itemCount: _subCategories[index].length,
                           itemBuilder: (context, subIndex) {
                             final subCategoryData =
@@ -92,7 +92,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                             return CheckboxListTile(
                               title: Text(
                                 subCategoryData.subCategory,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.black,
                                 ),
                               ),
@@ -114,10 +114,10 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                         ),
                     ],
                   );
-                }),
+                }).toList(),
                 // Display brands
                 ExpansionTile(
-                  title: const Text(
+                  title: Text(
                     'Brands',
                     style: TextStyle(
                       fontSize: 18,
@@ -144,7 +144,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
             ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
-        color: const Color.fromARGB(255, 255, 255, 255),
+        color: Color.fromARGB(255, 255, 255, 255),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -155,18 +155,18 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                   _selectedBrandIds.clear();
                 });
               },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
-                backgroundColor: const Color.fromARGB(255, 184, 10, 39),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-              child: const Text(
+              child: Text(
                 'Clear',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                 ),
+              ),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 38),
+                backgroundColor: Color.fromARGB(255, 184, 10, 39),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
             TextButton(
@@ -178,18 +178,18 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                   });
                 });
               },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
-                backgroundColor: const Color.fromARGB(255, 4, 108, 169),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-              child: const Text(
+              child: Text(
                 'Apply',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                 ),
+              ),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 38),
+                backgroundColor: const Color.fromARGB(255, 4, 108, 169),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
           ],
