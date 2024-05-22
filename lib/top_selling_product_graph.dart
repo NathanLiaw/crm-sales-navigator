@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
@@ -226,13 +227,10 @@ LIMIT 5;
     );
   }
 
-  String _formatSalesOrder(double salesOrder) {
-    if (salesOrder >= 1000) {
-      return 'RM ${(salesOrder / 1000).toStringAsFixed(1)}K';
-    } else {
-      return 'RM ${salesOrder.toStringAsFixed(0)}';
-    }
-  }
+String _formatSalesOrder(double salesOrder) {
+  final formatter = NumberFormat.currency(symbol: 'RM', decimalDigits: 0);
+  return formatter.format(salesOrder);
+}
 }
 
 class Product {

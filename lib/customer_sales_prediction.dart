@@ -45,7 +45,7 @@ class _CustomerSalesPredictionPageState
   void initState() {
     super.initState();
     _loadPreferences().then((_) {
-      salesData = fetchSalesData(null); // Fetch all sales data initially
+      salesData = fetchSalesData(null);
     });
   }
 
@@ -75,9 +75,9 @@ class _CustomerSalesPredictionPageState
         SELECT 
           p.id AS ProductID, 
           p.product_name AS ProductName,
-          SUM(ci.qty) AS TotalQuantitySold, 
-          SUM(ci.total) AS TotalSalesValue, 
-          MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate,
+          ci.qty AS QuantitySold, 
+          ci.total AS SalesValue, 
+          DATE_FORMAT(ci.created, '%Y-%m-%d') AS SaleDate,
           c.customer_company_name AS CustomerCompanyName,
           ci.uom AS UnitOfMeasure
         FROM cart_item ci 
@@ -86,31 +86,54 @@ class _CustomerSalesPredictionPageState
         JOIN salesman ON cart.buyer_id = salesman.id
         JOIN cart c ON ci.session = c.session OR ci.id = c.id
         WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
-        GROUP BY p.id, p.product_name, c.customer_company_name, ci.uom
-        ORDER BY TotalQuantitySold $sortOrder;
+        ORDER BY ci.created $sortOrder;
       ''');
 
       if (results.isEmpty) {
         developer.log('No data found', level: 1);
       }
 
-      int serialNumber = 1;
-      return results.map((row) {
-        return CustomerSalesData(
+      List<CustomerSalesData> salesData = [];
+      for (var row in results) {
+        salesData.add(CustomerSalesData(
           productId: row['ProductID'],
           productName: row['ProductName'],
-          totalQuantitySold: row['TotalQuantitySold'].toInt(),
-          totalSalesValue: row['TotalSalesValue'].toDouble(),
+          totalQuantitySold: row['QuantitySold'].toInt(),
+          totalSalesValue: row['SalesValue'].toDouble(),
           saleDate: DateTime.parse(row['SaleDate']),
           customerCompanyName: row['CustomerCompanyName'],
           unitOfMeasure: row['UnitOfMeasure'],
-          serialNumber: serialNumber++,
-        );
-      }).toList();
+        ));
+      }
+
+      return salesData;
     } catch (e, stackTrace) {
       developer.log('Error fetching data: $e', error: e, stackTrace: stackTrace);
       return [];
     }
+  }
+
+  List<CustomerSalesData> calculateMovingAverage(List<CustomerSalesData> data, int windowSize) {
+    List<CustomerSalesData> movingAverages = [];
+
+    for (int i = 0; i <= data.length - windowSize; i++) {
+      var window = data.sublist(i, i + windowSize);
+
+      double avgSalesValue = window.map((e) => e.totalSalesValue).reduce((a, b) => a + b) / windowSize;
+      double avgQuantitySold = window.map((e) => e.totalQuantitySold).reduce((a, b) => a + b) / windowSize;
+
+      movingAverages.add(CustomerSalesData(
+        productId: window.last.productId,
+        productName: window.last.productName,
+        totalQuantitySold: avgQuantitySold.round(),
+        totalSalesValue: avgSalesValue,
+        saleDate: window.last.saleDate,
+        customerCompanyName: window.last.customerCompanyName,
+        unitOfMeasure: window.last.unitOfMeasure,
+      ));
+    }
+
+    return movingAverages;
   }
 
   void toggleSortOrder() {
@@ -147,35 +170,124 @@ class _CustomerSalesPredictionPageState
                 } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                   return const Center(child: Text('No data available'));
                 } else if (snapshot.hasData) {
+                  Map<String, List<CustomerSalesData>> groupedData = {};
+                  for (var data in snapshot.data!) {
+                    if (!groupedData.containsKey(data.customerCompanyName)) {
+                      groupedData[data.customerCompanyName] = [];
+                    }
+                    groupedData[data.customerCompanyName]!.add(data);
+                  }
+
                   return ListView(
-                    children: snapshot.data!.map((salesData) {
+                    children: groupedData.entries.map((entry) {
+                      var movingAverageData = calculateMovingAverage(entry.value, 3);
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: ListTile(
-                          tileColor: Colors.grey[200],
-                          title: Text(
-                            salesData.customerCompanyName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromRGBO(111, 188, 249, 0.35), 
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Quantity Sold: ${salesData.totalQuantitySold}',
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 100, 0),
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                          child: ExpansionTile(
+                            backgroundColor: Colors.transparent,
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: EdgeInsets.zero,
+                            title: Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    entry.key,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    'Predicted Sales: RM${NumberFormat('#,##0').format(movingAverageData.last.totalSalesValue)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF487C08),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Predicted Stock: ${NumberFormat('#,##0').format(movingAverageData.last.totalQuantitySold)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF004072),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'Unit of Measure: ${salesData.unitOfMeasure}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 16,
+                            ),
+                            children: [
+                              Container(
+                                color: const Color(0xFFE1F5FE),
+                                child: Column(
+                                  children: movingAverageData.take(5).map((salesData) {
+                                    return Column(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Product: ${salesData.productName}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                'UOM: ${salesData.unitOfMeasure}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Targeted Sales: RM${NumberFormat('#,##0').format(salesData.totalSalesValue)}',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFF004072),
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Required Stock: ${NumberFormat('#,##0').format(salesData.totalQuantitySold)}',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFF487C08),
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                      textAlign: TextAlign.end,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (movingAverageData.indexOf(salesData) != movingAverageData.length - 1)
+                                          const Divider(
+                                            color: Colors.grey,
+                                            thickness: 1,
+                                          ),
+                                      ],
+                                    );
+                                  }).toList(),
                                 ),
                               ),
                             ],
@@ -204,7 +316,6 @@ class CustomerSalesData {
   final DateTime saleDate;
   final String customerCompanyName;
   final String unitOfMeasure;
-  final int serialNumber;
 
   CustomerSalesData({
     required this.productId,
@@ -214,6 +325,5 @@ class CustomerSalesData {
     required this.saleDate,
     required this.customerCompanyName,
     required this.unitOfMeasure,
-    required this.serialNumber,
   });
 }

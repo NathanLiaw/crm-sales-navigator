@@ -17,9 +17,7 @@ class _CustomersGraphState extends State<CustomersGraph> {
   @override
   void initState() {
     super.initState();
-    _loadUserDetails().then((_) {
-      customers = fetchCustomers();
-    });
+    customers = _loadUserDetails().then((_) => fetchCustomers());
   }
 
   Future<void> _loadUserDetails() async {
@@ -145,6 +143,10 @@ class CustomerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double percentage = customer.percentageOfTotal.isNaN || customer.percentageOfTotal.isInfinite 
+        ? 0 
+        : customer.percentageOfTotal / 100;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
@@ -181,7 +183,7 @@ class CustomerBar extends StatelessWidget {
                 ),
               ),
               FractionallySizedBox(
-                widthFactor: customer.percentageOfTotal > 100 ? 1.0 : customer.percentageOfTotal / 100,
+                widthFactor: percentage,
                 child: Container(
                   height: 10,
                   decoration: BoxDecoration(
