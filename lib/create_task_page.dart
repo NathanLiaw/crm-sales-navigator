@@ -147,7 +147,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
+        backgroundColor: Color(0xff004c87),
         title: Text(
           'Create Task',
           style: TextStyle(color: Colors.white),
