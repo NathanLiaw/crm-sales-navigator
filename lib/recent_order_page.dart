@@ -6,8 +6,12 @@ import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
 
 class RecentOrder extends StatefulWidget {
-  const RecentOrder({super.key});
+  const RecentOrder({
+    super.key,
+    required this.customerId,
+  });
 
+  final int customerId;
   @override
   _RecentOrderState createState() => _RecentOrderState();
 }
@@ -16,6 +20,7 @@ class _RecentOrderState extends State<RecentOrder> {
   bool _isGridView = false;
   int _userId = 0;
   final bool _isAscending = true;
+  int numberOfItems = 0;
 
   // Define sorting methods
   final List<String> _sortingMethods = [
@@ -76,6 +81,8 @@ class _RecentOrderState extends State<RecentOrder> {
                       },
                     ),
                     Text(_selectedMethod),
+                    SizedBox(width: 10),
+                    Text('$numberOfItems item(s)'),
                   ],
                 ),
                 IconButton(
@@ -203,10 +210,15 @@ class _RecentOrderState extends State<RecentOrder> {
                     // photo part
                     Container(
                       margin: const EdgeInsets.only(right: 16),
-                      child: Image.asset(
+                      child: (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute) ?
+                      Image.network(
                         snapshot.data!,
-                        width: 100,
                         height: 100,
+                        width: 100,
+                      ) : Image.asset(
+                        'asset/no_image.jpg',
+                        height: 100,
+                        width: 100,
                       ),
                     ),
                     // text part
@@ -285,10 +297,15 @@ class _RecentOrderState extends State<RecentOrder> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
+                (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute) ?
+                Image.network(
                   snapshot.data!,
-                  width: 70,
                   height: 70,
+                  width: 70,
+                ) : Image.asset(
+                  'asset/no_image.jpg', // Correct the path to the asset folder
+                  height: 70,
+                  width: 70,
                 ),
                 const SizedBox(height: 8),
                 Expanded(
@@ -301,9 +318,7 @@ class _RecentOrderState extends State<RecentOrder> {
                           // fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
-                        overflow:
-                            TextOverflow.ellipsis,
-                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       // SizedBox(height: 8),
                     ],
@@ -388,14 +403,21 @@ class _RecentOrderState extends State<RecentOrder> {
   Future<List<Map<String, dynamic>>> _fetchRecentOrders() async {
     try {
       MySqlConnection conn = await connectToDatabase();
+      String condition = 'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman" GROUP BY '
+          'ci.product_name, ci.product_id';
+      if (widget.customerId > 0){
+        condition = 'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman"'
+            'AND ci.customer_id = ${widget.customerId} GROUP BY ci.product_name, ci.product_id';
+      }
       final results = await readData(
         conn,
-        'cart c JOIN cart_item ci ON ci.session = c.session',
-        'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman" GROUP BY '
-            'ci.product_name, ci.product_id',
+        'cart c JOIN cart_item ci ON ci.session = c.session OR ci.cart_id = c.id',
+        condition,
         '',
         'ci.product_id, ci.product_name, SUM(ci.total) AS total',
       );
+
+      numberOfItems = results.length;
 
       await conn.close();
 
@@ -473,7 +495,7 @@ class _RecentOrderState extends State<RecentOrder> {
         String photoPath = results[0]['photo1'];
         // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/${photoPath.substring(6)}';
+          photoPath = 'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
         }
         return photoPath;
       } else {

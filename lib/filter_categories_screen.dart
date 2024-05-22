@@ -61,87 +61,87 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       body: _categories.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              children: [
-                // Display categories and subcategories
-                ..._categories.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final category = entry.value;
-                  final isExpanded = index == _expandedIndex;
-                  return ExpansionTile(
-                    title: Text(
-                      category.category,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onExpansionChanged: (expanded) {
-                      setState(() {
-                        _expandedIndex = expanded ? index : -1;
-                      });
-                    },
-                    children: [
-                      if (isExpanded)
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _subCategories[index].length,
-                          itemBuilder: (context, subIndex) {
-                            final subCategoryData =
-                                _subCategories[index][subIndex];
-                            return CheckboxListTile(
-                              title: Text(
-                                subCategoryData.subCategory,
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                              value: selectedSubCategoryIds
-                                  .contains(subCategoryData.id),
-                              onChanged: (selected) {
-                                setState(() {
-                                  if (selected!) {
-                                    selectedSubCategoryIds
-                                        .add(subCategoryData.id);
-                                  } else {
-                                    selectedSubCategoryIds
-                                        .remove(subCategoryData.id);
-                                  }
-                                });
-                              },
-                            );
-                          },
-                        ),
-                    ],
-                  );
-                }),
-                // Display brands
-                ExpansionTile(
-                  title: const Text(
-                    'Brands',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  children: _brands.map((brand) {
-                    return CheckboxListTile(
-                      title: Text(brand.brand),
-                      value: _selectedBrandIds.contains(brand.id),
-                      onChanged: (selected) {
-                        setState(() {
-                          if (selected!) {
-                            _selectedBrandIds.add(brand.id);
-                          } else {
-                            _selectedBrandIds.remove(brand.id);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+        children: [
+          // Display categories and subcategories
+          ..._categories.asMap().entries.map((entry) {
+            final index = entry.key;
+            final category = entry.value;
+            final isExpanded = index == _expandedIndex;
+            return ExpansionTile(
+              title: Text(
+                category.category,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              onExpansionChanged: (expanded) {
+                setState(() {
+                  _expandedIndex = expanded ? index : -1;
+                });
+              },
+              children: [
+                if (isExpanded)
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _subCategories[index].length,
+                    itemBuilder: (context, subIndex) {
+                      final subCategoryData =
+                      _subCategories[index][subIndex];
+                      return CheckboxListTile(
+                        title: Text(
+                          subCategoryData.subCategory,
+                          style: const TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        value: selectedSubCategoryIds
+                            .contains(subCategoryData.id),
+                        onChanged: (selected) {
+                          setState(() {
+                            if (selected!) {
+                              selectedSubCategoryIds
+                                  .add(subCategoryData.id);
+                            } else {
+                              selectedSubCategoryIds
+                                  .remove(subCategoryData.id);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
               ],
+            );
+          }),
+          // Display brands
+          ExpansionTile(
+            title: const Text(
+              'Brands',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            children: _brands.map((brand) {
+              return CheckboxListTile(
+                title: Text(brand.brand),
+                value: _selectedBrandIds.contains(brand.id),
+                onChanged: (selected) {
+                  setState(() {
+                    if (selected!) {
+                      _selectedBrandIds.add(brand.id);
+                    } else {
+                      _selectedBrandIds.remove(brand.id);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
         color: const Color.fromARGB(255, 255, 255, 255),

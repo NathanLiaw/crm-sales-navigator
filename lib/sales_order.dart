@@ -149,6 +149,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       query = '''
        SELECT 
       cart.*, 
+      cart_item.product_id,
       cart_item.product_name, 
       cart_item.qty,
       cart_item.uom,
@@ -171,6 +172,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       query = '''
         SELECT 
       cart.*, 
+      cart_item.product_id,
       cart_item.product_name, 
       cart_item.qty,
       cart_item.uom,
@@ -193,6 +195,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       query = '''
         SELECT 
       cart.*, 
+      cart_item.product_id,
       cart_item.product_name, 
       cart_item.qty,
       cart_item.uom,
@@ -507,7 +510,7 @@ Widget _buildQuickAccessDateButtons() {
         case 'Confirm':
           return Colors.green;
         case 'Pending':
-          return const Color.fromARGB(255, 38, 0, 255);
+          return const Color.fromARGB(255, 213, 155, 8);
         case 'Void':
           return Colors.red;
         default:
@@ -635,7 +638,7 @@ Widget _buildQuickAccessDateButtons() {
                               onPressed: () async {
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
-                                  productId: item['id'],
+                                  productId: item['product_id'],
                                   productName: item['product_name'],
                                   uom: item['uom'],
                                   quantity: item['qty'],
