@@ -353,7 +353,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                 height: 125,
                 child: InfoBox(
                   label: 'Predicted Target',
-                  value: 'RM ${widget.predictedTarget.toStringAsFixed(2)}',
+                  value: _currencyFormat.format(widget.predictedTarget),
                   currentValue: widget.predictedTarget,
                   previousValue: widget.previousMonthSales,
                   isUp: widget.predictedTarget >= widget.previousMonthSales,
@@ -496,6 +496,13 @@ class InfoBox extends StatelessWidget {
 
     bool isIncrease = change >= 0;
 
+    Color increaseColor;
+    if (label == 'Stock Sold' || label == 'Predicted Stock') {
+      increaseColor = Color.fromARGB(255, 0, 255, 13);
+    } else {
+      increaseColor = Color.fromARGB(255, 0, 117, 6);
+    }
+
     Widget icon;
     switch (label) {
       case 'Monthly Revenue':
@@ -551,7 +558,7 @@ class InfoBox extends StatelessWidget {
             Text(
               '${isIncrease ? '▲ Up' : '▼ Down'} ${change.abs().toStringAsFixed(1)}%',
               style: TextStyle(
-                color: isIncrease ? Color.fromARGB(255, 0, 145, 5) : Colors.red,
+                color: isIncrease ? increaseColor : Colors.red,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -569,6 +576,7 @@ class InfoBox extends StatelessWidget {
     );
   }
 }
+
 
 class SalesForecast {
   final int salesmanId;
