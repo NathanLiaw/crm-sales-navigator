@@ -29,7 +29,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0069BA),
+        backgroundColor: Color(0xff004c87),
         title: Text(
           'Create Lead',
           style: TextStyle(color: Colors.white),
@@ -49,19 +49,19 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Customer Details',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                ),
-                TextButton(
-                  onPressed: _selectCustomer,
-                  child: const Text(
-                    'Select Customer',
-                    style: TextStyle(
-                      color: Color(0xff0069BA),
-                      fontSize: 16,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Customer Details',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                     ),
-                  ),
+                    IconButton(
+                      icon: Icon(Icons.contacts, color: Color(0xff0069BA)),
+                      onPressed: _selectCustomer,
+                    ),
+                  ],
                 ),
                 TextFormField(
                   controller: customerNameController,
