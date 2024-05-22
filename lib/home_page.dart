@@ -1,9 +1,9 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
+import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
@@ -25,6 +25,8 @@ final List<String> tabbarNames = [
 ];
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -168,7 +170,7 @@ class _HomePageState extends State<HomePage> {
         var salesOrderId = row['so_id']?.toString();
         var previousStage = row['previous_stage']?.toString();
         var quantity =
-            row['quantity'] != null ? row['quantity'].toString() : null;
+            row['quantity']?.toString();
 
         var leadItem = LeadItem(
           customerName: customerName,
@@ -431,17 +433,17 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete this sales lead?'),
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this sales lead?'),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
             ),
             TextButton(
-              child: Text('Confirm'),
+              child: const Text('Confirm'),
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
@@ -481,19 +483,19 @@ class _HomePageState extends State<HomePage> {
             return Scaffold(
               appBar: AppBar(
                 automaticallyImplyLeading: false,
-                backgroundColor: Color(0xff004c87),
+                backgroundColor: const Color(0xff004c87),
                 title: Text(
                   'Welcome, $salesmanName',
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 actions: [
                   IconButton(
-                    icon: Icon(Icons.notifications, color: Colors.white),
+                    icon: const Icon(Icons.notifications, color: Colors.white),
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => NotificationsPage()),
+                            builder: (context) => const NotificationsPage()),
                       );
                     },
                   ),
@@ -502,8 +504,8 @@ class _HomePageState extends State<HomePage> {
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
                     child: Text(
                       'Sales Lead Pipeline',
                       style:
@@ -523,7 +525,7 @@ class _HomePageState extends State<HomePage> {
                       Tab(text: 'Closed(${closedLeads.length})'),
                     ],
                     labelStyle:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   Expanded(
                     child: TabBarView(
@@ -538,13 +540,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              bottomNavigationBar: CustomNavigationBar(),
+              bottomNavigationBar: const CustomNavigationBar(),
               floatingActionButton: _buildFloatingActionButton(context),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
             );
           } else {
-            return Scaffold(
+            return const Scaffold(
               body: Center(
                 child: CircularProgressIndicator(),
               ),
@@ -559,7 +561,7 @@ class _HomePageState extends State<HomePage> {
     return AnimatedBuilder(
       animation: DefaultTabController.of(context),
       builder: (BuildContext context, Widget? child) {
-        final TabController tabController = DefaultTabController.of(context)!;
+        final TabController tabController = DefaultTabController.of(context);
         return tabController.index == 0
             ? FloatingActionButton.extended(
                 onPressed: () {
@@ -572,10 +574,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 },
-                icon: Icon(Icons.add, color: Colors.white),
+                icon: const Icon(Icons.add, color: Colors.white),
                 label:
-                    Text('Create Lead', style: TextStyle(color: Colors.white)),
-                backgroundColor: Color(0xff0069BA),
+                    const Text('Create Lead', style: TextStyle(color: Colors.white)),
+                backgroundColor: const Color(0xff0069BA),
               )
             : Container();
       },
@@ -597,7 +599,7 @@ class _HomePageState extends State<HomePage> {
             // Check if it's the last item
             if (index == leadItems.length - 1)
               // Add additional padding for the last item
-              SizedBox(height: 80),
+              const SizedBox(height: 80),
           ],
         );
       },
@@ -605,137 +607,149 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildLeadItem(LeadItem leadItem) {
-    return Card(
-      color: const Color.fromARGB(255, 205, 229, 242),
-      elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  leadItem.customerName.length > 10
-                      ? leadItem.customerName.substring(0, 6) + '...'
-                      : leadItem.customerName,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Container(
-                  margin: EdgeInsets.only(left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    leadItem.amount,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                Spacer(),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton2<String>(
-                    isExpanded: true,
-                    hint: Text(
-                      'Opportunities',
-                      style: TextStyle(fontSize: 12, color: Colors.black),
-                    ),
-                    items: tabbarNames
-                        .skip(1)
-                        .map((item) => DropdownMenuItem<String>(
-                              value: item,
-                              child: Text(
-                                item,
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ))
-                        .toList(),
-                    value: leadItem.selectedValue,
-                    onChanged: (String? value) {
-                      if (value == 'Engagement') {
-                        _moveToEngagement(leadItem);
-                      } else if (value == 'Negotiation') {
-                        _moveToNegotiation(leadItem);
-                      } else if (value == 'Closed') {
-                        _moveToCreateTaskPage(context, leadItem);
-                      } else if (value == 'Order Processing') {
-                        _navigateToCreateTaskPage(context, leadItem, false);
-                      }
-                    },
-                    buttonStyleData: ButtonStyleData(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      height: 32,
-                      width: 140,
-                      decoration: BoxDecoration(color: Colors.white),
-                    ),
-                    menuItemStyleData: MenuItemStyleData(
-                      height: 30,
-                    ),
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CustomerInsightPage(
+              customerName: leadItem.customerName,
             ),
-            SizedBox(height: 8),
-            Text(leadItem.description),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: Text(
-                    leadItem.createdDate,
-                    style: TextStyle(color: Colors.grey),
+          ),
+        );
+      },
+      child: Card(
+        color: const Color.fromARGB(255, 205, 229, 242),
+        elevation: 2,
+        margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    leadItem.customerName.length > 10
+                        ? '${leadItem.customerName.substring(0, 6)}...'
+                        : leadItem.customerName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _handleIgnore(leadItem);
-                        },
-                        child:
-                            Text('Ignore', style: TextStyle(color: Colors.red)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            side: BorderSide(color: Colors.red, width: 2),
-                          ),
-                          minimumSize: Size(50, 35),
-                        ),
+                  Container(
+                    margin: const EdgeInsets.only(left: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      leadItem.amount,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
-                      SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
+                    ),
+                  ),
+                  const Spacer(),
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton2<String>(
+                      isExpanded: true,
+                      hint: const Text(
+                        'Opportunities',
+                        style: TextStyle(fontSize: 12, color: Colors.black),
+                      ),
+                      items: tabbarNames
+                          .skip(1)
+                          .map((item) => DropdownMenuItem<String>(
+                                value: item,
+                                child: Text(
+                                  item,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ))
+                          .toList(),
+                      value: leadItem.selectedValue,
+                      onChanged: (String? value) {
+                        if (value == 'Engagement') {
                           _moveToEngagement(leadItem);
-                        },
-                        child: Text('Accept',
-                            style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xff0069BA),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          minimumSize: Size(50, 35),
-                        ),
+                        } else if (value == 'Negotiation') {
+                          _moveToNegotiation(leadItem);
+                        } else if (value == 'Closed') {
+                          _moveToCreateTaskPage(context, leadItem);
+                        } else if (value == 'Order Processing') {
+                          _navigateToCreateTaskPage(context, leadItem, false);
+                        }
+                      },
+                      buttonStyleData: const ButtonStyleData(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        height: 32,
+                        width: 140,
+                        decoration: BoxDecoration(color: Colors.white),
                       ),
-                    ],
+                      menuItemStyleData: const MenuItemStyleData(
+                        height: 30,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(leadItem.description),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Text(
+                      leadItem.createdDate,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            _handleIgnore(leadItem);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              side: const BorderSide(color: Colors.red, width: 2),
+                            ),
+                            minimumSize: const Size(50, 35),
+                          ),
+                          child:
+                              const Text('Ignore', style: TextStyle(color: Colors.red)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            _moveToEngagement(leadItem);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff0069BA),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            minimumSize: const Size(50, 35),
+                          ),
+                          child: const Text('Accept',
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -864,7 +878,7 @@ class _HomePageState extends State<HomePage> {
             future: _fetchSalesOrderStatus(leadItem.salesOrderId!),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
+                return const CircularProgressIndicator();
               } else if (snapshot.hasError) {
                 return Text('Error: ${snapshot.error}');
               } else {
@@ -961,7 +975,7 @@ class _HomePageState extends State<HomePage> {
           future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
+              return const CircularProgressIndicator();
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else {

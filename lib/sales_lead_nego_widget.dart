@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
@@ -17,13 +18,13 @@ class NegotiationLeadItem extends StatefulWidget {
   final Function(LeadItem, String, String?) onMoveToOrderProcessing;
 
   const NegotiationLeadItem({
-    Key? key,
+    super.key,
     required this.leadItem,
     required this.onDeleteLead,
     required this.onUndoLead,
     required this.onComplete,
     required this.onMoveToOrderProcessing,
-  }) : super(key: key);
+  });
 
   @override
   _NegotiationLeadItemState createState() => _NegotiationLeadItemState();
@@ -40,9 +41,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     _fetchTaskDetails();
   }
 
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
       throw 'Could not launch $url';
     }
@@ -119,7 +121,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     return Card(
       color: const Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -130,7 +132,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               children: [
                 Text(
                   widget.leadItem.customerName.length > 15
-                      ? widget.leadItem.customerName.substring(0, 15) + '...'
+                      ? '${widget.leadItem.customerName.substring(0, 15)}...'
                       : widget.leadItem.customerName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -139,22 +141,22 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Container(
-                  margin: EdgeInsets.only(left: 20),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  margin: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     'RM$formattedAmount',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 PopupMenuButton<String>(
                   onSelected: (String value) async {
                     if (value == 'delete') {
@@ -162,18 +164,18 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: Text('Confirm Delete'),
-                            content: Text(
+                            title: const Text('Confirm Delete'),
+                            content: const Text(
                                 'Are you sure you want to delete this sales lead?'),
                             actions: [
                               TextButton(
-                                child: Text('Cancel'),
+                                child: const Text('Cancel'),
                                 onPressed: () {
                                   Navigator.of(context).pop(false);
                                 },
                               ),
                               TextButton(
-                                child: Text('Confirm'),
+                                child: const Text('Confirm'),
                                 onPressed: () {
                                   Navigator.of(context).pop(true);
                                 },
@@ -203,9 +205,19 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
+                     PopupMenuItem<String>(
                       value: 'view details',
-                      child: Text('View details'),
+                      child: const Text('View details'),
+                       onTap: () {
+                         Navigator.push(
+                           context,
+                           MaterialPageRoute(
+                             builder: (context) => CustomerInsightPage(
+                               customerName: widget.leadItem.customerName,
+                             ),
+                           ),
+                         );
+                       },
                     ),
                     const PopupMenuItem<String>(
                       value: 'delete',
@@ -217,7 +229,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                     ),
                     PopupMenuItem<String>(
                       value: 'undo',
-                      child: Text('Undo'),
+                      child: const Text('Undo'),
                       onTap: () async {
                         MySqlConnection conn = await connectToDatabase();
                         try {
@@ -269,8 +281,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       Text(
                         widget.leadItem.contactNumber.isNotEmpty
                             ? widget.leadItem.contactNumber
-                            : 'XXX-XXXXXXX',
-                        style: TextStyle(
+                            : 'Unavailable',
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
@@ -295,8 +307,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       Text(
                         widget.leadItem.emailAddress.isNotEmpty
                             ? widget.leadItem.emailAddress
-                            : 'XXX@domain.com',
-                        style: TextStyle(
+                            : 'Unavailable',
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
@@ -312,34 +324,34 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.date_range, color: Color(0xff0069BA)),
+                      const Icon(Icons.date_range, color: Color(0xff0069BA)),
                       Text(
                           'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Text(
                         '${title?.toUpperCase()}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ],
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     '$description',
-                    style: TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 ],
               )
             else
-              Text(
+              const Text(
                 'You haven\'t created a task yet! Click the Create Task button to create it.',
                 style: TextStyle(
                   color: Colors.black,
@@ -352,7 +364,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 DropdownButtonHideUnderline(
                   child: DropdownButton2<String>(
                     isExpanded: true,
-                    hint: Text(
+                    hint: const Text(
                       'Negotiation',
                     ),
                     items: ['Negotiation', 'Order Processing', 'Closed']
@@ -360,7 +372,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               value: item,
                               child: Text(
                                 item,
-                                style: TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ))
                         .toList(),
@@ -391,7 +403,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   onPressed: () => _navigateToCreateTaskPage(context, true),
                   child: Text(
                     title == null ? 'Create Task' : 'Edit Task',
-                    style: TextStyle(
+                    style: const TextStyle(
                       decoration: TextDecoration.underline,
                       decorationColor: Color(0xff0069BA),
                       color: Color(0xff0069BA),
@@ -401,7 +413,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 ),
                 Text(
                   'Created on: ${widget.leadItem.createdDate}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
                   ),

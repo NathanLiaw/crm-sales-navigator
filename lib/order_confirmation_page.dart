@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:flutter/gestures.dart';
@@ -198,6 +199,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formattedTotal = formatter.format(widget.total);
+    final formattedSubtotal = formatter.format(widget.subtotal);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff004c87),
@@ -327,11 +331,11 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Total: RM${widget.total.toStringAsFixed(3)}',
+                    'Total: $formattedTotal',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                   Text(
-                    'Subtotal: RM${widget.subtotal.toStringAsFixed(3)}',
+                    'Subtotal: $formattedSubtotal',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],

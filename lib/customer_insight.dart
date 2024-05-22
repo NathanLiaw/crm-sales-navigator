@@ -39,7 +39,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
       final results = await readFirst(
         conn,
         'customer',
-        'company_name = "${widget.customerName}" AND status = 1',
+        "company_name = '${widget.customerName}' AND status = 1",
         '',
       );
       await conn.close();
@@ -346,7 +346,9 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                   const SizedBox(height: 10.0),
                   SizedBox(
                     height: 250.0,
-                    child: ListView.builder(
+                    child: products.isEmpty
+                        ? const Text('No purchases yet')
+                        : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: products.length,
                       itemBuilder: (context, index) {
@@ -370,8 +372,8 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                 children: [
                                   // Container for product photo
                                   SizedBox(
-                                    width: 120.0, // Adjust according to your needs
-                                    height: 120.0, // Adjust according to your needs
+                                    width: 120.0,
+                                    height: 120.0,
                                     child: CachedNetworkImage(
                                       imageUrl: photoUrl,
                                       placeholder: (context, url) => const CircularProgressIndicator(),
@@ -381,7 +383,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                   const SizedBox(height: 8),
                                   // Container for product name with fixed width
                                   SizedBox(
-                                    width: 120.0, // Adjust according to your needs
+                                    width: 120.0,
                                     child: Text(
                                       productName,
                                       textAlign: TextAlign.center,
@@ -392,7 +394,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                   const SizedBox(height: 4),
                                   // Container for product uom with fixed width
                                   SizedBox(
-                                    width: 120.0, // Adjust according to your needs
+                                    width: 120.0,
                                     child: Text(
                                       productUom,
                                       textAlign: TextAlign.center,

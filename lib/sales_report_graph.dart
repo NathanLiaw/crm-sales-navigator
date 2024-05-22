@@ -99,7 +99,7 @@ class _SalesReportState extends State<SalesReport> {
                 DATE(c.created) AS `Date`,
                 ROUND(SUM(c.final_total), 0) AS `Total Sales`
             FROM cart c
-            JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
             JOIN 
             cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
             WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() 
@@ -129,7 +129,7 @@ class _SalesReportState extends State<SalesReport> {
                   DATE_FORMAT(c.created, '%Y-%m') AS YearMonth,
                   ROUND(SUM(c.final_total), 0) AS `Total Sales`
               FROM cart c
-              JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+              JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
               JOIN 
             cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE c.created >= CURDATE() - INTERVAL 6 MONTH
@@ -165,7 +165,7 @@ class _SalesReportState extends State<SalesReport> {
                   ROUND(SUM(c.final_total), 0) AS `Total Sales`
               FROM 
                   cart c
-              JOIN Salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+              JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
               JOIN 
               cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE 

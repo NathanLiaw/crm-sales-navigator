@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/edit_item_page.dart';
@@ -276,6 +277,9 @@ class _CartPage extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formattedTotal = formatter.format(total);
+    final formattedSubtotal = formatter.format(subtotal);
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -392,6 +396,7 @@ class _CartPage extends State<CartPage> {
                     List<String> itemPhotos = productPhotos.isNotEmpty ? productPhotos[index] : [];
                     bool isSelected = selectedCartItems.contains(item);
                     final currentQuantity = item.quantity;
+                    final formattedPrice = formatter.format(item.unitPrice * item.quantity);
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
@@ -512,7 +517,7 @@ class _CartPage extends State<CartPage> {
                                               Row(
                                                   children: [
                                                     SizedBox(
-                                                      width: 150, // Set your desired width here
+                                                      width: 150,
                                                       child: Row(
                                                         children: [
                                                           Flexible(
@@ -520,7 +525,7 @@ class _CartPage extends State<CartPage> {
                                                               mainAxisAlignment: MainAxisAlignment.start,
                                                               children: [
                                                                 Text(
-                                                                  'RM${(item.unitPrice * (item.quantity)).toStringAsFixed(3)}',
+                                                                  formattedPrice,
                                                                   style: const TextStyle(
                                                                     fontSize: 16,
                                                                     fontWeight: FontWeight.bold,
@@ -663,7 +668,7 @@ class _CartPage extends State<CartPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total: RM${total.toStringAsFixed(3)}',
+                            'Total: $formattedTotal',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -671,7 +676,7 @@ class _CartPage extends State<CartPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Subtotal: RM${subtotal.toStringAsFixed(3)}',
+                            'Subtotal: $formattedSubtotal',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,

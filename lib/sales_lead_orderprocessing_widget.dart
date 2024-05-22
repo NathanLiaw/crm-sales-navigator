@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/order_details_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OrderProcessingLeadItem extends StatelessWidget {
@@ -187,7 +188,16 @@ class OrderProcessingLeadItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderDetailsPage(
+                          cartID: int.parse(leadItem.salesOrderId!),
+                        ),
+                      ),
+                    );
+                  },
                   child: Text(
                     'View Order',
                     style: TextStyle(
