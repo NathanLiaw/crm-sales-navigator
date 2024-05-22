@@ -6,8 +6,8 @@ import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:sales_navigator/components/item_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 class ItemScreen extends StatefulWidget {
   final int productId;
@@ -16,7 +16,7 @@ class ItemScreen extends StatefulWidget {
   final Blob itemDescription;
   final String priceByUom;
 
-  const ItemScreen({
+  const ItemScreen({super.key,
     required this.productId,
     required this.productName,
     required this.itemAssetNames,
@@ -52,12 +52,11 @@ class _ItemScreenState extends State<ItemScreen> {
         _uom = firstEntry.key;
         _price = firstEntry.value;
         _priceDataByArea = jsonEncode(areaData);
-        print(_priceDataByArea);
       } else {
-        print('No data found for area ID: $_areaId');
+        developer.log('No data found for area ID: $_areaId');
       }
     } else {
-      print('Area ID $_areaId not found in price data.');
+      developer.log('Area ID $_areaId not found in price data');
     }
   }
 
@@ -72,8 +71,7 @@ class _ItemScreenState extends State<ItemScreen> {
           Map<String, double> areaPrices = {};
           value.forEach((uom, price) {
             if (price is String) {
-              double parsedPrice =
-                  double.tryParse(price.replaceAll(',', '')) ?? 0.0;
+              double parsedPrice = double.tryParse(price.replaceAll(',', '')) ?? 0.0;
               areaPrices[uom] = parsedPrice;
             }
           });
@@ -83,7 +81,7 @@ class _ItemScreenState extends State<ItemScreen> {
 
       retrievePriceByUomUsingAreaId();
     } catch (e) {
-      print('Error decoding price data: $e');
+      developer.log('Error decoding price data: $e', error: e);
     }
   }
 
@@ -104,7 +102,7 @@ class _ItemScreenState extends State<ItemScreen> {
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
         children: [
-          ItemAppBar(),
+          const ItemAppBar(),
           Container(
             decoration: BoxDecoration(
               boxShadow: [
@@ -122,8 +120,8 @@ class _ItemScreenState extends State<ItemScreen> {
             child: CachedNetworkImage(
               imageUrl: widget.itemAssetNames[_selectedImageIndex],
               height: 446,
-              placeholder: (context, url) => CircularProgressIndicator(),
-              errorWidget: (context, url, error) => Icon(Icons.error_outline),
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) => const Icon(Icons.error_outline),
             ),
 
             /*Image.asset(
@@ -131,7 +129,7 @@ class _ItemScreenState extends State<ItemScreen> {
               height: 446,
             ), */
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           SizedBox(
             height: 100,
             child: ListView.builder(
@@ -140,7 +138,7 @@ class _ItemScreenState extends State<ItemScreen> {
               itemBuilder: (context, index) {
                 final assetName = widget.itemAssetNames[index];
                 if (assetName == 'https://haluansama.com/crm-sales/null') {
-                  return SizedBox
+                  return const SizedBox
                       .shrink(); // Return an empty container if the asset name is null
                 }
                 return GestureDetector(
@@ -150,7 +148,7 @@ class _ItemScreenState extends State<ItemScreen> {
                     });
                   },
                   child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     child: Image.network(
                       assetName,
                       fit: BoxFit.cover,
@@ -161,26 +159,28 @@ class _ItemScreenState extends State<ItemScreen> {
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: 364,
+                      width: 300,
                       child: Text(
                         widget.productName,
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
+                        maxLines: 3,
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 25, 23, 49),
+                          color: const Color.fromARGB(255, 25, 23, 49),
                         ),
                       ),
                     ),
                     SizedBox(
-                      width: 364,
+                      width: 300,
                       child: Text(
                         _uom,
                         overflow: TextOverflow.ellipsis,
@@ -194,7 +194,7 @@ class _ItemScreenState extends State<ItemScreen> {
                     ),
                   ],
                 ),
-                Spacer(),
+                const Spacer(),
                 IconButton(
                   iconSize: 40,
                   onPressed: () {},
@@ -206,7 +206,7 @@ class _ItemScreenState extends State<ItemScreen> {
           const Divider(
             height: 24,
             thickness: 1,
-            color: const Color.fromARGB(255, 202, 202, 202),
+            color: Color.fromARGB(255, 202, 202, 202),
           ),
           Container(
             margin: const EdgeInsets.only(left: 10),
@@ -217,12 +217,12 @@ class _ItemScreenState extends State<ItemScreen> {
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color.fromARGB(255, 25, 23, 49),
+                color: const Color.fromARGB(255, 25, 23, 49),
               ),
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
             child: Card(
               color: Colors.white,
               clipBehavior: Clip.hardEdge,
@@ -257,10 +257,10 @@ class _ItemScreenState extends State<ItemScreen> {
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Color.fromARGB(255, 25, 23, 49),
+                                color: const Color.fromARGB(255, 25, 23, 49),
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               '$_uom: RM ${_price.toStringAsFixed(3)}',
                               style: GoogleFonts.inter(
@@ -275,7 +275,19 @@ class _ItemScreenState extends State<ItemScreen> {
                       const Spacer(),
                       IconButton(
                         iconSize: 30,
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) {
+                              return ItemVariationsScreen(
+                                productId: widget.productId,
+                                productName: widget.productName,
+                                itemAssetName: widget.itemAssetNames[0],
+                                priceByUom: _priceDataByArea,
+                              );
+                            }),
+                          );
+                        },
                         icon: const Icon(Icons.arrow_forward_ios),
                       ),
                     ],
@@ -287,7 +299,7 @@ class _ItemScreenState extends State<ItemScreen> {
           const Divider(
             height: 24,
             thickness: 1,
-            color: const Color.fromARGB(255, 202, 202, 202),
+            color: Color.fromARGB(255, 202, 202, 202),
           ),
           Container(
             margin: const EdgeInsets.only(left: 10),
@@ -305,7 +317,7 @@ class _ItemScreenState extends State<ItemScreen> {
           Container(
             margin: const EdgeInsets.only(left: 10, top: 14),
             child: Container(
-              margin: EdgeInsets.only(bottom: 28),
+              margin: const EdgeInsets.only(bottom: 28),
               child: HtmlWidget(
                 widget.itemDescription.toString(),
               ),
@@ -316,83 +328,3 @@ class _ItemScreenState extends State<ItemScreen> {
     );
   }
 }
-
-
-
-/*
-
-ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount:
-                jsonDecode(priceByUom).length, // Decode the JSON string here
-            itemBuilder: (context, index) {
-              final variationData =
-                  jsonDecode(priceByUom).entries.elementAt(index);
-              final variationName = variationData.key;
-              final variationPrices = variationData.value;
-
-              return Container(
-                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                child: Card(
-                  color: Colors.white,
-                  clipBehavior: Clip.hardEdge,
-                  child: InkWell(
-                    splashColor: Colors.blue.withAlpha(30),
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 20),
-                      child: Row(
-                        children: [
-                          // Add Image or Icon here
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  variationName,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromARGB(255, 25, 23, 49),
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                ...variationPrices.entries.map((entry) {
-                                  final uom = entry.key;
-                                  final price = entry.value;
-                                  return Text(
-                                    '$uom: RM $price',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          const Color.fromARGB(255, 25, 23, 49),
-                                    ),
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            iconSize: 30,
-                            onPressed: () {},
-                            icon: const Icon(Icons.arrow_forward_ios),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-
-
-
-*/
-
