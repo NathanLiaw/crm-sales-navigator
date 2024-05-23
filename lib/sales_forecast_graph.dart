@@ -332,66 +332,49 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              SizedBox(
-                width: 187,
-                height: 125,
-                child: InfoBox(
-                  label: 'Monthly Revenue',
-                  value:
-                      '${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
-                  currentValue: widget.currentSales,
-                  previousValue: widget.previousMonthSales,
-                  isUp: widget.currentSales >= widget.previousMonthSales,
-                  isDown: widget.currentSales < widget.previousMonthSales,
-                  backgroundColor: Color(0x300F9D58),
-                  textColor: Color(0xFF508155),
-                  fromLastMonthTextColor: Colors.black87,
-                ),
+              ResponsiveInfoBox(
+                label: 'Monthly Revenue',
+                value: '${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
+                currentValue: widget.currentSales,
+                previousValue: widget.previousMonthSales,
+                isUp: widget.currentSales >= widget.previousMonthSales,
+                isDown: widget.currentSales < widget.previousMonthSales,
+                backgroundColor: Color(0x300F9D58),
+                textColor: Color(0xFF508155),
+                fromLastMonthTextColor: Colors.black87,
               ),
-              SizedBox(
-                width: 187,
-                height: 125,
-                child: InfoBox(
-                  label: 'Predicted Target',
-                  value: _currencyFormat.format(widget.predictedTarget),
-                  currentValue: widget.predictedTarget,
-                  previousValue: widget.previousMonthSales,
-                  isUp: widget.predictedTarget >= widget.previousMonthSales,
-                  isDown: widget.predictedTarget < widget.previousMonthSales,
-                  backgroundColor: Color(0x49004C87),
-                  textColor: Color(0xFF004C87),
-                  fromLastMonthTextColor: Colors.black87,
-                ),
+              ResponsiveInfoBox(
+                label: 'Predicted Target',
+                value: _currencyFormat.format(widget.predictedTarget),
+                currentValue: widget.predictedTarget,
+                previousValue: widget.previousMonthSales,
+                isUp: widget.predictedTarget >= widget.previousMonthSales,
+                isDown: widget.predictedTarget < widget.previousMonthSales,
+                backgroundColor: Color(0x49004C87),
+                textColor: Color(0xFF004C87),
+                fromLastMonthTextColor: Colors.black87,
               ),
-              SizedBox(
-                width: 187,
-                height: 125,
-                child: InfoBox(
-                  label: 'Stock Sold',
-                  value: '${widget.cartQuantity}',
-                  currentValue: widget.cartQuantity.toDouble(),
-                  previousValue: widget.previousCartQuantity.toDouble(),
-                  isUp: widget.cartQuantity >= widget.previousCartQuantity,
-                  isDown: widget.cartQuantity < widget.previousCartQuantity,
-                  backgroundColor: Color(0xFF004C87),
-                  textColor: Colors.white,
-                  fromLastMonthTextColor: Colors.white,
-                ),
+              ResponsiveInfoBox(
+                label: 'Stock Sold',
+                value: '${widget.cartQuantity}',
+                currentValue: widget.cartQuantity.toDouble(),
+                previousValue: widget.previousCartQuantity.toDouble(),
+                isUp: widget.cartQuantity >= widget.previousCartQuantity,
+                isDown: widget.cartQuantity < widget.previousCartQuantity,
+                backgroundColor: Color(0xFF004C87),
+                textColor: Colors.white,
+                fromLastMonthTextColor: Colors.white,
               ),
-              SizedBox(
-                width: 187,
-                height: 125,
-                child: InfoBox(
-                  label: 'Predicted Stock',
-                  value: '${widget.stockNeeded}',
-                  currentValue: widget.stockNeeded.toDouble(),
-                  previousValue: widget.previousCartQuantity.toDouble(),
-                  isUp: widget.stockNeeded >= widget.previousCartQuantity,
-                  isDown: widget.stockNeeded < widget.previousCartQuantity,
-                  backgroundColor: Color(0xFF709640),
-                  textColor: Colors.white,
-                  fromLastMonthTextColor: Colors.white,
-                ),
+              ResponsiveInfoBox(
+                label: 'Predicted Stock',
+                value: '${widget.stockNeeded}',
+                currentValue: widget.stockNeeded.toDouble(),
+                previousValue: widget.previousCartQuantity.toDouble(),
+                isUp: widget.stockNeeded >= widget.previousCartQuantity,
+                isDown: widget.stockNeeded < widget.previousCartQuantity,
+                backgroundColor: Color(0xFF709640),
+                textColor: Colors.white,
+                fromLastMonthTextColor: Colors.white,
               ),
             ],
           ),
@@ -457,7 +440,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 }
 
-class InfoBox extends StatelessWidget {
+class ResponsiveInfoBox extends StatelessWidget {
   final String label;
   final String value;
   final double currentValue;
@@ -468,7 +451,7 @@ class InfoBox extends StatelessWidget {
   final Color textColor;
   final Color fromLastMonthTextColor;
 
-  const InfoBox({
+  const ResponsiveInfoBox({
     Key? key,
     required this.label,
     required this.value,
@@ -521,8 +504,11 @@ class InfoBox extends StatelessWidget {
         icon = SizedBox.shrink();
     }
 
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double boxWidth = deviceWidth * 0.8;
+
     return Container(
-      width: 160,
+      width: boxWidth,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(10),
@@ -576,7 +562,6 @@ class InfoBox extends StatelessWidget {
     );
   }
 }
-
 
 class SalesForecast {
   final int salesmanId;

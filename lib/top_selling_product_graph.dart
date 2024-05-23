@@ -71,32 +71,33 @@ LIMIT 5;
 
     try {
       final results = await executeQuery(query);
-      final List<Product> fetchedProducts = results.map((row) => Product(
-            row['product_name'] as String,
-            (row['total_qty_sold'] as num).toInt(),
-            (row['total_sales'] as num).toDouble(),
-          )).toList();
+      final List<Product> fetchedProducts = results
+          .map((row) => Product(
+                row['product_name'] as String,
+                (row['total_qty_sold'] as num).toInt(),
+                (row['total_sales'] as num).toDouble(),
+              ))
+          .toList();
 
       setState(() {
         products = fetchedProducts;
       });
     } catch (e, stackTrace) {
-      developer.log('Error fetching top products: $e', error: e, stackTrace: stackTrace);
+      developer.log('Error fetching top products: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final maxQuantity = products.fold<int>(
-        0, (max, p) => p.quantity > max ? p.quantity : max);
+    final maxQuantity =
+        products.fold<int>(0, (max, p) => p.quantity > max ? p.quantity : max);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Top Selling Products',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         centerTitle: false,
@@ -147,8 +148,7 @@ LIMIT 5;
                         ),
                       ),
                       Expanded(
-                        child: ListView.separated(
-                          physics: const NeverScrollableScrollPhysics(),
+                        child: ListView.builder(
                           itemCount: products.length,
                           itemBuilder: (context, index) {
                             final product = products[index];
@@ -192,15 +192,18 @@ LIMIT 5;
                                             child: Text(
                                               '${product.quantity}',
                                               textAlign: TextAlign.center,
-                                              style: const TextStyle(fontWeight: FontWeight.w600),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                           Expanded(
                                             flex: 2,
                                             child: Text(
-                                              _formatSalesOrder(product.salesOrder),
+                                              _formatSalesOrder(
+                                                  product.salesOrder),
                                               textAlign: TextAlign.end,
-                                              style: const TextStyle(fontWeight: FontWeight.w600),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w600),
                                             ),
                                           ),
                                         ],
@@ -211,10 +214,6 @@ LIMIT 5;
                               ),
                             );
                           },
-                          separatorBuilder: (context, index) => Divider(
-                            color: Colors.grey.shade300,
-                            height: 1,
-                          ),
                           padding: EdgeInsets.zero,
                         ),
                       ),
@@ -227,10 +226,10 @@ LIMIT 5;
     );
   }
 
-String _formatSalesOrder(double salesOrder) {
-  final formatter = NumberFormat.currency(symbol: 'RM', decimalDigits: 0);
-  return formatter.format(salesOrder);
-}
+  String _formatSalesOrder(double salesOrder) {
+    final formatter = NumberFormat.currency(symbol: 'RM', decimalDigits: 0);
+    return formatter.format(salesOrder);
+  }
 }
 
 class Product {
