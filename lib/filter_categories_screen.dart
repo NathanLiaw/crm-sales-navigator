@@ -22,7 +22,6 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
   late List<CategoryData> _categories = [];
   late List<List<SubCategoryData>> _subCategories = [];
   late List<BrandData> _brands = [];
-  int _expandedIndex = -1;
   List<int> selectedSubCategoryIds = [];
   List<int> _selectedBrandIds = [];
 
@@ -62,59 +61,51 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
           ? Center(child: CircularProgressIndicator())
           : ListView(
               children: [
-                // Display categories and subcategories
-                ..._categories.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final category = entry.value;
-                  final isExpanded = index == _expandedIndex;
-                  return ExpansionTile(
-                    title: Text(
-                      category.category,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                // Display categories with expandable subcategories
+                ExpansionTile(
+                  title: Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    onExpansionChanged: (expanded) {
-                      setState(() {
-                        _expandedIndex = expanded ? index : -1;
-                      });
-                    },
-                    children: [
-                      if (isExpanded)
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: _subCategories[index].length,
-                          itemBuilder: (context, subIndex) {
-                            final subCategoryData =
-                                _subCategories[index][subIndex];
-                            return CheckboxListTile(
-                              title: Text(
-                                subCategoryData.subCategory,
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                              value: selectedSubCategoryIds
-                                  .contains(subCategoryData.id),
-                              onChanged: (selected) {
-                                setState(() {
-                                  if (selected!) {
-                                    selectedSubCategoryIds
-                                        .add(subCategoryData.id);
-                                  } else {
-                                    selectedSubCategoryIds
-                                        .remove(subCategoryData.id);
-                                  }
-                                });
-                              },
-                            );
-                          },
+                  ),
+                  children: _categories.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final category = entry.value;
+                    return ExpansionTile(
+                      title: Text(
+                        category.category,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
-                    ],
-                  );
-                }).toList(),
+                      ),
+                      children: _subCategories[index].map((subCategoryData) {
+                        return CheckboxListTile(
+                          title: Text(
+                            subCategoryData.subCategory,
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
+                          value: selectedSubCategoryIds
+                              .contains(subCategoryData.id),
+                          onChanged: (selected) {
+                            setState(() {
+                              if (selected!) {
+                                selectedSubCategoryIds.add(subCategoryData.id);
+                              } else {
+                                selectedSubCategoryIds
+                                    .remove(subCategoryData.id);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }).toList(),
+                ),
                 // Display brands
                 ExpansionTile(
                   title: Text(
