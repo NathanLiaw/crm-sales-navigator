@@ -462,7 +462,7 @@ class _CartPage extends State<CartPage> {
                                         children: [
                                           Flexible(
                                             child: SizedBox(
-                                              width: 200,
+                                              width: 180,
                                               child: Text(
                                                 item.productName,
                                                 style: const TextStyle(
@@ -501,7 +501,7 @@ class _CartPage extends State<CartPage> {
                                       ),
                                       const SizedBox(height: 4),
                                       SizedBox(
-                                        width: 240,
+                                        width: 200,
                                         child: Text(
                                           item.uom,
                                           style: const TextStyle(
