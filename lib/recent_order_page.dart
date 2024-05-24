@@ -356,7 +356,7 @@ class _RecentOrderState extends State<RecentOrder> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
         'id, product_name, photo1, description, sub_category, price_by_uom',
       );
@@ -403,10 +403,10 @@ class _RecentOrderState extends State<RecentOrder> {
   Future<List<Map<String, dynamic>>> _fetchRecentOrders() async {
     try {
       MySqlConnection conn = await connectToDatabase();
-      String condition = 'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman" GROUP BY '
-          'ci.product_name, ci.product_id';
+      String condition = "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' GROUP BY "
+          "ci.product_name, ci.product_id";
       if (widget.customerId > 0){
-        condition = 'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman"'
+        condition = "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman'"
             'AND ci.customer_id = ${widget.customerId} GROUP BY ci.product_name, ci.product_id';
       }
       final results = await readData(
@@ -485,7 +485,7 @@ class _RecentOrderState extends State<RecentOrder> {
       final results = await readData(
         conn,
         'product',
-        'product_name = "$productName"',
+        "product_name = '$productName'",
         '',
         'photo1',
       );
