@@ -219,8 +219,7 @@ class _EditItemPageState extends State<EditItemPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(
-                              width: 200,
+                            Expanded(
                               child: Text(
                                 widget.itemName,
                                 style: const TextStyle(
