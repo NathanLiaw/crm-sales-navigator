@@ -13,14 +13,14 @@ class ContactUs extends StatelessWidget {
           'Contact Us',
           style: TextStyle(color: Colors.white),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Handle notifications
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.notifications),
+        //     onPressed: () {
+        //       // Handle notifications
+        //     },
+        //   ),
+        // ],
       ),
       body: const Padding(
         padding: EdgeInsets.all(16.0),

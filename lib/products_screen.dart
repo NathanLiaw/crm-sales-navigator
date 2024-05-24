@@ -61,9 +61,9 @@ class _ProductsScreenState extends State<ProductsScreen>
       await conn.close();
 
       areaMap = Map.fromEntries(results.map((row) => MapEntry<int, String>(
-        row['id'],
-        row['area'] ?? '',
-      )));
+            row['id'],
+            row['area'] ?? '',
+          )));
 
       setState(() {
         area = areaMap;
@@ -229,18 +229,18 @@ class _ProductsScreenState extends State<ProductsScreen>
               ),
             ),
           ),
-          actions: <Widget>[
-            // IconButton(
-            //   icon: const Icon(
-            //     Icons.notifications,
-            //     size: 34,
-            //     color: Colors.white,
-            //   ),
-            //   onPressed: () {
-            //     // Add your onPressed logic here
-            //   },
-            // ),
-          ],
+          // actions: <Widget>[
+          //   // IconButton(
+          //   //   icon: const Icon(
+          //   //     Icons.notifications,
+          //   //     size: 34,
+          //   //     color: Colors.white,
+          //   //   ),
+          //   //   onPressed: () {
+          //   //     // Add your onPressed logic here
+          //   //   },
+          //   // ),
+          // ],
         ),
       ),
       body: Container(
@@ -250,7 +250,6 @@ class _ProductsScreenState extends State<ProductsScreen>
         child: Column(
           children: [
             const SizedBox(height: 2),
-
             const Divider(
               color: Color.fromARGB(255, 0, 76, 135),
             ),
@@ -360,7 +359,6 @@ class _ProductsScreenState extends State<ProductsScreen>
             const Divider(
               color: Color.fromARGB(255, 0, 76, 135),
             ),
-
             Expanded(
               child: Container(
                 color: Colors.white,

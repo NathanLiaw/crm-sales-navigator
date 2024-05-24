@@ -45,6 +45,10 @@ class LoginPage extends StatelessWidget {
         prefs.setString('repriceAuthority', row['reprice_authority']);
         prefs.setString('discountAuthority', row['discount_authority']);
         prefs.setInt('status', row['status']);
+        // Save login status and expiration time to shared preferences
+        prefs.setBool('isLoggedIn', true);
+        prefs.setInt('loginExpirationTime',
+            DateTime.now().add(Duration(hours: 24)).millisecondsSinceEpoch);
 
         // Navigate to HomePage and pass salesmanName
         Navigator.pushReplacement(
@@ -63,6 +67,21 @@ class LoginPage extends StatelessWidget {
       developer.log('Error signing in: $e', error: e);
     } finally {
       await conn.close();
+    }
+  }
+
+  Future<bool> checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    int loginExpirationTime = prefs.getInt('loginExpirationTime') ?? 0;
+
+    if (isLoggedIn &&
+        loginExpirationTime > DateTime.now().millisecondsSinceEpoch) {
+      return true;
+    } else {
+      prefs.remove('isLoggedIn');
+      prefs.remove('loginExpirationTime');
+      return false;
     }
   }
 
@@ -99,107 +118,128 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 50),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.only(top: 30),
-                margin: const EdgeInsets.only(bottom: 10),
-                child: Image.asset(
-                  'asset/logo/logo_fyh.png',
-                  width: 300,
-                  height: 250,
-                ),
-              ),
-              Container(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.only(
-                  left: 20,
-                ),
-                child: const Text(
-                  'Salesman',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              // Email input field
-              const SizedBox(height: 10),
-              Container(
-                margin:
-                    const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
-                child: TextFormField(
-                  controller: usernameController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Username',
-                    // hintText: 'fyh@mail.com',
-                  ),
-                ),
-              ),
-
-              // Password input field
-              const SizedBox(height: 10),
-              Container(
-                margin: const EdgeInsets.only(top: 10, left: 20, right: 20),
-                child: TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Password',
-                  ),
-                ),
-              ),
-
-              // Sign in button
-              const SizedBox(height: 20),
-              Container(
-                margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Call the sign in method
-                    signIn(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff0069BA),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
+    return FutureBuilder<bool>(
+      future: checkLoginStatus(),
+      builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // Show a loading indicator while checking login status
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        } else if (snapshot.hasData && snapshot.data!) {
+          // If logged in, navigate to HomePage
+          return HomePage();
+        } else {
+          // If not logged in, show the login page
+          return Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 50),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(top: 30),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: Image.asset(
+                        'asset/logo/logo_fyh.png',
+                        width: 300,
+                        height: 250,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Sign In',
-                    style: TextStyle(
-                      color: Colors.white,
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                      ),
+                      child: const Text(
+                        'Salesman',
+                        style: TextStyle(
+                            fontSize: 25, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                ),
-              ),
 
-              // Forgot password button
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  // Show pop up window
-                  showContactInfoDialog(context);
-                },
-                child: const Text(
-                  'Forgot Password',
-                  style: TextStyle(
-                    color: Colors.black,
-                    decoration: TextDecoration.underline,
-                    decorationThickness: 2.0,
-                  ),
+                    // Email input field
+                    const SizedBox(height: 10),
+                    Container(
+                      margin: const EdgeInsets.only(
+                          top: 10, bottom: 10, left: 20, right: 20),
+                      child: TextFormField(
+                        controller: usernameController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Username',
+                          // hintText: 'fyh@mail.com',
+                        ),
+                      ),
+                    ),
+
+                    // Password input field
+                    const SizedBox(height: 10),
+                    Container(
+                      margin:
+                          const EdgeInsets.only(top: 10, left: 20, right: 20),
+                      child: TextFormField(
+                        controller: passwordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Password',
+                        ),
+                      ),
+                    ),
+
+                    // Sign in button
+                    const SizedBox(height: 20),
+                    Container(
+                      margin:
+                          const EdgeInsets.only(top: 20, left: 20, right: 20),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Call the sign in method
+                          signIn(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff0069BA),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Forgot password button
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () {
+                        // Show pop up window
+                        showContactInfoDialog(context);
+                      },
+                      child: const Text(
+                        'Forgot Password',
+                        style: TextStyle(
+                          color: Colors.black,
+                          decoration: TextDecoration.underline,
+                          decorationThickness: 2.0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        }
+      },
     );
   }
 }

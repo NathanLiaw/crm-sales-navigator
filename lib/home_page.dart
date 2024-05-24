@@ -4,7 +4,6 @@ import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/customer_insight.dart';
-import 'package:sales_navigator/notification_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -169,8 +168,7 @@ class _HomePageState extends State<HomePage> {
         var addressLine1 = row['address'].toString();
         var salesOrderId = row['so_id']?.toString();
         var previousStage = row['previous_stage']?.toString();
-        var quantity =
-            row['quantity']?.toString();
+        var quantity = row['quantity']?.toString();
 
         var leadItem = LeadItem(
           customerName: customerName,
@@ -249,6 +247,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _moveToEngagement(LeadItem leadItem) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      Results results = await conn.query(
+        'SELECT contact_number, email_address FROM sales_lead WHERE customer_name = ?',
+        [leadItem.customerName],
+      );
+      if (results.isNotEmpty) {
+        var row = results.first;
+        leadItem.contactNumber = row['contact_number'];
+        leadItem.emailAddress = row['email_address'];
+      }
+    } catch (e) {
+      developer.log('Error fetching contact number and email address: $e');
+    } finally {
+      await conn.close();
+    }
+
     setState(() {
       leadItems.remove(leadItem);
       engagementLeads.add(leadItem);
@@ -257,6 +272,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _moveToNegotiation(LeadItem leadItem) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      Results results = await conn.query(
+        'SELECT contact_number, email_address FROM sales_lead WHERE customer_name = ?',
+        [leadItem.customerName],
+      );
+      if (results.isNotEmpty) {
+        var row = results.first;
+        leadItem.contactNumber = row['contact_number'];
+        leadItem.emailAddress = row['email_address'];
+      }
+    } catch (e) {
+      developer.log('Error fetching contact number and email address: $e');
+    } finally {
+      await conn.close();
+    }
+
     setState(() {
       leadItems.remove(leadItem);
       negotiationLeads.add(leadItem);
@@ -434,7 +466,8 @@ class _HomePageState extends State<HomePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Delete'),
-          content: const Text('Are you sure you want to delete this sales lead?'),
+          content:
+              const Text('Are you sure you want to delete this sales lead?'),
           actions: [
             TextButton(
               child: const Text('Cancel'),
@@ -488,18 +521,18 @@ class _HomePageState extends State<HomePage> {
                   'Welcome, $salesmanName',
                   style: const TextStyle(color: Colors.white),
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const NotificationsPage()),
-                      );
-                    },
-                  ),
-                ],
+                // actions: [
+                //   IconButton(
+                //     icon: const Icon(Icons.notifications, color: Colors.white),
+                //     onPressed: () {
+                //       Navigator.push(
+                //         context,
+                //         MaterialPageRoute(
+                //             builder: (context) => const NotificationsPage()),
+                //       );
+                //     },
+                //   ),
+                // ],
               ),
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,8 +557,8 @@ class _HomePageState extends State<HomePage> {
                               'Order Processing(${orderProcessingLeads.length})'),
                       Tab(text: 'Closed(${closedLeads.length})'),
                     ],
-                    labelStyle:
-                        const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    labelStyle: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   Expanded(
                     child: TabBarView(
@@ -575,8 +608,8 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
-                label:
-                    const Text('Create Lead', style: TextStyle(color: Colors.white)),
+                label: const Text('Create Lead',
+                    style: TextStyle(color: Colors.white)),
                 backgroundColor: const Color(0xff0069BA),
               )
             : Container();
@@ -634,18 +667,20 @@ class _HomePageState extends State<HomePage> {
                     leadItem.customerName.length > 10
                         ? '${leadItem.customerName.substring(0, 6)}...'
                         : leadItem.customerName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Container(
                     margin: const EdgeInsets.only(left: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.green,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      leadItem.amount,
+                      leadItem.formattedAmount,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -721,12 +756,13 @@ class _HomePageState extends State<HomePage> {
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),
-                              side: const BorderSide(color: Colors.red, width: 2),
+                              side:
+                                  const BorderSide(color: Colors.red, width: 2),
                             ),
                             minimumSize: const Size(50, 35),
                           ),
-                          child:
-                              const Text('Ignore', style: TextStyle(color: Colors.red)),
+                          child: const Text('Ignore',
+                              style: TextStyle(color: Colors.red)),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
@@ -1009,6 +1045,10 @@ class LeadItem {
   String? salesOrderId;
   String? previousStage;
   String? quantity;
+  String get formattedAmount {
+    final formatter = NumberFormat("#,##0.00", "en_US");
+    return 'RM${formatter.format(double.parse(amount.substring(2)))}';
+  }
 
   LeadItem({
     required this.customerName,

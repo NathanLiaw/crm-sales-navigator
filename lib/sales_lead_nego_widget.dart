@@ -142,7 +142,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 ),
                 Container(
                   margin: const EdgeInsets.only(left: 20),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
@@ -205,23 +206,19 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
-                     PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: 'view details',
                       child: const Text('View details'),
-                       onTap: () {
-                         Navigator.push(
-                           context,
-                           MaterialPageRoute(
-                             builder: (context) => CustomerInsightPage(
-                               customerName: widget.leadItem.customerName,
-                             ),
-                           ),
-                         );
-                       },
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Text('Delete'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CustomerInsightPage(
+                              customerName: widget.leadItem.customerName,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const PopupMenuItem<String>(
                       value: 'complete',
@@ -256,6 +253,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                           await conn.close();
                         }
                       },
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Delete'),
                     ),
                   ],
                   child: const Icon(Icons.more_horiz_outlined,

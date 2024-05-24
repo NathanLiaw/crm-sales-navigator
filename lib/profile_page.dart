@@ -51,14 +51,14 @@ class _ProfilePageState extends State<ProfilePage> {
             fontSize: 24,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              // Handle notifications
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.notifications, color: Colors.white),
+        //     onPressed: () {
+        //       // Handle notifications
+        //     },
+        //   ),
+        // ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -81,13 +81,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   alignment: Alignment.center,
                   child: Text(
                     '$salesmanName',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   )),
               const SizedBox(height: 20),
               buildProfileOption('Account Setting', Icons.settings, context),
               buildProfileOption('Reports', Icons.analytics, context),
               buildProfileOption('Recent Order', Icons.shopping_bag, context),
-              buildProfileOption('Terms & Condition', Icons.description, context),
+              buildProfileOption(
+                  'Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
               const SizedBox(height: 20),
@@ -110,10 +112,10 @@ class _ProfilePageState extends State<ProfilePage> {
             context,
             MaterialPageRoute(builder: (context) => const AccountSetting()),
           ).then((value) {
-              if (value == true) {
-                _getSalesmanName();
-              }
-            });
+            if (value == true) {
+              _getSalesmanName();
+            }
+          });
         }
         if (title == 'Reports') {
           Navigator.push(
@@ -124,7 +126,10 @@ class _ProfilePageState extends State<ProfilePage> {
         if (title == 'Recent Order') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const RecentOrder(customerId: 0,)),
+            MaterialPageRoute(
+                builder: (context) => const RecentOrder(
+                      customerId: 0,
+                    )),
           );
         }
         if (title == 'Terms & Condition') {

@@ -80,7 +80,8 @@ class EngagementLeadItem extends StatelessWidget {
                   ),
                   Container(
                     margin: const EdgeInsets.only(left: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.green,
                       borderRadius: BorderRadius.circular(4),
@@ -159,10 +160,6 @@ class EngagementLeadItem extends StatelessWidget {
                         },
                       ),
                       const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Text('Delete'),
-                      ),
-                      const PopupMenuItem<String>(
                         value: 'complete',
                         child: Text('Complete'),
                       ),
@@ -195,6 +192,10 @@ class EngagementLeadItem extends StatelessWidget {
                             await conn.close();
                           }
                         },
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text('Delete'),
                       ),
                     ],
                     child: const Icon(Icons.more_horiz_outlined,
@@ -345,5 +346,4 @@ class EngagementLeadItem extends StatelessWidget {
       }
     }
   }
-
 }

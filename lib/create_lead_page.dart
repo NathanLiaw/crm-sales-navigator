@@ -9,7 +9,7 @@ import 'dart:developer' as developer;
 class CreateLeadPage extends StatefulWidget {
   final Function(String, String, String) onCreateLead;
 
-  const CreateLeadPage({super.key, required this.onCreateLead});
+  CreateLeadPage({required this.onCreateLead});
 
   @override
   _CreateLeadPageState createState() => _CreateLeadPageState();
@@ -29,13 +29,13 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
-        title: const Text(
+        backgroundColor: Color(0xff004c87),
+        title: Text(
           'Create Lead',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -43,7 +43,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -52,20 +52,20 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Customer Details',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.contacts, color: Color(0xff0069BA)),
+                      icon: Icon(Icons.contacts, color: Color(0xff0069BA)),
                       onPressed: _selectCustomer,
                     ),
                   ],
                 ),
                 TextFormField(
                   controller: customerNameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter customer/company name',
                     prefixIcon: Icon(
                       Icons.person,
@@ -84,7 +84,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 TextFormField(
                   controller: contactNumberController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter contact number',
                     prefixIcon: Icon(Icons.phone, color: Color(0xff0069BA)),
                   ),
@@ -104,15 +104,15 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 TextFormField(
                   controller: emailAddressController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter email address',
                     prefixIcon: Icon(Icons.email, color: Color(0xff0069BA)),
                   ),
                   validator: (value) {
-                    // if (value == null || value.isEmpty) {
-                    //   return 'Please enter email address';
-                    // }
-                    if (!EmailValidator.validate(value!)) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter email address';
+                    }
+                    if (!EmailValidator.validate(value)) {
                       return 'Please enter a valid email address';
                     }
                     return null;
@@ -120,7 +120,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 TextFormField(
                   controller: addressController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Enter address',
                     prefixIcon:
                         Icon(Icons.location_on, color: Color(0xff0069BA)),
@@ -138,14 +138,14 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24.0),
-                const Text(
+                SizedBox(height: 24.0),
+                Text(
                   'Others',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                 ),
                 TextFormField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Description',
                   ),
                   validator: (value) {
@@ -163,7 +163,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     Expanded(
                       child: TextFormField(
                         controller: amountController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Predicted sales',
                           hintText: 'RM',
                         ),
@@ -184,7 +184,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24.0),
+                SizedBox(height: 24.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -196,11 +196,11 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
-                          side: const BorderSide(color: Colors.red, width: 2),
+                          side: BorderSide(color: Colors.red, width: 2),
                         ),
-                        minimumSize: const Size(120, 40),
+                        minimumSize: Size(120, 40),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(
                           color: Colors.red,
@@ -222,13 +222,13 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: Color(0xff0069BA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        minimumSize: const Size(120, 40),
+                        minimumSize: Size(120, 40),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Create',
                         style: TextStyle(color: Colors.white),
                       ),
@@ -246,7 +246,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
   Future<void> _selectCustomer() async {
     final selectedCustomer = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CustomerDetails()),
+      MaterialPageRoute(builder: (context) => CustomerDetails()),
     );
     if (selectedCustomer != null) {
       setState(() {
