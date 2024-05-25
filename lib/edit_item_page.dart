@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
@@ -53,13 +54,13 @@ class _EditItemPageState extends State<EditItemPage> {
         'discount': discountPercentage,
       };
 
-      int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+      int rowsAffected =
+          await DatabaseHelper.updateData(updateData, 'cart_item');
       if (rowsAffected > 0) {
         setState(() {
           if (newPrice >= 0.00) {
             widget.itemPrice = newPrice;
-          }
-          else {
+          } else {
             widget.itemPrice = 0.00;
           }
         });
@@ -85,39 +86,44 @@ class _EditItemPageState extends State<EditItemPage> {
 
   void updatePriceAndAuthority() {
     // Parse input values from text controllers
-    double inputPrice = priceController.text.trim().isNotEmpty ? double.parse(priceController.text) : 0.0;
-    double inputDiscount = discountController.text.trim().isNotEmpty ? double.parse(discountController.text) : 0.0;
+    double inputPrice = priceController.text.trim().isNotEmpty
+        ? double.parse(priceController.text)
+        : 0.0;
+    double inputDiscount = discountController.text.trim().isNotEmpty
+        ? double.parse(discountController.text)
+        : 0.0;
 
     // Determine if input values are provided and user has corresponding authority
     bool hasRepriceAuthority = repriceAuthority && inputPrice > 0.0;
     bool hasDiscountAuthority = discountAuthority && inputDiscount > 0.0;
 
-    if (priceController.text.trim().isNotEmpty && discountController.text.trim().isNotEmpty
-        && hasRepriceAuthority && hasDiscountAuthority) {
+    if (priceController.text.trim().isNotEmpty &&
+        discountController.text.trim().isNotEmpty &&
+        hasRepriceAuthority &&
+        hasDiscountAuthority) {
       setState(() {
         widget.itemPrice = inputPrice;
         discountPercentage = inputDiscount;
       });
       calculateDiscountedPrice();
       showAlertDialog('Price updated', Colors.green);
-    }
-    else if (priceController.text.trim().isNotEmpty && discountController.text.trim().isEmpty
-        && hasRepriceAuthority) {
+    } else if (priceController.text.trim().isNotEmpty &&
+        discountController.text.trim().isEmpty &&
+        hasRepriceAuthority) {
       setState(() {
         widget.itemPrice = inputPrice;
       });
       updateItemPrice(inputPrice);
       showAlertDialog('Price updated', Colors.green);
-    }
-    else if (priceController.text.trim().isEmpty && discountController.text.trim().isNotEmpty
-        && hasDiscountAuthority) {
+    } else if (priceController.text.trim().isEmpty &&
+        discountController.text.trim().isNotEmpty &&
+        hasDiscountAuthority) {
       setState(() {
         discountPercentage = inputDiscount;
       });
       calculateDiscountedPrice();
       showAlertDialog('Price updated', Colors.green);
-    }
-    else {
+    } else {
       showAlertDialog('You do not have authority to reprice item', Colors.red);
     }
   }
@@ -202,24 +208,25 @@ class _EditItemPageState extends State<EditItemPage> {
                             width: 90,
                             child: widget.itemPhoto.isNotEmpty
                                 ? Image.network(
-                              'https://haluansama.com/crm-sales/${widget.itemPhoto}',
-                              height: 90,
-                              width: 90,
-                              fit: BoxFit.cover,
-                            )
+                                    'https://haluansama.com/crm-sales/${widget.itemPhoto}',
+                                    height: 90,
+                                    width: 90,
+                                    fit: BoxFit.cover,
+                                  )
                                 : Image.asset(
-                              'asset/no_image.jpg',
-                              height: 90,
-                              width: 90,
-                              fit: BoxFit.cover,
-                            ),
+                                    'asset/no_image.jpg',
+                                    height: 90,
+                                    width: 90,
+                                    fit: BoxFit.cover,
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 16.0),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
+                            SizedBox(
+                              width: 180,
                               child: Text(
                                 widget.itemName,
                                 style: const TextStyle(
@@ -260,7 +267,8 @@ class _EditItemPageState extends State<EditItemPage> {
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: (widget.itemPrice).toStringAsFixed(3),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 12.0),
                                 border: const OutlineInputBorder(),
                               ),
                             ),
@@ -286,7 +294,8 @@ class _EditItemPageState extends State<EditItemPage> {
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 hintText: '0%',
-                                contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 12.0),
                                 border: OutlineInputBorder(),
                               ),
                             ),
@@ -316,7 +325,8 @@ class _EditItemPageState extends State<EditItemPage> {
                     minimumSize: MaterialStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.white),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
