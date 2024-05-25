@@ -21,16 +21,22 @@ class CustomerInsightPage extends StatefulWidget {
 
 class _CustomerInsightPageState extends State<CustomerInsightPage> {
   late Future<Customer.Customer> customerFuture;
-  late Future<List<Map<String, dynamic>>> salesDataFuture;
-  late Future<List<Map<String, dynamic>>> productsFuture;
+  late Future<List<Map<String, dynamic>>> salesDataFuture = Future.value([]);
+  late Future<List<Map<String, dynamic>>> productsFuture = Future.value([]);
   late int customerId = 0;
 
   @override
   void initState() {
     super.initState();
-    customerFuture = fetchCustomer();
-    salesDataFuture = fetchSalesDataByCustomer(customerId);
-    productsFuture = fetchProductsByCustomer(customerId);
+    customerFuture = fetchCustomer().then((customer) {
+      setState(() {
+        customerId = customer.id!;
+        // After customerId is set, fetch sales and products data
+        salesDataFuture = fetchSalesDataByCustomer(customerId);
+        productsFuture = fetchProductsByCustomer(customerId);
+      });
+      return customer;
+    });
   }
 
   Future<Customer.Customer> fetchCustomer() async {
@@ -102,7 +108,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
         GROUP BY product_id
       ) AS first_uom_per_product ON ci.product_id = first_uom_per_product.product_id
           AND ci.uom = first_uom_per_product.first_uom
-      WHERE ci.customer_id = $customerId AND p.status = 1
+      WHERE ci.customer_id = 6 AND p.status = 1
       GROUP BY p.product_name, p.photo1, ci.uom
       LIMIT 10
     ''');
@@ -195,7 +201,6 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
           } else {
             Customer.Customer customer = snapshot.data![0] as Customer.Customer;
             List<Map<String, dynamic>> products = snapshot.data![2] as List<Map<String, dynamic>>;
-
             if (customer.id == null) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
@@ -309,7 +314,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                   ),
                   const SizedBox(height: 16),
                   const SizedBox(
-                    height: 180.0,
+                    height: 300.0,
                     child: CustomersGraph(),
                   ),
                   const SizedBox(height: 20.0),
@@ -375,7 +380,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                     width: 120.0,
                                     height: 120.0,
                                     child: CachedNetworkImage(
-                                      imageUrl: photoUrl,
+                                      imageUrl: photoUrl.isNotEmpty ? photoUrl : 'asset/no_image.jpg',
                                       placeholder: (context, url) => const CircularProgressIndicator(),
                                       errorWidget: (context, url, error) => const Icon(Icons.error_outline),
                                     ),
