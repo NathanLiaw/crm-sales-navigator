@@ -401,6 +401,11 @@ class _CartPage extends State<CartPage> {
                     bool isSelected = selectedCartItems.contains(item);
                     final currentQuantity = item.quantity;
                     final formattedPrice = formatter.format(item.unitPrice * item.quantity);
+                    // Format previous price only if it's not null
+                    String? formattedPreviousPrice;
+                    if (item.previousPrice != null) {
+                      formattedPreviousPrice = formatter.format(item.previousPrice! * item.quantity);
+                    }
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
@@ -562,7 +567,7 @@ class _CartPage extends State<CartPage> {
                                               SizedBox(
                                                 child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
                                                     ? Text(
-                                                  'RM${(item.previousPrice! * item.quantity).toStringAsFixed(3)}',
+                                                  formattedPreviousPrice!,
                                                   style: const TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.bold,
@@ -575,59 +580,62 @@ class _CartPage extends State<CartPage> {
                                               ),
                                             ],
                                           ),
-                                          // Group for quantity controls (IconButton and TextField)
-                                          Visibility(
-                                            visible: !editCart, // Set visibility based on the value of editCart
-                                            child: Row(
-                                              children: [
-                                                IconButton(
-                                                  iconSize: 28,
-                                                  onPressed: () {
-                                                    // Decrement quantity when minus button is pressed
-                                                    if (currentQuantity > 1) {
-                                                      setState(() {
-                                                        item.quantity = currentQuantity - 1;
-                                                        updateItemQuantity(item.id, item.quantity);
-                                                        calculateTotalAndSubTotal();
-                                                      });
-                                                    }
-                                                  },
-                                                  icon: const Icon(Icons.remove),
-                                                ),
-                                                SizedBox(
-                                                  width: 20, // Adjust the width of the TextField container
-                                                  child: TextField(
-                                                    textAlign: TextAlign.center,
-                                                    keyboardType: TextInputType.number,
-                                                    controller: TextEditingController(text: currentQuantity.toString()),
-                                                    onChanged: (value) {
-                                                      final newValue = int.tryParse(value);
-                                                      if (newValue != null) {
-                                                        setState(() {
-                                                          item.quantity = newValue;
-                                                          updateItemQuantity(item.id, item.quantity);
-                                                          calculateTotalAndSubTotal();
-                                                        });
-                                                      }
-                                                    },
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  iconSize: 28,
-                                                  onPressed: () {
-                                                    // Increment quantity when plus button is pressed
+
+                                        ],
+
+                                      ),
+                                      // Group for quantity controls (IconButton and TextField)
+                                      Visibility(
+                                        visible: !editCart, // Set visibility based on the value of editCart
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            IconButton(
+                                              iconSize: 28,
+                                              onPressed: () {
+                                                // Decrement quantity when minus button is pressed
+                                                if (currentQuantity > 1) {
+                                                  setState(() {
+                                                    item.quantity = currentQuantity - 1;
+                                                    updateItemQuantity(item.id, item.quantity);
+                                                    calculateTotalAndSubTotal();
+                                                  });
+                                                }
+                                              },
+                                              icon: const Icon(Icons.remove),
+                                            ),
+                                            SizedBox(
+                                              width: 40, // Adjust the width of the TextField container
+                                              child: TextField(
+                                                textAlign: TextAlign.center,
+                                                keyboardType: TextInputType.number,
+                                                controller: TextEditingController(text: currentQuantity.toString()),
+                                                onChanged: (value) {
+                                                  final newValue = int.tryParse(value);
+                                                  if (newValue != null) {
                                                     setState(() {
-                                                      item.quantity = currentQuantity + 1;
+                                                      item.quantity = newValue;
                                                       updateItemQuantity(item.id, item.quantity);
                                                       calculateTotalAndSubTotal();
                                                     });
-                                                  },
-                                                  icon: const Icon(Icons.add),
-                                                ),
-                                              ],
+                                                  }
+                                                },
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            IconButton(
+                                              iconSize: 28,
+                                              onPressed: () {
+                                                // Increment quantity when plus button is pressed
+                                                setState(() {
+                                                  item.quantity = currentQuantity + 1;
+                                                  updateItemQuantity(item.id, item.quantity);
+                                                  calculateTotalAndSubTotal();
+                                                });
+                                              },
+                                              icon: const Icon(Icons.add),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),

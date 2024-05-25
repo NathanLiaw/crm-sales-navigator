@@ -95,12 +95,11 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                             width: 115,
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(left: 10),
-                              child: Column(
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   SizedBox(
@@ -129,53 +128,53 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(
-                              height: 10,
-                            ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  iconSize: 28,
-                                  onPressed: () {
-                                    // Decrement quantity when minus button is pressed
-                                    if (currentQuantity > 1) {
-                                      setState(() {
-                                        quantityMap[uom] = currentQuantity - 1;
-                                      });
-                                    }
-                                  },
-                                  icon: const Icon(Icons.remove),
-                                ),
-                                SizedBox(
-                                  width: 40,
-                                  child: TextField(
-                                    textAlign: TextAlign.center,
-                                    keyboardType: TextInputType.number,
-                                    controller: TextEditingController(text: currentQuantity.toString()),
-                                    onChanged: (value) {
-                                      final newValue = int.tryParse(value);
-                                      if (newValue != null) {
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    iconSize: 28,
+                                    onPressed: () {
+                                      // Decrement quantity when minus button is pressed
+                                      if (currentQuantity > 1) {
                                         setState(() {
-                                          quantityMap[uom] = newValue;
+                                          quantityMap[uom] = currentQuantity - 1;
                                         });
                                       }
                                     },
+                                    icon: const Icon(Icons.remove),
                                   ),
-                                ),
-                                IconButton(
-                                  iconSize: 28,
-                                  onPressed: () {
-                                    // Increment quantity when plus button is pressed
-                                    setState(() {
-                                      quantityMap[uom] = currentQuantity + 1;
-                                    });
-                                  },
-                                  icon: const Icon(Icons.add),
-                                ),
-                              ],
-                            )
-                          ],
+                                  SizedBox(
+                                    width: 40,
+                                    child: TextField(
+                                      textAlign: TextAlign.center,
+                                      keyboardType: TextInputType.number,
+                                      controller: TextEditingController(text: currentQuantity.toString()),
+                                      onChanged: (value) {
+                                        final newValue = int.tryParse(value);
+                                        if (newValue != null) {
+                                          setState(() {
+                                            quantityMap[uom] = newValue;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 28,
+                                    onPressed: () {
+                                      // Increment quantity when plus button is pressed
+                                      setState(() {
+                                        quantityMap[uom] = currentQuantity + 1;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.add),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
                         )
                       ],
                     ),

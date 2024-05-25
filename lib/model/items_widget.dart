@@ -170,99 +170,120 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
               final containerSize = (screenWidth - 40) / 2;
 
-              return Container(
-                padding: const EdgeInsets.only(
-                    left: 12, right: 12, top: 10, bottom: 2),
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: const [
-                      BoxShadow(
-                        blurStyle: BlurStyle.normal,
-                        color: Color.fromARGB(75, 117, 117, 117),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: Offset(0, 5),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ItemScreen(
+                        productId: productId,
+                        itemAssetNames: [
+                          photoUrl1,
+                          photoUrl2,
+                          photoUrl3
+                        ],
+                        productName: productName,
+                        itemDescription: itemDescription,
+                        priceByUom:
+                        product['price_by_uom'].toString(),
                       ),
-                    ]),
-                child: Expanded(
-                  child: Column(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          try {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ItemScreen(
-                                  productId: productId,
-                                  itemAssetNames: [
-                                    photoUrl1,
-                                    photoUrl2,
-                                    photoUrl3
-                                  ],
-                                  productName: productName,
-                                  itemDescription: itemDescription,
-                                  priceByUom:
-                                  product['price_by_uom'].toString(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.only(
+                      left: 12, right: 12, top: 10, bottom: 2),
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: const [
+                        BoxShadow(
+                          blurStyle: BlurStyle.normal,
+                          color: Color.fromARGB(75, 117, 117, 117),
+                          spreadRadius: 1,
+                          blurRadius: 4,
+                          offset: Offset(0, 5),
+                        ),
+                      ]),
+                  child: Expanded(
+                    child: Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            try {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ItemScreen(
+                                    productId: productId,
+                                    itemAssetNames: [
+                                      photoUrl1,
+                                      photoUrl2,
+                                      photoUrl3
+                                    ],
+                                    productName: productName,
+                                    itemDescription: itemDescription,
+                                    priceByUom:
+                                    product['price_by_uom'].toString(),
+                                  ),
                                 ),
-                              ),
-                            );
-                          } catch (e) {
-                            developer.log('Error navigating to ItemScreen: $e');
-                          }
-                        },
-                        child: Container(
-                          height: containerSize,
-                          width: containerSize,
-                          margin: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              width: 1,
-                              color: const Color.fromARGB(255, 0, 76, 135),
-                            ),
-                          ),
-                          child: CachedNetworkImage(
-                            imageUrl: photoUrl1,
+                              );
+                            } catch (e) {
+                              developer.log('Error navigating to ItemScreen: $e');
+                            }
+                          },
+                          child: Container(
                             height: containerSize,
                             width: containerSize,
-                            placeholder: (context, url) =>
-                                const CircularProgressIndicator(),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.error_outline),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: containerSize,
-                        padding: const EdgeInsets.only(top: 16),
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    productName,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                      const Color.fromARGB(255, 25, 23, 49),
-                                    ),
-                                  ),
-                                ],
+                            margin: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                width: 1,
+                                color: const Color.fromARGB(255, 0, 76, 135),
                               ),
                             ),
-                          ],
+                            child: CachedNetworkImage(
+                              imageUrl: photoUrl1,
+                              height: containerSize,
+                              width: containerSize,
+                              placeholder: (context, url) =>
+                                  const CircularProgressIndicator(),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.error_outline),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          width: containerSize,
+                          padding: const EdgeInsets.only(top: 16),
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      productName,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                        const Color.fromARGB(255, 25, 23, 49),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -222,30 +222,32 @@ class _EditItemPageState extends State<EditItemPage> {
                           ),
                         ),
                         const SizedBox(width: 16.0),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 180,
-                              child: Text(
-                                widget.itemName,
-                                style: const TextStyle(
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 200,
+                                child: Text(
+                                  widget.itemName,
+                                  style: const TextStyle(
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 8.0),
-                            SizedBox(
-                              width: 220,
-                              child: Text(
-                                widget.itemUom,
-                                style: const TextStyle(
-                                  fontSize: 14.0,
+                              const SizedBox(height: 8.0),
+                              SizedBox(
+                                width: 220,
+                                child: Text(
+                                  widget.itemUom,
+                                  style: const TextStyle(
+                                    fontSize: 14.0,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

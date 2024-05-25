@@ -101,8 +101,8 @@ class _ItemScreenState extends State<ItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: new IconButton(
-          icon: new Icon(
+        leading: IconButton(
+          icon: const Icon(
             Icons.arrow_back,
             size: 34,
           ),
@@ -111,7 +111,7 @@ class _ItemScreenState extends State<ItemScreen> {
           },
         ),
         foregroundColor: Colors.white,
-        backgroundColor: Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
@@ -281,7 +281,19 @@ class _ItemScreenState extends State<ItemScreen> {
                       const Spacer(),
                       IconButton(
                         iconSize: 30,
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) {
+                              return ItemVariationsScreen(
+                                productId: widget.productId,
+                                productName: widget.productName,
+                                itemAssetName: widget.itemAssetNames[0],
+                                priceByUom: _priceDataByArea,
+                              );
+                            }),
+                          );
+                        },
                         icon: const Icon(Icons.arrow_forward_ios),
                       ),
                     ],
