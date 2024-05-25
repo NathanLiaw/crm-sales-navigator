@@ -125,7 +125,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   _selectedMethod = _sortingMethods[index];
                 });
                 Navigator.pop(context);
-                _fetchRecentOrders(); // Refetch data on sort change
+                _sortResults(_fetchedData!);
               },
             );
           },
@@ -536,17 +536,53 @@ class _RecentOrderState extends State<RecentOrder> {
 
   void _sortResults(List<Map<String, dynamic>> results) {
     if (_selectedMethod == 'By Name (A to Z)') {
-      results.sort((a, b) => a['product_name'].compareTo(b['product_name']));
+      results.sort((a, b) {
+        if (_isAscending) {
+          return a['product_name'].compareTo(b['product_name']);
+        } else {
+          return b['product_name'].compareTo(a['product_name']);
+        }
+      });
     } else if (_selectedMethod == 'By Name (Z to A)') {
-      results.sort((a, b) => b['product_name'].compareTo(a['product_name']));
+      results.sort((a, b) {
+        if (_isAscending) {
+          return b['product_name'].compareTo(a['product_name']);
+        } else {
+          return a['product_name'].compareTo(b['product_name']);
+        }
+      });
     } else if (_selectedMethod == 'Uploaded Date (Old to New)') {
-      results.sort((a, b) => a['product_id'].compareTo(b['product_id']));
+      results.sort((a, b) {
+        if (_isAscending) {
+          return a['product_id'].compareTo(b['product_id']);
+        } else {
+          return b['product_id'].compareTo(a['product_id']);
+        }
+      });
     } else if (_selectedMethod == 'Uploaded Date (New to Old)') {
-      results.sort((a, b) => b['product_id'].compareTo(a['product_id']));
+      results.sort((a, b) {
+        if (_isAscending) {
+          return b['product_id'].compareTo(a['product_id']);
+        } else {
+          return a['product_id'].compareTo(b['product_id']);
+        }
+      });
     } else if (_selectedMethod == 'By Price (Low to High)') {
-      results.sort((a, b) => a['total'].compareTo(b['total']));
+      results.sort((a, b) {
+        if (_isAscending) {
+          return a['total'].compareTo(b['total']);
+        } else {
+          return b['total'].compareTo(a['total']);
+        }
+      });
     } else if (_selectedMethod == 'By Price (High to Low)') {
-      results.sort((a, b) => b['total'].compareTo(a['total']));
+      results.sort((a, b) {
+        if (_isAscending) {
+          return b['total'].compareTo(a['total']);
+        } else {
+          return a['total'].compareTo(b['total']);
+        }
+      });
     }
   }
 
