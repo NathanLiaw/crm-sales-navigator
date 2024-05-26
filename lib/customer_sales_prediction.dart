@@ -64,7 +64,7 @@ class _CustomerSalesPredictionPageState
       String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
       String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
       dateRangeQuery =
-          "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
+      "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
     }
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
     String usernameCondition = loggedInUsername.isNotEmpty
@@ -106,6 +106,7 @@ class _CustomerSalesPredictionPageState
         ));
       }
 
+      developer.log('Fetched sales data: ${salesData.length} items', level: 1);
       return salesData;
     } catch (e, stackTrace) {
       developer.log('Error fetching data: $e', error: e, stackTrace: stackTrace);
@@ -170,6 +171,7 @@ class _CustomerSalesPredictionPageState
                 } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                   return const Center(child: Text('No data available'));
                 } else if (snapshot.hasData) {
+                  developer.log('Snapshot data: ${snapshot.data!.length} items', level: 1);
                   Map<String, List<CustomerSalesData>> groupedData = {};
                   for (var data in snapshot.data!) {
                     if (!groupedData.containsKey(data.customerCompanyName)) {
@@ -180,117 +182,124 @@ class _CustomerSalesPredictionPageState
 
                   return ListView(
                     children: groupedData.entries.map((entry) {
+                      developer.log('Group: ${entry.key}, Items: ${entry.value.length}', level: 1);
                       var movingAverageData = calculateMovingAverage(entry.value, 3);
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(111, 188, 249, 0.35), 
+                            color: const Color.fromRGBO(111, 188, 249, 0.35),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: ExpansionTile(
-                            backgroundColor: Colors.transparent,
-                            tilePadding: EdgeInsets.zero,
-                            childrenPadding: EdgeInsets.zero,
-                            title: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    entry.key,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    'Predicted Sales: RM${NumberFormat('#,##0').format(movingAverageData.last.totalSalesValue)}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF487C08),
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Predicted Stock: ${NumberFormat('#,##0').format(movingAverageData.last.totalQuantitySold)}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF004072),
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            children: [
-                              Container(
-                                color: const Color(0xFFE1F5FE),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: ExpansionTile(
+                              backgroundColor: Colors.transparent,
+                              tilePadding: EdgeInsets.zero,
+                              childrenPadding: EdgeInsets.zero,
+                              title: Padding(
+                                padding: const EdgeInsets.all(10),
                                 child: Column(
-                                  children: movingAverageData.take(5).map((salesData) {
-                                    return Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Product: ${salesData.productName}',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Text(
-                                                'UOM: ${salesData.unitOfMeasure}',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 5),
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      'Targeted Sales: RM${NumberFormat('#,##0').format(salesData.totalSalesValue)}',
-                                                      style: const TextStyle(
-                                                        color: Color(0xFF004072),
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: Text(
-                                                      'Required Stock: ${NumberFormat('#,##0').format(salesData.totalQuantitySold)}',
-                                                      style: const TextStyle(
-                                                        color: Color(0xFF487C08),
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
-                                                      textAlign: TextAlign.end,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (movingAverageData.indexOf(salesData) != movingAverageData.length - 1)
-                                          const Divider(
-                                            color: Colors.grey,
-                                            thickness: 1,
-                                          ),
-                                      ],
-                                    );
-                                  }).toList(),
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.key,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      'Predicted Sales: RM${NumberFormat('#,##0').format(movingAverageData.last.totalSalesValue)}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF487C08),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Predicted Stock: ${NumberFormat('#,##0').format(movingAverageData.last.totalQuantitySold)}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF004072),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE1F5FE),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    children: movingAverageData.take(5).map((salesData) {
+                                      return Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Product: ${salesData.productName}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  'UOM: ${salesData.unitOfMeasure}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 5),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Targeted Sales: RM${NumberFormat('#,##0').format(salesData.totalSalesValue)}',
+                                                        style: const TextStyle(
+                                                          color: Color(0xFF004072),
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Required Stock: ${NumberFormat('#,##0').format(salesData.totalQuantitySold)}',
+                                                        style: const TextStyle(
+                                                          color: Color(0xFF487C08),
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                        textAlign: TextAlign.end,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (movingAverageData.indexOf(salesData) != movingAverageData.length - 1)
+                                            const Divider(
+                                              color: Colors.grey,
+                                              thickness: 1,
+                                            ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

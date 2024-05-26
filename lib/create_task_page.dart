@@ -16,7 +16,8 @@ class CreateTaskPage extends StatefulWidget {
   final DateTime? existingDueDate;
   final bool showTaskDetails;
 
-  const CreateTaskPage({super.key,
+  const CreateTaskPage({
+    super.key,
     required this.customerName,
     required this.contactNumber,
     required this.emailAddress,
@@ -77,11 +78,12 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
         // get the qty sum in the cart_item table based on session
         Results quantityResults = await conn.query(
-          "SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = '?' OR cart_id = ?",
+          "SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ? OR cart_id = ?",
           [session, int.parse(salesOrderId)],
         );
-        String totalQuantity = quantityResults.first['total_qty'].toString();
-
+        String totalQuantity = quantityResults.isEmpty
+            ? '0'
+            : quantityResults.first['total_qty'].toString();
         setState(() {
           createdDate = row['created'].toString();
           expirationDate = row['expiration_date'].toString();
@@ -127,7 +129,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   Future<List<String>> fetchSalesOrderIds() async {
     try {
       List<Map<String, dynamic>> salesOrders =
-          await fetchSalesOrderDropdown(widget.customerName);
+      await fetchSalesOrderDropdown(widget.customerName);
       setState(() {
         salesOrderIds = salesOrders.map((order) {
           final orderId = order['id'];
@@ -142,6 +144,19 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Create a NumberFormat instance with the desired format
+    final formatter = NumberFormat("#,###.000", "en_US");
+    // Validate and preprocess the lastPurchasedAmount
+    String formattedLastPurchasedAmount = '';
+    if (widget.lastPurchasedAmount != null &&
+        widget.lastPurchasedAmount.isNotEmpty) {
+      String cleanedAmount =
+      widget.lastPurchasedAmount.replaceAll(RegExp(r'[^0-9.]'), '');
+      if (cleanedAmount.isNotEmpty) {
+        double parsedAmount = double.parse(cleanedAmount);
+        formattedLastPurchasedAmount = formatter.format(parsedAmount);
+      }
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff004c87),
@@ -193,7 +208,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              widget.lastPurchasedAmount,
+                              // Use the formatted lastPurchasedAmount
+                              'RM $formattedLastPurchasedAmount',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -240,12 +256,14 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on, color: Color(0xff0069BA)),
+                          const Icon(Icons.location_on,
+                              color: Color(0xff0069BA)),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               widget.address,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                              const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -308,7 +326,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               child: Text(
                                 selectedDate != null
                                     ? DateFormat('dd/MM/yyyy')
-                                        .format(selectedDate!)
+                                    .format(selectedDate!)
                                     : '',
                               ),
                             ),
@@ -363,21 +381,23 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                   ],
                 ),
                 const SizedBox(height: 30),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Created date: ${formattedCreatedDate ?? ''}',
-                      style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Expiry date: ${expirationDate ?? ''}',
-                      style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
+                if (selectedSalesOrderId != null) ...[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Created date: ${formattedCreatedDate ?? ''}',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Expiry date: ${expirationDate ?? ''}',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
