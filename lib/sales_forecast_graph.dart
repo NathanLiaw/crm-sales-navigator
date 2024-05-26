@@ -11,7 +11,7 @@ class SalesForecastGraph extends StatefulWidget {
 }
 
 class _SalesForecastGraphState extends State<SalesForecastGraph> {
-  Future<List<SalesForecast>>? salesForecasts; 
+  Future<List<SalesForecast>>? salesForecasts;
   String loggedInUsername = '';
 
   @override
@@ -66,7 +66,8 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
       final purchaseMonth = row['Purchase_Month'] as int;
       final purchaseYear = row['Purchase_Year'] as int;
       final totalSales = (row['Total_Sales'] as num).toDouble();
-      final cartQuantity = (row['Cart_Quantity'] is num && (row['Cart_Quantity'] as num).isFinite)
+      final cartQuantity = (row['Cart_Quantity'] is num &&
+              (row['Cart_Quantity'] as num).isFinite)
           ? (row['Cart_Quantity'] as num).toInt()
           : 0;
       forecasts.add(SalesForecast(
@@ -77,7 +78,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
         totalSales: totalSales,
         cartQuantity: cartQuantity,
         previousMonthSales: 0.0,
-        previousCartQuantity: 0,  
+        previousCartQuantity: 0,
       ));
     }
 
@@ -86,7 +87,8 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 
     if (forecasts.length == 2) {
       predictedTarget = (forecasts[0].totalSales + forecasts[1].totalSales) / 2;
-      stockNeeded = ((forecasts[0].cartQuantity + forecasts[1].cartQuantity) / 2).round();
+      stockNeeded =
+          ((forecasts[0].cartQuantity + forecasts[1].cartQuantity) / 2).round();
     }
 
     await db.close();
@@ -113,61 +115,64 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Sales Forecast',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  'Sales Forecast',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 16),
-            FutureBuilder<List<SalesForecast>>(
-              future: salesForecasts,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else if (snapshot.hasData) {
-                  final currentMonthData = snapshot.data!.firstWhere(
-                    (forecast) =>
-                        forecast.purchaseMonth == DateTime.now().month,
-                    orElse: () => SalesForecast(
-                      salesmanId: 0,
-                      salesmanName: '',
-                      purchaseMonth: DateTime.now().month,
-                      purchaseYear: DateTime.now().year,
-                      totalSales: 0.0,
-                      cartQuantity: 0,
-                      previousMonthSales: 0.0,
-                      previousCartQuantity: 0,
-                      predictedTarget: 0.0,
-                      stockNeeded: 0,
-                    ),
-                  );
+              FutureBuilder<List<SalesForecast>>(
+                future: salesForecasts,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else if (snapshot.hasData) {
+                    final currentMonthData = snapshot.data!.firstWhere(
+                      (forecast) =>
+                          forecast.purchaseMonth == DateTime.now().month,
+                      orElse: () => SalesForecast(
+                        salesmanId: 0,
+                        salesmanName: '',
+                        purchaseMonth: DateTime.now().month,
+                        purchaseYear: DateTime.now().year,
+                        totalSales: 0.0,
+                        cartQuantity: 0,
+                        previousMonthSales: 0.0,
+                        previousCartQuantity: 0,
+                        predictedTarget: 0.0,
+                        stockNeeded: 0,
+                      ),
+                    );
 
-                  return EditableSalesTargetCard(
-                    currentSales: currentMonthData.totalSales,
-                    predictedTarget: currentMonthData.predictedTarget,
-                    cartQuantity: currentMonthData.cartQuantity,
-                    stockNeeded: currentMonthData.stockNeeded,
-                    previousMonthSales: currentMonthData.previousMonthSales,
-                    previousCartQuantity: currentMonthData.previousCartQuantity,
-                    loggedInUsername: loggedInUsername,
-                  );
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            ),
-          ],
+                    return EditableSalesTargetCard(
+                      currentSales: currentMonthData.totalSales,
+                      predictedTarget: currentMonthData.predictedTarget,
+                      cartQuantity: currentMonthData.cartQuantity,
+                      stockNeeded: currentMonthData.stockNeeded,
+                      previousMonthSales: currentMonthData.previousMonthSales,
+                      previousCartQuantity:
+                          currentMonthData.previousCartQuantity,
+                      loggedInUsername: loggedInUsername,
+                    );
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -243,140 +248,159 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       salesTargetValue =
           double.parse(_salesTarget.replaceAll(RegExp(r'[^\d.]'), ''));
     } catch (e) {
-      salesTargetValue = 1.0; // Avoid division by zero or NaN
+      salesTargetValue = 1.0;
     }
 
     double progressValue = (widget.currentSales / salesTargetValue)
-        .clamp(0.0, 1.0); // Ensure value is between 0 and 1
+        .clamp(0.0, 1.0);
 
-    double completionPercentage = (widget.currentSales / salesTargetValue) * 100;
+    double completionPercentage =
+        (widget.currentSales / salesTargetValue) * 100;
     completionPercentage = completionPercentage.clamp(0, 100);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Card(
-          color: Color.fromARGB(255, 222, 247, 255),
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width *
+                0.95,
+            child: Card(
+              color: Color.fromARGB(255, 222, 247, 255),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              elevation: 4.0,
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Sales Target',
-                          style: TextStyle(
-                              fontSize: 24.0, fontWeight: FontWeight.w700),
+                        const Row(
+                          children: [
+                            Text(
+                              'Sales Target',
+                              style: TextStyle(
+                                  fontSize: 24.0, fontWeight: FontWeight.w700),
+                            ),
+                            SizedBox(width: 8.0),
+                          ],
                         ),
-                        SizedBox(width: 16.0),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            icon: Icon(Icons.edit, color: Colors.grey[800]),
+                            onPressed: _editSalesTarget,
+                          ),
+                        ),
                       ],
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        icon: Icon(Icons.edit, color: Colors.grey[800]),
-                        onPressed: _editSalesTarget,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _salesTarget,
+                          style: const TextStyle(
+                              fontSize: 24.0,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromRGBO(0, 57, 104, 1)),
+                        ),
+                        SizedBox(width: 8.0),
+                        Text(
+                          '${completionPercentage.toStringAsFixed(0)}% Complete',
+                          style: const TextStyle(
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.w500,
+                              color: Color.fromRGBO(0, 57, 104, 1)),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                    SizedBox(height: 4.0),
                     Text(
-                      _salesTarget,
+                      'Current Sales: ${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
                       style: const TextStyle(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromRGBO(0, 57, 104, 1)),
-                    ),
-                    const SizedBox(width: 16.0),
-                    Text(
-                      '${completionPercentage.toStringAsFixed(0)}% Complete',
-                      style: const TextStyle(
-                          fontSize: 15.0,
+                          fontSize: 17.0,
                           fontWeight: FontWeight.w500,
-                          color: Color.fromRGBO(0, 57, 104, 1)),
+                          color: Color.fromARGB(255, 0, 122, 4)),
                     ),
+                    SizedBox(height: 4.0),
+                    LinearProgressIndicator(
+                      value: progressValue,
+                      minHeight: 14.0,
+                      backgroundColor: Color.fromRGBO(112, 112, 112, 0.37),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color.fromARGB(255, 0, 150, 5)),
+                    ),
+                    SizedBox(height: 8.0),
                   ],
                 ),
-                const SizedBox(height: 8.0),
-                Text(
-                  'Current Sales: ${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
-                  style: const TextStyle(
-                      fontSize: 17.0,
-                      fontWeight: FontWeight.w500,
-                      color: Color.fromARGB(255, 0, 122, 4)),
-                ),
-                const SizedBox(height: 8.0),
-                LinearProgressIndicator(
-                  value: progressValue,
-                  minHeight: 14.0,
-                  backgroundColor: Color.fromRGBO(112, 112, 112, 0.37),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color.fromARGB(255, 0, 150, 5)),
-                ),
-                const SizedBox(height: 16.0),
-              ],
+              ),
             ),
           ),
         ),
-        SizedBox(height: 16.0),
+        SizedBox(height: 14.0),
         Center(
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              ResponsiveInfoBox(
-                label: 'Monthly Revenue',
-                value: '${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
-                currentValue: widget.currentSales,
-                previousValue: widget.previousMonthSales,
-                isUp: widget.currentSales >= widget.previousMonthSales,
-                isDown: widget.currentSales < widget.previousMonthSales,
-                backgroundColor: Color(0x300F9D58),
-                textColor: Color(0xFF508155),
-                fromLastMonthTextColor: Colors.black87,
-              ),
-              ResponsiveInfoBox(
-                label: 'Predicted Target',
-                value: _currencyFormat.format(widget.predictedTarget),
-                currentValue: widget.predictedTarget,
-                previousValue: widget.previousMonthSales,
-                isUp: widget.predictedTarget >= widget.previousMonthSales,
-                isDown: widget.predictedTarget < widget.previousMonthSales,
-                backgroundColor: Color(0x49004C87),
-                textColor: Color(0xFF004C87),
-                fromLastMonthTextColor: Colors.black87,
-              ),
-              ResponsiveInfoBox(
-                label: 'Stock Sold',
-                value: '${widget.cartQuantity}',
-                currentValue: widget.cartQuantity.toDouble(),
-                previousValue: widget.previousCartQuantity.toDouble(),
-                isUp: widget.cartQuantity >= widget.previousCartQuantity,
-                isDown: widget.cartQuantity < widget.previousCartQuantity,
-                backgroundColor: Color(0xFF004C87),
-                textColor: Colors.white,
-                fromLastMonthTextColor: Colors.white,
-              ),
-              ResponsiveInfoBox(
-                label: 'Predicted Stock',
-                value: '${widget.stockNeeded}',
-                currentValue: widget.stockNeeded.toDouble(),
-                previousValue: widget.previousCartQuantity.toDouble(),
-                isUp: widget.stockNeeded >= widget.previousCartQuantity,
-                isDown: widget.stockNeeded < widget.previousCartQuantity,
-                backgroundColor: Color(0xFF709640),
-                textColor: Colors.white,
-                fromLastMonthTextColor: Colors.white,
-              ),
-            ],
+          child: Container(
+            width: MediaQuery.of(context).size.width *
+                0.95,
+            child: GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.5,
+              children: [
+                InfoBox(
+                  label: 'Monthly Revenue',
+                  value:
+                      '${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
+                  currentValue: widget.currentSales,
+                  previousValue: widget.previousMonthSales,
+                  isUp: widget.currentSales >= widget.previousMonthSales,
+                  isDown: widget.currentSales < widget.previousMonthSales,
+                  backgroundColor: Color(0x300F9D58),
+                  textColor: Color(0xFF508155),
+                  fromLastMonthTextColor: Colors.black87,
+                ),
+                InfoBox(
+                  label: 'Predicted Target',
+                  value: _currencyFormat.format(widget.predictedTarget),
+                  currentValue: widget.predictedTarget,
+                  previousValue: widget.previousMonthSales,
+                  isUp: widget.predictedTarget >= widget.previousMonthSales,
+                  isDown: widget.predictedTarget < widget.previousMonthSales,
+                  backgroundColor: Color(0x49004C87),
+                  textColor: Color(0xFF004C87),
+                  fromLastMonthTextColor: Colors.black87,
+                ),
+                InfoBox(
+                  label: 'Stock Sold',
+                  value: '${widget.cartQuantity}',
+                  currentValue: widget.cartQuantity.toDouble(),
+                  previousValue: widget.previousCartQuantity.toDouble(),
+                  isUp: widget.cartQuantity >= widget.previousCartQuantity,
+                  isDown: widget.cartQuantity < widget.previousCartQuantity,
+                  backgroundColor: Color(0xFF004C87),
+                  textColor: Colors.white,
+                  fromLastMonthTextColor: Colors.white,
+                ),
+                InfoBox(
+                  label: 'Predicted Stock',
+                  value: '${widget.stockNeeded}',
+                  currentValue: widget.stockNeeded.toDouble(),
+                  previousValue: widget.previousCartQuantity.toDouble(),
+                  isUp: widget.stockNeeded >= widget.previousCartQuantity,
+                  isDown: widget.stockNeeded < widget.previousCartQuantity,
+                  backgroundColor: Color(0xFF709640),
+                  textColor: Colors.white,
+                  fromLastMonthTextColor: Colors.white,
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -440,7 +464,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 }
 
-class ResponsiveInfoBox extends StatelessWidget {
+class InfoBox extends StatelessWidget {
   final String label;
   final String value;
   final double currentValue;
@@ -451,7 +475,7 @@ class ResponsiveInfoBox extends StatelessWidget {
   final Color textColor;
   final Color fromLastMonthTextColor;
 
-  const ResponsiveInfoBox({
+  const InfoBox({
     Key? key,
     required this.label,
     required this.value,
@@ -489,13 +513,13 @@ class ResponsiveInfoBox extends StatelessWidget {
     Widget icon;
     switch (label) {
       case 'Monthly Revenue':
-        icon = Icon(Icons.monetization_on, color: Color(0xFF508155)); 
+        icon = Icon(Icons.monetization_on, color: Color(0xFF508155));
         break;
       case 'Predicted Target':
         icon = Icon(Icons.gps_fixed, color: Color(0xFF004C87));
         break;
       case 'Stock Sold':
-        icon = Icon(Icons.outbox, color: Colors.white); 
+        icon = Icon(Icons.outbox, color: Colors.white);
         break;
       case 'Predicted Stock':
         icon = Icon(Icons.inbox, color: Colors.white);
@@ -504,14 +528,11 @@ class ResponsiveInfoBox extends StatelessWidget {
         icon = SizedBox.shrink();
     }
 
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double boxWidth = deviceWidth * 0.8;
-
     return Container(
-      width: boxWidth,
+      height: 100,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.2),
@@ -521,7 +542,7 @@ class ResponsiveInfoBox extends StatelessWidget {
           ),
         ],
       ),
-      padding: EdgeInsets.all(10),
+      padding: EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -529,17 +550,15 @@ class ResponsiveInfoBox extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: textColor)),
+                  style:
+                      TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               icon,
             ],
           ),
-          SizedBox(height: 5),
+          SizedBox(height: 3),
           Text(value,
               style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textColor)),
+                  fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
           if (isUp || isDown) ...[
             Text(
               '${isIncrease ? '▲ Up' : '▼ Down'} ${change.abs().toStringAsFixed(1)}%',
@@ -548,7 +567,7 @@ class ResponsiveInfoBox extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 3),
             Text(
               'From Last Month',
               style: TextStyle(

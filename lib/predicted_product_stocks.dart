@@ -53,11 +53,11 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
       SUM(ci.qty * ci.unit_price) AS total_sales,
       s.salesman_name
     FROM 
-      fyh.cart_item ci
+      cart_item ci
     JOIN 
-      fyh.cart c ON ci.session = c.session OR c.id = ci.cart_id
+      cart c ON ci.session = c.session OR c.id = ci.cart_id
     JOIN 
-      fyh.salesman s ON c.buyer_id = s.id
+      salesman s ON c.buyer_id = s.id
     WHERE 
       c.status != 'void' AND
       s.username = '$loggedInUsername' AND

@@ -50,7 +50,7 @@ class DataAnalyticsPage extends StatelessWidget {
                   );
                 },
                 child: const SizedBox(
-                  height: 525,
+                  height: 480,
                   child: SalesForecastGraph(),
                 ),
               ),
