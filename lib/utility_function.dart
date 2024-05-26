@@ -102,9 +102,9 @@ class UtilityFunction{
     return areaName;
   }
 
-  static Future<int?> getUserId() async {
+  static Future<int> getUserId() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    int? userId = pref.getInt('id');
+    int userId = pref.getInt('id') as int;
     return userId;
   }
 }

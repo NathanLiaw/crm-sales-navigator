@@ -108,7 +108,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
       String condition =
           "buyer_id = $buyerId AND customer_company_name = '$customerName' "
-          "AND status = 'Pending' AND CURDATE() >= expiration_date";
+          "AND status = 'Pending' AND CURDATE() <= expiration_date";
 
       List<Map<String, dynamic>> salesOrders = await readData(
         conn,
@@ -397,37 +397,37 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Quantity: ',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xff0069BA)),
+                          ),
+                          Text(quantity != null ? '$quantity items' : ''),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Text(
+                            'Total: ',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xff0069BA)),
+                          ),
+                          Text(total != null ? 'RM$total' : ''),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Quantity: ',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff0069BA)),
-                        ),
-                        Text(quantity != null ? '$quantity items' : ''),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Text(
-                          'Total: ',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff0069BA)),
-                        ),
-                        Text(total != null ? 'RM$total' : ''),
-                      ],
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 60),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,

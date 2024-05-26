@@ -341,26 +341,83 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 ],
               ),
               ElevatedButton(
-                onPressed: () async{
-                  if (agreedToTerms){
+                onPressed: () async {
+                  if (agreedToTerms) {
+                    // Show loading animation
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) {
+                        return const AlertDialog(
+                          backgroundColor: Colors.green,
+                          content: SizedBox(
+                            height: 80,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                                SizedBox(height: 20),
+                                Text(
+                                  'Processing order...',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+
+                    // Perform the operations
                     await createCart();
                     await completeCart();
                     remarkController.clear();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OrderSubmittedPage(),
-                      ),
+
+                    // Close the loading animation
+                    Navigator.pop(context);
+
+                    // Show order submitted dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: Colors.green,
+                          title: const Text(
+                            'Order Submitted',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          content: const Text(
+                            'Your order has been successfully submitted.',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const OrderSubmittedPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'OK',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     );
-                  }
-                  else {
+                  } else {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text('Terms and Conditions'),
-                          content: const Text('Please agree to the terms and '
-                              'conditions before proceeding.'),
+                          content: const Text('Please agree to the terms and conditions before proceeding.'),
                           actions: [
                             TextButton(
                               onPressed: () {

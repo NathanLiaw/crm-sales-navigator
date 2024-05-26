@@ -12,6 +12,7 @@ import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
 import 'package:sales_navigator/sales_lead_nego_widget.dart';
 import 'package:sales_navigator/sales_lead_orderprocessing_widget.dart';
+import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
@@ -39,18 +40,28 @@ class _HomePageState extends State<HomePage> {
 
   Map<int, DateTime> latestModifiedDates = {};
   Map<int, double> latestTotals = {};
+  late int salesmanId;
 
   @override
   void initState() {
     super.initState();
+    _initializeSalesmanId();
     _fetchLeadItems();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
+    });
   }
 
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
     MySqlConnection conn = await connectToDatabase();
     try {
-      Results results = await conn.query('SELECT * FROM cart');
+      print(salesmanId);
+      Results results = await conn.query('SELECT * FROM cart WHERE buyer_id = $salesmanId');
       await _fetchCreateLeadItems(conn);
 
       for (var row in results) {
@@ -77,6 +88,7 @@ class _HomePageState extends State<HomePage> {
           var createdDate =
               DateFormat('yyyy-MM-dd').format(currentDate); // Use current date
           var leadItem = LeadItem(
+            salesmanId: salesmanId,
             customerName: customerName,
             description: description,
             createdDate: createdDate,
@@ -102,7 +114,7 @@ class _HomePageState extends State<HomePage> {
 
           // Check if the customer already exists in the sales_lead table
           Results existingLeadResults = await conn.query(
-            'SELECT * FROM sales_lead WHERE customer_name = ?',
+            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
             [leadItem.customerName],
           );
           // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
@@ -113,8 +125,9 @@ class _HomePageState extends State<HomePage> {
             try {
               // Save the lead item to the sales_lead table
               await conn.query(
-                'INSERT INTO sales_lead (customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 [
+                  leadItem.salesmanId,
                   leadItem.customerName,
                   leadItem.description,
                   leadItem.createdDate,
@@ -154,7 +167,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
     try {
-      Results results = await conn.query('SELECT * FROM sales_lead');
+      Results results = await conn.query('SELECT * FROM sales_lead WHERE salesman_id = $salesmanId');
       for (var row in results) {
         var customerName = row['customer_name'] as String;
         var description = row['description'] as String? ?? '';
@@ -171,6 +184,7 @@ class _HomePageState extends State<HomePage> {
         var quantity = row['quantity']?.toString();
 
         var leadItem = LeadItem(
+          salesmanId: salesmanId,
           customerName: customerName,
           description: description,
           createdDate: createdDate,
@@ -442,8 +456,10 @@ class _HomePageState extends State<HomePage> {
     _updateLeadStageInDatabase(leadItem);
   }
 
-  void _createLead(String customerName, String description, String amount) {
+  Future<void> _createLead(
+      String customerName, String description, String amount) async {
     LeadItem leadItem = LeadItem(
+      salesmanId: salesmanId,
       customerName: customerName,
       description: description,
       createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
@@ -454,6 +470,24 @@ class _HomePageState extends State<HomePage> {
       addressLine1: '',
       salesOrderId: '',
     );
+
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      Results customerResults = await conn.query(
+        'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
+        [customerName],
+      );
+      if (customerResults.isNotEmpty) {
+        var customerRow = customerResults.first;
+        leadItem.contactNumber = customerRow['contact_number'].toString();
+        leadItem.emailAddress = customerRow['email'].toString();
+        leadItem.addressLine1 = customerRow['address_line_1'].toString();
+      }
+    } catch (e) {
+      developer.log('Error fetching customer details: $e');
+    } finally {
+      await conn.close();
+    }
 
     setState(() {
       leadItems.add(leadItem);
@@ -1033,6 +1067,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 class LeadItem {
+  final int salesmanId;
   final String customerName;
   final String description;
   final String createdDate;
@@ -1051,6 +1086,7 @@ class LeadItem {
   }
 
   LeadItem({
+    required this.salesmanId,
     required this.customerName,
     required this.description,
     required this.createdDate,
