@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.only(top:16.0),
+          padding: const EdgeInsets.only(top: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -71,10 +71,7 @@ class OrderStatusWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(
-            top: 12.0,
-            left: 16.0,
-          ),
+          padding: EdgeInsets.only(top: 12.0, left: 16.0),
           child: Text(
             'Order Status',
             style: TextStyle(
@@ -145,8 +142,24 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
       return;
     }
 
-    String formattedStartDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.start);
-    String formattedEndDate = DateFormat('yyyy-MM-dd').format(selectedDateRange.end);
+    // Adjust start and end date to the current hour
+    DateTime adjustedStartDate = DateTime(
+      selectedDateRange.start.year,
+      selectedDateRange.start.month,
+      selectedDateRange.start.day,
+      0, 0, 0
+    );
+
+    DateTime adjustedEndDate = DateTime(
+      selectedDateRange.end.year,
+      selectedDateRange.end.month,
+      selectedDateRange.end.day,
+      DateTime.now().hour,
+      59, 59,
+    );
+
+    String formattedStartDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedStartDate);
+    String formattedEndDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedEndDate);
 
     var results = await db.query(
       '''SELECT 
@@ -198,12 +211,14 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
 
   Future<void> _selectDateRange(BuildContext context) async {
     final DateTime now = DateTime.now();
-    final DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
-    final DateTime lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+    final DateTimeRange initialRange = DateTimeRange(
+      start: now.subtract(const Duration(days: 30)),
+      end: now,
+    );
 
     final DateTimeRange? pickedRange = await showDateRangePicker(
       context: context,
-      initialDateRange: DateTimeRange(start: firstDayOfMonth, end: lastDayOfMonth),
+      initialDateRange: initialRange,
       firstDate: DateTime(2019),
       lastDate: DateTime(2025),
     );

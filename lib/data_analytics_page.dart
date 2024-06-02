@@ -46,11 +46,11 @@ class DataAnalyticsPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                        const CustomerSalesPredictionPage()),
+                            const CustomerSalesPredictionPage()),
                   );
                 },
                 child: const SizedBox(
-                  height: 480,
+                  height: 510,
                   child: SalesForecastGraph(),
                 ),
               ),
@@ -92,7 +92,7 @@ class DataAnalyticsPage extends StatelessWidget {
                   );
                 },
                 child: const SizedBox(
-                  height: 425,
+                  height: 427,
                   child: TopSellingProductsPage(),
                 ),
               ),
@@ -107,7 +107,7 @@ class DataAnalyticsPage extends StatelessWidget {
                   );
                 },
                 child: const SizedBox(
-                  height: 450,
+                  height: 452,
                   child: PredictedProductsTarget(),
                 ),
               ),
