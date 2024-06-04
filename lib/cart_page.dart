@@ -526,7 +526,7 @@ class _CartPage extends State<CartPage> {
                                               Row(
                                                   children: [
                                                     SizedBox(
-                                                      width: 150,
+                                                      width: 220,
                                                       child: Row(
                                                         children: [
                                                           Flexible(

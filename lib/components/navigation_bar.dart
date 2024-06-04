@@ -72,23 +72,48 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                 const GButton(
                   icon: Icons.home,
                   text: 'Home',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const GButton(
                   icon: Icons.sell,
                   text: 'Sales',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const GButton(
                   icon: Icons.shopping_bag,
                   text: 'Product',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 GButton(
                   icon: const IconData(0),
                   text: 'Cart',
                   leading: buildCartIcon(),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const GButton(
                   icon: Icons.person,
                   text: 'Profile',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
               onTabChange: (index) {

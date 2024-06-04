@@ -636,6 +636,7 @@ class _HomePageState extends State<HomePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => CreateLeadPage(
+                        salesmanId: salesmanId,
                         onCreateLead: _createLead,
                       ),
                     ),

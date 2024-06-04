@@ -77,7 +77,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         field,
       );
 
-
       if (result.isNotEmpty) {
         final existingItem = result.first;
         final updatedQuantity = existingItem['qty'] + cartItem.quantity;
@@ -86,7 +85,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           'qty': updatedQuantity,
           'modified': UtilityFunction.getCurrentDateTime(),
         };
-
 
         await DatabaseHelper.updateData(data, tableName);
         developer.log('Cart item quantity updated successfully');
@@ -131,20 +129,19 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
   Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
-    setState(() => isLoading = true);
-    String orderByClause =
-        'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
-    String usernameFilter = "AND salesman.username = '$loggedInUsername'";
-    String customerFilter = selectedCustomer != null
-        ? "AND cart.customer_id = '${selectedCustomer!.id}'"
-        : "";
-    String query;
+  setState(() => isLoading = true);
+  String orderByClause = 'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
+  String usernameFilter = "AND salesman.username = '$loggedInUsername'";
+  String customerFilter = selectedCustomer != null
+      ? "AND cart.customer_id = '${selectedCustomer!.id}'"
+      : "";
+  String query;
 
-    if (dateRange != null) {
-      String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
-      String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
-      query = '''
-       SELECT 
+  if (dateRange != null) {
+    String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
+    String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
+    query = '''
+      SELECT 
       cart.*, 
       cart_item.product_id,
       cart_item.product_name, 
@@ -164,10 +161,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       $usernameFilter
       $customerFilter
       $orderByClause;
-      ''';
-    } else if (days != null) {
-      query = '''
-        SELECT 
+    ''';
+    developer.log('Query with dateRange: $query');
+  } else if (days != null) {
+    query = '''
+      SELECT 
       cart.*, 
       cart_item.product_id,
       cart_item.product_name, 
@@ -187,10 +185,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       $usernameFilter
       $customerFilter
       $orderByClause;
-      ''';
-    } else {
-      query = '''
-        SELECT 
+    ''';
+    developer.log('Query with days: $query');
+  } else {
+    query = '''
+      SELECT 
       cart.*, 
       cart_item.product_id,
       cart_item.product_name, 
@@ -208,18 +207,19 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       $usernameFilter
       $customerFilter
       $orderByClause;
-      ''';
-    }
-
-    try {
-      orders = await executeQuery(query);
-    } catch (e, stackTrace) {
-      developer.log('Failed to load orders: $e',
-          error: e, stackTrace: stackTrace);
-    } finally {
-      setState(() => isLoading = false);
-    }
+    ''';
+    developer.log('Default query: $query');
   }
+
+  try {
+    orders = await executeQuery(query);
+  } catch (e, stackTrace) {
+    developer.log('Failed to load orders: $e', error: e, stackTrace: stackTrace);
+  } finally {
+    setState(() => isLoading = false);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -375,43 +375,33 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
   Widget _buildDateButton(String text, int? days, int index) {
-    bool isSelected = selectedButtonIndex == index;
-    return TextButton(
-      onPressed: () {
-        setState(() {
-          selectedButtonIndex = index;
-          if (days != null) {
-            DateTime now = DateTime.now();
-            DateTime startDate = now.subtract(Duration(days: days));
-            DateTime endDate = now;
-            DateTimeRange newRange =
-            DateTimeRange(start: startDate, end: endDate);
+  bool isSelected = selectedButtonIndex == index;
+  return TextButton(
+    onPressed: () {
+      setState(() {
+        selectedButtonIndex = index;
+        selectedDays = days;
+        dateRange = null;
+        _loadSalesOrders(days: selectedDays);
+      });
+    },
+    style: TextButton.styleFrom(
+      backgroundColor: isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        color: isSelected ? Colors.white : Colors.black,
+      ),
+    ),
+  );
+}
 
-            dateRange = newRange;
-            _loadSalesOrders(days: days, dateRange: newRange);
-          } else {
-            dateRange = null;
-            _loadSalesOrders();
-          }
-        });
-      },
-      style: TextButton.styleFrom(
-        backgroundColor:
-        isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: isSelected ? Colors.white : Colors.black,
-        ),
-      ),
-    );
-  }
 
   Future<void> _selectDateRange(BuildContext context) async {
     DateTimeRange? newDateRange = await showDateRangePicker(
@@ -663,7 +653,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                           created: DateTime.now(),
                           modified: DateTime.now(),
                         );
-
 
                         await insertItemIntoCart(cartItem);
                         showDialog(

@@ -172,23 +172,27 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
               return GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ItemScreen(
-                        productId: productId,
-                        itemAssetNames: [
-                          photoUrl1,
-                          photoUrl2,
-                          photoUrl3
-                        ],
-                        productName: productName,
-                        itemDescription: itemDescription,
-                        priceByUom:
-                        product['price_by_uom'].toString(),
+                  try {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemScreen(
+                          productId: productId,
+                          itemAssetNames: [
+                            photoUrl1,
+                            photoUrl2,
+                            photoUrl3
+                          ],
+                          productName: productName,
+                          itemDescription: itemDescription,
+                          priceByUom:
+                          product['price_by_uom'].toString(),
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } catch (e) {
+                    developer.log('Error navigating to ItemScreen: $e');
+                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.only(
