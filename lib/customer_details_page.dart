@@ -3,6 +3,7 @@ import 'db_connection.dart';
 import 'package:mysql1/mysql1.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
+import 'package:shimmer/shimmer.dart';
 
 class CustomerDetails extends StatefulWidget {
   final ValueChanged<Customer>? onSelectionChanged;
@@ -14,18 +15,12 @@ class CustomerDetails extends StatefulWidget {
 }
 
 class _CustomerDetailsState extends State<CustomerDetails> {
-  List<Customer> customers = [];
   int? selectedIndex;
   late Customer selectedCustomer;
 
   @override
   void initState() {
     super.initState();
-    fetchCustomers().then((value) {
-      setState(() {
-        customers = value;
-      });
-    });
   }
 
   @override
@@ -60,87 +55,154 @@ class _CustomerDetailsState extends State<CustomerDetails> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: customers.length,
-                itemBuilder: (context, index) {
-                  final customer = customers[index];
-                  final isSelected = selectedIndex == index;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = isSelected ? null : index;
-                        selectedCustomer = isSelected ? Customer() : customer;
+              child: FutureBuilder<List<Customer>>(
+                future: fetchCustomers(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _buildShimmerLoading();
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Text('No customers found'),
+                    );
+                  } else {
+                    final customers = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: customers.length,
+                      itemBuilder: (context, index) {
+                        final customer = customers[index];
+                        final isSelected = selectedIndex == index;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedIndex = isSelected ? null : index;
+                              selectedCustomer = isSelected ? Customer() : customer;
 
-                        // Call the callback with the updated selected customer
-                        widget.onSelectionChanged?.call(selectedCustomer);
-                      });
+                              // Call the callback with the updated selected customer
+                              widget.onSelectionChanged?.call(selectedCustomer);
+                            });
 
-                      Navigator.pop(context, selectedCustomer);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 4.0,
-                          right: 4.0,
-                          bottom: 2.0
-                      ),
-                      child: Card(
-                        elevation: 2.0,
-                        color: isSelected ? const Color(0xfff8f9fa) : const Color(0xffcde5f2),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                customer.companyName,
-                                style: const TextStyle(
-                                  fontSize: 16.0,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xff191731),
+                            Navigator.pop(context, selectedCustomer);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                left: 4.0,
+                                right: 4.0,
+                                bottom: 2.0
+                            ),
+                            child: Card(
+                              elevation: 2.0,
+                              color: isSelected ? const Color(0xfff8f9fa) : const Color(0xffcde5f2),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      customer.companyName,
+                                      style: const TextStyle(
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xff191731),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8.0),
+                                    Text(
+                                      '${customer.addressLine1}${customer.addressLine2.isNotEmpty ? '\n${customer.addressLine2}' : ''}',
+                                      style: const TextStyle(
+                                        fontSize: 12.0,
+                                        color: Color(0xff191731),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          customer.contactNumber,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xff191731),
+                                          ),
+                                        ),
+                                        Text(
+                                          customer.email,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xff191731),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 8.0),
-                              Text(
-                                '${customer.addressLine1}${customer.addressLine2.isNotEmpty ? '\n${customer.addressLine2}' : ''}',
-                                style: const TextStyle(
-                                  fontSize: 12.0,
-                                  color: Color(0xff191731),
-                                ),
-                              ),
-                              const SizedBox(height: 16.0),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    customer.contactNumber,
-                                    style: const TextStyle(
-                                      fontSize: 14.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xff191731),
-                                    ),
-                                  ),
-                                  Text(
-                                    customer.email,
-                                    style: const TextStyle(
-                                      fontSize: 14.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xff191731),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  );
+                        );
+                      },
+                    );
+                  }
                 },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildShimmerLoading() {
+    return ListView.builder(
+      itemCount: 6, // Arbitrary number to show the loading placeholders
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Card(
+              elevation: 2.0,
+              child: Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 38.0,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 4.0),
+                    Container(
+                      width: double.infinity,
+                      height: 16.0,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 4.0),
+                    Container(
+                      width: 200.0,
+                      height: 16.0,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 4.0),
+                    Container(
+                      width: 120.0,
+                      height: 16.0,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

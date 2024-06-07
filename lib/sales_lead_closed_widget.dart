@@ -11,13 +11,13 @@ class ClosedLeadItem extends StatelessWidget {
   final String quantity;
 
   const ClosedLeadItem({
-    Key? key,
+    super.key,
     required this.leadItem,
     required this.formattedCreatedDate,
     required this.expirationDate,
     required this.total,
     required this.quantity,
-  }) : super(key: key);
+  });
 
   Future<void> _launchURL(String url) async {
     if (await canLaunch(url)) {
@@ -35,14 +35,14 @@ class ClosedLeadItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String formattedSalesOrderId = leadItem.salesOrderId != null
-        ? 'SO' + leadItem.salesOrderId!.padLeft(7, '0')
+        ? 'SO${leadItem.salesOrderId!.padLeft(7, '0')}'
         : '';
     double formattedTotal = double.parse(total);
 
     return Card(
-      color: Color.fromARGB(255, 205, 229, 242),
+      color: const Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -53,7 +53,7 @@ class ClosedLeadItem extends StatelessWidget {
               children: [
                 Text(
                   leadItem.customerName.length > 15
-                      ? leadItem.customerName.substring(0, 15) + '...'
+                      ? '${leadItem.customerName.substring(0, 15)}...'
                       : leadItem.customerName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -61,14 +61,14 @@ class ClosedLeadItem extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Column(
+                  child: const Column(
                     children: [
                       Text(
                         'Closed',
@@ -81,7 +81,7 @@ class ClosedLeadItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 PopupMenuButton<String>(
                   onSelected: (String value) {
                     // Perform an action based on the selected value
@@ -117,7 +117,7 @@ class ClosedLeadItem extends StatelessWidget {
                         leadItem.contactNumber.isNotEmpty
                             ? leadItem.contactNumber
                             : 'XXX-XXXXXXX',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
@@ -142,7 +142,7 @@ class ClosedLeadItem extends StatelessWidget {
                         leadItem.emailAddress.isNotEmpty
                             ? leadItem.emailAddress
                             : 'XXX@domain.com',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
@@ -156,9 +156,9 @@ class ClosedLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               formattedSalesOrderId,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(
+            const SizedBox(
               height: 8,
             ),
             Text('Created date: $formattedCreatedDate'),
@@ -168,7 +168,7 @@ class ClosedLeadItem extends StatelessWidget {
               leadItem.quantity != null
                   ? 'Quantity: $quantity items      Total: RM${_formatCurrency(formattedTotal)}'
                   : 'Quantity: Unknown      Total: RM${_formatCurrency(formattedTotal)}',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
             Row(
@@ -176,7 +176,7 @@ class ClosedLeadItem extends StatelessWidget {
               children: [
                 Text(
                   'Created on: ${leadItem.createdDate}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                   ),

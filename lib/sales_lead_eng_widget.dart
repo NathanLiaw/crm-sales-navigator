@@ -15,7 +15,7 @@ class EngagementLeadItem extends StatelessWidget {
   final Function(LeadItem) onDeleteLead;
   final Function(LeadItem, String) onUndoLead;
   final Function(LeadItem) onComplete;
-  final Function(LeadItem, String, String?) onMoveToOrderProcessing;
+  final Function(LeadItem, String, int?) onMoveToOrderProcessing;
 
   const EngagementLeadItem({
     super.key,
@@ -147,7 +147,7 @@ class EngagementLeadItem extends StatelessWidget {
                         <PopupMenuEntry<String>>[
                       PopupMenuItem<String>(
                         value: 'view details',
-                        child: Text('View details'),
+                        child: const Text('View details'),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -341,7 +341,7 @@ class EngagementLeadItem extends StatelessWidget {
       // Move EngagementLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
       if (result['salesOrderId'] != null) {
         String salesOrderId = result['salesOrderId'] as String;
-        String? quantity = result['quantity'] as String?;
+        int? quantity = result['quantity'];
         await onMoveToOrderProcessing(leadItem, salesOrderId, quantity);
       }
     }

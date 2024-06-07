@@ -271,7 +271,8 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       'description': descriptionController.text,
       'predicted_sales': amountController.text,
       'stage': 'Opportunities', // Add the default stage for new leads
-      'so_id': null,
+      'previous_stage': 'Opportunities',
+      'so_id': '',
       'created_date':
           DateTime.now().toString(), // Add the current date as created_date
     };

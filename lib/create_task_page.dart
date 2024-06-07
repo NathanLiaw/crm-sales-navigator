@@ -45,7 +45,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   String? total;
   List<String> salesOrderIds = [];
   String? formattedCreatedDate;
-  String? quantity;
+  int? quantity;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -81,9 +81,9 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
           "SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ? OR cart_id = ?",
           [session, int.parse(salesOrderId)],
         );
-        String totalQuantity = quantityResults.isEmpty
-            ? '0'
-            : quantityResults.first['total_qty'].toString();
+        int totalQuantity = quantityResults.isEmpty
+            ? 0
+            : quantityResults.first['total_qty'];
         setState(() {
           createdDate = row['created'].toString();
           expirationDate = row['expiration_date'].toString();
@@ -502,7 +502,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     String taskDescription = descriptionController.text;
     String taskDueDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
     String salesOrderId = selectedSalesOrderId ?? '';
-    int? quantityInt = quantity != null ? int.parse(quantity!) : null;
+    int? quantityInt = quantity;
 
     try {
       await conn.query(

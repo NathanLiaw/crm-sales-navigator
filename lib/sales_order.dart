@@ -10,6 +10,7 @@ import 'db_connection.dart';
 import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
+import 'package:shimmer/shimmer.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -440,7 +441,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Widget _buildSalesOrderList() {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView.builder(
+        itemCount: 6, // Number of shimmer items to show while loading
+        itemBuilder: (context, index) {
+          return _buildShimmerSalesOrderItem();
+        },
+      );
     }
 
     if (orders.isEmpty) {
@@ -471,6 +477,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         Map<String, dynamic> firstItem = items.first;
 
         return _buildSalesOrderItem(
+          context: context,
           index: index,
           orderNumber: orderId,
           companyName: firstItem['customer_company_name'] ?? 'Unknown Company',
@@ -485,7 +492,114 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     );
   }
 
+  Widget _buildShimmerSalesOrderItem() {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Stack(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        height: 20,
+                                        width: 150,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        height: 20,
+                                        width: 100,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        height: 20,
+                                        width: 200,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        height: 20,
+                                        width: 100,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 6,
+                    child: Container(
+                      height: 20,
+                      width: 100,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ExpansionTile(
+              title: Container(
+                height: 20,
+                width: 100,
+                color: Colors.white,
+              ),
+              children: List.generate(3, (index) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 20,
+                          width: double.infinity,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSalesOrderItem({
+    required BuildContext context,
     required int index,
     required String orderNumber,
     required String companyName,
@@ -546,9 +660,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        elevation: 2,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -10,11 +10,11 @@ class OrderProcessingLeadItem extends StatelessWidget {
   final Function(LeadItem) onMoveToClosed;
 
   const OrderProcessingLeadItem({
-    Key? key,
+    super.key,
     required this.leadItem,
     required this.status,
     required this.onMoveToClosed,
-  }) : super(key: key);
+  });
 
   Future<void> _launchURL(String url) async {
     if (await canLaunch(url)) {
@@ -35,7 +35,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String formattedSalesOrderId = leadItem.salesOrderId != null
-        ? 'SO' + leadItem.salesOrderId!.padLeft(7, '0')
+        ? 'SO${leadItem.salesOrderId!.padLeft(7, '0')}'
         : '';
 
     List<String> statusInfo = status.split('|');
@@ -48,10 +48,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
 
     return Card(
       color: orderStatus == 'Pending'
-          ? Color.fromARGB(255, 255, 237, 188)
-          : Color.fromARGB(255, 205, 229, 242),
+          ? const Color.fromARGB(255, 255, 237, 188)
+          : const Color.fromARGB(255, 205, 229, 242),
       elevation: 2,
-      margin: EdgeInsets.only(left: 8, right: 8, top: 10),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -62,7 +62,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
               children: [
                 Text(
                   leadItem.customerName.length > 24
-                      ? leadItem.customerName.substring(0, 24) + '...'
+                      ? '${leadItem.customerName.substring(0, 24)}...'
                       : leadItem.customerName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -71,10 +71,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: orderStatus == 'Pending'
-                        ? Color.fromARGB(255, 255, 195, 31)
+                        ? const Color.fromARGB(255, 255, 195, 31)
                         : Colors.green,
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -110,7 +110,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                         leadItem.contactNumber.isNotEmpty
                             ? leadItem.contactNumber
                             : 'XXX-XXXXXXX',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
@@ -135,7 +135,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                         leadItem.emailAddress.isNotEmpty
                             ? leadItem.emailAddress
                             : 'XXX@domain.com',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
@@ -149,19 +149,19 @@ class OrderProcessingLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               formattedSalesOrderId,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(
+            const SizedBox(
               height: 8,
             ),
-            Text('Created date: ${formattedCreatedDate}'),
+            Text('Created date: $formattedCreatedDate'),
             Text('Expiry date: $expirationDate'),
             const SizedBox(height: 8),
             Text(
               leadItem.quantity != null
                   ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
                   : 'Quantity: Unknown      Total: RM$formattedTotal',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -171,15 +171,15 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   visible: orderStatus == 'Confirm',
                   child: ElevatedButton(
                     onPressed: () => onMoveToClosed(leadItem),
-                    child:
-                        Text('Confirm', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xff0069BA),
+                      backgroundColor: const Color(0xff0069BA),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      minimumSize: Size(50, 35),
+                      minimumSize: const Size(50, 35),
                     ),
+                    child:
+                        const Text('Confirm', style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],
@@ -198,7 +198,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       ),
                     );
                   },
-                  child: Text(
+                  child: const Text(
                     'View Order',
                     style: TextStyle(
                       decoration: TextDecoration.underline,
@@ -210,7 +210,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                 ),
                 Text(
                   'Created on: ${leadItem.createdDate}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
                   ),

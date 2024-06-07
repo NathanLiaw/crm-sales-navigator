@@ -15,7 +15,7 @@ class NegotiationLeadItem extends StatefulWidget {
   final Function(LeadItem) onDeleteLead;
   final Function(LeadItem, String) onUndoLead;
   final Function(LeadItem) onComplete;
-  final Function(LeadItem, String, String?) onMoveToOrderProcessing;
+  final Function(LeadItem, String, int?) onMoveToOrderProcessing;
 
   const NegotiationLeadItem({
     super.key,
@@ -100,7 +100,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
       // Move NegotiationLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
       if (result['salesOrderId'] != null) {
         String salesOrderId = result['salesOrderId'] as String;
-        String? quantity = result['quantity'] as String?;
+        int? quantity = result['quantity'];
         await widget.onMoveToOrderProcessing(
             widget.leadItem, salesOrderId, quantity);
         Navigator.pop(context);

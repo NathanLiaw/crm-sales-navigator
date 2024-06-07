@@ -15,6 +15,7 @@ import 'package:sales_navigator/sales_lead_orderprocessing_widget.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
+import 'package:shimmer/shimmer.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -42,11 +43,18 @@ class _HomePageState extends State<HomePage> {
   Map<int, double> latestTotals = {};
   late int salesmanId;
 
+  bool _isLoading = true; // Track loading state
+
   @override
   void initState() {
     super.initState();
     _initializeSalesmanId();
     _fetchLeadItems();
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _isLoading = false; // Set loading state to false when data is loaded
+      });
+    });
   }
 
   void _initializeSalesmanId() async {
@@ -181,7 +189,7 @@ class _HomePageState extends State<HomePage> {
         var addressLine1 = row['address'].toString();
         var salesOrderId = row['so_id']?.toString();
         var previousStage = row['previous_stage']?.toString();
-        var quantity = row['quantity']?.toString();
+        var quantity = row['quantity'];
 
         var leadItem = LeadItem(
           salesmanId: salesmanId,
@@ -235,7 +243,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _moveFromNegotiationToOrderProcessing(
-      LeadItem leadItem, String salesOrderId, String? quantity) async {
+      LeadItem leadItem, String salesOrderId, int? quantity) async {
     setState(() {
       negotiationLeads.remove(leadItem);
       leadItem.salesOrderId = salesOrderId;
@@ -380,7 +388,7 @@ class _HomePageState extends State<HomePage> {
       // If the user selects a sales order ID, move the LeadItem to OrderProcessingLeadItem
       if (result['salesOrderId'] != null) {
         String salesOrderId = result['salesOrderId'] as String;
-        String? quantity = result['quantity'] as String?;
+        int? quantity = result['quantity'];
         await _moveFromOpportunitiesToOrderProcessing(
             leadItem, salesOrderId, quantity);
         setState(() {
@@ -392,7 +400,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _moveFromOpportunitiesToOrderProcessing(
-      LeadItem leadItem, String salesOrderId, String? quantity) async {
+      LeadItem leadItem, String salesOrderId, int? quantity) async {
     setState(() {
       leadItems.remove(leadItem);
       leadItem.salesOrderId = salesOrderId;
@@ -597,11 +605,11 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: TabBarView(
                       children: [
-                        _buildOpportunitiesTab(),
-                        _buildEngagementTab(),
-                        _buildNegotiationTab(),
-                        _buildOrderProcessingTab(),
-                        _buildClosedTab(),
+                        _isLoading ? _buildShimmerTab() : _buildOpportunitiesTab(),
+                        _isLoading ? _buildShimmerTab() : _buildEngagementTab(),
+                        _isLoading ? _buildShimmerTab() : _buildNegotiationTab(),
+                        _isLoading ? _buildShimmerTab() : _buildOrderProcessingTab(),
+                        _isLoading ? _buildShimmerTab() : _buildClosedTab(),
                       ],
                     ),
                   ),
@@ -620,6 +628,57 @@ class _HomePageState extends State<HomePage> {
             );
           }
         },
+      ),
+    );
+  }
+
+  // Shimmer effect for both tabs
+  Widget _buildShimmerTab() {
+    return ListView.builder(
+      itemCount: 4, // Number of shimmer items to show while loading
+      itemBuilder: (context, index) {
+        return _buildShimmerCard();
+      },
+    );
+  }
+
+  Widget _buildShimmerCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 64.0,
+                  color: Colors.white,
+                ),
+                SizedBox(height: 8.0),
+                Container(
+                  width: double.infinity,
+                  height: 16.0,
+                  color: Colors.white,
+                ),
+                SizedBox(height: 8.0),
+                Container(
+                  width: double.infinity,
+                  height: 16.0,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -874,7 +933,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _moveFromEngagementToOrderProcessing(
-      LeadItem leadItem, String salesOrderId, String? quantity) async {
+      LeadItem leadItem, String salesOrderId, int? quantity) async {
     setState(() {
       engagementLeads.remove(leadItem);
       leadItem.salesOrderId = salesOrderId;
@@ -949,7 +1008,44 @@ class _HomePageState extends State<HomePage> {
             future: _fetchSalesOrderStatus(leadItem.salesOrderId!),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
+                return Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+                    child: Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 200.0,
+                              color: Colors.white,
+                            ),
+                            SizedBox(height: 8.0),
+                            Container(
+                              width: double.infinity,
+                              height: 24.0,
+                              color: Colors.white,
+                            ),
+                            SizedBox(height: 8.0),
+                            Container(
+                              width: double.infinity,
+                              height: 24.0,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
               } else if (snapshot.hasError) {
                 return Text('Error: ${snapshot.error}');
               } else {
@@ -1046,7 +1142,7 @@ class _HomePageState extends State<HomePage> {
           future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return _buildShimmerCard();
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else {
@@ -1080,7 +1176,7 @@ class LeadItem {
   String addressLine1;
   String? salesOrderId;
   String? previousStage;
-  String? quantity;
+  int? quantity;
   String get formattedAmount {
     final formatter = NumberFormat("#,##0.00", "en_US");
     return 'RM${formatter.format(double.parse(amount.substring(2)))}';
@@ -1097,7 +1193,7 @@ class LeadItem {
     required this.emailAddress,
     required this.stage,
     required this.addressLine1,
-    required this.salesOrderId,
+    this.salesOrderId,
     this.previousStage,
     this.quantity,
   });
