@@ -129,7 +129,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       _loadSalesOrders();
     });
   }
-
+  
   Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
   setState(() => isLoading = true);
   String orderByClause =
@@ -141,81 +141,81 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   String query;
 
   if (dateRange != null) {
-    String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
-    String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
+    String startDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+    String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
     query = '''
-      SELECT 
-        cart.*, 
-        cart_item.product_id,
-        cart_item.product_name, 
-        cart_item.qty,
-        cart_item.uom,
-        cart_item.ori_unit_price,
-        salesman.salesman_name,
-        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
-        CURRENT_TIMESTAMP AS current_time
-      FROM 
+     SELECT 
+    cart.*, 
+    cart_item.product_id,
+    cart_item.product_name, 
+    cart_item.qty,
+    cart_item.uom,
+    cart_item.ori_unit_price,
+    salesman.salesman_name,
+    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+    FROM 
         cart
-      JOIN 
+    JOIN 
         cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-      JOIN 
+    JOIN 
         salesman ON cart.buyer_id = salesman.id
-      WHERE 
-        cart.created BETWEEN '$startDate' AND '$endDate'
-      $usernameFilter
-      $customerFilter
-      $orderByClause;
-      ''';
+    WHERE 
+    cart.created BETWEEN '$startDate' AND '$endDate'
+    $usernameFilter
+    $customerFilter
+    $orderByClause;
+    ''';
   } else if (days != null) {
     query = '''
       SELECT 
-        cart.*, 
-        cart_item.product_id,
-        cart_item.product_name, 
-        cart_item.qty,
-        cart_item.uom,
-        cart_item.ori_unit_price,
-        salesman.salesman_name,
-        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
-        CURRENT_TIMESTAMP AS current_time
-      FROM 
+    cart.*, 
+    cart_item.product_id,
+    cart_item.product_name, 
+    cart_item.qty,
+    cart_item.uom,
+    cart_item.ori_unit_price,
+    salesman.salesman_name,
+    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+    FROM 
         cart
-      JOIN 
+    JOIN 
         cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-      JOIN 
+    JOIN 
         salesman ON cart.buyer_id = salesman.id
-      WHERE 
-        cart.created >= DATE_SUB(CURDATE(), INTERVAL $days DAY)
-      $usernameFilter
-      $customerFilter
-      $orderByClause;
-      ''';
+    WHERE 
+    cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
+    $usernameFilter
+    $customerFilter
+    $orderByClause;
+    ''';
   } else {
     query = '''
       SELECT 
-        cart.*, 
-        cart_item.product_id,
-        cart_item.product_name, 
-        cart_item.qty,
-        cart_item.uom,
-        cart_item.ori_unit_price,
-        salesman.salesman_name,
-        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
-        CURRENT_TIMESTAMP AS current_time
-      FROM 
+    cart.*, 
+    cart_item.product_id,
+    cart_item.product_name, 
+    cart_item.qty,
+    cart_item.uom,
+    cart_item.ori_unit_price,
+    salesman.salesman_name,
+    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+    FROM 
         cart
-      JOIN 
+    JOIN 
         cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-      JOIN 
-        salesman ON cart.buyer_id = salesman.id
-      $usernameFilter
-      $customerFilter
-      $orderByClause;
-      ''';
+    JOIN 
+    salesman ON cart.buyer_id = salesman.id
+    $usernameFilter
+    $customerFilter
+    $orderByClause;
+    ''';
   }
+
+  developer.log('Executing query: $query');
 
   try {
     orders = await executeQuery(query);
+    developer.log('Query executed successfully, loaded orders: ${orders.length}');
   } catch (e, stackTrace) {
     developer.log('Failed to load orders: $e', error: e, stackTrace: stackTrace);
   } finally {
