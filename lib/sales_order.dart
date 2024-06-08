@@ -131,95 +131,97 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
   Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
-    setState(() => isLoading = true);
-    String orderByClause =
-        'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
-    String usernameFilter = "AND salesman.username = '$loggedInUsername'";
-    String customerFilter = selectedCustomer != null
-        ? "AND cart.customer_id = '${selectedCustomer!.id}'"
-        : "";
-    String query;
+  setState(() => isLoading = true);
+  String orderByClause =
+      'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
+  String usernameFilter = "AND salesman.username = '$loggedInUsername'";
+  String customerFilter = selectedCustomer != null
+      ? "AND cart.customer_id = '${selectedCustomer!.id}'"
+      : "";
+  String query;
 
-    if (dateRange != null) {
-      String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
-      String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
-      query = '''
-       SELECT 
-      cart.*, 
-      cart_item.product_id,
-      cart_item.product_name, 
-      cart_item.qty,
-      cart_item.uom,
-      cart_item.ori_unit_price,
-      salesman.salesman_name,
-      DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+  if (dateRange != null) {
+    String startDate = DateFormat('yyyy-MM-dd').format(dateRange.start);
+    String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
+    query = '''
+      SELECT 
+        cart.*, 
+        cart_item.product_id,
+        cart_item.product_name, 
+        cart_item.qty,
+        cart_item.uom,
+        cart_item.ori_unit_price,
+        salesman.salesman_name,
+        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
+        CURRENT_TIMESTAMP AS current_time
       FROM 
-          cart
+        cart
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
       JOIN 
-          salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
       WHERE 
-      cart.created BETWEEN '$startDate' AND '$endDate'
+        cart.created BETWEEN '$startDate' AND '$endDate'
       $usernameFilter
       $customerFilter
       $orderByClause;
       ''';
-    } else if (days != null) {
-      query = '''
-        SELECT 
-      cart.*, 
-      cart_item.product_id,
-      cart_item.product_name, 
-      cart_item.qty,
-      cart_item.uom,
-      cart_item.ori_unit_price,
-      salesman.salesman_name,
-      DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+  } else if (days != null) {
+    query = '''
+      SELECT 
+        cart.*, 
+        cart_item.product_id,
+        cart_item.product_name, 
+        cart_item.qty,
+        cart_item.uom,
+        cart_item.ori_unit_price,
+        salesman.salesman_name,
+        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
+        CURRENT_TIMESTAMP AS current_time
       FROM 
-          cart
+        cart
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
       JOIN 
-          salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
       WHERE 
-      cart.created >= DATE_SUB(CURDATE(), INTERVAL $days DAY)
+        cart.created >= DATE_SUB(CURDATE(), INTERVAL $days DAY)
       $usernameFilter
       $customerFilter
       $orderByClause;
       ''';
-    } else {
-      query = '''
-        SELECT 
-      cart.*, 
-      cart_item.product_id,
-      cart_item.product_name, 
-      cart_item.qty,
-      cart_item.uom,
-      cart_item.ori_unit_price,
-      salesman.salesman_name,
-      DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+  } else {
+    query = '''
+      SELECT 
+        cart.*, 
+        cart_item.product_id,
+        cart_item.product_name, 
+        cart_item.qty,
+        cart_item.uom,
+        cart_item.ori_unit_price,
+        salesman.salesman_name,
+        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
+        CURRENT_TIMESTAMP AS current_time
       FROM 
-          cart
+        cart
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
       JOIN 
-      salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
       $usernameFilter
       $customerFilter
       $orderByClause;
       ''';
-    }
-
-    try {
-      orders = await executeQuery(query);
-    } catch (e, stackTrace) {
-      developer.log('Failed to load orders: $e',
-          error: e, stackTrace: stackTrace);
-    } finally {
-      setState(() => isLoading = false);
-    }
   }
+
+  try {
+    orders = await executeQuery(query);
+  } catch (e, stackTrace) {
+    developer.log('Failed to load orders: $e', error: e, stackTrace: stackTrace);
+  } finally {
+    setState(() => isLoading = false);
+  }
+}
 
   @override
   Widget build(BuildContext context) {
