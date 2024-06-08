@@ -69,7 +69,8 @@ class _HomePageState extends State<HomePage> {
     MySqlConnection conn = await connectToDatabase();
     try {
       print(salesmanId);
-      Results results = await conn.query('SELECT * FROM cart WHERE buyer_id = $salesmanId');
+      Results results =
+          await conn.query('SELECT * FROM cart WHERE buyer_id = $salesmanId');
       await _fetchCreateLeadItems(conn);
 
       for (var row in results) {
@@ -167,7 +168,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      developer.log('Error fetching lead items: $e');
+      print('Error fetching lead items: $e');
     } finally {
       await conn.close();
     }
@@ -175,7 +176,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
     try {
-      Results results = await conn.query('SELECT * FROM sales_lead WHERE salesman_id = $salesmanId');
+      Results results = await conn
+          .query('SELECT * FROM sales_lead WHERE salesman_id = $salesmanId');
       for (var row in results) {
         var customerName = row['customer_name'] as String;
         var description = row['description'] as String? ?? '';
@@ -605,10 +607,16 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: TabBarView(
                       children: [
-                        _isLoading ? _buildShimmerTab() : _buildOpportunitiesTab(),
+                        _isLoading
+                            ? _buildShimmerTab()
+                            : _buildOpportunitiesTab(),
                         _isLoading ? _buildShimmerTab() : _buildEngagementTab(),
-                        _isLoading ? _buildShimmerTab() : _buildNegotiationTab(),
-                        _isLoading ? _buildShimmerTab() : _buildOrderProcessingTab(),
+                        _isLoading
+                            ? _buildShimmerTab()
+                            : _buildNegotiationTab(),
+                        _isLoading
+                            ? _buildShimmerTab()
+                            : _buildOrderProcessingTab(),
                         _isLoading ? _buildShimmerTab() : _buildClosedTab(),
                       ],
                     ),
@@ -1012,7 +1020,8 @@ class _HomePageState extends State<HomePage> {
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 2.0, horizontal: 8.0),
                     child: Card(
                       elevation: 2,
                       shape: RoundedRectangleBorder(

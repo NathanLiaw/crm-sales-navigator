@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
@@ -33,6 +34,80 @@ class CreateTaskPage extends StatefulWidget {
   _CreateTaskPageState createState() => _CreateTaskPageState();
 }
 
+class SalesOrderDialog extends StatefulWidget {
+  final String? salesOrderId;
+  final List<Map<String, dynamic>> cartItems;
+
+  const SalesOrderDialog({
+    super.key,
+    required this.salesOrderId,
+    required this.cartItems,
+  });
+
+  @override
+  _SalesOrderDialogState createState() => _SalesOrderDialogState();
+}
+
+class _SalesOrderDialogState extends State<SalesOrderDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        'Sales Order Details',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width *
+            0.8, // Adjust the width as needed
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.salesOrderId != null)
+                Text(
+                  'Sales Order ID: SO${widget.salesOrderId!.padLeft(7, '0')}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              const SizedBox(height: 16),
+              const Text(
+                'Cart Items:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  itemCount: widget.cartItems.length,
+                  itemBuilder: (context, index) {
+                    final item = widget.cartItems[index];
+                    return ListTile(
+                      title: Text('${item['product_name']}'),
+                      trailing: Text('Qty: ${item['qty']}'),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+}
+
 class _CreateTaskPageState extends State<CreateTaskPage> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -44,6 +119,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   String? createdDate;
   String? total;
   List<String> salesOrderIds = [];
+  List<Map<String, dynamic>> cartItemList = [];
   String? formattedCreatedDate;
   int? quantity;
 
@@ -81,15 +157,28 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
           "SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ? OR cart_id = ?",
           [session, int.parse(salesOrderId)],
         );
-        int totalQuantity = quantityResults.isEmpty
-            ? 0
-            : quantityResults.first['total_qty'];
+        int totalQuantity =
+            quantityResults.isEmpty ? 0 : quantityResults.first['total_qty'];
+
+        // get product names and quantities from cart_item
+        Results cartItemResults = await conn.query(
+          "SELECT product_name, qty FROM cart_item WHERE cart_id = ?",
+          [int.parse(salesOrderId)],
+        );
+        List<Map<String, dynamic>> cartItems = cartItemResults
+            .map((row) => {
+                  'product_name': row['product_name'],
+                  'qty': row['qty'],
+                })
+            .toList();
+
         setState(() {
           createdDate = row['created'].toString();
           expirationDate = row['expiration_date'].toString();
           total = row['total'].toString();
           quantity = totalQuantity;
           formattedCreatedDate = _formatDate(createdDate!);
+          cartItemList = cartItems;
         });
       }
       await conn.close();
@@ -129,7 +218,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   Future<List<String>> fetchSalesOrderIds() async {
     try {
       List<Map<String, dynamic>> salesOrders =
-      await fetchSalesOrderDropdown(widget.customerName);
+          await fetchSalesOrderDropdown(widget.customerName);
       setState(() {
         salesOrderIds = salesOrders.map((order) {
           final orderId = order['id'];
@@ -151,7 +240,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     if (widget.lastPurchasedAmount != null &&
         widget.lastPurchasedAmount.isNotEmpty) {
       String cleanedAmount =
-      widget.lastPurchasedAmount.replaceAll(RegExp(r'[^0-9.]'), '');
+          widget.lastPurchasedAmount.replaceAll(RegExp(r'[^0-9.]'), '');
       if (cleanedAmount.isNotEmpty) {
         double parsedAmount = double.parse(cleanedAmount);
         formattedLastPurchasedAmount = formatter.format(parsedAmount);
@@ -263,7 +352,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                             child: Text(
                               widget.address,
                               style:
-                              const TextStyle(fontWeight: FontWeight.bold),
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -322,11 +411,11 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            IntrinsicWidth(
+                            Flexible(
                               child: Text(
                                 selectedDate != null
                                     ? DateFormat('dd/MM/yyyy')
-                                    .format(selectedDate!)
+                                        .format(selectedDate!)
                                     : '',
                               ),
                             ),
@@ -351,6 +440,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     SizedBox(
                       width: 120,
                       child: DropdownButtonFormField<String>(
+                        menuMaxHeight: 100,
                         value: selectedSalesOrderId,
                         onChanged: (String? newValue) {
                           setState(() {
@@ -385,6 +475,17 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      InkWell(
+                        onTap: () => _showSalesOrderDialog(context),
+                        child: const Text(
+                          'View Sales Order Details',
+                          style: TextStyle(
+                            color: Color(0xff0069BA),
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       Text(
                         'Created date: ${formattedCreatedDate ?? ''}',
                         style: const TextStyle(
@@ -395,6 +496,27 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
+                      // const SizedBox(height: 16),
+                      // const Text(
+                      //   'Cart Items:',
+                      //   style: TextStyle(
+                      //     fontSize: 16,
+                      //     fontWeight: FontWeight.bold,
+                      //   ),
+                      // ),
+                      // SizedBox(
+                      //   height: 100,
+                      //   child: ListView.builder(
+                      //     itemCount: cartItemList.length,
+                      //     itemBuilder: (context, index) {
+                      //       final item = cartItemList[index];
+                      //       return ListTile(
+                      //         title: Text('${item['product_name']}'),
+                      //         trailing: Text('Qty: ${item['qty']}'),
+                      //       );
+                      //     },
+                      //   ),
+                      // ),
                     ],
                   ),
                   const SizedBox(height: 30),
@@ -478,6 +600,18 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showSalesOrderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return SalesOrderDialog(
+          salesOrderId: selectedSalesOrderId,
+          cartItems: cartItemList,
+        );
+      },
     );
   }
 
