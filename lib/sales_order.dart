@@ -77,6 +77,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         field,
       );
 
+
       if (result.isNotEmpty) {
         final existingItem = result.first;
         final updatedQuantity = existingItem['qty'] + cartItem.quantity;
@@ -85,6 +86,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           'qty': updatedQuantity,
           'modified': UtilityFunction.getCurrentDateTime(),
         };
+
 
         await DatabaseHelper.updateData(data, tableName);
         developer.log('Cart item quantity updated successfully');
@@ -130,7 +132,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
   setState(() => isLoading = true);
-  String orderByClause = 'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
+  String orderByClause =
+      'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
   String usernameFilter = "AND salesman.username = '$loggedInUsername'";
   String customerFilter = selectedCustomer != null
       ? "AND cart.customer_id = '${selectedCustomer!.id}'"
@@ -142,73 +145,73 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     String endDate = DateFormat('yyyy-MM-dd').format(dateRange.end);
     query = '''
       SELECT 
-      cart.*, 
-      cart_item.product_id,
-      cart_item.product_name, 
-      cart_item.qty,
-      cart_item.uom,
-      cart_item.ori_unit_price,
-      salesman.salesman_name,
-      DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+        cart.*, 
+        cart_item.product_id,
+        cart_item.product_name, 
+        cart_item.qty,
+        cart_item.uom,
+        cart_item.ori_unit_price,
+        salesman.salesman_name,
+        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
+        CURRENT_TIMESTAMP AS current_time
       FROM 
-          cart
+        cart
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
       JOIN 
-          salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
       WHERE 
-      cart.created BETWEEN '$startDate' AND '$endDate'
+        cart.created BETWEEN '$startDate' AND '$endDate'
       $usernameFilter
       $customerFilter
       $orderByClause;
-    ''';
-    developer.log('Query with dateRange: $query');
+      ''';
   } else if (days != null) {
     query = '''
       SELECT 
-      cart.*, 
-      cart_item.product_id,
-      cart_item.product_name, 
-      cart_item.qty,
-      cart_item.uom,
-      cart_item.ori_unit_price,
-      salesman.salesman_name,
-      DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+        cart.*, 
+        cart_item.product_id,
+        cart_item.product_name, 
+        cart_item.qty,
+        cart_item.uom,
+        cart_item.ori_unit_price,
+        salesman.salesman_name,
+        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
+        CURRENT_TIMESTAMP AS current_time
       FROM 
-          cart
+        cart
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
       JOIN 
-          salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
       WHERE 
-      cart.created >= DATE_SUB(CURDATE(), INTERVAL $days DAY)
+        cart.created >= DATE_SUB(CURDATE(), INTERVAL $days DAY)
       $usernameFilter
       $customerFilter
       $orderByClause;
-    ''';
-    developer.log('Query with days: $query');
+      ''';
   } else {
     query = '''
       SELECT 
-      cart.*, 
-      cart_item.product_id,
-      cart_item.product_name, 
-      cart_item.qty,
-      cart_item.uom,
-      cart_item.ori_unit_price,
-      salesman.salesman_name,
-      DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date
+        cart.*, 
+        cart_item.product_id,
+        cart_item.product_name, 
+        cart_item.qty,
+        cart_item.uom,
+        cart_item.ori_unit_price,
+        salesman.salesman_name,
+        DATE_FORMAT(cart.created, '%d/%m/%Y') AS created_date,
+        CURRENT_TIMESTAMP AS current_time
       FROM 
-          cart
+        cart
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
       JOIN 
-      salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
       $usernameFilter
       $customerFilter
       $orderByClause;
-    ''';
-    developer.log('Default query: $query');
+      ''';
   }
 
   try {
@@ -220,7 +223,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,12 +232,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004C87),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: <Widget>[
@@ -288,7 +285,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
               child: Text(
                 selectedCustomer?.companyName ?? 'Select Customer',
                 style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             const Icon(Icons.arrow_drop_down, color: Colors.grey),
@@ -380,33 +377,43 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
   Widget _buildDateButton(String text, int? days, int index) {
-  bool isSelected = selectedButtonIndex == index;
-  return TextButton(
-    onPressed: () {
-      setState(() {
-        selectedButtonIndex = index;
-        selectedDays = days;
-        dateRange = null;
-        _loadSalesOrders(days: selectedDays);
-      });
-    },
-    style: TextButton.styleFrom(
-      backgroundColor: isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(50),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-    ),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 12,
-        color: isSelected ? Colors.white : Colors.black,
-      ),
-    ),
-  );
-}
+    bool isSelected = selectedButtonIndex == index;
+    return TextButton(
+      onPressed: () {
+        setState(() {
+          selectedButtonIndex = index;
+          if (days != null) {
+            DateTime now = DateTime.now();
+            DateTime startDate = now.subtract(Duration(days: days));
+            DateTime endDate = now;
+            DateTimeRange newRange =
+                DateTimeRange(start: startDate, end: endDate);
 
+            dateRange = newRange;
+            _loadSalesOrders(days: days, dateRange: newRange);
+          } else {
+            dateRange = null;
+            _loadSalesOrders();
+          }
+        });
+      },
+      style: TextButton.styleFrom(
+        backgroundColor:
+            isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: isSelected ? Colors.white : Colors.black,
+        ),
+      ),
+    );
+  }
 
   Future<void> _selectDateRange(BuildContext context) async {
     DateTimeRange? newDateRange = await showDateRangePicker(
@@ -418,6 +425,20 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           ),
       firstDate: DateTime(DateTime.now().year - 5),
       lastDate: DateTime.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF004C87),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (newDateRange != null) {
@@ -538,7 +559,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
         shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         elevation: 4,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,7 +581,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '${index + 1}. $formattedOrderNumber',
@@ -582,7 +603,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         'RM $amount',
                                         style: const TextStyle(
                                           color:
-                                          Color.fromARGB(255, 76, 175, 80),
+                                              Color.fromARGB(255, 76, 175, 80),
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -611,73 +632,74 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
               ),
               children: items
                   .map((item) => Padding(
-                padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${item['product_name']} ${item['uom']} X${item['qty']}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: Color.fromARGB(255, 0, 0, 0),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.copy),
-                      onPressed: () async {
-                        final cartItem = CartItem(
-                          buyerId: await UtilityFunction.getUserId(),
-                          productId: item['product_id'],
-                          productName: item['product_name'],
-                          uom: item['uom'],
-                          quantity: item['qty'],
-                          discount: 0,
-                          originalUnitPrice: item['ori_unit_price'],
-                          unitPrice: item['ori_unit_price'],
-                          total: item['ori_unit_price'] * item['qty'],
-                          cancel: null,
-                          remark: null,
-                          status: 'in progress',
-                          created: DateTime.now(),
-                          modified: DateTime.now(),
-                        );
-
-                        await insertItemIntoCart(cartItem);
-                        showDialog(
-                          context: context,
-                          builder: (context) => const AlertDialog(
-                            backgroundColor: Colors.green,
-                            title: Row(
-                              children: [
-                                SizedBox(width: 20),
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.white,
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${item['product_name']} ${item['uom']} X${item['qty']}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Color.fromARGB(255, 0, 0, 0),
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Item copied to cart',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        );
-                        Future.delayed(const Duration(seconds: 1), () {
-                          Navigator.pop(context);
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ))
+                            IconButton(
+                              icon: const Icon(Icons.copy),
+                              onPressed: () async {
+                                final cartItem = CartItem(
+                                  buyerId: await UtilityFunction.getUserId(),
+                                  productId: item['product_id'],
+                                  productName: item['product_name'],
+                                  uom: item['uom'],
+                                  quantity: item['qty'],
+                                  discount: 0,
+                                  originalUnitPrice: item['ori_unit_price'],
+                                  unitPrice: item['ori_unit_price'],
+                                  total: item['ori_unit_price'] * item['qty'],
+                                  cancel: null,
+                                  remark: null,
+                                  status: 'in progress',
+                                  created: DateTime.now(),
+                                  modified: DateTime.now(),
+                                );
+
+
+                                await insertItemIntoCart(cartItem);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => const AlertDialog(
+                                    backgroundColor: Colors.green,
+                                    title: Row(
+                                      children: [
+                                        SizedBox(width: 20),
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Item copied to cart',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                                Future.delayed(const Duration(seconds: 1), () {
+                                  Navigator.pop(context);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ))
                   .toList(),
             ),
           ],
