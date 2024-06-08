@@ -269,31 +269,48 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
   Widget _buildCustomerPicker() {
-    return InkWell(
-      onTap: _selectCustomer,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                selectedCustomer?.companyName ?? 'Select Customer',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const Icon(Icons.arrow_drop_down, color: Colors.grey),
-          ],
-        ),
+  return InkWell(
+    onTap: selectedCustomer == null ? _selectCustomer : null,
+    child: Container(
+      height: 50.0,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: Colors.grey),
       ),
-    );
-  }
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              selectedCustomer?.companyName ?? 'Select Customer',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (selectedCustomer != null)
+            IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.grey),
+              onPressed: _cancelSelectedCustomer,
+              constraints: BoxConstraints(maxHeight: 24.0), 
+              padding: EdgeInsets.zero, 
+            )
+          else
+            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+        ],
+      ),
+    ),
+  );
+}
+
+void _cancelSelectedCustomer() {
+  setState(() {
+    selectedCustomer = null;
+    _loadSalesOrders();
+  });
+}
+
 
   Widget _buildQuickAccessDateButtons() {
     return Padding(
