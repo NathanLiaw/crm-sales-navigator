@@ -197,7 +197,7 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
                   child: Column(
                     children: [
                       ListView.separated(
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         shrinkWrap: true,
                         itemCount: products.length,
                         itemBuilder: (context, index) {

@@ -165,19 +165,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
                   initialDateRange: _selectedDateRange,
                   firstDate: DateTime(2019),
                   lastDate: DateTime.now(),
-                  builder: (BuildContext context, Widget? child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: Theme.of(context).colorScheme.copyWith(
-                          primary: Colors.lightBlue,
-                          onPrimary: Colors.white,
-                          surface:
-                              const Color.fromARGB(255, 212, 234, 255),
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
+                  
                 );
                 if (picked != null && picked != _selectedDateRange) {
                   setState(() {
@@ -199,23 +187,23 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
                 ),
               ),
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
                     if (isCustomRangeSelected) {
                       return const Color(0xFF047CBD);
                     }
                     return const Color(0xFFD9D9D9);
                   },
                 ),
-                foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
+                foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
                     if (isCustomRangeSelected) {
                       return Colors.white;
                     }
                     return Colors.black;
                   },
                 ),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -272,24 +260,24 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xFF047CBD)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),

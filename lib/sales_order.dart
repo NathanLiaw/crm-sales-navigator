@@ -230,7 +230,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004C87),
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Column(
         children: <Widget>[
@@ -413,20 +418,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           ),
       firstDate: DateTime(DateTime.now().year - 5),
       lastDate: DateTime.now(),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF004C87),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (newDateRange != null) {
