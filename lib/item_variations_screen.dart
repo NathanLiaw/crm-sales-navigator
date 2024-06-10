@@ -28,11 +28,27 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   late Map<String, dynamic> priceData;
   late Map<String, int> quantityMap = {};
   late CartItem? cartItem;
+  List<TextEditingController> textControllers = [];
 
   @override
   void initState() {
     super.initState();
     priceData = jsonDecode(widget.priceByUom);
+    initializeQuantityMap();
+    initializeTextControllers();
+  }
+
+  void initializeQuantityMap() {
+    for (var uom in priceData.keys) {
+      quantityMap[uom] = quantityMap[uom] ?? 1;
+    }
+  }
+
+  void initializeTextControllers() {
+    textControllers = List.generate(priceData.length, (index) {
+      final uom = priceData.keys.elementAt(index);
+      return TextEditingController(text: quantityMap[uom].toString());
+    });
   }
 
   @override
@@ -59,6 +75,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
           final price = priceData[uom];
           final currentQuantity = quantityMap[uom] ?? 1;
           final isUnavailable = price == 0;
+          TextEditingController textController = textControllers[idx];
 
           return Stack(
             children: [
@@ -146,23 +163,31 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                           setState(() {
                                             quantityMap[uom] =
                                                 currentQuantity - 1;
+                                            textController.text =
+                                                quantityMap[uom]
+                                                    .toString();
                                           });
                                         }
                                       },
                                       icon: const Icon(Icons.remove),
                                     ),
                                     SizedBox(
-                                      width: 40,
+                                      width: 60, // Adjust the width of the TextField container
                                       child: TextField(
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.number,
-                                        controller: TextEditingController(
-                                            text: currentQuantity.toString()),
+                                        controller: textController,
                                         onChanged: (value) {
                                           final newValue = int.tryParse(value);
-                                          if (newValue != null) {
+                                          if (newValue != null && newValue > 0) {
                                             setState(() {
                                               quantityMap[uom] = newValue;
+                                            });
+                                          } else {
+                                            // If the value is not a positive integer or is null, reset it to 1
+                                            setState(() {
+                                              textController.text = '1';
+                                              quantityMap[uom] = 1;
                                             });
                                           }
                                         },
@@ -177,6 +202,9 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                         setState(() {
                                           quantityMap[uom] =
                                               currentQuantity + 1;
+                                          textController.text =
+                                              quantityMap[uom]
+                                                  .toString();
                                         });
                                       },
                                       icon: const Icon(Icons.add),

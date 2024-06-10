@@ -14,6 +14,7 @@ import 'cart_item.dart';
 import 'db_sqlite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:developer' as developer;
+import 'package:flutter/services.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -43,11 +44,18 @@ class _CartPage extends State<CartPage> {
   bool editCart = false;
   bool isChecked = false;
 
+  List<TextEditingController> textControllers = [];
+
   @override
   void initState() {
     super.initState();
     loadCartItemsAndPhotos();
     getTax();
+    initializeTextControllers();
+  }
+
+  void initializeTextControllers() {
+    textControllers = List.generate(cartItems.length, (index) => TextEditingController(text: cartItems[index].quantity.toString()));
   }
 
   Future<void> getTax() async {
@@ -86,6 +94,9 @@ class _CartPage extends State<CartPage> {
       totalCartItems = queryResults.length;
     });
     List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+
+    textControllers = List.generate(cartItems.length, (index) => TextEditingController());
+
     return cartItems;
   }
 
@@ -284,6 +295,7 @@ class _CartPage extends State<CartPage> {
     final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     final formattedTotal = formatter.format(total);
     final formattedSubtotal = formatter.format(subtotal);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -406,124 +418,155 @@ class _CartPage extends State<CartPage> {
                     if (item.previousPrice != null) {
                       formattedPreviousPrice = formatter.format(item.previousPrice! * item.quantity);
                     }
+                    TextEditingController textController = textControllers[index];
+                    textController.text = item.quantity.toString();
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          _navigateToItemScreen(item.productName);
-                        },
-                        child: Card(
-                          elevation: 2,
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              top: 8.0,
-                              bottom: 8.0,
-                              left: 6.0,
-                              right: 2.0,
+                      child: Dismissible(
+                        key: Key(item.id.toString()),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (direction) async {
+                          // Remove the item from the list and delete from the database
+                          setState(() {
+                            cartItems.removeAt(index);
+                            selectedCartItems.remove(item);
+                          });
+                          await DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${item.productName} removed from cart'),
+                              duration: const Duration(seconds: 1),
+                              backgroundColor: Colors.green,
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                if (editCart)  // Conditionally render checkbox if editCart is true
-                                  Checkbox(
-                                    value: isSelected,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        if (value != null && value) {
-                                          // Add the item to selectedCartItems when checkbox is checked
-                                          selectedCartItems.add(item);
-                                        } else {
-                                          // Remove the item from selectedCartItems when checkbox is unchecked
-                                          selectedCartItems.remove(item);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                SizedBox(
-                                  width: 90,
-                                  child: (itemPhotos.isNotEmpty)
-                                      ? Image.network(
-                                    'https://haluansama.com/crm-sales/${itemPhotos[0]}',
-                                    height: 90,
+                          );
+                        },
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                        ),
+                        child: GestureDetector(
+                          onTap: () {
+                            _navigateToItemScreen(item.productName);
+                          },
+                          child: Card(
+                            elevation: 2,
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 8.0,
+                                bottom: 8.0,
+                                left: 6.0,
+                                right: 2.0,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  if (editCart) // Conditionally render checkbox if editCart is true
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value != null && value) {
+                                            // Add the item to selectedCartItems when checkbox is checked
+                                            selectedCartItems.add(item);
+                                          } else {
+                                            // Remove the item from selectedCartItems when checkbox is unchecked
+                                            selectedCartItems.remove(item);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  SizedBox(
                                     width: 90,
-                                    fit: BoxFit.cover,
-                                  )
-                                      : Image.asset(
-                                    'asset/no_image.jpg',
-                                    height: 90,
-                                    width: 90,
-                                    fit: BoxFit.cover,
+                                    child: (itemPhotos.isNotEmpty)
+                                        ? Image.network(
+                                      'https://haluansama.com/crm-sales/${itemPhotos[0]}',
+                                      height: 90,
+                                      width: 90,
+                                      fit: BoxFit.cover,
+                                    )
+                                        : Image.asset(
+                                      'asset/no_image.jpg',
+                                      height: 90,
+                                      width: 90,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: SizedBox(
-                                              width: 180,
-                                              child: Text(
-                                                item.productName,
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Flexible(
+                                              child: SizedBox(
+                                                width: 180,
+                                                child: Text(
+                                                  item.productName,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis, // Overflow handling
+                                                  maxLines: 3, // Allow up to 3 lines of text
                                                 ),
-                                                overflow: TextOverflow.ellipsis, // Overflow handling
-                                                maxLines: 3, // Allow up to 3 lines of text
                                               ),
                                             ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () async {
-                                              final updatedPrice = await Navigator.push<double?>(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => EditItemPage(
-                                                    itemId: item.id,
-                                                    itemName: item.productName,
-                                                    itemUom: item.uom,
-                                                    itemPhoto: itemPhotos.isNotEmpty ? itemPhotos[0] : '',
-                                                    itemPrice: item.unitPrice,
+                                            IconButton(
+                                              icon: const Icon(Icons.edit),
+                                              onPressed: () async {
+                                                final updatedPrice = await Navigator.push<double?>(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EditItemPage(
+                                                      itemId: item.id,
+                                                      itemName: item.productName,
+                                                      itemUom: item.uom,
+                                                      itemPhoto: itemPhotos.isNotEmpty ? itemPhotos[0] : '',
+                                                      itemPrice: item.unitPrice,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
+                                                );
 
-                                              if (updatedPrice != null) {
-                                                setState(() {
-                                                  item.unitPrice = updatedPrice;
-                                                });
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SizedBox(
-                                        width: 200,
-                                        child: Text(
-                                          item.uom,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                          ),
-                                          softWrap: true,
+                                                if (updatedPrice != null) {
+                                                  setState(() {
+                                                    item.unitPrice = updatedPrice;
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              // Display the item price
-                                              Row(
+                                        const SizedBox(height: 4),
+                                        SizedBox(
+                                          width: 200,
+                                          child: item.uom.isNotEmpty
+                                              ? Text(
+                                            item.uom,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                            softWrap: true,
+                                          )
+                                              : const SizedBox.shrink(),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Display the item price
+                                                Row(
                                                   children: [
                                                     SizedBox(
                                                       width: 220,
@@ -544,12 +587,19 @@ class _CartPage extends State<CartPage> {
                                                                 ),
                                                                 if (item.previousPrice != null) // Check if previousPrice is not null
                                                                   Text(
-                                                                    item.unitPrice - item.previousPrice! > 0 ? ' ▲' : (item.unitPrice - item.previousPrice! < 0 ? ' ▼' : ''),
+                                                                    item.unitPrice - item.previousPrice! > 0
+                                                                        ? ' ▲'
+                                                                        : (item.unitPrice - item.previousPrice! < 0 ? ' ▼' : ''),
                                                                     style: TextStyle(
-                                                                      color: (item.unitPrice - item.previousPrice! > 0) ? Colors.red : ((item.unitPrice - item.previousPrice! < 0) ? Colors.green : null),
+                                                                      color: (item.unitPrice - item.previousPrice! > 0)
+                                                                          ? Colors.red
+                                                                          : ((item.unitPrice - item.previousPrice! < 0)
+                                                                          ? Colors.green
+                                                                          : null),
                                                                     ),
                                                                   ),
-                                                                if (item.previousPrice != null && (item.unitPrice - item.previousPrice!) != 0) // Check if previousPrice is not null and price difference is not 0
+                                                                if (item.previousPrice != null &&
+                                                                    (item.unitPrice - item.previousPrice!) != 0) // Check if previousPrice is not null and price difference is not 0
                                                                   Text(
                                                                     '${((item.unitPrice - item.previousPrice!) / item.previousPrice! * 100).toStringAsFixed(0)}%',
                                                                     style: const TextStyle(
@@ -562,85 +612,168 @@ class _CartPage extends State<CartPage> {
                                                         ],
                                                       ),
                                                     ),
-                                                  ]
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
+                                                      ? Text(
+                                                    formattedPreviousPrice!,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.grey,
+                                                      decoration: TextDecoration.lineThrough,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  )
+                                                      : const SizedBox.shrink(),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        // Group for quantity controls (IconButton and TextField)
+                                        Visibility(
+                                          visible: !editCart, // Set visibility based on the value of editCart
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              IconButton(
+                                                iconSize: 28,
+                                                onPressed: () {
+                                                  // Decrement quantity when minus button is pressed
+                                                  if (currentQuantity > 1) {
+                                                    setState(() {
+                                                      item.quantity = currentQuantity - 1;
+                                                      textController.text = item.quantity.toString();
+                                                      updateItemQuantity(item.id, item.quantity);
+                                                      calculateTotalAndSubTotal();
+                                                    });
+                                                  } else {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) => AlertDialog(
+                                                        title: const Text('Delete Item?'),
+                                                        content: const Text('Are you sure you want to delete this item from the cart?'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(context); // Close the dialog
+                                                            },
+                                                            child: const Text('Cancel'),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              // Remove the item from the list and delete from the database
+                                                              setState(() {
+                                                                cartItems.removeAt(index);
+                                                                selectedCartItems.remove(item);
+                                                                totalCartItems = cartItems.length;
+                                                              });
+                                                              DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName); // Assuming this is an asynchronous operation
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text('${item.productName} removed from cart'),
+                                                                  duration: const Duration(seconds: 1),
+                                                                  backgroundColor: Colors.green,
+                                                                ),
+                                                              );
+                                                              Navigator.pop(context); // Close the dialog
+                                                            },
+                                                            child: const Text('Delete'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                icon: const Icon(Icons.remove),
                                               ),
-                                              SizedBox(
-                                                child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
-                                                    ? Text(
-                                                  formattedPreviousPrice!,
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.grey,
-                                                    decoration: TextDecoration.lineThrough,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                )
-                                                    : const SizedBox.shrink(),
-                                              ),
-                                            ],
-                                          ),
-
-                                        ],
-
-                                      ),
-                                      // Group for quantity controls (IconButton and TextField)
-                                      Visibility(
-                                        visible: !editCart, // Set visibility based on the value of editCart
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: [
-                                            IconButton(
-                                              iconSize: 28,
-                                              onPressed: () {
-                                                // Decrement quantity when minus button is pressed
-                                                if (currentQuantity > 1) {
+                                          SizedBox(
+                                            width: 60, // Adjust the width of the TextField container
+                                            child: TextField(
+                                              textAlign: TextAlign.center,
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.allow(RegExp(r'[0-9]')), // Only allow numeric input
+                                                LengthLimitingTextInputFormatter(5), // Limit the length of input to 5 characters
+                                              ],
+                                              controller: textController,
+                                              onChanged: (value) {
+                                                final newValue = int.tryParse(value);
+                                                if (newValue != null) {
                                                   setState(() {
-                                                    item.quantity = currentQuantity - 1;
+                                                    item.quantity = newValue;
                                                     updateItemQuantity(item.id, item.quantity);
                                                     calculateTotalAndSubTotal();
                                                   });
                                                 }
+                                                // Check if the entered value is 0 and show confirmation dialog
+                                                if (newValue == 0 || newValue == null) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      title: const Text('Delete Item?'),
+                                                      content: const Text('Are you sure you want to delete this item from the cart?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            // Reset quantity to 1 and close the dialog
+                                                            setState(() {
+                                                              item.quantity = 1;
+                                                              textController.text = '1'; // Reset text field value
+                                                              totalCartItems = cartItems.length;
+                                                            });
+                                                            Navigator.pop(context); // Close the dialog
+                                                          },
+                                                          child: const Text('Cancel'),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            // Remove the item from the list and delete from the database
+                                                            setState(() {
+                                                              cartItems.removeAt(index);
+                                                              selectedCartItems.remove(item);
+                                                            });
+                                                            DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName); // Assuming this is an asynchronous operation
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text('${item.productName} removed from cart'),
+                                                                duration: const Duration(seconds: 1),
+                                                                backgroundColor: Colors.green,
+                                                              ),
+                                                            );
+                                                            Navigator.pop(context); // Close the dialog
+                                                          },
+                                                          child: const Text('Delete'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }
                                               },
-                                              icon: const Icon(Icons.remove),
                                             ),
-                                            SizedBox(
-                                              width: 40, // Adjust the width of the TextField container
-                                              child: TextField(
-                                                textAlign: TextAlign.center,
-                                                keyboardType: TextInputType.number,
-                                                controller: TextEditingController(text: currentQuantity.toString()),
-                                                onChanged: (value) {
-                                                  final newValue = int.tryParse(value);
-                                                  if (newValue != null) {
-                                                    setState(() {
-                                                      item.quantity = newValue;
-                                                      updateItemQuantity(item.id, item.quantity);
-                                                      calculateTotalAndSubTotal();
-                                                    });
-                                                  }
+                                          ),
+                                          IconButton(
+                                                iconSize: 28,
+                                                onPressed: () {
+                                                  // Increment quantity when plus button is pressed
+                                                  setState(() {
+                                                    item.quantity = currentQuantity + 1;
+                                                    updateItemQuantity(item.id, item.quantity);
+                                                    calculateTotalAndSubTotal();
+                                                  });
                                                 },
+                                                icon: const Icon(Icons.add),
                                               ),
-                                            ),
-                                            IconButton(
-                                              iconSize: 28,
-                                              onPressed: () {
-                                                // Increment quantity when plus button is pressed
-                                                setState(() {
-                                                  item.quantity = currentQuantity + 1;
-                                                  updateItemQuantity(item.id, item.quantity);
-                                                  calculateTotalAndSubTotal();
-                                                });
-                                              },
-                                              icon: const Icon(Icons.add),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
