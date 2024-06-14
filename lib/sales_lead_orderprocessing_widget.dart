@@ -60,18 +60,29 @@ class OrderProcessingLeadItem extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  leadItem.customerName.length > 24
-                      ? '${leadItem.customerName.substring(0, 24)}...'
-                      : leadItem.customerName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                // Text(
+                //   leadItem.customerName.length > 24
+                //       ? '${leadItem.customerName.substring(0, 24)}...'
+                //       : leadItem.customerName,
+                //   style: const TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 20,
+                //   ),
+                //   overflow: TextOverflow.ellipsis,
+                // ),
+                Container(
+                  width: 250,
+                  child: Text(
+                    leadItem.customerName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: orderStatus == 'Pending'
                         ? const Color.fromARGB(255, 255, 195, 31)
@@ -178,8 +189,8 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       ),
                       minimumSize: const Size(50, 35),
                     ),
-                    child:
-                        const Text('Confirm', style: TextStyle(color: Colors.white)),
+                    child: const Text('Confirm',
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

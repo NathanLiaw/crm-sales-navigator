@@ -51,19 +51,30 @@ class ClosedLeadItem extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  leadItem.customerName.length > 15
-                      ? '${leadItem.customerName.substring(0, 15)}...'
-                      : leadItem.customerName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                // Text(
+                //   leadItem.customerName.length > 15
+                //       ? '${leadItem.customerName.substring(0, 15)}...'
+                //       : leadItem.customerName,
+                //   style: const TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 20,
+                //   ),
+                //   overflow: TextOverflow.ellipsis,
+                // ),
+                Container(
+                  width: 200,
+                  child: Text(
+                    leadItem.customerName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(4),

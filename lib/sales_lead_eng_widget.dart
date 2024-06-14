@@ -68,15 +68,25 @@ class EngagementLeadItem extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(
-                    leadItem.customerName.length > 10
-                        ? '${leadItem.customerName.substring(0, 15)}...'
-                        : leadItem.customerName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                  // Text(
+                  //   leadItem.customerName.length > 10
+                  //       ? '${leadItem.customerName.substring(0, 15)}...'
+                  //       : leadItem.customerName,
+                  //   style: const TextStyle(
+                  //     fontWeight: FontWeight.bold,
+                  //     fontSize: 20,
+                  //   ),
+                  //   overflow: TextOverflow.ellipsis,
+                  // ),
+                  Container(
+                    width: 200,
+                    child: Text(
+                      leadItem.customerName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                   Container(
                     margin: const EdgeInsets.only(left: 20),

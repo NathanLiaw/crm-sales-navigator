@@ -10,7 +10,8 @@ class CreateLeadPage extends StatefulWidget {
   final Function(String, String, String) onCreateLead;
   final int salesmanId;
 
-  const CreateLeadPage({super.key, required this.onCreateLead, required this.salesmanId});
+  const CreateLeadPage(
+      {super.key, required this.onCreateLead, required this.salesmanId});
 
   @override
   _CreateLeadPageState createState() => _CreateLeadPageState();
@@ -59,7 +60,8 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.contacts, color: Color(0xff0069BA)),
+                      icon:
+                          const Icon(Icons.contacts, color: Color(0xff0069BA)),
                       onPressed: _selectCustomer,
                     ),
                   ],
@@ -272,7 +274,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       'predicted_sales': amountController.text,
       'stage': 'Opportunities', // Add the default stage for new leads
       'previous_stage': 'Opportunities',
-      'so_id': '',
+      'so_id': null,
       'created_date':
           DateTime.now().toString(), // Add the current date as created_date
     };

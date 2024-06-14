@@ -141,15 +141,25 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.leadItem.customerName.length > 15
-                        ? '${widget.leadItem.customerName.substring(0, 15)}...'
-                        : widget.leadItem.customerName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                  // Text(
+                  //   widget.leadItem.customerName.length > 15
+                  //       ? '${widget.leadItem.customerName.substring(0, 15)}...'
+                  //       : widget.leadItem.customerName,
+                  //   style: const TextStyle(
+                  //     fontWeight: FontWeight.bold,
+                  //     fontSize: 20,
+                  //   ),
+                  //   overflow: TextOverflow.ellipsis,
+                  // ),
+                  Container(
+                    width: 200,
+                    child: Text(
+                      widget.leadItem.customerName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                   Container(
                     margin: const EdgeInsets.only(left: 20),
@@ -250,7 +260,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                   results.first['previous_stage'];
                               if (previousStage != null &&
                                   previousStage.isNotEmpty) {
-                                widget.onUndoLead(widget.leadItem, previousStage);
+                                widget.onUndoLead(
+                                    widget.leadItem, previousStage);
                                 widget.leadItem.stage = previousStage;
                                 await conn.query(
                                   'UPDATE sales_lead SET previous_stage = NULL WHERE customer_name = ?',
@@ -281,7 +292,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 children: [
                   GestureDetector(
                     onTap: widget.leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${widget.leadItem.contactNumber}')
+                        ? () =>
+                            _launchURL('tel:${widget.leadItem.contactNumber}')
                         : null,
                     child: Row(
                       children: [
