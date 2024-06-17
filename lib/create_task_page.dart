@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
-import 'package:sales_navigator/selectOrderID.dart';
+import 'package:sales_navigator/select_order_id.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
@@ -473,7 +473,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                   children: [
                     SizedBox(
                       width: 120,
-                      child: DropdownButtonFormField<String>(
+                      child: DropdownButtonFormField<String?>(
                         menuMaxHeight: 200,
                         value: selectedSalesOrderId,
                         onChanged: (String? newValue) {
@@ -482,12 +482,22 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                           });
                           _fetchSalesOrderDetails(newValue);
                         },
-                        items: salesOrderIds.map((String id) {
-                          String formattedId = 'SO${id.padLeft(7, '0')}';
-                          return DropdownMenuItem<String>(
-                            value: id,
-                            child: Text(formattedId),
-                          );
+                        items: ['', ...salesOrderIds].map((String? id) {
+                          if (id == null || id.isEmpty) {
+                            return const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                'Select',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            );
+                          } else {
+                            String formattedId = 'SO${id.padLeft(7, '0')}';
+                            return DropdownMenuItem<String>(
+                              value: id,
+                              child: Text(formattedId),
+                            );
+                          }
                         }).toList(),
                         // validator: (value) {
                         //   if (value == null) {
@@ -497,31 +507,51 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         // },
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      '*Select a sales order ID',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
+                    Spacer(),
+                    const SizedBox(width: 20),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _navigateToSelectOrderIDPage,
+                          child: Container(
+                            child: Text(
+                              'View Orders Details',
+                              // style: TextStyle(
+                              //     color: Color.fromARGB(255, 127, 127, 127)),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 24,
+                          // color: Colors.grey,
+                        ),
+                      ],
+                    )
                   ],
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _navigateToSelectOrderIDPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff0069BA),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    minimumSize: const Size(120, 40),
-                  ),
-                  child: const Text(
-                    'Check Orders Details',
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
+                // ElevatedButton(
+                //   onPressed: _navigateToSelectOrderIDPage,
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Color(0xff0069BA),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(5),
+                //     ),
+                //     minimumSize: const Size(120, 40),
+                //   ),
+                //   child: const Text(
+                //     'Check Orders Details',
+                //     style: TextStyle(
+                //       color: Colors.white,
+                //     ),
+                //   ),
+                // ),
+                const Text(
+                  '*Select a sales order ID',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 15),
                 if (selectedSalesOrderId != null) ...[
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,7 +631,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ],
                   ),
                 ],
-                const SizedBox(height: 60),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[

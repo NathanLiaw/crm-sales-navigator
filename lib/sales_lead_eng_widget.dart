@@ -79,7 +79,7 @@ class EngagementLeadItem extends StatelessWidget {
                   //   overflow: TextOverflow.ellipsis,
                   // ),
                   Container(
-                    width: 200,
+                    width: 170,
                     child: Text(
                       leadItem.customerName,
                       style: const TextStyle(
@@ -88,128 +88,134 @@ class EngagementLeadItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Container(
-                    margin: const EdgeInsets.only(left: 20),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'RM$formattedAmount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                  Spacer(),
+                  Row(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(left: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'RM$formattedAmount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const Spacer(),
-                  PopupMenuButton<String>(
-                    onSelected: (String value) async {
-                      if (value == 'delete') {
-                        bool confirmDelete = await showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Confirm Delete'),
-                              content: const Text(
-                                  'Are you sure you want to delete this sales lead?'),
-                              actions: [
-                                TextButton(
-                                  child: const Text('Cancel'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop(false);
-                                  },
-                                ),
-                                TextButton(
-                                  child: const Text('Confirm'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop(true);
-                                  },
-                                ),
-                              ],
+                      SizedBox(width: 10),
+                      PopupMenuButton<String>(
+                        onSelected: (String value) async {
+                          if (value == 'delete') {
+                            bool confirmDelete = await showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Confirm Delete'),
+                                  content: const Text(
+                                      'Are you sure you want to delete this sales lead?'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancel'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false);
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: const Text('Confirm'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true);
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
                             );
-                          },
-                        );
 
-                        if (confirmDelete == true) {
-                          MySqlConnection conn = await connectToDatabase();
-                          try {
-                            await conn.query(
-                              'DELETE FROM sales_lead WHERE customer_name = ?',
-                              [leadItem.customerName],
-                            );
-                            onDeleteLead(leadItem);
-                          } catch (e) {
-                            developer.log('Error deleting lead item: $e');
-                          } finally {
-                            await conn.close();
-                          }
-                        }
-                      }
-                      if (value == 'complete') {
-                        onComplete(leadItem);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
-                      PopupMenuItem<String>(
-                        value: 'view details',
-                        child: const Text('View details'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CustomerInsightPage(
-                                customerName: leadItem.customerName,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'complete',
-                        child: Text('Complete'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'undo',
-                        child: const Text('Undo'),
-                        onTap: () async {
-                          MySqlConnection conn = await connectToDatabase();
-                          try {
-                            Results results = await conn.query(
-                              'SELECT previous_stage FROM sales_lead WHERE customer_name = ?',
-                              [leadItem.customerName],
-                            );
-                            if (results.isNotEmpty) {
-                              String? previousStage =
-                                  results.first['previous_stage'];
-                              if (previousStage != null &&
-                                  previousStage.isNotEmpty) {
-                                onUndoLead(leadItem, previousStage);
-                                leadItem.stage = previousStage;
+                            if (confirmDelete == true) {
+                              MySqlConnection conn = await connectToDatabase();
+                              try {
                                 await conn.query(
-                                  'UPDATE sales_lead SET previous_stage = NULL WHERE customer_name = ?',
+                                  'DELETE FROM sales_lead WHERE customer_name = ?',
                                   [leadItem.customerName],
                                 );
+                                onDeleteLead(leadItem);
+                              } catch (e) {
+                                developer.log('Error deleting lead item: $e');
+                              } finally {
+                                await conn.close();
                               }
                             }
-                          } catch (e) {
-                            developer.log('Error checking previous stage: $e');
-                          } finally {
-                            await conn.close();
+                          }
+                          if (value == 'complete') {
+                            onComplete(leadItem);
                           }
                         },
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Text('Delete'),
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'view details',
+                            child: const Text('View details'),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CustomerInsightPage(
+                                    customerName: leadItem.customerName,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'complete',
+                            child: Text('Complete'),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'undo',
+                            child: const Text('Undo'),
+                            onTap: () async {
+                              MySqlConnection conn = await connectToDatabase();
+                              try {
+                                Results results = await conn.query(
+                                  'SELECT previous_stage FROM sales_lead WHERE customer_name = ?',
+                                  [leadItem.customerName],
+                                );
+                                if (results.isNotEmpty) {
+                                  String? previousStage =
+                                      results.first['previous_stage'];
+                                  if (previousStage != null &&
+                                      previousStage.isNotEmpty) {
+                                    onUndoLead(leadItem, previousStage);
+                                    leadItem.stage = previousStage;
+                                    await conn.query(
+                                      'UPDATE sales_lead SET previous_stage = NULL WHERE customer_name = ?',
+                                      [leadItem.customerName],
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                developer
+                                    .log('Error checking previous stage: $e');
+                              } finally {
+                                await conn.close();
+                              }
+                            },
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                        ],
+                        child: const Icon(Icons.more_horiz_outlined,
+                            color: Colors.black),
                       ),
                     ],
-                    child: const Icon(Icons.more_horiz_outlined,
-                        color: Colors.black),
                   ),
                 ],
               ),

@@ -124,13 +124,42 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            customer,
-                            style: const TextStyle(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff191731),
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 250,
+                                child: Text(
+                                  customer,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          OrderDetailsPage(cartID: cartID),
+                                    ),
+                                  ).then((selectedOrderID) {
+                                    if (selectedOrderID != null) {
+                                      Navigator.pop(context, selectedOrderID);
+                                    }
+                                  });
+                                },
+                                child: Text(
+                                  'View Details',
+                                  style: TextStyle(
+                                      color: Colors.purple,
+                                      decoration: TextDecoration.underline),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8.0),
                           Text(

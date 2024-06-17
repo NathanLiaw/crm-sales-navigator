@@ -910,36 +910,56 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        ElevatedButton(
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     _handleIgnore(leadItem);
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: Colors.white,
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(5),
+                        //       side:
+                        //           const BorderSide(color: Colors.red, width: 2),
+                        //     ),
+                        //     minimumSize: const Size(50, 35),
+                        //   ),
+                        //   child: const Text('Ignore',
+                        //       style: TextStyle(color: Colors.red)),
+                        // ),
+                        IconButton(
+                          iconSize: 40,
+                          icon: Icon(
+                            Icons.cancel,
+                            color: Colors.red,
+                          ),
                           onPressed: () {
                             _handleIgnore(leadItem);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                              side:
-                                  const BorderSide(color: Colors.red, width: 2),
-                            ),
-                            minimumSize: const Size(50, 35),
-                          ),
-                          child: const Text('Ignore',
-                              style: TextStyle(color: Colors.red)),
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
+                        // const SizedBox(width: 8),
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     _moveToEngagement(leadItem);
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: const Color(0xff0069BA),
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(5),
+                        //     ),
+                        //     minimumSize: const Size(50, 35),
+                        //   ),
+                        //   child: const Text('Accept',
+                        //       style: TextStyle(color: Colors.white)),
+                        // ),
+                        IconButton(
+                          iconSize: 40,
+                          icon: Icon(
+                            Icons.check_circle,
+                            color: Color(0xff0069BA),
+                          ),
                           onPressed: () {
                             _moveToEngagement(leadItem);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff0069BA),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            minimumSize: const Size(50, 35),
-                          ),
-                          child: const Text('Accept',
-                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),

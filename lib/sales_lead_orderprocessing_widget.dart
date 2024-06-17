@@ -76,7 +76,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     leadItem.customerName,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 18),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
