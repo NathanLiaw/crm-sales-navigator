@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:flutter/gestures.dart';
@@ -43,7 +44,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       final results = await readData(
         conn,
         'order_option',
-        'order_type="Sales Order" AND status=1',
+        "order_type='Sales Order' AND status=1",
         '',
         '*',
       );
@@ -198,6 +199,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formattedTotal = formatter.format(widget.total);
+    final formattedSubtotal = formatter.format(widget.subtotal);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff004c87),
@@ -327,36 +331,93 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Total: RM${widget.total.toStringAsFixed(3)}',
+                    'Total: $formattedTotal',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                   Text(
-                    'Subtotal: RM${widget.subtotal.toStringAsFixed(3)}',
+                    'Subtotal: $formattedSubtotal',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
               ),
               ElevatedButton(
-                onPressed: () async{
-                  if (agreedToTerms){
+                onPressed: () async {
+                  if (agreedToTerms) {
+                    // Show loading animation
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) {
+                        return const AlertDialog(
+                          backgroundColor: Colors.green,
+                          content: SizedBox(
+                            height: 80,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                                SizedBox(height: 20),
+                                Text(
+                                  'Processing order...',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+
+                    // Perform the operations
                     await createCart();
                     await completeCart();
                     remarkController.clear();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OrderSubmittedPage(),
-                      ),
+
+                    // Close the loading animation
+                    Navigator.pop(context);
+
+                    // Show order submitted dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: Colors.green,
+                          title: const Text(
+                            'Order Submitted',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          content: const Text(
+                            'Your order has been successfully submitted.',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const OrderSubmittedPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'OK',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     );
-                  }
-                  else {
+                  } else {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text('Terms and Conditions'),
-                          content: const Text('Please agree to the terms and '
-                              'conditions before proceeding.'),
+                          content: const Text('Please agree to the terms and conditions before proceeding.'),
                           actions: [
                             TextButton(
                               onPressed: () {

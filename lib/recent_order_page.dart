@@ -4,6 +4,7 @@ import 'package:sales_navigator/item_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
+import 'package:shimmer/shimmer.dart';
 
 class RecentOrder extends StatefulWidget {
   const RecentOrder({
@@ -35,10 +36,14 @@ class _RecentOrderState extends State<RecentOrder> {
   // Selected sorting method
   String _selectedMethod = 'By Name (A to Z)';
 
+  // To cache the fetched data
+  List<Map<String, dynamic>>? _fetchedData;
+
   @override
   void initState() {
     super.initState();
     _loadUserId();
+    _fetchRecentOrders();
   }
 
   void _loadUserId() async {
@@ -81,7 +86,7 @@ class _RecentOrderState extends State<RecentOrder> {
                       },
                     ),
                     Text(_selectedMethod),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text('$numberOfItems item(s)'),
                   ],
                 ),
@@ -120,6 +125,7 @@ class _RecentOrderState extends State<RecentOrder> {
                   _selectedMethod = _sortingMethods[index];
                 });
                 Navigator.pop(context);
+                _sortResults(_fetchedData!);
               },
             );
           },
@@ -179,12 +185,53 @@ class _RecentOrderState extends State<RecentOrder> {
     );
   }
 
+
   Widget _buildListItem(Map<String, dynamic> item) {
     return FutureBuilder<String>(
       future: _fetchProductPhoto(item['product_name']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 20,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 150,
+                          height: 20,
+                          color: Colors.grey[300],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
@@ -207,21 +254,20 @@ class _RecentOrderState extends State<RecentOrder> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // photo part
                     Container(
                       margin: const EdgeInsets.only(right: 16),
-                      child: (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute) ?
-                      Image.network(
+                      child: (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute)
+                          ? Image.network(
                         snapshot.data!,
                         height: 100,
                         width: 100,
-                      ) : Image.asset(
+                      )
+                          : Image.asset(
                         'asset/no_image.jpg',
                         height: 100,
                         width: 100,
                       ),
                     ),
-                    // text part
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,8 +278,7 @@ class _RecentOrderState extends State<RecentOrder> {
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                           ),
                           const SizedBox(height: 8),
@@ -265,7 +310,6 @@ class _RecentOrderState extends State<RecentOrder> {
             ),
           );
         } else {
-          // No photo found for the product
           return Container();
         }
       },
@@ -277,7 +321,52 @@ class _RecentOrderState extends State<RecentOrder> {
       future: _fetchProductPhoto(item['product_name']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 2,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 70,
+                    height: 70,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 100,
+                    height: 20,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(20, 30),
+                      backgroundColor: Colors.grey[300],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                    child: const Text(''),
+                  ),
+                ],
+              ),
+            ),
+          );
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
@@ -297,13 +386,14 @@ class _RecentOrderState extends State<RecentOrder> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute) ?
-                Image.network(
+                (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute)
+                    ? Image.network(
                   snapshot.data!,
                   height: 70,
                   width: 70,
-                ) : Image.asset(
-                  'asset/no_image.jpg', // Correct the path to the asset folder
+                )
+                    : Image.asset(
+                  'asset/no_image.jpg',
                   height: 70,
                   width: 70,
                 ),
@@ -315,18 +405,16 @@ class _RecentOrderState extends State<RecentOrder> {
                       Text(
                         item['product_name'],
                         style: const TextStyle(
-                          // fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      // SizedBox(height: 8),
                     ],
                   ),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Handle "View Item" button click
+                    _navigateToItemScreen(item['product_name']);
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(20, 30),
@@ -335,15 +423,13 @@ class _RecentOrderState extends State<RecentOrder> {
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  child:
-                      const Text('View Item', style: TextStyle(color: Colors.white)),
+                  child: const Text('View Item', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
           );
         } else {
-          // No photo found for the product
-          return Container(); // Return an empty container
+          return Container();
         }
       },
     );
@@ -356,9 +442,9 @@ class _RecentOrderState extends State<RecentOrder> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
-        'id, product_name, photo1, description, sub_category, price_by_uom',
+        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
 
       if (productData.isNotEmpty) {
@@ -366,7 +452,11 @@ class _RecentOrderState extends State<RecentOrder> {
 
         int productId = product['id'];
         String productName = product['product_name'];
-        List<String> itemAssetNames = [product['photo1'], product['photo2'], product['photo3'], product['photo4']];
+        List<String> itemAssetNames = [
+          'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
+          'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
+          'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
+        ];
         Blob description = stringToBlob(product['description']);
         String priceByUom = product['price_by_uom'];
 
@@ -401,13 +491,18 @@ class _RecentOrderState extends State<RecentOrder> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchRecentOrders() async {
+    if (_fetchedData != null) {
+      // If we already have the data, return it
+      return _fetchedData!;
+    }
+
     try {
       MySqlConnection conn = await connectToDatabase();
-      String condition = 'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman" GROUP BY '
-          'ci.product_name, ci.product_id';
-      if (widget.customerId > 0){
-        condition = 'ci.buyer_id = $_userId AND c.buyer_user_group = "salesman"'
-            'AND ci.customer_id = ${widget.customerId} GROUP BY ci.product_name, ci.product_id';
+      String condition = "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' GROUP BY "
+          "ci.product_name, ci.product_id";
+      if (widget.customerId > 0) {
+        condition = "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' "
+            "AND ci.customer_id = ${widget.customerId} GROUP BY ci.product_name, ci.product_id";
       }
       final results = await readData(
         conn,
@@ -417,65 +512,77 @@ class _RecentOrderState extends State<RecentOrder> {
         'ci.product_id, ci.product_name, SUM(ci.total) AS total',
       );
 
-      numberOfItems = results.length;
-
       await conn.close();
 
-      // Sort the results based on the selected method
-      if (_selectedMethod == 'By Name (A to Z)') {
-        results.sort((a, b) {
-          if (_isAscending) {
-            return a['product_name'].compareTo(b['product_name']);
-          } else {
-            return b['product_name'].compareTo(a['product_name']);
-          }
-        });
-      } else if (_selectedMethod == 'By Name (Z to A)') {
-        results.sort((a, b) {
-          if (_isAscending) {
-            return b['product_name'].compareTo(a['product_name']);
-          } else {
-            return a['product_name'].compareTo(b['product_name']);
-          }
-        });
-      } else if (_selectedMethod == 'Uploaded Date (Old to New)') {
-        results.sort((a, b) {
-          if (_isAscending) {
-            return a['product_id'].compareTo(b['product_id']);
-          } else {
-            return b['product_id'].compareTo(a['product_id']);
-          }
-        });
-      } else if (_selectedMethod == 'Uploaded Date (New to Old)') {
-        results.sort((a, b) {
-          if (_isAscending) {
-            return b['product_id'].compareTo(a['product_id']);
-          } else {
-            return a['product_id'].compareTo(b['product_id']);
-          }
-        });
-      } else if (_selectedMethod == 'By Price (Low to High)') {
-        results.sort((a, b) {
-          if (_isAscending) {
-            return a['total'].compareTo(b['total']);
-          } else {
-            return b['total'].compareTo(a['total']);
-          }
-        });
-      } else if (_selectedMethod == 'By Price (High to Low)') {
-        results.sort((a, b) {
-          if (_isAscending) {
-            return b['total'].compareTo(a['total']);
-          } else {
-            return a['total'].compareTo(b['total']);
-          }
+      // Cache the fetched data
+      _fetchedData = results;
+
+      // Update the numberOfItems
+      if (mounted) {
+        setState(() {
+          numberOfItems = results.length;
         });
       }
+
+      // Sort the results based on the selected method
+      _sortResults(results);
 
       return results;
     } catch (e) {
       developer.log('Error fetching recent orders: $e', error: e);
       return [];
+    }
+  }
+
+  void _sortResults(List<Map<String, dynamic>> results) {
+    if (_selectedMethod == 'By Name (A to Z)') {
+      results.sort((a, b) {
+        if (_isAscending) {
+          return a['product_name'].compareTo(b['product_name']);
+        } else {
+          return b['product_name'].compareTo(a['product_name']);
+        }
+      });
+    } else if (_selectedMethod == 'By Name (Z to A)') {
+      results.sort((a, b) {
+        if (_isAscending) {
+          return b['product_name'].compareTo(a['product_name']);
+        } else {
+          return a['product_name'].compareTo(b['product_name']);
+        }
+      });
+    } else if (_selectedMethod == 'Uploaded Date (Old to New)') {
+      results.sort((a, b) {
+        if (_isAscending) {
+          return a['product_id'].compareTo(b['product_id']);
+        } else {
+          return b['product_id'].compareTo(a['product_id']);
+        }
+      });
+    } else if (_selectedMethod == 'Uploaded Date (New to Old)') {
+      results.sort((a, b) {
+        if (_isAscending) {
+          return b['product_id'].compareTo(a['product_id']);
+        } else {
+          return a['product_id'].compareTo(b['product_id']);
+        }
+      });
+    } else if (_selectedMethod == 'By Price (Low to High)') {
+      results.sort((a, b) {
+        if (_isAscending) {
+          return a['total'].compareTo(b['total']);
+        } else {
+          return b['total'].compareTo(a['total']);
+        }
+      });
+    } else if (_selectedMethod == 'By Price (High to Low)') {
+      results.sort((a, b) {
+        if (_isAscending) {
+          return b['total'].compareTo(a['total']);
+        } else {
+          return a['total'].compareTo(b['total']);
+        }
+      });
     }
   }
 
@@ -485,7 +592,7 @@ class _RecentOrderState extends State<RecentOrder> {
       final results = await readData(
         conn,
         'product',
-        'product_name = "$productName"',
+        "product_name = '$productName'",
         '',
         'photo1',
       );

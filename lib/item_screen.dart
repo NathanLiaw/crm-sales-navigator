@@ -16,7 +16,8 @@ class ItemScreen extends StatefulWidget {
   final Blob itemDescription;
   final String priceByUom;
 
-  const ItemScreen({super.key,
+  const ItemScreen({
+    super.key,
     required this.productId,
     required this.productName,
     required this.itemAssetNames,
@@ -99,10 +100,22 @@ class _ItemScreenState extends State<ItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            size: 34,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        foregroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+      ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
         children: [
-          const ItemAppBar(),
           Container(
             decoration: BoxDecoration(
               boxShadow: [
@@ -119,9 +132,10 @@ class _ItemScreenState extends State<ItemScreen> {
             ),
             child: CachedNetworkImage(
               imageUrl: widget.itemAssetNames[_selectedImageIndex],
-              height: 446,
+              height: 400,
               placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (context, url, error) => const Icon(Icons.error_outline),
+              errorWidget: (context, url, error) =>
+                  const Icon(Icons.error_outline),
             ),
           ),
           const SizedBox(height: 10),
@@ -133,8 +147,7 @@ class _ItemScreenState extends State<ItemScreen> {
               itemBuilder: (context, index) {
                 final assetName = widget.itemAssetNames[index];
                 if (assetName == 'https://haluansama.com/crm-sales/null') {
-                  return const SizedBox
-                      .shrink();
+                  return const SizedBox.shrink();
                 }
                 return GestureDetector(
                   onTap: () {
@@ -188,11 +201,11 @@ class _ItemScreenState extends State<ItemScreen> {
                   ],
                 ),
                 const Spacer(),
-                IconButton(
+                /*IconButton(
                   iconSize: 40,
                   onPressed: () {},
                   icon: const Icon(Icons.shortcut_sharp),
-                ),
+                ), */
               ],
             ),
           ),
@@ -236,7 +249,7 @@ class _ItemScreenState extends State<ItemScreen> {
                 },
                 child: Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
                   child: Row(
                     children: [
                       Flexible(
@@ -268,7 +281,19 @@ class _ItemScreenState extends State<ItemScreen> {
                       const Spacer(),
                       IconButton(
                         iconSize: 30,
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) {
+                              return ItemVariationsScreen(
+                                productId: widget.productId,
+                                productName: widget.productName,
+                                itemAssetName: widget.itemAssetNames[0],
+                                priceByUom: _priceDataByArea,
+                              );
+                            }),
+                          );
+                        },
                         icon: const Icon(Icons.arrow_forward_ios),
                       ),
                     ],

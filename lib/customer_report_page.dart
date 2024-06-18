@@ -33,86 +33,85 @@ class CustomerReport extends StatefulWidget {
 }
 
 class _CustomerReportState extends State<CustomerReport> {
-  late Future<List<Customer>> customers;
+  late Future<List<Customer>> salesData;
   bool isSortedAscending = false;
   DateTimeRange? _selectedDateRange;
   int selectedButtonIndex = -1;
   String loggedInUsername = '';
 
   @override
-void initState() {
-  super.initState();
-  loadPreferences().then((_) {
-    setState(() {
-      _selectedDateRange = null;
-      customers = fetchCustomers(isSortedAscending, _selectedDateRange);
-      selectedButtonIndex = 3;
+  void initState() {
+    super.initState();
+    loadPreferences().then((_) {
+      setState(() {
+        _selectedDateRange = null;
+        salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
+        selectedButtonIndex = 3;
+      });
     });
-  });
-}
-
-
-Future<void> loadPreferences() async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('username');
-    bool? sorted = prefs.getBool('isSortedAscending');
-
-    setState(() {
-      loggedInUsername = username ?? '';
-      isSortedAscending = sorted ?? false;
-    });
-  } catch (e) {
-    developer.log('Error loading preferences: $e', error: e);
   }
-}
 
-Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange) async {
-  var db = await connectToDatabase();
-  var sortOrder = isAscending ? 'ASC' : 'DESC';
-  String dateCondition = dateRange != null ? 
-      "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' "
-          "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'" : '';
-  var results = await db.query(
-      '''
-      SELECT 
-      cart.customer_company_name AS Company_Name,
-      customer.id AS Customer_ID,
-      customer.username AS customer_username,
-      customer.contact_number AS Contact_Number,
-      customer.email AS Email,
-      Salesman.id AS salesman_id,
-      Salesman.username AS username,
-      Salesman.salesman_name,
-      SUM(cart.final_total) AS Total_Sales,
-      MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase
-      FROM cart
-      JOIN customer ON cart.buyer_id = customer.id
-      JOIN Salesman ON cart.buyer_id = Salesman.id
-      WHERE cart.buyer_user_group != 'customer'
-      AND cart.status != 'void' AND salesman.username = '$loggedInUsername' 
-      $dateCondition 
-      GROUP BY cart.customer_company_name, customer.id
-      ORDER BY Total_Sales $sortOrder;
-      ''');
-  int serialNumber = 1; 
-  List<Customer> customersList = [];
-  for (var row in results) {  
-    customersList.add(Customer(
-      id: row['Customer_ID'],
-      companyName: row['Company_Name'],
-      customerUsername: row['customer_username'],
-      email: row['Email'],
-      contactNumber: row['Contact_Number'],
-      totalSales: row['Total_Sales'],
-      lastPurchase: DateTime.parse(row['Last_Purchase']),
-      serialNumber: serialNumber,  
-    ));
-    serialNumber++;
+  Future<void> loadPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? username = prefs.getString('username');
+      bool? sorted = prefs.getBool('isSortedAscending');
+
+      setState(() {
+        loggedInUsername = username ?? '';
+        isSortedAscending = sorted ?? false;
+      });
+    } catch (e) {
+      developer.log('Error loading preferences: $e', error: e);
+    }
   }
-  await db.close();
-  return customersList;
-}
+
+  Future<List<Customer>> fetchSalesData(bool isAscending, DateTimeRange? dateRange) async {
+    var db = await connectToDatabase();
+    var sortOrder = isAscending ? 'ASC' : 'DESC';
+    String dateCondition = dateRange != null
+        ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' "
+            "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'" : '';
+    var results = await db.query(
+        '''
+        SELECT 
+        cart.customer_company_name AS Company_Name,
+        customer.id AS Customer_ID,
+        customer.username AS customer_username,
+        customer.contact_number AS Contact_Number,
+        customer.email AS Email,
+        salesman.id AS salesman_id,
+        salesman.username AS username,
+        salesman.salesman_name,
+        SUM(cart.final_total) AS Total_Sales,
+        MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase
+        FROM cart
+        JOIN customer ON cart.buyer_id = customer.id
+        JOIN salesman ON cart.buyer_id = salesman.id
+        WHERE cart.buyer_user_group != 'customer'
+        AND cart.status != 'void' AND salesman.username = '$loggedInUsername' 
+        $dateCondition 
+        GROUP BY cart.customer_company_name, customer.id
+        ORDER BY Total_Sales $sortOrder;
+        ''');
+    int serialNumber = 1; 
+    List<Customer> customersList = [];
+    for (var row in results) {  
+      customersList.add(Customer(
+        id: row['Customer_ID'],
+        companyName: row['Company_Name'],
+        customerUsername: row['customer_username'],
+        email: row['Email'],
+        contactNumber: row['Contact_Number'],
+        totalSales: row['Total_Sales'],
+        lastPurchase: DateTime.parse(row['Last_Purchase']),
+        serialNumber: serialNumber,  
+      ));
+      serialNumber++;
+    }
+    await db.close();
+    return customersList;
+  }
 
   void toggleSortOrder() {
     setState(() {
@@ -120,7 +119,7 @@ Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange
       SharedPreferences.getInstance().then((prefs) {
         prefs.setBool('isSortedAscending', isSortedAscending);
       });
-      customers = fetchCustomers(isSortedAscending, _selectedDateRange);
+      salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
     });
   }
 
@@ -130,137 +129,136 @@ Future<List<Customer>> fetchCustomers(bool isAscending, DateTimeRange? dateRange
     setState(() {
       _selectedDateRange = DateTimeRange(start: start, end: now);
       selectedButtonIndex = selectedIndex;
-      customers = fetchCustomers(isSortedAscending, _selectedDateRange);
+      salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
     });
   }
 
   void queryAllData() {
-  setState(() {
-    _selectedDateRange = null; 
-    selectedButtonIndex = 3;
-    customers = fetchCustomers(isSortedAscending, _selectedDateRange);
-  });
-}
+    setState(() {
+      _selectedDateRange = null; 
+      selectedButtonIndex = 3;
+      salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
+    });
+  }
 
-Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
-  final bool isCustomRangeSelected = selectedButtonIndex == -1;
+  Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
+    final bool isCustomRangeSelected = selectedButtonIndex == -1;
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(left: 5.0),
-            child: TextButton.icon(
-              onPressed: () async {
-                final DateTimeRange? picked = await showDateRangePicker(
-                  context: context,
-                  initialDateRange: _selectedDateRange,
-                  firstDate: DateTime(2019),
-                  lastDate: DateTime.now(),
-                  builder: (BuildContext context, Widget? child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: Theme.of(context).colorScheme.copyWith(
-                          primary: Colors.lightBlue,
-                          onPrimary: Colors.white,
-                          surface:
-                              const Color.fromARGB(255, 212, 234, 255),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(left: 5.0),
+              child: TextButton.icon(
+                onPressed: () async {
+                  final DateTimeRange? picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: _selectedDateRange,
+                    firstDate: DateTime(2019),
+                    lastDate: DateTime.now(),
+                    builder: (BuildContext context, Widget? child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: Theme.of(context).colorScheme.copyWith(
+                            primary: Colors.lightBlue,
+                            onPrimary: Colors.white,
+                            surface: const Color.fromARGB(255, 212, 234, 255),
+                          ),
                         ),
-                      ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (picked != null && picked != _selectedDateRange) {
-                  setState(() {
-                    _selectedDateRange = picked;
-                    selectedButtonIndex = 3;
-                    customers =
-                        fetchCustomers(isSortedAscending, _selectedDateRange);
-                  });
-                }
-              },
-              icon: Icon(
-                Icons.calendar_today,
-                color: isCustomRangeSelected ? Colors.white : Colors.black,
-              ),
-              label: Text(
-                formattedDate,
-                style: TextStyle(
+                        child: child!,
+                      );
+                    },
+                  );
+                  if (picked != null && picked != _selectedDateRange) {
+                    setState(() {
+                      _selectedDateRange = picked;
+                      selectedButtonIndex = 3;
+                      salesData =
+                          fetchSalesData(isSortedAscending, _selectedDateRange);
+                    });
+                  }
+                },
+                icon: Icon(
+                  Icons.calendar_today,
                   color: isCustomRangeSelected ? Colors.white : Colors.black,
-                  fontSize: 15,
                 ),
-              ),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
-                      return const Color(0xFF047CBD);
-                    }
-                    return const Color(0xFFD9D9D9);
-                  },
+                label: Text(
+                  formattedDate,
+                  style: TextStyle(
+                    color: isCustomRangeSelected ? Colors.white : Colors.black,
+                    fontSize: 15,
+                  ),
                 ),
-                foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
-                      return Colors.white;
-                    }
-                    return Colors.black;
-                  },
-                ),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (isCustomRangeSelected) {
+                        return const Color(0xFF047CBD);
+                      }
+                      return const Color(0xFFD9D9D9);
+                    },
+                  ),
+                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (isCustomRangeSelected) {
+                        return Colors.white;
+                      }
+                      return Colors.black;
+                    },
+                  ),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          TextButton.icon(
-            onPressed: toggleSortOrder,
-            icon: Icon(
-              isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
-              color: Colors.black,
-            ),
-            label: const Text(
-              'Sort',
-              style: TextStyle(color: Colors.black),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFFD9D9D9),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+            TextButton.icon(
+              onPressed: toggleSortOrder,
+              icon: Icon(
+                isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
+                color: Colors.black,
               ),
-            ),
-          )
-        ],
-      ),
-      const SizedBox(height: 10),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Row(
-          children: [
-            _buildTimeFilterButton('All', () => queryAllData(),
-                selectedButtonIndex == 3),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
-                selectedButtonIndex == 0),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
-                selectedButtonIndex == 1),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
-                selectedButtonIndex == 2),
+              label: const Text(
+                'Sort',
+                style: TextStyle(color: Colors.black),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFD9D9D9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            )
           ],
         ),
-      ),
-      const SizedBox(height: 10),
-    ],
-  );
-}
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              _buildTimeFilterButton('All', () => queryAllData(),
+                  selectedButtonIndex == 3),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+                  selectedButtonIndex == 0),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+                  selectedButtonIndex == 1),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+                  selectedButtonIndex == 2),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
 
   Widget _buildTimeFilterButton(
       String text, VoidCallback onPressed, bool isSelected) {
@@ -318,7 +316,7 @@ Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
           ),
           Expanded(
             child: FutureBuilder<List<Customer>>(
-              future: customers,
+              future: salesData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

@@ -4,11 +4,19 @@ import 'dart:developer' as developer;
 
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
-    host: '10.0.2.2',
-    port: 3306,
-    user: 'root',
-    password: '901022',
+    // Aiven Database
+    host: 'fyh-crm-sm.h.aivencloud.com',
+    port: 19991,
+    user: 'avnadmin',
+    password: 'AVNS_Iqrl_2qmZTRxm7WrA30',
     db: 'fyh',
+
+    // Localhost Database
+    // host: '10.0.2.2',
+    // port: 3306,
+    // user: 'root',
+    // password: '901022',
+    // db: 'fyh',
   );
 
   try {
@@ -40,7 +48,7 @@ Future<List<Map<String, dynamic>>> readData(
   }
 
   final query = await connection.query(
-    'SELECT $field FROM $tableName $sqlQuery $sqlOrder',
+    "SELECT $field FROM $tableName $sqlQuery $sqlOrder",
   );
 
   final results = <Map<String, dynamic>>[];
@@ -91,29 +99,29 @@ Future<int> countData(
 
 Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
     String tableName, String condition, String order) async {
-  String sqlQuery = '';
-  String sqlOrder = '';
+    String sqlQuery = '';
+    String sqlOrder = '';
 
-  if (condition.isNotEmpty) {
-    sqlQuery = 'WHERE $condition';
-  }
+    if (condition.isNotEmpty) {
+      sqlQuery = 'WHERE $condition';
+    }
 
-  if (order.isNotEmpty) {
-    sqlOrder = 'ORDER BY $order';
-  }
+    if (order.isNotEmpty) {
+      sqlOrder = 'ORDER BY $order';
+    }
 
-  try {
-    final queryResult = await connection
-        .query('SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1');
-    if (queryResult.isNotEmpty) {
-      return Map<String, dynamic>.from(queryResult.first.fields);
-    } else {
+    try {
+      final queryResult = await connection
+          .query("SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1");
+      if (queryResult.isNotEmpty) {
+        return Map<String, dynamic>.from(queryResult.first.fields);
+      } else {
+        return {};
+      }
+    } catch (e) {
+      developer.log('Error reading first row: $e', error: e);
       return {};
     }
-  } catch (e) {
-    developer.log('Error reading first row: $e', error: e);
-    return {};
-  }
 }
 
 Future<bool> saveData(MySqlConnection connection, String tableName,

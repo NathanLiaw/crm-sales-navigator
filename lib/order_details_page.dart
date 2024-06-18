@@ -92,13 +92,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final cartItemResults = await readData(
         conn,
         'cart_item',
-        'session = "$session" OR cart_id = "$cartId"',
+        "session = '$session' OR cart_id = '$cartId'",
         '',
         'product_name, unit_price, qty, total, status',
       );
 
-      final createdDateTime = DateTime.parse(createdDateResults.first['created'] as String);
-      final formattedCreatedDate = DateFormat('yyyy-MM-dd').format(createdDateTime);
+      final createdDateTime =
+          DateTime.parse(createdDateResults.first['created'] as String);
+      final formattedCreatedDate =
+          DateFormat('yyyy-MM-dd').format(createdDateTime);
 
       final formattedSalesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
 
@@ -154,7 +156,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final results = await readData(
         conn,
         'product',
-        'product_name = "$productName"',
+        "product_name = '$productName'",
         '',
         'photo1',
       );
@@ -162,10 +164,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (results.isNotEmpty && results[0]['photo1'] != null) {
         String photoPath = results[0]['photo1'];
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'asset/photo/${photoPath.substring(6)}';
+          photoPath =
+              'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
         }
         return photoPath;
       } else {
+        // Return a valid URI for the asset image
         return 'asset/no_image.jpg';
       }
     } catch (e) {
@@ -174,17 +178,61 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
+  // Future<void> voidOrder() async {
+  //   final conn = await connectToDatabase();
+  //   final success = await saveData(conn, 'cart', {
+  //     'status': 'Void',
+  //     'id': widget.cartID,
+  //   });
+  //   await conn.close();
+  //   if (success) {
+  //     setState(() {
+  //       isVoidButtonDisabled = true;
+  //     });
+  //   }
+  // }
+
   Future<void> voidOrder() async {
     final conn = await connectToDatabase();
-    final success = await saveData(conn, 'cart', {
-      'status': 'Void',
-      'id': widget.cartID,
-    });
-    await conn.close();
-    if (success) {
+    try {
+      // First, update the status of the cart table to "Void."
+      final success = await saveData(conn, 'cart', {
+        'status': 'Void',
+        'id': widget.cartID,
+      });
+      if (!success) {
+        print('Failed to void order in cart');
+        return;
+      }
+
+      // Query the cart_item table based on cart_id
+      final cartItemResults = await readData(
+        conn,
+        'cart_item',
+        'cart_id = ${widget.cartID}',
+        '',
+        'id',
+      );
+      // Update the status of the queried rows to "Void".
+      for (var result in cartItemResults) {
+        await saveData(conn, 'cart_item', {
+          'status': 'Void',
+          'id': result['id'],
+        });
+      }
+
+      // Disable the button after successfully updating the status to "Void".
       setState(() {
         isVoidButtonDisabled = true;
+        shouldHideVoidButton();
       });
+
+      // Fetch order details again to update the status on the page
+      await fetchOrderDetails();
+    } catch (e) {
+      print('Error voiding order: $e');
+    } finally {
+      await conn.close();
     }
   }
 
@@ -279,7 +327,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       Expanded(
                           flex: 5,
                           child:
-                          Text('Fong Yuan Hung Import & Export Sdn Bhd.')),
+                              Text('Fong Yuan Hung Import & Export Sdn Bhd.')),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -351,8 +399,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('RM${total.toStringAsFixed(3)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Total',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('RM${total.toStringAsFixed(3)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const Divider(),
@@ -365,23 +415,53 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),
-                      ElevatedButton(
-                        onPressed: isVoidButtonDisabled ? null : voidOrder,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          isVoidButtonDisabled ? Colors.grey : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            side: const BorderSide(color: Colors.red, width: 2),
+                      // ElevatedButton(
+                      //   onPressed: isVoidButtonDisabled ? null : voidOrder,
+                      //   style: ElevatedButton.styleFrom(
+                      //     backgroundColor:
+                      //     isVoidButtonDisabled ? Colors.grey : Colors.white,
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(5),
+                      //       side: const BorderSide(color: Colors.red, width: 2),
+                      //     ),
+                      //     minimumSize: const Size(120, 40),
+                      //   ),
+                      //   child: const Text(
+                      //     'Void',
+                      //     style: TextStyle(
+                      //         color: Colors.red, fontWeight: FontWeight.bold),
+                      //   ),
+                      // ),
+                      Opacity(
+                        opacity:
+                            (isVoidButtonDisabled || shouldHideVoidButton())
+                                ? 0.0
+                                : 1.0,
+                        child: ElevatedButton(
+                          onPressed: shouldHideVoidButton() ? null : voidOrder,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: shouldHideVoidButton()
+                                ? Colors.transparent
+                                : Colors.white,
+                            shape: shouldHideVoidButton()
+                                ? null
+                                : RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    side:
+                                        BorderSide(color: Colors.red, width: 2),
+                                  ),
+                            minimumSize: Size(120, 40),
                           ),
-                          minimumSize: const Size(120, 40),
+                          child: shouldHideVoidButton()
+                              ? SizedBox.shrink()
+                              : Text(
+                                  'Void',
+                                  style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold),
+                                ),
                         ),
-                        child: const Text(
-                          'Void',
-                          style: TextStyle(
-                              color: Colors.red, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      )
                     ],
                   ),
                 ],
@@ -393,6 +473,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
+  bool shouldHideVoidButton() {
+    // If any item in the order has a status of "Void" or "Confirm", return true to hide the Void button.
+    return orderItems
+        .any((item) => item.status == 'Void' || item.status == 'Confirm');
+  }
+
   Widget _buildOrderItem(OrderItem item) {
     double unitPriceConverted = double.parse(item.unitPrice);
 
@@ -402,11 +488,17 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(
-              item.photoPath,
-              width: 80,
-              height: 80,
-            ),
+            (item.photoPath.isNotEmpty && Uri.parse(item.photoPath).isAbsolute)
+                ? Image.network(
+                    item.photoPath,
+                    height: 80,
+                    width: 80,
+                  )
+                : Image.asset(
+                    'asset/no_image.jpg',
+                    height: 80,
+                    width: 80,
+                  ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -414,7 +506,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 children: [
                   Text(
                     item.productName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -446,11 +539,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Status: ${item.status}',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: Text('Total: RM${subtotal.toStringAsFixed(3)}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

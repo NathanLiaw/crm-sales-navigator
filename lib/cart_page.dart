@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/edit_item_page.dart';
@@ -13,6 +14,7 @@ import 'cart_item.dart';
 import 'db_sqlite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:developer' as developer;
+import 'package:flutter/services.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -29,6 +31,7 @@ class _CartPage extends State<CartPage> {
   // Cart Section
   List<CartItem> cartItems = [];
   List<CartItem> selectedCartItems = [];
+  late int totalCartItems = 0;
   late List<List<String>> productPhotos = [];
   double total = 0;
   double subtotal = 0;
@@ -41,11 +44,18 @@ class _CartPage extends State<CartPage> {
   bool editCart = false;
   bool isChecked = false;
 
+  List<TextEditingController> textControllers = [];
+
   @override
   void initState() {
     super.initState();
     loadCartItemsAndPhotos();
     getTax();
+    initializeTextControllers();
+  }
+
+  void initializeTextControllers() {
+    textControllers = List.generate(cartItems.length, (index) => TextEditingController(text: cartItems[index].quantity.toString()));
   }
 
   Future<void> getTax() async {
@@ -73,14 +83,20 @@ class _CartPage extends State<CartPage> {
 
     Database database = await DatabaseHelper.database;
     String cartItemTableName = DatabaseHelper.cartItemTableName;
-    String condition = 'buyer_id = $id AND status = "in progress"';
+    String condition = "buyer_id = $id AND status = 'in progress'";
     String order = 'created DESC';
     String field = '*';
 
     List<Map<String, dynamic>> queryResults =
     await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
 
+    setState(() {
+      totalCartItems = queryResults.length;
+    });
     List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+
+    textControllers = List.generate(cartItems.length, (index) => TextEditingController());
+
     return cartItems;
   }
 
@@ -184,7 +200,7 @@ class _CartPage extends State<CartPage> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
         'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
@@ -238,7 +254,7 @@ class _CartPage extends State<CartPage> {
     try {
       // Construct a query to get the latest price for each product in the list
       var results = await conn.query(
-          'SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC'
+          "SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC"
       );
 
       // Use a map to store the latest price for each product
@@ -269,13 +285,17 @@ class _CartPage extends State<CartPage> {
       if (latestPrices.containsKey(item.productId)) {
         item.previousPrice = latestPrices[item.productId]!;
       } else {
-        developer.log('No price found for product ID ${item.productId}');
+        developer.log('No previous price found for product ID ${item.productId}');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formattedTotal = formatter.format(total);
+    final formattedSubtotal = formatter.format(subtotal);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -348,13 +368,13 @@ class _CartPage extends State<CartPage> {
                   ? CustomerInfo(initialCustomer: customer!)
                   : _buildSelectCustomerCard(context),
               const SizedBox(height: 32),
-              const Padding(
-                padding: EdgeInsets.only(
+              Padding(
+                padding: const EdgeInsets.only(
                   left: 8.0,
                 ),
                 child: Text(
-                  'Cart',
-                  style: TextStyle(
+                  'Cart ($totalCartItems)',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -392,127 +412,164 @@ class _CartPage extends State<CartPage> {
                     List<String> itemPhotos = productPhotos.isNotEmpty ? productPhotos[index] : [];
                     bool isSelected = selectedCartItems.contains(item);
                     final currentQuantity = item.quantity;
+                    final formattedPrice = formatter.format(item.unitPrice * item.quantity);
+                    // Format previous price only if it's not null
+                    String? formattedPreviousPrice;
+                    if (item.previousPrice != null) {
+                      formattedPreviousPrice = formatter.format(item.previousPrice! * item.quantity);
+                    }
+                    TextEditingController textController = textControllers[index];
+                    textController.text = item.quantity.toString();
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          _navigateToItemScreen(item.productName);
-                        },
-                        child: Card(
-                          elevation: 2,
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              top: 8.0,
-                              bottom: 8.0,
-                              left: 6.0,
-                              right: 2.0,
+                      child: Dismissible(
+                        key: Key(item.id.toString()),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (direction) async {
+                          // Remove the item from the list and delete from the database
+                          setState(() {
+                            cartItems.removeAt(index);
+                            selectedCartItems.remove(item);
+                          });
+                          await DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${item.productName} removed from cart'),
+                              duration: const Duration(seconds: 1),
+                              backgroundColor: Colors.green,
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                if (editCart)  // Conditionally render checkbox if editCart is true
-                                  Checkbox(
-                                    value: isSelected,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        if (value != null && value) {
-                                          // Add the item to selectedCartItems when checkbox is checked
-                                          selectedCartItems.add(item);
-                                        } else {
-                                          // Remove the item from selectedCartItems when checkbox is unchecked
-                                          selectedCartItems.remove(item);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                SizedBox(
-                                  width: 90,
-                                  child: itemPhotos.isNotEmpty
-                                      ? Image.network(
-                                    'https://haluansama.com/crm-sales/${itemPhotos[0]}',
-                                    height: 90,
+                          );
+                        },
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                        ),
+                        child: GestureDetector(
+                          onTap: () {
+                            _navigateToItemScreen(item.productName);
+                          },
+                          child: Card(
+                            elevation: 2,
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 8.0,
+                                bottom: 8.0,
+                                left: 6.0,
+                                right: 2.0,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  if (editCart) // Conditionally render checkbox if editCart is true
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value != null && value) {
+                                            // Add the item to selectedCartItems when checkbox is checked
+                                            selectedCartItems.add(item);
+                                          } else {
+                                            // Remove the item from selectedCartItems when checkbox is unchecked
+                                            selectedCartItems.remove(item);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  SizedBox(
                                     width: 90,
-                                    fit: BoxFit.cover,
-                                  )
-                                      : Image.asset(
-                                    'asset/no_image.jpg',
-                                    height: 90,
-                                    width: 90,
-                                    fit: BoxFit.cover,
+                                    child: (itemPhotos.isNotEmpty)
+                                        ? Image.network(
+                                      'https://haluansama.com/crm-sales/${itemPhotos[0]}',
+                                      height: 90,
+                                      width: 90,
+                                      fit: BoxFit.cover,
+                                    )
+                                        : Image.asset(
+                                      'asset/no_image.jpg',
+                                      height: 90,
+                                      width: 90,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: SizedBox(
-                                              width: 200,
-                                              child: Text(
-                                                item.productName,
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Flexible(
+                                              child: SizedBox(
+                                                width: 180,
+                                                child: Text(
+                                                  item.productName,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis, // Overflow handling
+                                                  maxLines: 3, // Allow up to 3 lines of text
                                                 ),
-                                                overflow: TextOverflow.ellipsis, // Overflow handling
-                                                maxLines: 3, // Allow up to 3 lines of text
                                               ),
                                             ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () async {
-                                              final updatedPrice = await Navigator.push<double?>(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => EditItemPage(
-                                                    itemId: item.id,
-                                                    itemName: item.productName,
-                                                    itemUom: item.uom,
-                                                    itemPhoto: itemPhotos.isNotEmpty ? itemPhotos[0] : '',
-                                                    itemPrice: item.unitPrice,
+                                            IconButton(
+                                              icon: const Icon(Icons.edit),
+                                              onPressed: () async {
+                                                final updatedPrice = await Navigator.push<double?>(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EditItemPage(
+                                                      itemId: item.id,
+                                                      itemName: item.productName,
+                                                      itemUom: item.uom,
+                                                      itemPhoto: itemPhotos.isNotEmpty ? itemPhotos[0] : '',
+                                                      itemPrice: item.unitPrice,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
+                                                );
 
-                                              if (updatedPrice != null) {
-                                                setState(() {
-                                                  item.unitPrice = updatedPrice;
-                                                });
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SizedBox(
-                                        width: 240,
-                                        child: Text(
-                                          item.uom,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                          ),
-                                          softWrap: true,
+                                                if (updatedPrice != null) {
+                                                  setState(() {
+                                                    item.unitPrice = updatedPrice;
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              // Display the item price
-                                              Row(
+                                        const SizedBox(height: 4),
+                                        SizedBox(
+                                          width: 200,
+                                          child: item.uom.isNotEmpty
+                                              ? Text(
+                                            item.uom,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                            softWrap: true,
+                                          )
+                                              : const SizedBox.shrink(),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Display the item price
+                                                Row(
                                                   children: [
                                                     SizedBox(
-                                                      width: 150, // Set your desired width here
+                                                      width: 220,
                                                       child: Row(
                                                         children: [
                                                           Flexible(
@@ -520,7 +577,7 @@ class _CartPage extends State<CartPage> {
                                                               mainAxisAlignment: MainAxisAlignment.start,
                                                               children: [
                                                                 Text(
-                                                                  'RM${(item.unitPrice * (item.quantity)).toStringAsFixed(3)}',
+                                                                  formattedPrice,
                                                                   style: const TextStyle(
                                                                     fontSize: 16,
                                                                     fontWeight: FontWeight.bold,
@@ -530,12 +587,19 @@ class _CartPage extends State<CartPage> {
                                                                 ),
                                                                 if (item.previousPrice != null) // Check if previousPrice is not null
                                                                   Text(
-                                                                    item.unitPrice - item.previousPrice! > 0 ? ' ▲' : (item.unitPrice - item.previousPrice! < 0 ? ' ▼' : ''),
+                                                                    item.unitPrice - item.previousPrice! > 0
+                                                                        ? ' ▲'
+                                                                        : (item.unitPrice - item.previousPrice! < 0 ? ' ▼' : ''),
                                                                     style: TextStyle(
-                                                                      color: (item.unitPrice - item.previousPrice! > 0) ? Colors.red : ((item.unitPrice - item.previousPrice! < 0) ? Colors.green : null),
+                                                                      color: (item.unitPrice - item.previousPrice! > 0)
+                                                                          ? Colors.red
+                                                                          : ((item.unitPrice - item.previousPrice! < 0)
+                                                                          ? Colors.green
+                                                                          : null),
                                                                     ),
                                                                   ),
-                                                                if (item.previousPrice != null && (item.unitPrice - item.previousPrice!) != 0) // Check if previousPrice is not null and price difference is not 0
+                                                                if (item.previousPrice != null &&
+                                                                    (item.unitPrice - item.previousPrice!) != 0) // Check if previousPrice is not null and price difference is not 0
                                                                   Text(
                                                                     '${((item.unitPrice - item.previousPrice!) / item.previousPrice! * 100).toStringAsFixed(0)}%',
                                                                     style: const TextStyle(
@@ -548,82 +612,168 @@ class _CartPage extends State<CartPage> {
                                                         ],
                                                       ),
                                                     ),
-                                                  ]
-                                              ),
-                                              SizedBox(
-                                                child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
-                                                    ? Text(
-                                                  'RM${(item.previousPrice! * item.quantity).toStringAsFixed(3)}',
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.grey,
-                                                    decoration: TextDecoration.lineThrough,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                )
-                                                    : const SizedBox.shrink(),
-                                              ),
-                                            ],
-                                          ),
-                                          // Group for quantity controls (IconButton and TextField)
-                                          Visibility(
-                                            visible: !editCart, // Set visibility based on the value of editCart
-                                            child: Row(
-                                              children: [
-                                                IconButton(
-                                                  iconSize: 28,
-                                                  onPressed: () {
-                                                    // Decrement quantity when minus button is pressed
-                                                    if (currentQuantity > 1) {
-                                                      setState(() {
-                                                        item.quantity = currentQuantity - 1;
-                                                        updateItemQuantity(item.id, item.quantity);
-                                                        calculateTotalAndSubTotal();
-                                                      });
-                                                    }
-                                                  },
-                                                  icon: const Icon(Icons.remove),
+                                                  ],
                                                 ),
                                                 SizedBox(
-                                                  width: 20, // Adjust the width of the TextField container
-                                                  child: TextField(
-                                                    textAlign: TextAlign.center,
-                                                    keyboardType: TextInputType.number,
-                                                    controller: TextEditingController(text: currentQuantity.toString()),
-                                                    onChanged: (value) {
-                                                      final newValue = int.tryParse(value);
-                                                      if (newValue != null) {
-                                                        setState(() {
-                                                          item.quantity = newValue;
-                                                          updateItemQuantity(item.id, item.quantity);
-                                                          calculateTotalAndSubTotal();
-                                                        });
-                                                      }
-                                                    },
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  iconSize: 28,
-                                                  onPressed: () {
-                                                    // Increment quantity when plus button is pressed
-                                                    setState(() {
-                                                      item.quantity = currentQuantity + 1;
-                                                      updateItemQuantity(item.id, item.quantity);
-                                                      calculateTotalAndSubTotal();
-                                                    });
-                                                  },
-                                                  icon: const Icon(Icons.add),
+                                                  child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
+                                                      ? Text(
+                                                    formattedPreviousPrice!,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.grey,
+                                                      decoration: TextDecoration.lineThrough,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  )
+                                                      : const SizedBox.shrink(),
                                                 ),
                                               ],
                                             ),
+                                          ],
+                                        ),
+                                        // Group for quantity controls (IconButton and TextField)
+                                        Visibility(
+                                          visible: !editCart, // Set visibility based on the value of editCart
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              IconButton(
+                                                iconSize: 28,
+                                                onPressed: () {
+                                                  // Decrement quantity when minus button is pressed
+                                                  if (currentQuantity > 1) {
+                                                    setState(() {
+                                                      item.quantity = currentQuantity - 1;
+                                                      textController.text = item.quantity.toString();
+                                                      updateItemQuantity(item.id, item.quantity);
+                                                      calculateTotalAndSubTotal();
+                                                    });
+                                                  } else {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) => AlertDialog(
+                                                        title: const Text('Delete Item?'),
+                                                        content: const Text('Are you sure you want to delete this item from the cart?'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(context); // Close the dialog
+                                                            },
+                                                            child: const Text('Cancel'),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              // Remove the item from the list and delete from the database
+                                                              setState(() {
+                                                                cartItems.removeAt(index);
+                                                                selectedCartItems.remove(item);
+                                                                totalCartItems = cartItems.length;
+                                                              });
+                                                              DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName); // Assuming this is an asynchronous operation
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text('${item.productName} removed from cart'),
+                                                                  duration: const Duration(seconds: 1),
+                                                                  backgroundColor: Colors.green,
+                                                                ),
+                                                              );
+                                                              Navigator.pop(context); // Close the dialog
+                                                            },
+                                                            child: const Text('Delete'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                icon: const Icon(Icons.remove),
+                                              ),
+                                          SizedBox(
+                                            width: 60, // Adjust the width of the TextField container
+                                            child: TextField(
+                                              textAlign: TextAlign.center,
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.allow(RegExp(r'[0-9]')), // Only allow numeric input
+                                                LengthLimitingTextInputFormatter(5), // Limit the length of input to 5 characters
+                                              ],
+                                              controller: textController,
+                                              onChanged: (value) {
+                                                final newValue = int.tryParse(value);
+                                                if (newValue != null) {
+                                                  setState(() {
+                                                    item.quantity = newValue;
+                                                    updateItemQuantity(item.id, item.quantity);
+                                                    calculateTotalAndSubTotal();
+                                                  });
+                                                }
+                                                // Check if the entered value is 0 and show confirmation dialog
+                                                if (newValue == 0 || newValue == null) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      title: const Text('Delete Item?'),
+                                                      content: const Text('Are you sure you want to delete this item from the cart?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            // Reset quantity to 1 and close the dialog
+                                                            setState(() {
+                                                              item.quantity = 1;
+                                                              textController.text = '1'; // Reset text field value
+                                                              totalCartItems = cartItems.length;
+                                                            });
+                                                            Navigator.pop(context); // Close the dialog
+                                                          },
+                                                          child: const Text('Cancel'),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            // Remove the item from the list and delete from the database
+                                                            setState(() {
+                                                              cartItems.removeAt(index);
+                                                              selectedCartItems.remove(item);
+                                                            });
+                                                            DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName); // Assuming this is an asynchronous operation
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text('${item.productName} removed from cart'),
+                                                                duration: const Duration(seconds: 1),
+                                                                backgroundColor: Colors.green,
+                                                              ),
+                                                            );
+                                                            Navigator.pop(context); // Close the dialog
+                                                          },
+                                                          child: const Text('Delete'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
                                           ),
-                                        ],
-                                      ),
-                                    ],
+                                          IconButton(
+                                                iconSize: 28,
+                                                onPressed: () {
+                                                  // Increment quantity when plus button is pressed
+                                                  setState(() {
+                                                    item.quantity = currentQuantity + 1;
+                                                    updateItemQuantity(item.id, item.quantity);
+                                                    calculateTotalAndSubTotal();
+                                                  });
+                                                },
+                                                icon: const Icon(Icons.add),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -663,7 +813,7 @@ class _CartPage extends State<CartPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total: RM${total.toStringAsFixed(3)}',
+                            'Total: $formattedTotal',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -671,7 +821,7 @@ class _CartPage extends State<CartPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Subtotal: RM${subtotal.toStringAsFixed(3)}',
+                            'Subtotal: $formattedSubtotal',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,

@@ -30,6 +30,6 @@ class BrandData {
 }
 
 Future<List<BrandData>> fetchBrands(MySqlConnection conn) async {
-  final results = await conn.query('SELECT * FROM brand WHERE status = "1"');
+  final results = await conn.query('SELECT * FROM brand WHERE status = 1');
   return results.map<BrandData>((row) => BrandData.fromRow(row)).toList();
 }

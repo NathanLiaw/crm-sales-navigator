@@ -72,23 +72,48 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                 const GButton(
                   icon: Icons.home,
                   text: 'Home',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const GButton(
                   icon: Icons.sell,
                   text: 'Sales',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const GButton(
                   icon: Icons.shopping_bag,
                   text: 'Product',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 GButton(
                   icon: const IconData(0),
                   text: 'Cart',
                   leading: buildCartIcon(),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const GButton(
                   icon: Icons.person,
                   text: 'Profile',
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
               onTabChange: (index) {
@@ -155,10 +180,10 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
               ),
               if (countCartItem != null)
                 Positioned(
-                  bottom: 10,
-                  left: 12,
+                  bottom: 4,
+                  right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.red,
@@ -167,7 +192,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       '$countCartItem',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -185,7 +210,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
 
     try {
       const tableName = 'cart_item';
-      final condition = 'buyer_id = $userId AND status = "in progress"';
+      final condition = "buyer_id = $userId AND status = 'in progress'";
 
       final db = await DatabaseHelper.database;
 

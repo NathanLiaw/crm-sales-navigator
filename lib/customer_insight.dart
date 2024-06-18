@@ -21,16 +21,22 @@ class CustomerInsightPage extends StatefulWidget {
 
 class _CustomerInsightPageState extends State<CustomerInsightPage> {
   late Future<Customer.Customer> customerFuture;
-  late Future<List<Map<String, dynamic>>> salesDataFuture;
-  late Future<List<Map<String, dynamic>>> productsFuture;
+  late Future<List<Map<String, dynamic>>> salesDataFuture = Future.value([]);
+  late Future<List<Map<String, dynamic>>> productsFuture = Future.value([]);
   late int customerId = 0;
 
   @override
   void initState() {
     super.initState();
-    customerFuture = fetchCustomer();
-    salesDataFuture = fetchSalesDataByCustomer();
-    productsFuture = fetchProductsByCustomer(customerId);
+    customerFuture = fetchCustomer().then((customer) {
+      setState(() {
+        customerId = customer.id!;
+        // After customerId is set, fetch sales and products data
+        salesDataFuture = fetchSalesDataByCustomer(customerId);
+        productsFuture = fetchProductsByCustomer(customerId);
+      });
+      return customer;
+    });
   }
 
   Future<Customer.Customer> fetchCustomer() async {
@@ -39,7 +45,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
       final results = await readFirst(
         conn,
         'customer',
-        'company_name = "${widget.customerName}" AND status = 1',
+        "company_name = '${widget.customerName}' AND status = 1",
         '',
       );
       await conn.close();
@@ -70,13 +76,13 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchSalesDataByCustomer() async {
+  Future<List<Map<String, dynamic>>> fetchSalesDataByCustomer(int customerId) async {
     try {
       MySqlConnection conn = await connectToDatabase();
       final results = await readData(
         conn,
         'cart',
-        'created >= DATE_SUB(NOW(), INTERVAL 12 MONTH) AND customer_id = 6 GROUP BY YEAR(created), MONTH(created)',
+        'created >= DATE_SUB(NOW(), INTERVAL 12 MONTH) AND customer_id = $customerId GROUP BY YEAR(created), MONTH(created)',
         'sales_year DESC, sales_month DESC;',
         'YEAR(created) AS sales_year, MONTH(created) AS sales_month, SUM(final_total) AS total_sales',
       );
@@ -102,7 +108,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
         GROUP BY product_id
       ) AS first_uom_per_product ON ci.product_id = first_uom_per_product.product_id
           AND ci.uom = first_uom_per_product.first_uom
-      WHERE ci.customer_id = $customerId AND p.status = 1
+      WHERE ci.customer_id = 6 AND p.status = 1
       GROUP BY p.product_name, p.photo1, ci.uom
       LIMIT 10
     ''');
@@ -125,7 +131,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
         'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
       );
@@ -195,7 +201,6 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
           } else {
             Customer.Customer customer = snapshot.data![0] as Customer.Customer;
             List<Map<String, dynamic>> products = snapshot.data![2] as List<Map<String, dynamic>>;
-
             if (customer.id == null) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
@@ -309,7 +314,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                   ),
                   const SizedBox(height: 16),
                   const SizedBox(
-                    height: 180.0,
+                    height: 300.0,
                     child: CustomersGraph(),
                   ),
                   const SizedBox(height: 20.0),
@@ -346,7 +351,9 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                   const SizedBox(height: 10.0),
                   SizedBox(
                     height: 250.0,
-                    child: ListView.builder(
+                    child: products.isEmpty
+                        ? const Text('No purchases yet')
+                        : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: products.length,
                       itemBuilder: (context, index) {
@@ -370,10 +377,10 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                 children: [
                                   // Container for product photo
                                   SizedBox(
-                                    width: 120.0, // Adjust according to your needs
-                                    height: 120.0, // Adjust according to your needs
+                                    width: 120.0,
+                                    height: 120.0,
                                     child: CachedNetworkImage(
-                                      imageUrl: photoUrl,
+                                      imageUrl: photoUrl.isNotEmpty ? photoUrl : 'asset/no_image.jpg',
                                       placeholder: (context, url) => const CircularProgressIndicator(),
                                       errorWidget: (context, url, error) => const Icon(Icons.error_outline),
                                     ),
@@ -381,7 +388,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                   const SizedBox(height: 8),
                                   // Container for product name with fixed width
                                   SizedBox(
-                                    width: 120.0, // Adjust according to your needs
+                                    width: 120.0,
                                     child: Text(
                                       productName,
                                       textAlign: TextAlign.center,
@@ -392,7 +399,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                                   const SizedBox(height: 4),
                                   // Container for product uom with fixed width
                                   SizedBox(
-                                    width: 120.0, // Adjust according to your needs
+                                    width: 120.0,
                                     child: Text(
                                       productUom,
                                       textAlign: TextAlign.center,

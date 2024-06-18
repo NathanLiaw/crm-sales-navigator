@@ -91,7 +91,7 @@ class _SearchScreenState extends State<SearchScreen> {
       final productData = await readData(
         conn,
         'product',
-        'status = 1 AND product_name = "$selectedProductName"',
+        "status = 1 AND product_name = '$selectedProductName'",
         '',
         'id, product_name, photo1, photo2, photo3, description, sub_category, '
             'price_by_uom',

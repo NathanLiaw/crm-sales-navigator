@@ -5,6 +5,7 @@ import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:developer' as developer;
+import 'package:shimmer/shimmer.dart';
 
 class ItemsWidget extends StatefulWidget {
   final int? brandId; // Brand ID to filter products
@@ -73,23 +74,23 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       List<dynamic> parameters = [];
 
       if (widget.brandId != null) {
-        query += ' AND brand = ?';
+        query += " AND brand = ?";
         parameters.add(widget.brandId);
       } else if (widget.subCategoryId != null) {
-        query += ' AND sub_category = ?';
+        query += " AND sub_category = ?";
         parameters.add(widget.subCategoryId);
       }
 
       if (widget.brandIds?.isNotEmpty ?? false) {
-        query += ' AND brand IN (${widget.brandIds!.join(", ")})';
+        query += " AND brand IN (${widget.brandIds!.join(', ')})";
       }
 
       if (widget.subCategoryIds?.isNotEmpty ?? false) {
-        query += ' AND sub_category IN (${widget.subCategoryIds!.join(", ")})';
+        query += " AND sub_category IN (${widget.subCategoryIds!.join(', ')})";
       }
 
       if (widget.isFeatured) {
-        query += ' AND featured = "Yes"';
+        query += " AND featured = 'Yes'";
       }
 
       if (widget.sortOrder == 'By Name (A to Z)') {
@@ -138,7 +139,30 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       future: getProductData(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          final screenWidth = MediaQuery.of(context).size.width;
+          final containerSize = (screenWidth - 40) / 2;
+          return GridView.count(
+            crossAxisCount: 2,
+            childAspectRatio: screenWidth < 2000 ? 0.65 : 0.70,
+            children: List.generate(4, (index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      width: 1,
+                      color: const Color.fromARGB(255, 0, 76, 135),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
         }
 
         if (snapshot.hasError) {
@@ -147,7 +171,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
         final products = _products;
         final screenWidth = MediaQuery.of(context).size.width;
-        final childAspectRatio = screenWidth < 2000 ? 0.60 : 0.64;
+        final childAspectRatio = screenWidth < 2000 ? 0.65 : 0.70;
 
         return Expanded(
           child: GridView.count(
@@ -170,99 +194,129 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
               final containerSize = (screenWidth - 40) / 2;
 
-              return Container(
-                padding: const EdgeInsets.only(
-                    left: 12, right: 12, top: 10, bottom: 2),
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: const [
-                      BoxShadow(
-                        blurStyle: BlurStyle.normal,
-                        color: Color.fromARGB(75, 117, 117, 117),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: Offset(0, 5),
+              return GestureDetector(
+                onTap: () {
+                  try {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemScreen(
+                          productId: productId,
+                          itemAssetNames: [
+                            photoUrl1,
+                            photoUrl2,
+                            photoUrl3
+                          ],
+                          productName: productName,
+                          itemDescription: itemDescription,
+                          priceByUom: product['price_by_uom'].toString(),
+                        ),
                       ),
-                    ]),
-                child: Expanded(
-                  child: Column(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          try {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ItemScreen(
-                                  productId: productId,
-                                  itemAssetNames: [
-                                    photoUrl1,
-                                    photoUrl2,
-                                    photoUrl3
-                                  ],
-                                  productName: productName,
-                                  itemDescription: itemDescription,
-                                  priceByUom:
-                                  product['price_by_uom'].toString(),
+                    );
+                  } catch (e) {
+                    developer.log('Error navigating to ItemScreen: $e');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.only(
+                      left: 8, right: 8, top: 10, bottom: 2),
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: const [
+                        BoxShadow(
+                          blurStyle: BlurStyle.normal,
+                          color: Color.fromARGB(75, 117, 117, 117),
+                          spreadRadius: 1,
+                          blurRadius: 4,
+                          offset: Offset(0, 5),
+                        ),
+                      ]),
+                  child: Expanded(
+                    child: Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            try {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ItemScreen(
+                                    productId: productId,
+                                    itemAssetNames: [
+                                      photoUrl1,
+                                      photoUrl2,
+                                      photoUrl3
+                                    ],
+                                    productName: productName,
+                                    itemDescription: itemDescription,
+                                    priceByUom: product['price_by_uom'].toString(),
+                                  ),
                                 ),
-                              ),
-                            );
-                          } catch (e) {
-                            developer.log('Error navigating to ItemScreen: $e');
-                          }
-                        },
-                        child: Container(
-                          height: containerSize,
-                          width: containerSize,
-                          margin: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              width: 1,
-                              color: const Color.fromARGB(255, 0, 76, 135),
-                            ),
-                          ),
-                          child: CachedNetworkImage(
-                            imageUrl: photoUrl1,
+                              );
+                            } catch (e) {
+                              developer.log('Error navigating to ItemScreen: $e');
+                            }
+                          },
+                          child: Container(
                             height: containerSize,
                             width: containerSize,
-                            placeholder: (context, url) =>
-                                const CircularProgressIndicator(),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.error_outline),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: containerSize,
-                        padding: const EdgeInsets.only(top: 16),
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    productName,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                      const Color.fromARGB(255, 25, 23, 49),
-                                    ),
-                                  ),
-                                ],
+                            margin: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                width: 1,
+                                color: const Color.fromARGB(255, 0, 76, 135),
                               ),
                             ),
-                          ],
+                            child: CachedNetworkImage(
+                              imageUrl: photoUrl1,
+                              height: containerSize,
+                              width: containerSize,
+                              placeholder: (context, url) => Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
+                                child: Container(
+                                  height: containerSize,
+                                  width: containerSize,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                              const Icon(Icons.error_outline),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          width: containerSize,
+                          padding: const EdgeInsets.only(top: 8),
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      productName,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color.fromARGB(255, 25, 23, 49),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -24,6 +24,8 @@ dependencies:
   email_validator: ^2.1.17
   path: any
   transparent_image: ^2.0.1
+  url_launcher: ^6.0.3
+  flutter_launcher_icons: ^0.13.1
   shimmer: ^3.0.0
 dev_dependencies:
   flutter_test:
@@ -35,4 +37,23 @@ flutter:
   assets:
     - asset/logo/
     - asset/
-    - asset/photo/
+    - asset/icon/
+
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "asset/icon/icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "path/to/image.png"
+    background_color: "#hexcode"
+    theme_color: "#hexcode"
+  windows:
+    generate: true
+    image_path: "path/to/image.png"
+    icon_size: 48 # min:48, max:256, default: 48
+  macos:
+    generate: true
+    image_path: "path/to/image.png"
