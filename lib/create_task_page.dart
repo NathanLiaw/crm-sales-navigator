@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/select_order_id.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
@@ -57,8 +58,7 @@ class _SalesOrderDialogState extends State<SalesOrderDialog> {
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
       content: SizedBox(
-        width: MediaQuery.of(context).size.width *
-            0.8, // Adjust the width as needed
+        width: MediaQuery.of(context).size.width * 0.8,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,6 +137,23 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       });
     });
     _fetchSalesOrderDetails(selectedSalesOrderId);
+  }
+
+  Future<void> _navigateToSelectOrderIDPage() async {
+    final selectedOrderID = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            SelectOrderIDPage(customerName: widget.customerName),
+      ),
+    );
+
+    if (selectedOrderID != null) {
+      setState(() {
+        selectedSalesOrderId = selectedOrderID.toString();
+      });
+      _fetchSalesOrderDetails(selectedSalesOrderId);
+    }
   }
 
   Future<void> _fetchSalesOrderDetails(String? salesOrderId) async {
@@ -230,6 +247,23 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     }
     return salesOrderIds;
   }
+
+  // void _navigateToSelectOrderIDPage() async {
+  //   final selectedOrderID = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) =>
+  //           SelectOrderIDPage(customerName: widget.customerName),
+  //     ),
+  //   );
+
+  //   if (selectedOrderID != null) {
+  //     setState(() {
+  //       selectedSalesOrderId = selectedOrderID;
+  //     });
+  //     _fetchSalesOrderDetails(selectedOrderID);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -439,8 +473,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                   children: [
                     SizedBox(
                       width: 120,
-                      child: DropdownButtonFormField<String>(
-                        menuMaxHeight: 100,
+                      child: DropdownButtonFormField<String?>(
+                        menuMaxHeight: 200,
                         value: selectedSalesOrderId,
                         onChanged: (String? newValue) {
                           setState(() {
@@ -448,12 +482,22 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                           });
                           _fetchSalesOrderDetails(newValue);
                         },
-                        items: salesOrderIds.map((String id) {
-                          String formattedId = 'SO${id.padLeft(7, '0')}';
-                          return DropdownMenuItem<String>(
-                            value: id,
-                            child: Text(formattedId),
-                          );
+                        items: ['', ...salesOrderIds].map((String? id) {
+                          if (id == null || id.isEmpty) {
+                            return const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                'Select',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            );
+                          } else {
+                            String formattedId = 'SO${id.padLeft(7, '0')}';
+                            return DropdownMenuItem<String>(
+                              value: id,
+                              child: Text(formattedId),
+                            );
+                          }
                         }).toList(),
                         // validator: (value) {
                         //   if (value == null) {
@@ -463,29 +507,66 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         // },
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      '*Select a sales order ID',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
+                    Spacer(),
+                    const SizedBox(width: 20),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _navigateToSelectOrderIDPage,
+                          child: Container(
+                            child: Text(
+                              'View Orders Details',
+                              // style: TextStyle(
+                              //     color: Color.fromARGB(255, 127, 127, 127)),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 24,
+                          // color: Colors.grey,
+                        ),
+                      ],
+                    )
                   ],
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
+                // ElevatedButton(
+                //   onPressed: _navigateToSelectOrderIDPage,
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Color(0xff0069BA),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(5),
+                //     ),
+                //     minimumSize: const Size(120, 40),
+                //   ),
+                //   child: const Text(
+                //     'Check Orders Details',
+                //     style: TextStyle(
+                //       color: Colors.white,
+                //     ),
+                //   ),
+                // ),
+                const Text(
+                  '*Select a sales order ID',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 15),
                 if (selectedSalesOrderId != null) ...[
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      InkWell(
-                        onTap: () => _showSalesOrderDialog(context),
-                        child: const Text(
-                          'View Sales Order Details',
-                          style: TextStyle(
-                            color: Color(0xff0069BA),
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      // InkWell(
+                      //   onTap: () => _showSalesOrderDialog(context),
+                      //   child: const Text(
+                      //     'View Sales Order Details',
+                      //     style: TextStyle(
+                      //       color: Color(0xff0069BA),
+                      //       decoration: TextDecoration.underline,
+                      //     ),
+                      //   ),
+                      // ),
+                      const SizedBox(height: 5),
                       Text(
                         'Created date: ${formattedCreatedDate ?? ''}',
                         style: const TextStyle(
@@ -550,7 +631,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ],
                   ),
                 ],
-                const SizedBox(height: 60),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[

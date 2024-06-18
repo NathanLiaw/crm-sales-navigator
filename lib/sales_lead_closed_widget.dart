@@ -51,50 +51,67 @@ class ClosedLeadItem extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  leadItem.customerName.length > 15
-                      ? '${leadItem.customerName.substring(0, 15)}...'
-                      : leadItem.customerName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                // Text(
+                //   leadItem.customerName.length > 15
+                //       ? '${leadItem.customerName.substring(0, 15)}...'
+                //       : leadItem.customerName,
+                //   style: const TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 20,
+                //   ),
+                //   overflow: TextOverflow.ellipsis,
+                // ),
+                Container(
+                  width: 170,
+                  child: Text(
+                    leadItem.customerName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Column(
-                    children: [
-                      Text(
-                        'Closed',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                PopupMenuButton<String>(
-                  onSelected: (String value) {
-                    // Perform an action based on the selected value
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'view details',
-                      child: Text('View details'),
+                      child: const Column(
+                        children: [
+                          Text(
+                            'Closed',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (String value) {
+                        // Perform an action based on the selected value
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'view details',
+                          child: Text('View details'),
+                        ),
+                      ],
+                      child: const Icon(Icons.more_horiz_outlined,
+                          color: Colors.black),
                     ),
                   ],
-                  child: const Icon(Icons.more_horiz_outlined,
-                      color: Colors.black),
                 ),
               ],
             ),
@@ -166,7 +183,7 @@ class ClosedLeadItem extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               leadItem.quantity != null
-                  ? 'Quantity: $quantity items      Total: RM${_formatCurrency(formattedTotal)}'
+                  ? 'Quantity: ${leadItem.quantity} items      Total: RM${_formatCurrency(formattedTotal)}'
                   : 'Quantity: Unknown      Total: RM${_formatCurrency(formattedTotal)}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
