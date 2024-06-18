@@ -1,6 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db_connection.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Sales Report',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        colorScheme: const ColorScheme.light(
+          primary: Colors.lightBlue,
+          onPrimary: Colors.white,
+          surface: Colors.lightBlue,
+        ),
+        iconTheme: const IconThemeData(color: Colors.lightBlue),
+      ),
+      home: const SalesReportPage(),
+    );
+  }
+}
 
 class SalesReportPage extends StatefulWidget {
   const SalesReportPage({super.key});
@@ -18,8 +40,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
   void initState() {
     super.initState();
     selectedReportType = 'Week';
+    salesData = Future.value([]); // Initialize with an empty Future
     _loadUsername().then((_) {
-      salesData = fetchSalesData(selectedReportType);
+      setState(() {
+        salesData = fetchSalesData(selectedReportType);
+      });
     });
   }
 
@@ -35,7 +60,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
     var db = await connectToDatabase();
     late String query;
 
-    // Using the username in the query to filter data
     String usernameCondition = " AND s.username = '$_loggedInUsername'";
 
     switch (reportType) {
@@ -43,8 +67,9 @@ class _SalesReportPageState extends State<SalesReportPage> {
         query = '''
           SELECT 
               Dates.`Date`,
-              DATE_FORMAT(Dates.`Date`, '%a') AS `Day`,
-              IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`
+              DATE_FORMAT(Dates.`Date`, '%W') AS `Day`,
+              IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`,
+              IFNULL(DailySales.`Total Qty`, 0) AS `Total Qty`
           FROM (
               SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
               UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
@@ -57,11 +82,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
           LEFT JOIN (
               SELECT 
                   DATE(c.created) AS `Date`,
-                  ROUND(SUM(c.final_total), 0) AS `Total Sales`
+                  ROUND(SUM(c.final_total), 0) AS `Total Sales`,
+                  SUM(cart_item.qty) AS `Total Qty`
               FROM cart c
               JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN 
-            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE()
               AND c.status != 'void' $usernameCondition
               GROUP BY DATE(c.created)
@@ -74,7 +99,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
           SELECT
               GeneratedMonths.YearMonth,
               GeneratedMonths.MonthName,
-              IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
+              IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`,
+              IFNULL(SUM(MonthlySales.`Total Qty`), 0) AS `Total Qty`
           FROM (
               SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
                      DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
@@ -89,11 +115,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
           LEFT JOIN (
               SELECT 
                   DATE_FORMAT(c.created, '%Y-%m') AS YearMonth,
-                  ROUND(SUM(c.final_total), 0) AS `Total Sales`
+                  ROUND(SUM(c.final_total), 0) AS `Total Sales`,
+                  SUM(cart_item.qty) AS `Total Qty`
               FROM cart c
               JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN 
-            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE c.created >= CURDATE() - INTERVAL 12 MONTH
               AND c.status != 'void' $usernameCondition
               GROUP BY DATE_FORMAT(c.created, '%Y-%m')
@@ -106,7 +132,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
         query = '''
             SELECT
                 GeneratedYears.Year AS `Year`,
-                IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
+                IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`,
+                IFNULL(SUM(YearlySales.`Total Qty`), 0) AS `Total Qty`
             FROM (
                 SELECT YEAR(CURDATE()) AS Year
                 UNION ALL SELECT YEAR(CURDATE()) - 1
@@ -118,11 +145,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
             LEFT JOIN (
                 SELECT 
                     YEAR(c.created) AS Year,
-                    ROUND(SUM(c.final_total), 0) AS `Total Sales`
+                    ROUND(SUM(c.final_total), 0) AS `Total Sales`,
+                    SUM(cart_item.qty) AS `Total Qty`
                 FROM cart c
                 JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-                JOIN 
-            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+                JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
                 WHERE c.created >= CURDATE() - INTERVAL 6 YEAR
                 AND c.status != 'void' $usernameCondition
                 GROUP BY YEAR(c.created)
@@ -142,7 +169,10 @@ class _SalesReportPageState extends State<SalesReportPage> {
         date: row['Date'],
         totalSales: row['Total Sales'] != null
             ? (row['Total Sales'] as num).toDouble()
-            : null,
+            : 0,
+        totalQuantity: row['Total Qty'] != null
+            ? (row['Total Qty'] as num).toDouble()
+            : 0,
       );
     }).toList();
   }
@@ -150,7 +180,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
   void changeReportType(String newReportType) {
     setState(() {
       selectedReportType = newReportType;
-      salesData = fetchSalesData(selectedReportType);
+      salesData = fetchSalesData(newReportType);
     });
   }
 
@@ -213,22 +243,24 @@ class _SalesReportPageState extends State<SalesReportPage> {
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final item = snapshot.data![index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ListTile(
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromRGBO(111, 188, 249, 0.35),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
                             title: Text(
-                              item.day != null ? item.day! : '',
+                              item.day ?? '',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: selectedReportType == 'Week' &&
-                                    item.date != null
+                            subtitle: selectedReportType == 'Week' && item.date != null
                                 ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Date: ${_formatDate(item.date!)}',
@@ -239,31 +271,53 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}',
+                                        'Total Sales: ${_formatCurrency(item.totalSales!)}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                           color: Color.fromARGB(255, 0, 100, 0),
                                         ),
                                       ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Total Quantity: ${item.totalQuantity!.toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Color(0xFF004072),
+                                        ),
+                                      ),
                                     ],
                                   )
                                 : selectedReportType == 'Month' ||
                                         selectedReportType == 'Year'
-                                    ? Text(
-                                        'Total Sales: RM ${item.totalSales!.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 16,
-                                          color: Color.fromARGB(255, 0, 100, 0),
-                                        ),
+                                    ? Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Total Sales: ${_formatCurrency(item.totalSales!)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
+                                              color: Color.fromARGB(255, 0, 100, 0),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Total Quantity: ${item.totalQuantity!.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Color(0xFF004072),
+                                            ),
+                                          ),
+                                        ],
                                       )
                                     : null,
                             contentPadding: const EdgeInsets.symmetric(
                                 vertical: 4, horizontal: 16),
                           ),
-                          const Divider(color: Colors.grey),
-                        ],
+                        ),
                       );
                     },
                   );
@@ -281,12 +335,18 @@ class _SalesReportPageState extends State<SalesReportPage> {
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year.toString()}';
   }
+
+  String _formatCurrency(double amount) {
+    final NumberFormat formatter = NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US');
+    return formatter.format(amount);
+  }
 }
 
 class SalesData {
   final String? day;
   final DateTime? date;
   final double? totalSales;
+  final double? totalQuantity;
 
-  SalesData({this.day, this.date, this.totalSales});
+  SalesData({this.day, this.date, this.totalSales, this.totalQuantity});
 }
