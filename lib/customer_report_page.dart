@@ -42,6 +42,7 @@ class _CustomerReportState extends State<CustomerReport> {
   @override
   void initState() {
     super.initState();
+    salesData = Future.value([]); // Initialize salesData with an empty list
     loadPreferences().then((_) {
       setState(() {
         _selectedDateRange = null;
@@ -66,14 +67,15 @@ class _CustomerReportState extends State<CustomerReport> {
     }
   }
 
-  Future<List<Customer>> fetchSalesData(bool isAscending, DateTimeRange? dateRange) async {
+  Future<List<Customer>> fetchSalesData(
+      bool isAscending, DateTimeRange? dateRange) async {
     var db = await connectToDatabase();
     var sortOrder = isAscending ? 'ASC' : 'DESC';
     String dateCondition = dateRange != null
         ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' "
-            "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'" : '';
-    var results = await db.query(
-        '''
+            "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'"
+        : '';
+    var results = await db.query('''
         SELECT 
         cart.customer_company_name AS Company_Name,
         customer.id AS Customer_ID,
@@ -84,19 +86,22 @@ class _CustomerReportState extends State<CustomerReport> {
         salesman.username AS username,
         salesman.salesman_name,
         SUM(cart.final_total) AS Total_Sales,
-        MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase
+        MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase,
+        SUM(ci.qty) AS Total_Quantity
         FROM cart
         JOIN customer ON cart.buyer_id = customer.id
         JOIN salesman ON cart.buyer_id = salesman.id
+        LEFT JOIN cart_item ci ON ci.session = cart.session OR ci.cart_id = cart.id
         WHERE cart.buyer_user_group != 'customer'
-        AND cart.status != 'void' AND salesman.username = '$loggedInUsername' 
+        AND cart.status != 'void'
+        AND salesman.username = '$loggedInUsername'
         $dateCondition 
         GROUP BY cart.customer_company_name, customer.id
         ORDER BY Total_Sales $sortOrder;
         ''');
-    int serialNumber = 1; 
+    int serialNumber = 1;
     List<Customer> customersList = [];
-    for (var row in results) {  
+    for (var row in results) {
       customersList.add(Customer(
         id: row['Customer_ID'],
         companyName: row['Company_Name'],
@@ -104,8 +109,9 @@ class _CustomerReportState extends State<CustomerReport> {
         email: row['Email'],
         contactNumber: row['Contact_Number'],
         totalSales: row['Total_Sales'],
+        totalQuantity: row['Total_Quantity'],
         lastPurchase: DateTime.parse(row['Last_Purchase']),
-        serialNumber: serialNumber,  
+        serialNumber: serialNumber,
       ));
       serialNumber++;
     }
@@ -135,7 +141,7 @@ class _CustomerReportState extends State<CustomerReport> {
 
   void queryAllData() {
     setState(() {
-      _selectedDateRange = null; 
+      _selectedDateRange = null;
       selectedButtonIndex = 3;
       salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
     });
@@ -159,18 +165,6 @@ class _CustomerReportState extends State<CustomerReport> {
                     initialDateRange: _selectedDateRange,
                     firstDate: DateTime(2019),
                     lastDate: DateTime.now(),
-                    builder: (BuildContext context, Widget? child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: Colors.lightBlue,
-                            onPrimary: Colors.white,
-                            surface: const Color.fromARGB(255, 212, 234, 255),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
                   );
                   if (picked != null && picked != _selectedDateRange) {
                     setState(() {
@@ -241,8 +235,8 @@ class _CustomerReportState extends State<CustomerReport> {
           alignment: Alignment.centerLeft,
           child: Row(
             children: [
-              _buildTimeFilterButton('All', () => queryAllData(),
-                  selectedButtonIndex == 3),
+              _buildTimeFilterButton(
+                  'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
               _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
@@ -294,7 +288,7 @@ class _CustomerReportState extends State<CustomerReport> {
   Widget build(BuildContext context) {
     String formattedDate = _selectedDateRange != null
         ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} '
-        '- ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
+            '- ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       appBar: AppBar(
@@ -322,95 +316,130 @@ class _CustomerReportState extends State<CustomerReport> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData) {
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No data available'));
+                } else {
                   return ListView(
                     children: snapshot.data!.map((customer) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: ExpansionTile(
-                          backgroundColor: Colors.grey[200],
-                          title: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${customer.serialNumber}. ',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  customer.companyName,
-                                  style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 5),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromRGBO(111, 188, 249, 0.35),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          subtitle: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              '     Total Sales: ${customer.totalSalesDisplay}',
-                              style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 100, 0),
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                              child: Align(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: ExpansionTile(
+                              backgroundColor: Colors.transparent,
+                              title: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${customer.serialNumber}. ',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      customer.companyName,
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              subtitle: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '    ID: ${customer.id}',
+                                      '     Total Sales: ${customer.totalSalesDisplay}',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
+                                          color: Color.fromARGB(255, 0, 100, 0),
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '    Username: ${customer.customerUsername}',
+                                      '     Total Quantity: ${customer.totalQuantityDisplay}',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Email: ${customer.email}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Contact Number: ${customer.contactNumber}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Last Purchase: ${DateFormat('dd-MM-yyyy').format(customer.lastPurchase)}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
+                                          color: Color(0xFF004072),
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
                               ),
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE1F5FE),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment
+                                        .start, // Added alignment here
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '      ID: ${customer.id}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Username: ${customer.customerUsername}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Email: ${customer.email}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Contact Number: ${customer.contactNumber}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Last Purchase: ${DateFormat('dd-MM-yyyy').format(customer.lastPurchase)}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Divider(color: Colors.transparent),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     }).toList(),
                   );
-                } else {
-                  return const Center(child: Text('No data available'));
                 }
               },
             ),
@@ -428,6 +457,7 @@ class Customer {
   final String email;
   final String contactNumber;
   final double totalSales;
+  final double totalQuantity;
   final DateTime lastPurchase;
   final int serialNumber;
 
@@ -438,9 +468,13 @@ class Customer {
     required this.email,
     required this.contactNumber,
     required this.totalSales,
+    required this.totalQuantity,
     required this.lastPurchase,
     required this.serialNumber,
   });
 
-  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalSales)}';
+  String get totalSalesDisplay =>
+      'RM ${NumberFormat("#,##0.000", "en_US").format(totalSales)}';
+  String get totalQuantityDisplay =>
+      NumberFormat("#,##0", "en_US").format(totalQuantity);
 }

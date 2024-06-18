@@ -3,9 +3,6 @@ import 'package:intl/intl.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

@@ -43,8 +43,7 @@ class _SalesReportState extends State<SalesReport> {
   Future<void> _loadUsername() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      loggedInUsername = prefs.getString('username') ??
-          'default_username';
+      loggedInUsername = prefs.getString('username') ?? 'default_username';
     });
   }
 
@@ -230,7 +229,8 @@ class _SalesReportState extends State<SalesReport> {
       body: _salesDataMap[_selectedInterval] != null
           ? _salesDataMap[_selectedInterval]!.isNotEmpty
               ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 4.0),
                   child: Align(
                     alignment: Alignment.center,
                     child: ConstrainedBox(
