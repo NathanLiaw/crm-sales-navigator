@@ -765,14 +765,26 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(
-                    leadItem.customerName.length > 10
-                        ? '${leadItem.customerName.substring(0, 6)}...'
-                        : leadItem.customerName,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18),
-                    overflow: TextOverflow.ellipsis,
+                  // Text(
+                  //   leadItem.customerName.length > 20
+                  //       ? '${leadItem.customerName.substring(0, 20)}...'
+                  //       : leadItem.customerName,
+                  //   style: const TextStyle(
+                  //       fontWeight: FontWeight.bold, fontSize: 18),
+                  //   maxLines: 2,
+                  //   overflow: TextOverflow.ellipsis,
+                  // ),
+                  Container(
+                    width: 200,
+                    child: Text(
+                      leadItem.customerName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  Spacer(),
                   Container(
                     margin: const EdgeInsets.only(left: 20),
                     padding:
@@ -790,7 +802,55 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  // const Spacer(),
+                  // DropdownButtonHideUnderline(
+                  //   child: DropdownButton2<String>(
+                  //     isExpanded: true,
+                  //     hint: const Text(
+                  //       'Opportunities',
+                  //       style: TextStyle(fontSize: 12, color: Colors.black),
+                  //     ),
+                  //     items: tabbarNames
+                  //         .skip(1)
+                  //         .map((item) => DropdownMenuItem<String>(
+                  //               value: item,
+                  //               child: Text(
+                  //                 item,
+                  //                 style: const TextStyle(fontSize: 12),
+                  //               ),
+                  //             ))
+                  //         .toList(),
+                  //     value: leadItem.selectedValue,
+                  //     onChanged: (String? value) {
+                  //       if (value == 'Engagement') {
+                  //         _moveToEngagement(leadItem);
+                  //       } else if (value == 'Negotiation') {
+                  //         _moveToNegotiation(leadItem);
+                  //       } else if (value == 'Closed') {
+                  //         _moveToCreateTaskPage(context, leadItem);
+                  //       } else if (value == 'Order Processing') {
+                  //         _navigateToCreateTaskPage(context, leadItem, false);
+                  //       }
+                  //     },
+                  //     buttonStyleData: const ButtonStyleData(
+                  //       padding: EdgeInsets.symmetric(horizontal: 16),
+                  //       height: 32,
+                  //       width: 140,
+                  //       decoration: BoxDecoration(color: Colors.white),
+                  //     ),
+                  //     menuItemStyleData: const MenuItemStyleData(
+                  //       height: 30,
+                  //     ),
+                  //   ),
+                  // ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(leadItem.description),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
                       isExpanded: true,
@@ -833,8 +893,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(leadItem.description),
+              // const SizedBox(height: 8),
+              // Text(leadItem.description),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -850,36 +910,56 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        ElevatedButton(
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     _handleIgnore(leadItem);
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: Colors.white,
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(5),
+                        //       side:
+                        //           const BorderSide(color: Colors.red, width: 2),
+                        //     ),
+                        //     minimumSize: const Size(50, 35),
+                        //   ),
+                        //   child: const Text('Ignore',
+                        //       style: TextStyle(color: Colors.red)),
+                        // ),
+                        IconButton(
+                          iconSize: 40,
+                          icon: Icon(
+                            Icons.cancel,
+                            color: Colors.red,
+                          ),
                           onPressed: () {
                             _handleIgnore(leadItem);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                              side:
-                                  const BorderSide(color: Colors.red, width: 2),
-                            ),
-                            minimumSize: const Size(50, 35),
-                          ),
-                          child: const Text('Ignore',
-                              style: TextStyle(color: Colors.red)),
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
+                        // const SizedBox(width: 8),
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     _moveToEngagement(leadItem);
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: const Color(0xff0069BA),
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(5),
+                        //     ),
+                        //     minimumSize: const Size(50, 35),
+                        //   ),
+                        //   child: const Text('Accept',
+                        //       style: TextStyle(color: Colors.white)),
+                        // ),
+                        IconButton(
+                          iconSize: 40,
+                          icon: Icon(
+                            Icons.check_circle,
+                            color: Color(0xff0069BA),
+                          ),
                           onPressed: () {
                             _moveToEngagement(leadItem);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff0069BA),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            minimumSize: const Size(50, 35),
-                          ),
-                          child: const Text('Accept',
-                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),

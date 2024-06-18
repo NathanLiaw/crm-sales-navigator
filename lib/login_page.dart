@@ -48,7 +48,7 @@ class LoginPage extends StatelessWidget {
         // Save login status and expiration time to shared preferences
         prefs.setBool('isLoggedIn', true);
         prefs.setInt('loginExpirationTime',
-            DateTime.now().add(Duration(hours: 24)).millisecondsSinceEpoch);
+            DateTime.now().add(Duration(days: 31)).millisecondsSinceEpoch);
 
         // Navigate to HomePage and pass salesmanName
         Navigator.pushReplacement(
