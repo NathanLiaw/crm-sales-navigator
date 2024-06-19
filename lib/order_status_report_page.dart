@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
@@ -17,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sales Order',
+      title: 'Sales Order Report',
       theme: ThemeData(
         primaryColor: const Color(0xFF004C87),
         hintColor: const Color(0xFF004C87),
@@ -27,19 +26,19 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.white),
         ),
       ),
-      home: const SalesOrderPage(),
+      home: const OrderStatusReportPage(),
     );
   }
 }
 
-class SalesOrderPage extends StatefulWidget {
-  const SalesOrderPage({super.key});
+class OrderStatusReportPage extends StatefulWidget {
+  const OrderStatusReportPage({super.key});
 
   @override
-  _SalesOrderPageState createState() => _SalesOrderPageState();
+  _OrderStatusReportPageState createState() => _OrderStatusReportPageState();
 }
 
-class _SalesOrderPageState extends State<SalesOrderPage> {
+class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   List<Map<String, dynamic>> orders = [];
   bool isLoading = true;
   DateTimeRange? dateRange;
@@ -143,7 +142,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
-     SELECT 
+    SELECT 
     cart.*, 
     cart_item.product_id,
     cart_item.product_name, 
@@ -228,12 +227,15 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
-          'Sales Order',
+          'Sales Order Report',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004C87),
-        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: <Widget>[
@@ -241,7 +243,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           Expanded(child: _buildSalesOrderList()),
         ],
       ),
-      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 

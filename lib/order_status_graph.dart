@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'order_status_report_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -34,7 +34,8 @@ class MyApp extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -79,21 +80,30 @@ class OrderStatusWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const OrderStatusReportPage()),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 2,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const OrderStatusIndicator(),
           ),
-          child: const OrderStatusIndicator(),
         ),
       ],
     );
@@ -138,25 +148,22 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     if (loggedInUsername.isEmpty) {
       return;
     }
-
-    // Adjust start and end date to the current hour
-    DateTime adjustedStartDate = DateTime(
-      selectedDateRange.start.year,
-      selectedDateRange.start.month,
-      selectedDateRange.start.day,
-      0, 0, 0
-    );
+    DateTime adjustedStartDate = DateTime(selectedDateRange.start.year,
+        selectedDateRange.start.month, selectedDateRange.start.day, 0, 0, 0);
 
     DateTime adjustedEndDate = DateTime(
       selectedDateRange.end.year,
       selectedDateRange.end.month,
       selectedDateRange.end.day,
       DateTime.now().hour,
-      59, 59,
+      59,
+      59,
     );
 
-    String formattedStartDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedStartDate);
-    String formattedEndDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedEndDate);
+    String formattedStartDate =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedStartDate);
+    String formattedEndDate =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedEndDate);
 
     var results = await db.query(
       '''SELECT 
@@ -244,7 +251,8 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
                 const SizedBox(width: 8),
                 Text(
                   "${DateFormat('dd/MM/yyyy').format(dateRange.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange.end)}",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 const Icon(Icons.arrow_drop_down, size: 24.0),
               ],
@@ -255,7 +263,6 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         Stack(
           alignment: Alignment.center,
           children: [
-            // Complete Order Number
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -291,7 +298,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStatusIndicator('Complete', Colors.green, complete),
+            _buildStatusIndicator('Complete', Color(0xFF487C08), complete),
             _buildStatusIndicator('Pending', Colors.blue, pending),
             _buildStatusIndicator('Void', Colors.red, voided),
           ],
@@ -336,7 +343,7 @@ class OrderStatusPainter extends CustomPainter {
     const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
 
     Paint paintComplete = Paint()
-      ..color = Colors.green
+      ..color = Color(0xFF487C08)
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
@@ -417,7 +424,8 @@ class InProgressOrdersWidget extends StatelessWidget {
               return Text('Error: ${snapshot.error}');
             } else if (snapshot.hasData) {
               return Container(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -434,28 +442,28 @@ class InProgressOrdersWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ...snapshot.data!.map((order) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          order.date,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4), 
-                        Center(
-                          child: Text(
-                            '${order.status} Orders',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              order.date,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    )),
+                            const SizedBox(height: 4),
+                            Center(
+                              child: Text(
+                                '${order.status} Orders',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        )),
                   ],
                 ),
               );
