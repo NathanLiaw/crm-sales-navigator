@@ -98,6 +98,33 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     }
   }
 
+  Future<void> insertAllItemsIntoCart(List<Map<String, dynamic>> items) async {
+    try {
+      for (var item in items) {
+        final cartItem = CartItem(
+          buyerId: await UtilityFunction.getUserId(),
+          productId: item['product_id'],
+          productName: item['product_name'],
+          uom: item['uom'],
+          quantity: item['qty'],
+          discount: 0,
+          originalUnitPrice: item['ori_unit_price'],
+          unitPrice: item['ori_unit_price'],
+          total: item['ori_unit_price'] * item['qty'],
+          cancel: null,
+          remark: null,
+          status: 'in progress',
+          created: DateTime.now(),
+          modified: DateTime.now(),
+        );
+        await insertItemIntoCart(cartItem);
+      }
+      developer.log('All items copied to cart successfully');
+    } catch (e) {
+      developer.log('Error copying all items to cart: $e', error: e);
+    }
+  }
+
   Future<void> _loadUserDetails() async {
     final prefs = await SharedPreferences.getInstance();
     loggedInUsername = prefs.getString('username') ?? '';
@@ -143,7 +170,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
-     SELECT 
+    SELECT 
     cart.*, 
     cart_item.product_id,
     cart_item.product_name, 
@@ -221,6 +248,24 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           error: e, stackTrace: stackTrace);
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _updateOrderStatus(int orderId, String status) async {
+    try {
+      const tableName = 'cart';
+      final data = {
+        'id': orderId,
+        'status': status,
+        'modified': UtilityFunction.getCurrentDateTime(),
+      };
+
+      final db = await DatabaseHelper.database;
+      await DatabaseHelper.updateData(data, tableName);
+      developer.log('Order status updated successfully');
+      _loadSalesOrders();
+    } catch (e) {
+      developer.log('Error updating order status: $e', error: e);
     }
   }
 
@@ -507,7 +552,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           creationDate: firstItem['created_date'] != null
               ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
               : DateTime.now(),
-          amount: '${firstItem['final_total']?.toStringAsFixed(2) ?? '0.00'}',
+          amount: '${firstItem['final_total']?.toStringAsFixed(3) ?? '0.000'}',
           status: firstItem['status'] ?? 'Unknown Status',
           items: items,
         );
@@ -566,6 +611,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
     String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
     int orderId = int.parse(orderNumber);
+
     return GestureDetector(
       onTap: () async {
         bool? result = await Navigator.push(
@@ -621,19 +667,95 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         Text(
                                           companyName,
                                           style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600),
                                         ),
                                         Text(
                                           'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500),
                                         ),
                                         const SizedBox(height: 8),
-                                        Text(
-                                          'RM $amount',
-                                          style: const TextStyle(
-                                            color: Color(0xFF487C08),
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              'RM $amount',
+                                              style: const TextStyle(
+                                                color: Color(0xFF487C08),
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.copy),
+                                              onPressed: () async {
+                                                for (var item in items) {
+                                                  final cartItem = CartItem(
+                                                    buyerId:
+                                                        await UtilityFunction
+                                                            .getUserId(),
+                                                    productId:
+                                                        item['product_id'],
+                                                    productName:
+                                                        item['product_name'],
+                                                    uom: item['uom'],
+                                                    quantity: item['qty'],
+                                                    discount: 0,
+                                                    originalUnitPrice:
+                                                        item['ori_unit_price'],
+                                                    unitPrice:
+                                                        item['ori_unit_price'],
+                                                    total:
+                                                        item['ori_unit_price'] *
+                                                            item['qty'],
+                                                    cancel: null,
+                                                    remark: null,
+                                                    status: 'in progress',
+                                                    created: DateTime.now(),
+                                                    modified: DateTime.now(),
+                                                  );
+
+                                                  await insertItemIntoCart(
+                                                      cartItem);
+                                                }
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      const AlertDialog(
+                                                    backgroundColor:
+                                                        Color(0xFF487C08),
+                                                    title: Row(
+                                                      children: [
+                                                        SizedBox(width: 20),
+                                                        Icon(
+                                                          Icons.check_circle,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 8),
+                                                        Text(
+                                                          'All items copied to cart',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 18,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                                Future.delayed(
+                                                    const Duration(seconds: 1),
+                                                    () {
+                                                  Navigator.pop(context);
+                                                });
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -701,7 +823,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                           created: DateTime.now(),
                                           modified: DateTime.now(),
                                         );
-
                                         await insertItemIntoCart(cartItem);
                                         showDialog(
                                           context: context,

@@ -567,6 +567,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
     String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
     int orderId = int.parse(orderNumber);
+
     return GestureDetector(
       onTap: () async {
         bool? result = await Navigator.push(
@@ -622,19 +623,95 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                         Text(
                                           companyName,
                                           style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600),
                                         ),
                                         Text(
                                           'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500),
                                         ),
                                         const SizedBox(height: 8),
-                                        Text(
-                                          'RM $amount',
-                                          style: const TextStyle(
-                                            color: Color(0xFF487C08),
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              'RM $amount',
+                                              style: const TextStyle(
+                                                color: Color(0xFF487C08),
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.copy),
+                                              onPressed: () async {
+                                                for (var item in items) {
+                                                  final cartItem = CartItem(
+                                                    buyerId:
+                                                        await UtilityFunction
+                                                            .getUserId(),
+                                                    productId:
+                                                        item['product_id'],
+                                                    productName:
+                                                        item['product_name'],
+                                                    uom: item['uom'],
+                                                    quantity: item['qty'],
+                                                    discount: 0,
+                                                    originalUnitPrice:
+                                                        item['ori_unit_price'],
+                                                    unitPrice:
+                                                        item['ori_unit_price'],
+                                                    total:
+                                                        item['ori_unit_price'] *
+                                                            item['qty'],
+                                                    cancel: null,
+                                                    remark: null,
+                                                    status: 'in progress',
+                                                    created: DateTime.now(),
+                                                    modified: DateTime.now(),
+                                                  );
+
+                                                  await insertItemIntoCart(
+                                                      cartItem);
+                                                }
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      const AlertDialog(
+                                                    backgroundColor:
+                                                        Color(0xFF487C08),
+                                                    title: Row(
+                                                      children: [
+                                                        SizedBox(width: 20),
+                                                        Icon(
+                                                          Icons.check_circle,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 8),
+                                                        Text(
+                                                          'All items copied to cart',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 18,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                                Future.delayed(
+                                                    const Duration(seconds: 1),
+                                                    () {
+                                                  Navigator.pop(context);
+                                                });
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -702,7 +779,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                           created: DateTime.now(),
                                           modified: DateTime.now(),
                                         );
-
                                         await insertItemIntoCart(cartItem);
                                         showDialog(
                                           context: context,
