@@ -70,7 +70,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
               DATE_FORMAT(Dates.`Date`, '%W') AS `Day`,
               IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`,
               IFNULL(DailySales.`Total Qty`, 0) AS `Total Qty`
-          FROM (
+                    FROM (
               SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
               UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
               UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
@@ -85,9 +85,9 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ROUND(SUM(c.final_total), 0) AS `Total Sales`,
                   SUM(cart_item.qty) AS `Total Qty`
               FROM cart c
-              JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
-              WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE()
+              JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+              JOIN cart_item ON c.id = cart_item.cart_id
+              WHERE c.created >= CURDATE() - INTERVAL 6 DAY
               AND c.status != 'void' $usernameCondition
               GROUP BY DATE(c.created)
           ) AS DailySales ON Dates.`Date` = DailySales.`Date`
@@ -103,7 +103,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
               IFNULL(SUM(MonthlySales.`Total Qty`), 0) AS `Total Qty`
           FROM (
               SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
-                     DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
+                  DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
               FROM (
                   SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
                   SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL
@@ -170,9 +170,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
         totalSales: row['Total Sales'] != null
             ? (row['Total Sales'] as num).toDouble()
             : 0,
-        totalQuantity: row['Total Qty'] != null
-            ? (row['Total Qty'] as num).toDouble()
-            : 0,
+        totalQuantity:
+            row['Total Qty'] != null ? (row['Total Qty'] as num).toDouble() : 0,
       );
     }).toList();
   }
@@ -244,7 +243,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
                     itemBuilder: (context, index) {
                       final item = snapshot.data![index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 5),
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color.fromRGBO(111, 188, 249, 0.35),
@@ -258,9 +258,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: selectedReportType == 'Week' && item.date != null
+                            subtitle: selectedReportType == 'Week' &&
+                                    item.date != null
                                 ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Date: ${_formatDate(item.date!)}',
@@ -292,14 +294,16 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                 : selectedReportType == 'Month' ||
                                         selectedReportType == 'Year'
                                     ? Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Total Sales: ${_formatCurrency(item.totalSales!)}',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w700,
                                               fontSize: 16,
-                                              color: Color.fromARGB(255, 0, 100, 0),
+                                              color: Color.fromARGB(
+                                                  255, 0, 100, 0),
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -337,7 +341,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
   }
 
   String _formatCurrency(double amount) {
-    final NumberFormat formatter = NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US');
+    final NumberFormat formatter =
+        NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US');
     return formatter.format(amount);
   }
 }

@@ -81,32 +81,33 @@ class _SalesReportState extends State<SalesReport> {
       case 'Week':
         query = '''
         SELECT 
-            Dates.`Date`,
-            DATE_FORMAT(Dates.`Date`, '%a') AS `Day`, -- Short form of the day
-            IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`
-        FROM (
-            SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
-            UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-            UNION ALL SELECT CURDATE()
-        ) AS Dates
-        LEFT JOIN (
-            SELECT 
-                DATE(c.created) AS `Date`,
-                ROUND(SUM(c.final_total), 0) AS `Total Sales`
-            FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-            JOIN 
-            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
-            WHERE c.created BETWEEN CURDATE() - INTERVAL 6 DAY AND CURDATE() 
-            AND c.status != 'void' AND s.username = '$loggedInUsername'
-            GROUP BY DATE(c.created)
-        ) AS DailySales ON Dates.`Date` = DailySales.`Date`
-        ORDER BY Dates.`Date` DESC;
-      ''';
+          Dates.`Date`,
+          DATE_FORMAT(Dates.`Date`, '%W') AS `Day`,
+          IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`,
+          IFNULL(DailySales.`Total Qty`, 0) AS `Total Qty`
+      FROM (
+          SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
+          UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
+          UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
+          UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
+          UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
+          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+          UNION ALL SELECT CURDATE()
+      ) AS Dates
+      LEFT JOIN (
+          SELECT 
+              DATE(c.created) AS `Date`,
+              ROUND(SUM(c.final_total), 0) AS `Total Sales`,
+              SUM(cart_item.qty) AS `Total Qty`
+          FROM cart c
+          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+          JOIN cart_item ON c.id = cart_item.cart_id
+          WHERE c.created >= CURDATE() - INTERVAL 6 DAY
+          AND c.status != 'void' '$loggedInUsername'
+          GROUP BY DATE(c.created)
+      ) AS DailySales ON Dates.`Date` = DailySales.`Date`
+      ORDER BY Dates.`Date` ASC;
+        ''';
         break;
 
       case 'Month':
@@ -117,7 +118,7 @@ class _SalesReportState extends State<SalesReport> {
               IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
           FROM (
               SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
-                     DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
+                    DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
               FROM (
                   SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
                   SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
@@ -129,8 +130,7 @@ class _SalesReportState extends State<SalesReport> {
                   ROUND(SUM(c.final_total), 0) AS `Total Sales`
               FROM cart c
               JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN 
-            cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE c.created >= CURDATE() - INTERVAL 6 MONTH
               AND c.status != 'void' AND s.username = '$loggedInUsername'
               GROUP BY DATE_FORMAT(c.created, '%Y-%m')
@@ -165,8 +165,7 @@ class _SalesReportState extends State<SalesReport> {
               FROM 
                   cart c
               JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN 
-              cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
               WHERE 
                   c.created >= CURDATE() - INTERVAL 6 YEAR
               AND 
@@ -194,6 +193,10 @@ class _SalesReportState extends State<SalesReport> {
     }).toList();
   }
 
+  void _refreshData() async {
+    await _fetchData(_selectedInterval);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -212,6 +215,7 @@ class _SalesReportState extends State<SalesReport> {
                 if (newValue != null) {
                   setState(() {
                     _selectedInterval = newValue;
+                    _refreshData(); // Refresh data when interval changes
                   });
                 }
               },
@@ -302,6 +306,7 @@ class _SalesReportState extends State<SalesReport> {
           },
           interval: maxY / 6,
           reservedSize: 40,
+          margin: 8,
         ),
         bottomTitles: SideTitles(
           showTitles: true,
@@ -312,20 +317,14 @@ class _SalesReportState extends State<SalesReport> {
             int lastIndex = salesData.length - 1;
 
             if (_selectedInterval == 'Weekly') {
-              if (index == lastIndex) {
-                return DateFormat('EEE').format(DateTime.now());
-              } else {
-                DateTime currentDate = DateTime.now();
-                DateTime date =
-                    currentDate.subtract(Duration(days: lastIndex - index));
-                return DateFormat('EEE').format(date);
-              }
+              DateTime currentDate = DateTime.now();
+              DateTime date = currentDate.subtract(Duration(days: lastIndex - index));
+              return DateFormat('EEE').format(date);
             } else if (_selectedInterval == 'Monthly') {
               if (index == lastIndex) {
                 return DateFormat('MMM').format(DateTime.now());
               } else {
-                DateTime date = DateTime.now()
-                    .subtract(Duration(days: (lastIndex - index) * 30));
+                DateTime date = DateTime.now().subtract(Duration(days: (lastIndex - index) * 30));
                 return DateFormat('MMM').format(date);
               }
             } else {
@@ -337,6 +336,7 @@ class _SalesReportState extends State<SalesReport> {
             }
           },
           reservedSize: 22,
+          margin: 8,
         ),
       ),
       borderData: FlBorderData(
@@ -355,7 +355,7 @@ class _SalesReportState extends State<SalesReport> {
       lineBarsData: [
         LineChartBarData(
           spots: spots,
-          isCurved: false,
+          isCurved: false, // Make the line straight
           colors: [Colors.blue],
           barWidth: 4,
           isStrokeCapRound: true,
@@ -363,6 +363,8 @@ class _SalesReportState extends State<SalesReport> {
           belowBarData: BarAreaData(
             show: true,
             colors: [Colors.blue.withOpacity(0.3)],
+            cutOffY: 0,
+            applyCutOffY: true,
           ),
           aboveBarData: BarAreaData(show: false),
         ),

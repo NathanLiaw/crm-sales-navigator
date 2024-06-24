@@ -52,7 +52,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   void initState() {
     super.initState();
     _loadUserDetails().then((_) {
-      _loadSalesOrders();
+      if (mounted) {
+        _loadSalesOrders();
+      }
     });
   }
 
@@ -219,8 +221,164 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
       developer.log('Failed to load orders: $e',
           error: e, stackTrace: stackTrace);
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
+  }
+
+  Future<void> _showItemSelectionDialog(
+      List<Map<String, dynamic>> items) async {
+    List<bool> checkedItems = List<bool>.filled(items.length, false);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFFE1F5FE),
+              title: const Center(
+                child: Text(
+                  'Copy Items To Cart',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: items.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    var item = entry.value;
+                    return Column(
+                      children: [
+                        CheckboxListTile(
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['product_name'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Text(
+                                'Unit of measure:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                item['uom'],
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Quantity: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Text(
+                                    item['qty'].toString(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          value: checkedItems[index],
+                          onChanged: (bool? value) {
+                            if (mounted) {
+                              setState(() {
+                                checkedItems[index] = value!;
+                              });
+                            }
+                          },
+                        ),
+                        if (index != items.length - 1)
+                          const Divider(color: Colors.grey),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    const SizedBox(width: 20),
+                    TextButton(
+                      child: const Text(
+                        'Copy to cart',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      onPressed: () async {
+                        for (int i = 0; i < items.length; i++) {
+                          if (checkedItems[i]) {
+                            final item = items[i];
+                            final cartItem = CartItem(
+                              buyerId: await UtilityFunction.getUserId(),
+                              productId: item['product_id'],
+                              productName: item['product_name'],
+                              uom: item['uom'],
+                              quantity: item['qty'],
+                              discount: 0,
+                              originalUnitPrice: item['ori_unit_price'],
+                              unitPrice: item['ori_unit_price'],
+                              total: item['ori_unit_price'] * item['qty'],
+                              cancel: null,
+                              remark: null,
+                              status: 'in progress',
+                              created: DateTime.now(),
+                              modified: DateTime.now(),
+                            );
+                            await insertItemIntoCart(cartItem);
+                          }
+                        }
+                        Navigator.of(context).pop();
+
+                        // Show snackbar for success message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Selected items copied to cart',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            duration: Duration(seconds: 3),
+                            backgroundColor: Color(0xFF487C08),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -648,67 +806,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                             IconButton(
                                               icon: const Icon(Icons.copy),
                                               onPressed: () async {
-                                                for (var item in items) {
-                                                  final cartItem = CartItem(
-                                                    buyerId:
-                                                        await UtilityFunction
-                                                            .getUserId(),
-                                                    productId:
-                                                        item['product_id'],
-                                                    productName:
-                                                        item['product_name'],
-                                                    uom: item['uom'],
-                                                    quantity: item['qty'],
-                                                    discount: 0,
-                                                    originalUnitPrice:
-                                                        item['ori_unit_price'],
-                                                    unitPrice:
-                                                        item['ori_unit_price'],
-                                                    total:
-                                                        item['ori_unit_price'] *
-                                                            item['qty'],
-                                                    cancel: null,
-                                                    remark: null,
-                                                    status: 'in progress',
-                                                    created: DateTime.now(),
-                                                    modified: DateTime.now(),
-                                                  );
-
-                                                  await insertItemIntoCart(
-                                                      cartItem);
-                                                }
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      const AlertDialog(
-                                                    backgroundColor:
-                                                        Color(0xFF487C08),
-                                                    title: Row(
-                                                      children: [
-                                                        SizedBox(width: 20),
-                                                        Icon(
-                                                          Icons.check_circle,
-                                                          color: Colors.white,
-                                                        ),
-                                                        SizedBox(width: 8),
-                                                        Text(
-                                                          'All items copied to cart',
-                                                          style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 18,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                );
-                                                Future.delayed(
-                                                    const Duration(seconds: 1),
-                                                    () {
-                                                  Navigator.pop(context);
-                                                });
+                                                await _showItemSelectionDialog(
+                                                    items);
                                               },
                                             ),
                                           ],
@@ -731,6 +830,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                 ),
               ),
               ExpansionTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 title: const Text(
                   'Items',
                   style: TextStyle(fontWeight: FontWeight.w700),
@@ -743,74 +845,46 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                           .map((item) => Padding(
                                 padding:
                                     const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: Text(
-                                        '${item['product_name']} ${item['uom']} X${item['qty']}',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400,
-                                          color: Color.fromARGB(255, 0, 0, 0),
-                                        ),
+                                    Text(
+                                      item['product_name'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
                                       ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.copy),
-                                      onPressed: () async {
-                                        final cartItem = CartItem(
-                                          buyerId:
-                                              await UtilityFunction.getUserId(),
-                                          productId: item['product_id'],
-                                          productName: item['product_name'],
-                                          uom: item['uom'],
-                                          quantity: item['qty'],
-                                          discount: 0,
-                                          originalUnitPrice:
-                                              item['ori_unit_price'],
-                                          unitPrice: item['ori_unit_price'],
-                                          total: item['ori_unit_price'] *
-                                              item['qty'],
-                                          cancel: null,
-                                          remark: null,
-                                          status: 'in progress',
-                                          created: DateTime.now(),
-                                          modified: DateTime.now(),
-                                        );
-                                        await insertItemIntoCart(cartItem);
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) =>
-                                              const AlertDialog(
-                                            backgroundColor: Color(0xFF487C08),
-                                            title: Row(
-                                              children: [
-                                                SizedBox(width: 20),
-                                                Icon(
-                                                  Icons.check_circle,
-                                                  color: Colors.white,
-                                                ),
-                                                SizedBox(width: 8),
-                                                Text(
-                                                  'Item copied to cart',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                        Future.delayed(
-                                            const Duration(seconds: 1), () {
-                                          Navigator.pop(context);
-                                        });
-                                      },
+                                    const Text(
+                                      'Unit of measure:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                      ),
                                     ),
+                                    Text(
+                                      item['uom'],
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Quantity: ',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          item['qty'].toString(),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(color: Colors.grey),
                                   ],
                                 ),
                               ))
