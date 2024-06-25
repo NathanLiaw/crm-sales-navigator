@@ -141,8 +141,8 @@ class EngagementLeadItem extends StatelessWidget {
                               MySqlConnection conn = await connectToDatabase();
                               try {
                                 await conn.query(
-                                  'DELETE FROM sales_lead WHERE customer_name = ?',
-                                  [leadItem.customerName],
+                                  'DELETE FROM sales_lead WHERE id = ?',
+                                  [leadItem.id],
                                 );
                                 onDeleteLead(leadItem);
                               } catch (e) {
@@ -183,8 +183,8 @@ class EngagementLeadItem extends StatelessWidget {
                               MySqlConnection conn = await connectToDatabase();
                               try {
                                 Results results = await conn.query(
-                                  'SELECT previous_stage FROM sales_lead WHERE customer_name = ?',
-                                  [leadItem.customerName],
+                                  'SELECT previous_stage FROM sales_lead WHERE id = ?',
+                                  [leadItem.id],
                                 );
                                 if (results.isNotEmpty) {
                                   String? previousStage =
@@ -194,8 +194,8 @@ class EngagementLeadItem extends StatelessWidget {
                                     onUndoLead(leadItem, previousStage);
                                     leadItem.stage = previousStage;
                                     await conn.query(
-                                      'UPDATE sales_lead SET previous_stage = NULL WHERE customer_name = ?',
-                                      [leadItem.customerName],
+                                      'UPDATE sales_lead SET previous_stage = NULL WHERE id = ?',
+                                      [leadItem.id],
                                     );
                                   }
                                 }
@@ -343,6 +343,7 @@ class EngagementLeadItem extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => CreateTaskPage(
+          id: leadItem.id,
           customerName: leadItem.customerName,
           contactNumber: leadItem.contactNumber,
           emailAddress: leadItem.emailAddress,
