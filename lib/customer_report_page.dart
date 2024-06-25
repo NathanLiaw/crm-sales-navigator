@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
@@ -160,11 +161,11 @@ class _CustomerReportState extends State<CustomerReport> {
               padding: const EdgeInsets.only(left: 5.0),
               child: TextButton.icon(
                 onPressed: () async {
-                  final DateTimeRange? picked = await showDateRangePicker(
+                  final DateTimeRange? picked = await showRangePickerDialog(
                     context: context,
-                    initialDateRange: _selectedDateRange,
-                    firstDate: DateTime(2019),
-                    lastDate: DateTime.now(),
+                    minDate: DateTime(2019),
+                    maxDate: DateTime.now(),
+                    selectedRange: _selectedDateRange,
                   );
                   if (picked != null && picked != _selectedDateRange) {
                     setState(() {

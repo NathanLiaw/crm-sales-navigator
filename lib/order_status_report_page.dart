@@ -5,6 +5,7 @@ import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'db_connection.dart';
 import 'customer_details_page.dart';
 import 'customer.dart';
@@ -250,9 +251,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                   color: const Color(0xFFE1F5FE),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                width: screenWidth * 0.9,
+                width: screenWidth * 0.95,
                 constraints: BoxConstraints(
-                  maxHeight: screenHeight * 0.8,
+                  maxHeight: screenHeight * 0.9,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -282,7 +283,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             ),
                             SizedBox(height: screenHeight * 0.005),
                             Text(
-                              'Unit of measure: ${items[0]['uom']}',
+                              'UOM: ${items[0]['uom']}',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
@@ -290,7 +291,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             ),
                             SizedBox(height: screenHeight * 0.005),
                             Text(
-                              'Quantity: ${items[0]['qty']}',
+                              'Qty: ${items[0]['qty']}',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
@@ -341,7 +342,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                             SizedBox(
                                                 height: screenHeight * 0.005),
                                             Text(
-                                              'Unit of measure: ${item['uom']}',
+                                              'UOM: ${item['uom']}',
                                               style: TextStyle(
                                                 fontSize: screenWidth * 0.04,
                                                 fontWeight: FontWeight.w500,
@@ -350,7 +351,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                             SizedBox(
                                                 height: screenHeight * 0.005),
                                             Text(
-                                              'Quantity: ${item['qty']}',
+                                              'Qty: ${item['qty']}',
                                               style: TextStyle(
                                                 fontSize: screenWidth * 0.04,
                                                 fontWeight: FontWeight.w500,
@@ -677,15 +678,15 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   }
 
   Future<void> _selectDateRange(BuildContext context) async {
-    DateTimeRange? newDateRange = await showDateRangePicker(
+    DateTimeRange? newDateRange = await showRangePickerDialog(
       context: context,
-      initialDateRange: dateRange ??
+      minDate: DateTime(DateTime.now().year - 5),
+      maxDate: DateTime.now(),
+      selectedRange: dateRange ??
           DateTimeRange(
             start: DateTime.now().subtract(const Duration(days: 7)),
             end: DateTime.now(),
           ),
-      firstDate: DateTime(DateTime.now().year - 5),
-      lastDate: DateTime.now(),
     );
 
     if (newDateRange != null) {
@@ -940,7 +941,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   const Text(
-                                                    'Unit of measure: ',
+                                                    'UOM: ',
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w500,
@@ -960,7 +961,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                               Row(
                                                 children: [
                                                   const Text(
-                                                    'Quantity: ',
+                                                    'Qty: ',
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w500,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'order_status_report_page.dart';
 
 class MyApp extends StatelessWidget {
@@ -214,17 +215,11 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
   }
 
   Future<void> _selectDateRange(BuildContext context) async {
-    final DateTime now = DateTime.now();
-    final DateTimeRange initialRange = DateTimeRange(
-      start: now.subtract(const Duration(days: 30)),
-      end: now,
-    );
-
-    final DateTimeRange? pickedRange = await showDateRangePicker(
+    final DateTimeRange? pickedRange = await showRangePickerDialog(
       context: context,
-      initialDateRange: initialRange,
-      firstDate: DateTime(2019),
-      lastDate: DateTime(2025),
+      minDate: DateTime(2019),
+      maxDate: DateTime.now(),
+      selectedRange: dateRange,
     );
 
     if (pickedRange != null && pickedRange != dateRange) {

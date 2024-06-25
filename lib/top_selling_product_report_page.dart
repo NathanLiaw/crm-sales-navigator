@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:date_picker_plus/date_picker_plus.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
@@ -160,8 +160,6 @@ class _ProductReportState extends State<ProductReport> {
                     minDate: DateTime(2019),
                     maxDate: DateTime.now(),
                     selectedRange: _selectedDateRange,
-                    slidersColor: Colors.lightBlue,
-                    highlightColor: Colors.redAccent,
                   );
                   if (picked != null && picked != _selectedDateRange) {
                     setState(() {
