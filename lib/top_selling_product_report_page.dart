@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
@@ -64,29 +65,32 @@ class _ProductReportState extends State<ProductReport> {
     if (dateRange != null) {
       String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
       String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
-      dateRangeQuery = "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
+      dateRangeQuery =
+          "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
     }
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
-    String usernameCondition = loggedInUsername.isNotEmpty ? "AND salesman.username = '${loggedInUsername.replaceAll("'", "''")}'" : "";
+    String usernameCondition = loggedInUsername.isNotEmpty
+        ? "AND salesman.username = '${loggedInUsername.replaceAll("'", "''")}'"
+        : "";
     try {
       var results = await db.query('''
-        SELECT 
-          b.id AS BrandID, 
-          b.brand AS BrandName, 
-          p.id AS ProductID, 
-          p.product_name AS ProductName, 
-          SUM(ci.qty) AS TotalQuantitySold, 
-          SUM(ci.total) AS TotalSalesValue, 
-          MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate
-        FROM cart_item ci 
-        JOIN product p ON ci.product_id = p.id 
-        JOIN brand b ON p.brand = b.id 
-        JOIN cart ON ci.session = cart.session OR ci.cart_id = cart.id
-        JOIN salesman ON cart.buyer_id = salesman.id
-        WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
-        GROUP BY p.id
-        ORDER BY TotalQuantitySold $sortOrder;
-      ''');
+      SELECT 
+        b.id AS BrandID, 
+        b.brand AS BrandName, 
+        p.id AS ProductID, 
+        p.product_name AS ProductName, 
+        SUM(ci.qty) AS TotalQuantitySold, 
+        SUM(ci.total) AS TotalSalesValue, 
+        MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate
+      FROM cart_item ci 
+      JOIN product p ON ci.product_id = p.id 
+      JOIN brand b ON p.brand = b.id 
+      JOIN cart ON ci.session = cart.session OR ci.cart_id = cart.id
+      JOIN salesman ON cart.buyer_id = salesman.id
+      WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
+      GROUP BY p.id
+      ORDER BY TotalSalesValue $sortOrder;
+    ''');
 
       if (results.isEmpty) {
         developer.log('No data found', level: 1);
@@ -106,7 +110,8 @@ class _ProductReportState extends State<ProductReport> {
         );
       }).toList();
     } catch (e, stackTrace) {
-      developer.log('Error fetching data: $e', error: e, stackTrace: stackTrace);
+      developer.log('Error fetching data: $e',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -150,11 +155,13 @@ class _ProductReportState extends State<ProductReport> {
               padding: const EdgeInsets.only(left: 5.0),
               child: TextButton.icon(
                 onPressed: () async {
-                  final DateTimeRange? picked = await showDateRangePicker(
+                  final DateTimeRange? picked = await showRangePickerDialog(
                     context: context,
-                    initialDateRange: _selectedDateRange,
-                    firstDate: DateTime(2019),
-                    lastDate: DateTime.now(),
+                    minDate: DateTime(2019),
+                    maxDate: DateTime.now(),
+                    selectedRange: _selectedDateRange,
+                    slidersColor: Colors.lightBlue,
+                    highlightColor: Colors.redAccent,
                   );
                   if (picked != null && picked != _selectedDateRange) {
                     setState(() {
@@ -224,8 +231,8 @@ class _ProductReportState extends State<ProductReport> {
           alignment: Alignment.centerLeft,
           child: Row(
             children: [
-              _buildTimeFilterButton('All', () => queryAllData(),
-                  selectedButtonIndex == 3),
+              _buildTimeFilterButton(
+                  'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
               _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
@@ -288,8 +295,8 @@ class _ProductReportState extends State<ProductReport> {
             Navigator.of(context).pop();
           },
         ),
-        title: const Text('Product Report',
-            style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Product Report', style: TextStyle(color: Colors.white)),
       ),
       body: Column(
         children: [
@@ -311,7 +318,8 @@ class _ProductReportState extends State<ProductReport> {
                   return ListView(
                     children: snapshot.data!.map((product) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 5),
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color.fromRGBO(111, 188, 249, 0.35),
@@ -327,7 +335,8 @@ class _ProductReportState extends State<ProductReport> {
                                   Text(
                                     '${product.serialNumber}. ',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold, fontSize: 16),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
                                   ),
                                   const SizedBox(width: 3),
                                   Expanded(
@@ -370,12 +379,14 @@ class _ProductReportState extends State<ProductReport> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Padding(
                                         padding: const EdgeInsets.all(10),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               '      Product ID: ${product.id}',
@@ -390,14 +401,6 @@ class _ProductReportState extends State<ProductReport> {
                                                   fontWeight: FontWeight.w500,
                                                   fontSize: 17),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '      Total Sales: ${product.totalSalesDisplay}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
-                                            ),
-                                            const SizedBox(height: 4),
                                             Text(
                                               '      Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
                                               style: const TextStyle(
@@ -450,5 +453,6 @@ class Product {
   });
 
   String get totalSalesDisplay =>
-      NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US').format(totalSales);
+      NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US')
+          .format(totalSales);
 }
