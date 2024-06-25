@@ -42,7 +42,7 @@ class _CustomerReportState extends State<CustomerReport> {
   @override
   void initState() {
     super.initState();
-    salesData = Future.value([]); // Initialize salesData with an empty list
+    salesData = Future.value([]);
     loadPreferences().then((_) {
       setState(() {
         _selectedDateRange = null;
@@ -76,27 +76,27 @@ class _CustomerReportState extends State<CustomerReport> {
             "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'"
         : '';
     var results = await db.query('''
+        
         SELECT 
-        cart.customer_company_name AS Company_Name,
-        customer.id AS Customer_ID,
-        customer.username AS customer_username,
-        customer.contact_number AS Contact_Number,
-        customer.email AS Email,
-        salesman.id AS salesman_id,
-        salesman.username AS username,
-        salesman.salesman_name,
-        SUM(cart.final_total) AS Total_Sales,
-        MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase,
-        SUM(ci.qty) AS Total_Quantity
+            cart.customer_company_name AS Company_Name,
+            customer.id AS Customer_ID,
+            customer.username AS customer_username,
+            customer.contact_number AS Contact_Number,
+            customer.email AS Email,
+            salesman.id AS Salesman_ID,
+            salesman.username AS Salesman_Username,
+            salesman.salesman_name,
+            SUM(cart.final_total) AS Total_Sales,
+            MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase,
+            SUM(ci.qty) AS Total_Quantity
         FROM cart
-        JOIN customer ON cart.buyer_id = customer.id
+        JOIN customer ON cart.customer_id = customer.id
         JOIN salesman ON cart.buyer_id = salesman.id
-        LEFT JOIN cart_item ci ON ci.session = cart.session OR ci.cart_id = cart.id
+        LEFT JOIN cart_item ci ON ci.cart_id = cart.id
         WHERE cart.buyer_user_group != 'customer'
         AND cart.status != 'void'
-        AND salesman.username = '$loggedInUsername'
-        $dateCondition 
-        GROUP BY cart.customer_company_name, customer.id
+        AND salesman.username = '$loggedInUsername' $dateCondition 
+        GROUP BY cart.customer_company_name, customer.id, salesman.id
         ORDER BY Total_Sales $sortOrder;
         ''');
     int serialNumber = 1;
