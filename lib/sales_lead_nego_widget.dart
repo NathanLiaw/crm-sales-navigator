@@ -34,6 +34,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   String? title;
   String? description;
   DateTime? dueDate;
+  List<Map<String, dynamic>> tasks = [];
 
   @override
   void initState() {
@@ -54,15 +55,20 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results = await conn.query(
-        'SELECT task_title, task_description, task_duedate FROM sales_lead WHERE customer_name = ?',
-        [widget.leadItem.customerName],
+        // 'SELECT t.id, t.title, t.description, t.due_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.customer_name = ?',
+        'SELECT t.id, t.title, t.description, t.due_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
+        [widget.leadItem.id],
       );
       if (results.isNotEmpty && mounted) {
-        var row = results.first;
         setState(() {
-          title = row['task_title'];
-          description = row['task_description'];
-          dueDate = row['task_duedate'];
+          tasks = results.map((row) {
+            return {
+              'title': row['title'],
+              'description': row['description'],
+              'due_date': row['due_date'],
+              'id': row['id'], // add tasks ID
+            };
+          }).toList();
         });
       }
     } catch (e) {
@@ -72,12 +78,35 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     }
   }
 
+  // Future<void> _fetchTaskDetails() async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     Results results = await conn.query(
+  //       'SELECT task_title, task_description, task_duedate FROM sales_lead WHERE id = ?',
+  //       [widget.leadItem.id],
+  //     );
+  //     if (results.isNotEmpty && mounted) {
+  //       var row = results.first;
+  //       setState(() {
+  //         title = row['task_title'];
+  //         description = row['task_description'];
+  //         dueDate = row['task_duedate'];
+  //       });
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching task details: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
+
   Future<void> _navigateToCreateTaskPage(
       BuildContext context, bool showTaskDetails) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CreateTaskPage(
+          id: widget.leadItem.id,
           customerName: widget.leadItem.customerName,
           contactNumber: widget.leadItem.contactNumber,
           emailAddress: widget.leadItem.emailAddress,
@@ -92,12 +121,11 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     );
 
     if (result != null && result['error'] == null) {
-      setState(() {
-        title = result['title'] as String?;
-        description = result['description'] as String?;
-        dueDate = result['dueDate'] as DateTime?;
-      });
-      // Move NegotiationLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
+      if (result['hasTaskDetails'] == true) {
+        _fetchTaskDetails(); // 只有在有任务详情时才刷新任务列表
+      }
+
+      // 检查是否需要移动到 Order Processing
       if (result['salesOrderId'] != null) {
         String salesOrderId = result['salesOrderId'] as String;
         int? quantity = result['quantity'];
@@ -106,6 +134,101 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
         Navigator.pop(context);
       }
     }
+    // if (result != null && result['error'] == null) {
+    //   setState(() {
+    //     title = result['title'] as String?;
+    //     description = result['description'] as String?;
+    //     dueDate = result['dueDate'] as DateTime?;
+    //   });
+    //   // Move NegotiationLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
+    //   if (result['salesOrderId'] != null) {
+    //     String salesOrderId = result['salesOrderId'] as String;
+    //     int? quantity = result['quantity'];
+    //     await widget.onMoveToOrderProcessing(
+    //         widget.leadItem, salesOrderId, quantity);
+    //     Navigator.pop(context);
+    //   }
+    // }
+    // _fetchTaskDetails();
+  }
+
+  Future<void> _navigateToEditTaskPage(
+      BuildContext context, Map<String, dynamic> task) async {
+    final taskId = task['id']; // fetch taskId
+    print('taskId: $taskId');
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTaskPage(
+          id: 0,
+          customerName: widget.leadItem.customerName,
+          contactNumber: widget.leadItem.contactNumber,
+          emailAddress: widget.leadItem.emailAddress,
+          address: widget.leadItem.addressLine1,
+          lastPurchasedAmount: widget.leadItem.amount,
+          existingTitle: task['title'],
+          existingDescription: task['description'],
+          existingDueDate: task['due_date'],
+          showTaskDetails: true,
+          taskId: taskId, // 将任务ID传递给CreateTaskPage
+          showSalesOrderId: false, // 设置为 false，不显示 sales order ID 部分
+        ),
+      ),
+    );
+    _fetchTaskDetails();
+    // if (result != null && result['error'] == null) {
+    //   _fetchTaskDetails(); // 刷新任务列表
+    //   // Move NegotiationLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
+    //   if (result['salesOrderId'] != null) {
+    //     String salesOrderId = result['salesOrderId'] as String;
+    //     int? quantity = result['quantity'];
+    //     await widget.onMoveToOrderProcessing(
+    //         widget.leadItem, salesOrderId, quantity);
+    //     Navigator.pop(context);
+    //   }
+    // }
+  }
+
+  Future<void> _deleteTask(int taskId) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      await conn.query('DELETE FROM tasks WHERE id = ?', [taskId]);
+      setState(() {
+        tasks.removeWhere((task) => task['id'] == taskId);
+      });
+    } catch (e) {
+      developer.log('Error deleting task: $e');
+    } finally {
+      await conn.close();
+    }
+  }
+
+  void _showDeleteConfirmationDialog(int taskId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this task?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteTask(taskId);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _formatCurrency(String amount) {
@@ -213,8 +336,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               MySqlConnection conn = await connectToDatabase();
                               try {
                                 await conn.query(
-                                  'DELETE FROM sales_lead WHERE customer_name = ?',
-                                  [widget.leadItem.customerName],
+                                  'DELETE FROM sales_lead WHERE id = ?',
+                                  [widget.leadItem.id],
                                 );
                                 widget.onDeleteLead(widget.leadItem);
                               } catch (e) {
@@ -254,8 +377,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               MySqlConnection conn = await connectToDatabase();
                               try {
                                 Results results = await conn.query(
-                                  'SELECT previous_stage FROM sales_lead WHERE customer_name = ?',
-                                  [widget.leadItem.customerName],
+                                  'SELECT previous_stage FROM sales_lead WHERE id = ?',
+                                  [widget.leadItem.id],
                                 );
                                 if (results.isNotEmpty) {
                                   String? previousStage =
@@ -266,8 +389,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                         widget.leadItem, previousStage);
                                     widget.leadItem.stage = previousStage;
                                     await conn.query(
-                                      'UPDATE sales_lead SET previous_stage = NULL WHERE customer_name = ?',
-                                      [widget.leadItem.customerName],
+                                      'UPDATE sales_lead SET previous_stage = NULL WHERE id = ?',
+                                      [widget.leadItem.id],
                                     );
                                   }
                                 }
@@ -349,44 +472,140 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 ],
               ),
               const SizedBox(height: 8),
-              if (title != null && description != null && dueDate != null)
+              // Replace the existing task details section with a ListView
+              if (tasks.isNotEmpty)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.date_range, color: Color(0xff0069BA)),
-                        Text(
-                            'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
-                      ],
+                    const Text(
+                      'Tasks',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Text(
-                          '${title?.toUpperCase()}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ],
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        itemCount: tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        task['title'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      // Column(
+                                      //   children: [
+                                      //     IconButton(
+                                      //       icon: const Icon(Icons.edit),
+                                      //       onPressed: () =>
+                                      //           _navigateToEditTaskPage(
+                                      //               context, task),
+                                      //     ),
+                                      //     IconButton(
+                                      //       icon: const Icon(Icons.delete,
+                                      //           color: Colors.red),
+                                      //       onPressed: () =>
+                                      //           _showDeleteConfirmationDialog(
+                                      //               task['id']),
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                      const SizedBox(height: 8),
+                                      Text(task['description']),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                          'Due Date: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}'),
+                                    ],
+                                  ),
+                                  Spacer(),
+                                  Column(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () =>
+                                            _navigateToEditTaskPage(
+                                                context, task),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () =>
+                                            _showDeleteConfirmationDialog(
+                                                task['id']),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$description',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 16),
                   ],
                 )
               else
                 const Text(
-                  'You haven\'t created a task yet! Click the Create Task button to create it.',
+                  'You haven\'t created any tasks yet! Click the Create Task button to create one.',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                   ),
                 ),
+              // if (title != null && description != null && dueDate != null)
+              //   Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       const SizedBox(height: 8),
+              //       Row(
+              //         children: [
+              //           const Icon(Icons.date_range, color: Color(0xff0069BA)),
+              //           Text(
+              //               'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
+              //         ],
+              //       ),
+              //       const SizedBox(height: 16),
+              //       Row(
+              //         children: [
+              //           Text(
+              //             '${title?.toUpperCase()}',
+              //             style: const TextStyle(
+              //                 fontWeight: FontWeight.bold, fontSize: 16),
+              //           ),
+              //         ],
+              //       ),
+              //       const SizedBox(height: 4),
+              //       Text(
+              //         '$description',
+              //         style: const TextStyle(fontSize: 14),
+              //       ),
+              //       const SizedBox(height: 16),
+              //     ],
+              //   )
+              // else
+              //   const Text(
+              //     'You haven\'t created a task yet! Click the Create Task button to create it.',
+              //     style: TextStyle(
+              //       color: Colors.black,
+              //       fontSize: 14,
+              //     ),
+              //   ),
+              SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -430,15 +649,30 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 children: [
                   TextButton(
                     onPressed: () => _navigateToCreateTaskPage(context, true),
-                    child: Text(
-                      title == null ? 'Create Task' : 'Edit Task',
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
-                        decorationColor: Color(0xff0069BA),
-                        color: Color(0xff0069BA),
-                        fontSize: 14,
+                    child: Container(
+                      width: 100,
+                      child: Text(
+                        'Create Task / Select Order ID',
+                        style: const TextStyle(
+                          decoration: TextDecoration.underline,
+                          decorationColor: Color(0xff0069BA),
+                          color: Color(0xff0069BA),
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    //   Container(
+                    //   width: 170,
+                    //   child: Text(
+                    //     widget.leadItem.customerName,
+                    //     style: const TextStyle(
+                    //         fontWeight: FontWeight.bold, fontSize: 18),
+                    //     maxLines: 3,
+                    //     overflow: TextOverflow.ellipsis,
+                    //   ),
+                    // ),
                   ),
                   Text(
                     'Created on: ${widget.leadItem.createdDate}',

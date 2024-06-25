@@ -97,6 +97,7 @@ class _HomePageState extends State<HomePage> {
           var createdDate =
               DateFormat('yyyy-MM-dd').format(currentDate); // Use current date
           var leadItem = LeadItem(
+            id: 0,
             salesmanId: salesmanId,
             customerName: customerName,
             description: description,
@@ -194,6 +195,7 @@ class _HomePageState extends State<HomePage> {
         var quantity = row['quantity'];
 
         var leadItem = LeadItem(
+          id: row['id'] as int, // 添加这一行
           salesmanId: salesmanId,
           customerName: customerName,
           description: description,
@@ -260,8 +262,8 @@ class _HomePageState extends State<HomePage> {
     MySqlConnection conn = await connectToDatabase();
     try {
       await conn.query(
-        'UPDATE sales_lead SET so_id = ? WHERE customer_name = ?',
-        [salesOrderId, leadItem.customerName],
+        'UPDATE sales_lead SET so_id = ? WHERE id = ?',
+        [salesOrderId, leadItem.id],
       );
     } catch (e) {
       developer.log('Error updating sales order ID: $e');
@@ -274,8 +276,8 @@ class _HomePageState extends State<HomePage> {
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results = await conn.query(
-        'SELECT contact_number, email_address FROM sales_lead WHERE customer_name = ?',
-        [leadItem.customerName],
+        'SELECT contact_number, email_address FROM sales_lead WHERE id = ?',
+        [leadItem.id],
       );
       if (results.isNotEmpty) {
         var row = results.first;
@@ -299,8 +301,8 @@ class _HomePageState extends State<HomePage> {
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results = await conn.query(
-        'SELECT contact_number, email_address FROM sales_lead WHERE customer_name = ?',
-        [leadItem.customerName],
+        'SELECT contact_number, email_address FROM sales_lead WHERE id = ?',
+        [leadItem.id],
       );
       if (results.isNotEmpty) {
         var row = results.first;
@@ -350,6 +352,7 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(
         builder: (context) => CreateTaskPage(
+          id: leadItem.id,
           customerName: leadItem.customerName,
           contactNumber: leadItem.contactNumber,
           emailAddress: leadItem.emailAddress,
@@ -376,6 +379,7 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(
         builder: (context) => CreateTaskPage(
+          id: leadItem.id,
           customerName: leadItem.customerName,
           contactNumber: leadItem.contactNumber,
           emailAddress: leadItem.emailAddress,
@@ -416,8 +420,8 @@ class _HomePageState extends State<HomePage> {
     MySqlConnection conn = await connectToDatabase();
     try {
       await conn.query(
-        'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE customer_name = ?',
-        [leadItem.stage, leadItem.previousStage, leadItem.customerName],
+        'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?',
+        [leadItem.stage, leadItem.previousStage, leadItem.id],
       );
     } catch (e) {
       developer.log('Error updating stage: $e');
@@ -469,6 +473,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _createLead(
       String customerName, String description, String amount) async {
     LeadItem leadItem = LeadItem(
+      id: 0,
       salesmanId: salesmanId,
       customerName: customerName,
       description: description,
@@ -534,8 +539,8 @@ class _HomePageState extends State<HomePage> {
       MySqlConnection conn = await connectToDatabase();
       try {
         await conn.query(
-          'DELETE FROM sales_lead WHERE customer_name = ?',
-          [leadItem.customerName],
+          'DELETE FROM sales_lead WHERE id = ?',
+          [leadItem.id],
         );
         setState(() {
           leadItems.remove(leadItem);
@@ -996,6 +1001,7 @@ class _HomePageState extends State<HomePage> {
               context,
               MaterialPageRoute(
                 builder: (context) => CreateTaskPage(
+                  id: leadItem.id,
                   customerName: leadItem.customerName,
                   contactNumber: leadItem.contactNumber,
                   emailAddress: leadItem.emailAddress,
@@ -1053,6 +1059,7 @@ class _HomePageState extends State<HomePage> {
               context,
               MaterialPageRoute(
                 builder: (context) => CreateTaskPage(
+                  id: leadItem.id,
                   customerName: leadItem.customerName,
                   contactNumber: leadItem.contactNumber,
                   emailAddress: leadItem.emailAddress,
@@ -1253,6 +1260,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 class LeadItem {
+  final int id; // 添加这一行
   final int salesmanId;
   final String customerName;
   final String description;
@@ -1285,6 +1293,7 @@ class LeadItem {
     this.salesOrderId,
     this.previousStage,
     this.quantity,
+    required this.id,
   });
 
   void moveToEngagement(Function(LeadItem) onMoveToEngagement) {

@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
 class CreateTaskPage extends StatefulWidget {
+  final int id;
   final String customerName;
   final String contactNumber;
   final String emailAddress;
@@ -17,9 +18,12 @@ class CreateTaskPage extends StatefulWidget {
   final String? existingDescription;
   final DateTime? existingDueDate;
   final bool showTaskDetails;
+  final bool showSalesOrderId;
+  final int? taskId; // 新增taskId参数
 
   const CreateTaskPage({
     super.key,
+    required this.id,
     required this.customerName,
     required this.contactNumber,
     required this.emailAddress,
@@ -29,6 +33,8 @@ class CreateTaskPage extends StatefulWidget {
     this.existingDescription,
     this.existingDueDate,
     this.showTaskDetails = true,
+    this.showSalesOrderId = true,
+    this.taskId, // 新增taskId参数
   });
 
   @override
@@ -248,23 +254,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     return salesOrderIds;
   }
 
-  // void _navigateToSelectOrderIDPage() async {
-  //   final selectedOrderID = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) =>
-  //           SelectOrderIDPage(customerName: widget.customerName),
-  //     ),
-  //   );
-
-  //   if (selectedOrderID != null) {
-  //     setState(() {
-  //       selectedSalesOrderId = selectedOrderID;
-  //     });
-  //     _fetchSalesOrderDetails(selectedOrderID);
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     // Create a NumberFormat instance with the desired format
@@ -463,173 +452,175 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 40),
-                const Text(
-                  'Sales order ID',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      child: DropdownButtonFormField<String?>(
-                        menuMaxHeight: 200,
-                        value: selectedSalesOrderId,
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            selectedSalesOrderId = newValue;
-                          });
-                          _fetchSalesOrderDetails(newValue);
-                        },
-                        items: ['', ...salesOrderIds].map((String? id) {
-                          if (id == null || id.isEmpty) {
-                            return const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text(
-                                'Select',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            );
-                          } else {
-                            String formattedId = 'SO${id.padLeft(7, '0')}';
-                            return DropdownMenuItem<String>(
-                              value: id,
-                              child: Text(formattedId),
-                            );
-                          }
-                        }).toList(),
-                        // validator: (value) {
-                        //   if (value == null) {
-                        //     return 'Please select a sales order ID';
-                        //   }
-                        //   return null;
-                        // },
+                if (widget.showSalesOrderId) ...[
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Sales order ID',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: DropdownButtonFormField<String?>(
+                          menuMaxHeight: 200,
+                          value: selectedSalesOrderId,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedSalesOrderId = newValue;
+                            });
+                            _fetchSalesOrderDetails(newValue);
+                          },
+                          items: ['', ...salesOrderIds].map((String? id) {
+                            if (id == null || id.isEmpty) {
+                              return const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text(
+                                  'Select',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              );
+                            } else {
+                              String formattedId = 'SO${id.padLeft(7, '0')}';
+                              return DropdownMenuItem<String>(
+                                value: id,
+                                child: Text(formattedId),
+                              );
+                            }
+                          }).toList(),
+                          // validator: (value) {
+                          //   if (value == null) {
+                          //     return 'Please select a sales order ID';
+                          //   }
+                          //   return null;
+                          // },
+                        ),
                       ),
-                    ),
-                    Spacer(),
-                    const SizedBox(width: 20),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: _navigateToSelectOrderIDPage,
-                          child: Container(
-                            child: Text(
-                              'View Orders Details',
-                              // style: TextStyle(
-                              //     color: Color.fromARGB(255, 127, 127, 127)),
+                      Spacer(),
+                      const SizedBox(width: 20),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _navigateToSelectOrderIDPage,
+                            child: Container(
+                              child: Text(
+                                'View Orders Details',
+                                // style: TextStyle(
+                                //     color: Color.fromARGB(255, 127, 127, 127)),
+                              ),
                             ),
                           ),
+                          const Icon(
+                            Icons.chevron_right,
+                            size: 24,
+                            // color: Colors.grey,
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // ElevatedButton(
+                  //   onPressed: _navigateToSelectOrderIDPage,
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: Color(0xff0069BA),
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.circular(5),
+                  //     ),
+                  //     minimumSize: const Size(120, 40),
+                  //   ),
+                  //   child: const Text(
+                  //     'Check Orders Details',
+                  //     style: TextStyle(
+                  //       color: Colors.white,
+                  //     ),
+                  //   ),
+                  // ),
+                  const Text(
+                    '*Select a sales order ID',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 15),
+                  if (selectedSalesOrderId != null) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // InkWell(
+                        //   onTap: () => _showSalesOrderDialog(context),
+                        //   child: const Text(
+                        //     'View Sales Order Details',
+                        //     style: TextStyle(
+                        //       color: Color(0xff0069BA),
+                        //       decoration: TextDecoration.underline,
+                        //     ),
+                        //   ),
+                        // ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Created date: ${formattedCreatedDate ?? ''}',
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        const Icon(
-                          Icons.chevron_right,
-                          size: 24,
-                          // color: Colors.grey,
+                        Text(
+                          'Expiry date: ${expirationDate ?? ''}',
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        // const SizedBox(height: 16),
+                        // const Text(
+                        //   'Cart Items:',
+                        //   style: TextStyle(
+                        //     fontSize: 16,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+                        // SizedBox(
+                        //   height: 100,
+                        //   child: ListView.builder(
+                        //     itemCount: cartItemList.length,
+                        //     itemBuilder: (context, index) {
+                        //       final item = cartItemList[index];
+                        //       return ListTile(
+                        //         title: Text('${item['product_name']}'),
+                        //         trailing: Text('Qty: ${item['qty']}'),
+                        //       );
+                        //     },
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Quantity: ',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xff0069BA)),
+                            ),
+                            Text(quantity != null ? '$quantity items' : ''),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            const Text(
+                              'Total: ',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xff0069BA)),
+                            ),
+                            Text(total != null ? 'RM$total' : ''),
+                          ],
                         ),
                       ],
-                    )
+                    ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                // ElevatedButton(
-                //   onPressed: _navigateToSelectOrderIDPage,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: Color(0xff0069BA),
-                //     shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(5),
-                //     ),
-                //     minimumSize: const Size(120, 40),
-                //   ),
-                //   child: const Text(
-                //     'Check Orders Details',
-                //     style: TextStyle(
-                //       color: Colors.white,
-                //     ),
-                //   ),
-                // ),
-                const Text(
-                  '*Select a sales order ID',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 15),
-                if (selectedSalesOrderId != null) ...[
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // InkWell(
-                      //   onTap: () => _showSalesOrderDialog(context),
-                      //   child: const Text(
-                      //     'View Sales Order Details',
-                      //     style: TextStyle(
-                      //       color: Color(0xff0069BA),
-                      //       decoration: TextDecoration.underline,
-                      //     ),
-                      //   ),
-                      // ),
-                      const SizedBox(height: 5),
-                      Text(
-                        'Created date: ${formattedCreatedDate ?? ''}',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Expiry date: ${expirationDate ?? ''}',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      // const SizedBox(height: 16),
-                      // const Text(
-                      //   'Cart Items:',
-                      //   style: TextStyle(
-                      //     fontSize: 16,
-                      //     fontWeight: FontWeight.bold,
-                      //   ),
-                      // ),
-                      // SizedBox(
-                      //   height: 100,
-                      //   child: ListView.builder(
-                      //     itemCount: cartItemList.length,
-                      //     itemBuilder: (context, index) {
-                      //       final item = cartItemList[index];
-                      //       return ListTile(
-                      //         title: Text('${item['product_name']}'),
-                      //         trailing: Text('Qty: ${item['qty']}'),
-                      //       );
-                      //     },
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Quantity: ',
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xff0069BA)),
-                          ),
-                          Text(quantity != null ? '$quantity items' : ''),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Text(
-                            'Total: ',
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xff0069BA)),
-                          ),
-                          Text(total != null ? 'RM$total' : ''),
-                        ],
-                      ),
-                    ],
-                  ),
                 ],
                 const SizedBox(height: 30),
                 Row(
@@ -710,44 +701,101 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     }
   }
 
-  Future<Map<String, Object?>> _saveTaskToDatabase() async {
+  Future<Map<String, dynamic>> _saveTaskToDatabase() async {
     MySqlConnection conn = await connectToDatabase();
 
-    String taskTitle = titleController.text;
-    String taskDescription = descriptionController.text;
-    String taskDueDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
+    String taskTitle = titleController.text.trim();
+    String taskDescription = descriptionController.text.trim();
+    String taskDueDate = selectedDate != null
+        ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+        : '';
     String salesOrderId = selectedSalesOrderId ?? '';
     int? quantityInt = quantity;
 
     try {
+      // 检查是否有任务详情需要保存
+      bool hasTaskDetails = taskTitle.isNotEmpty || taskDescription.isNotEmpty;
+
+      if (hasTaskDetails) {
+        if (widget.taskId != null) {
+          // 更新现有任务
+          await conn.query(
+            'UPDATE tasks SET title = ?, description = ?, due_date = ? WHERE id = ?',
+            [taskTitle, taskDescription, taskDueDate, widget.taskId],
+          );
+        } else {
+          // 插入新任务
+          Results leadResults = await conn.query(
+            'SELECT id FROM sales_lead WHERE id = ?',
+            [widget.id],
+          );
+          int leadId = leadResults.first['id'];
+
+          await conn.query(
+            'INSERT INTO tasks (title, description, due_date, lead_id) VALUES (?, ?, ?, ?)',
+            [taskTitle, taskDescription, taskDueDate, leadId],
+          );
+        }
+      }
+
+      // 更新 sales_lead 表
       await conn.query(
-        'UPDATE sales_lead SET task_title = ?, task_description = ?, task_duedate = ?, so_id = ?, quantity = ? WHERE customer_name = ?',
-        [
-          taskTitle,
-          taskDescription,
-          taskDueDate,
-          salesOrderId.isEmpty ? null : salesOrderId,
-          quantityInt,
-          widget.customerName
-        ],
+        'UPDATE sales_lead SET so_id = ?, quantity = ? WHERE id = ?',
+        [salesOrderId.isEmpty ? null : salesOrderId, quantityInt, widget.id],
       );
-      developer.log('Task data saved successfully.');
+
+      print('Data saved successfully.');
       return {
-        'title': titleController.text,
-        'description': descriptionController.text,
-        'dueDate': selectedDate,
         'salesOrderId': salesOrderId.isEmpty ? null : salesOrderId,
-        'quantity': quantity,
+        'quantity': quantityInt,
+        'hasTaskDetails': hasTaskDetails,
       };
     } catch (e) {
-      developer.log('Failed to save task data: $e');
-      return {
-        'error': 'Failed to save task data',
-      };
+      print('Failed to save data: $e');
+      return {'error': 'Failed to save data'};
     } finally {
       await conn.close();
     }
   }
+
+  // Future<Map<String, Object?>> _saveTaskToDatabase() async {
+  //   MySqlConnection conn = await connectToDatabase();
+
+  //   String taskTitle = titleController.text;
+  //   String taskDescription = descriptionController.text;
+  //   String taskDueDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
+  //   String salesOrderId = selectedSalesOrderId ?? '';
+  //   int? quantityInt = quantity;
+
+  //   try {
+  //     await conn.query(
+  //       'UPDATE sales_lead SET task_title = ?, task_description = ?, task_duedate = ?, so_id = ?, quantity = ? WHERE id = ?',
+  //       [
+  //         taskTitle,
+  //         taskDescription,
+  //         taskDueDate,
+  //         salesOrderId.isEmpty ? null : salesOrderId,
+  //         quantityInt,
+  //         widget.id
+  //       ],
+  //     );
+  //     developer.log('Task data saved successfully.');
+  //     return {
+  //       'title': titleController.text,
+  //       'description': descriptionController.text,
+  //       'dueDate': selectedDate,
+  //       'salesOrderId': salesOrderId.isEmpty ? null : salesOrderId,
+  //       'quantity': quantity,
+  //     };
+  //   } catch (e) {
+  //     developer.log('Failed to save task data: $e');
+  //     return {
+  //       'error': 'Failed to save task data',
+  //     };
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   String _formatDate(String dateString) {
     if (dateString.isEmpty) {
