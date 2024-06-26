@@ -81,102 +81,114 @@ class _SalesReportState extends State<SalesReport> {
       case 'Week':
         query = '''
         SELECT 
-          Dates.`Date`,
-          DATE_FORMAT(Dates.`Date`, '%W') AS `Day`,
-          IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`,
-          IFNULL(DailySales.`Total Qty`, 0) AS `Total Qty`
-      FROM (
-          SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
-          UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-          UNION ALL SELECT CURDATE()
-      ) AS Dates
-      LEFT JOIN (
-          SELECT 
-              DATE(c.created) AS `Date`,
-              ROUND(SUM(c.final_total), 0) AS `Total Sales`,
-              SUM(cart_item.qty) AS `Total Qty`
-          FROM cart c
-          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-          JOIN cart_item ON c.id = cart_item.cart_id
-          WHERE c.created >= CURDATE() - INTERVAL 6 DAY
-          AND c.status != 'void' '$loggedInUsername'
-          GROUP BY DATE(c.created)
-      ) AS DailySales ON Dates.`Date` = DailySales.`Date`
-      ORDER BY Dates.`Date` ASC;
+            Dates.`Date`,
+            DATE_FORMAT(Dates.`Date`, '%W') AS `Day`,
+            IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`,
+            IFNULL(DailySales.`Total Qty`, 0) AS `Total Qty`
+        FROM (
+            SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
+            UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+            UNION ALL SELECT CURDATE()
+        ) AS Dates
+        LEFT JOIN (
+            SELECT 
+                DATE(c.created) AS `Date`,
+                ROUND(SUM(c.final_total), 0) AS `Total Sales`,
+                SUM(cart_item.qty) AS `Total Qty`
+            FROM cart c
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            JOIN cart_item ON c.id = cart_item.cart_id
+            WHERE c.created >= CURDATE() - INTERVAL 6 DAY
+              AND c.status != 'void'
+              AND s.username = '$loggedInUsername'
+            GROUP BY DATE(c.created)
+        ) AS DailySales ON Dates.`Date` = DailySales.`Date`
+        ORDER BY Dates.`Date` ASC;
         ''';
         break;
 
       case 'Month':
         query = '''
-          SELECT
-              GeneratedMonths.YearMonth,
-              GeneratedMonths.MonthName,
-              IFNULL(SUM(MonthlySales.`Total Sales`), 0) AS `Total Sales`
-          FROM (
-              SELECT DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%Y-%m') AS YearMonth,
-                    DATE_FORMAT(CURDATE() - INTERVAL c.num MONTH, '%M %Y') AS MonthName
-              FROM (
-                  SELECT 0 AS num UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL
-                  SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-              ) AS c
-          ) AS GeneratedMonths
-          LEFT JOIN (
-              SELECT 
-                  DATE_FORMAT(c.created, '%Y-%m') AS YearMonth,
-                  ROUND(SUM(c.final_total), 0) AS `Total Sales`
-              FROM cart c
-              JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
-              WHERE c.created >= CURDATE() - INTERVAL 6 MONTH
-              AND c.status != 'void' AND s.username = '$loggedInUsername'
-              GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-          ) AS MonthlySales ON GeneratedMonths.YearMonth = MonthlySales.YearMonth
-          GROUP BY GeneratedMonths.YearMonth, GeneratedMonths.MonthName
-          ORDER BY GeneratedMonths.YearMonth ASC;
+        SELECT
+            GeneratedYears.Year AS `Year`,
+            IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
+        FROM (
+            SELECT 
+                YEAR(CURDATE()) AS Year
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 1
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 2
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 3
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 4
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 5
+        ) AS GeneratedYears
+        LEFT JOIN (
+            SELECT 
+                YEAR(c.created) AS Year,
+                ROUND(SUM(c.final_total), 0) AS `Total Sales`
+            FROM 
+                cart c
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+            JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+            WHERE 
+                c.created >= CURDATE() - INTERVAL 6 YEAR
+              AND 
+                c.status != 'void' AND s.username = '$loggedInUsername'
+            GROUP BY 
+                YEAR(c.created)
+        ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
+        GROUP BY 
+            GeneratedYears.Year
+        ORDER BY 
+            GeneratedYears.Year ASC;
         ''';
         break;
       case 'Year':
         query = '''
-          SELECT
-              GeneratedYears.Year AS `Year`,
-              IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
-          FROM (
-              SELECT 
-                  YEAR(CURDATE()) AS Year
-              UNION ALL SELECT 
-                  YEAR(CURDATE()) - 1
-              UNION ALL SELECT 
-                  YEAR(CURDATE()) - 2
-              UNION ALL SELECT 
-                  YEAR(CURDATE()) - 3
-              UNION ALL SELECT 
-                  YEAR(CURDATE()) - 4
-              UNION ALL SELECT 
-                  YEAR(CURDATE()) - 5
-          ) AS GeneratedYears
-          LEFT JOIN (
-              SELECT 
-                  YEAR(c.created) AS Year,
-                  ROUND(SUM(c.final_total), 0) AS `Total Sales`
-              FROM 
-                  cart c
-              JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-              JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
-              WHERE 
-                  c.created >= CURDATE() - INTERVAL 6 YEAR
+        SELECT
+            GeneratedYears.Year AS `Year`,
+            IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
+        FROM (
+            SELECT 
+                YEAR(CURDATE()) AS Year
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 1
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 2
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 3
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 4
+            UNION ALL SELECT 
+                YEAR(CURDATE()) - 5
+        ) AS GeneratedYears
+        LEFT JOIN (
+            SELECT 
+                YEAR(c.created) AS Year,
+                ROUND(SUM(c.final_total), 0) AS `Total Sales`
+            FROM 
+                cart c
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+            JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+            WHERE 
+                c.created >= CURDATE() - INTERVAL 6 YEAR
               AND 
-                  c.status != 'void' AND s.username = '$loggedInUsername'
-              GROUP BY 
-                  YEAR(c.created)
-          ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
-          GROUP BY 
-              GeneratedYears.Year
-          ORDER BY 
-              GeneratedYears.Year ASC;
+                c.status != 'void' AND s.username = '$loggedInUsername'
+            GROUP BY 
+                YEAR(c.created)
+        ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
+        GROUP BY 
+            GeneratedYears.Year
+        ORDER BY 
+            GeneratedYears.Year ASC;
         ''';
         break;
     }
@@ -318,13 +330,15 @@ class _SalesReportState extends State<SalesReport> {
 
             if (_selectedInterval == 'Weekly') {
               DateTime currentDate = DateTime.now();
-              DateTime date = currentDate.subtract(Duration(days: lastIndex - index));
+              DateTime date =
+                  currentDate.subtract(Duration(days: lastIndex - index));
               return DateFormat('EEE').format(date);
             } else if (_selectedInterval == 'Monthly') {
               if (index == lastIndex) {
                 return DateFormat('MMM').format(DateTime.now());
               } else {
-                DateTime date = DateTime.now().subtract(Duration(days: (lastIndex - index) * 30));
+                DateTime date = DateTime.now()
+                    .subtract(Duration(days: (lastIndex - index) * 30));
                 return DateFormat('MMM').format(date);
               }
             } else {
