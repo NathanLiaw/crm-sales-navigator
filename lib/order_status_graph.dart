@@ -149,14 +149,21 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     if (loggedInUsername.isEmpty) {
       return;
     }
-    DateTime adjustedStartDate = DateTime(selectedDateRange.start.year,
-        selectedDateRange.start.month, selectedDateRange.start.day, 0, 0, 0);
+
+    DateTime adjustedStartDate = DateTime(
+      selectedDateRange.start.year,
+      selectedDateRange.start.month,
+      selectedDateRange.start.day,
+      0,
+      0,
+      0,
+    );
 
     DateTime adjustedEndDate = DateTime(
       selectedDateRange.end.year,
       selectedDateRange.end.month,
       selectedDateRange.end.day,
-      DateTime.now().hour,
+      23,
       59,
       59,
     );
@@ -168,24 +175,24 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
 
     var results = await db.query(
       '''SELECT 
-        COUNT(*) AS Total,
-        CASE 
-            WHEN c.status = 'confirm' THEN 'Complete'
-            WHEN c.status = 'Pending' THEN 'Pending'
-            ELSE 'Void'
-        END AS status,
-        s.username
-      FROM 
-        cart AS c
-      JOIN 
-        salesman AS s ON c.buyer_id = s.id
-      WHERE 
-        c.created BETWEEN ? AND ? AND 
-        c.buyer_user_group = 'salesman' AND 
-        s.username = ?
-      GROUP BY 
-        status, s.username;
-      ''',
+      COUNT(*) AS Total,
+      CASE 
+          WHEN c.status = 'confirm' THEN 'Complete'
+          WHEN c.status = 'Pending' THEN 'Pending'
+          ELSE 'Void'
+      END AS status,
+      s.username
+    FROM 
+      cart AS c
+    JOIN 
+      salesman AS s ON c.buyer_id = s.id
+    WHERE 
+      c.created BETWEEN ? AND ? AND 
+      c.buyer_user_group = 'salesman' AND 
+      s.username = ?
+    GROUP BY 
+      status, s.username;
+    ''',
       [formattedStartDate, formattedEndDate, loggedInUsername],
     );
 
@@ -223,9 +230,29 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     );
 
     if (pickedRange != null && pickedRange != dateRange) {
+      DateTime adjustedStartDate = DateTime(
+        pickedRange.start.year,
+        pickedRange.start.month,
+        pickedRange.start.day,
+        0,
+        0,
+        0,
+      );
+
+      DateTime adjustedEndDate = DateTime(
+        pickedRange.end.year,
+        pickedRange.end.month,
+        pickedRange.end.day,
+        23,
+        59,
+        59,
+      );
+
       setState(() {
-        dateRange = pickedRange;
+        dateRange =
+            DateTimeRange(start: adjustedStartDate, end: adjustedEndDate);
       });
+
       await fetchDataForDateRange(dateRange);
     }
   }

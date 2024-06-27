@@ -78,7 +78,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
       SELECT 
         DATE(c.created) AS `Date`,
         ROUND(SUM(c.final_total), 0) AS `Total Sales`,
-        SUM(cart_item.qty) AS `Total Qty`
+        SUM(cart_item.qty) AS `Total Qty`,
+        COUNT(DISTINCT c.id) AS `Total Orders`
       FROM cart c
       JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
       JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
@@ -94,6 +95,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
         date: row['Date'],
         totalSales: row['Total Sales'] != null ? (row['Total Sales'] as num).toDouble() : 0,
         totalQuantity: row['Total Qty'] != null ? (row['Total Qty'] as num).toDouble() : 0,
+        totalOrders: row['Total Orders'] != null ? (row['Total Orders'] as num).toInt() : 0,
       );
     }).toList();
   }
@@ -340,6 +342,15 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                     color: Color(0xFF004072),
                                   ),
                                 ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Total Orders: ${item.totalOrders}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Color.fromARGB(255, 100, 0, 0),
+                                  ),
+                                ),
                               ],
                             ),
                             contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
@@ -368,6 +379,7 @@ class SalesData {
   final DateTime? date;
   final double? totalSales;
   final double? totalQuantity;
+  final int? totalOrders;
 
-  SalesData({this.day, this.date, this.totalSales, this.totalQuantity});
+  SalesData({this.day, this.date, this.totalSales, this.totalQuantity, this.totalOrders});
 }

@@ -63,10 +63,23 @@ class _ProductReportState extends State<ProductReport> {
     var db = await connectToDatabase();
     String dateRangeQuery = '';
     if (dateRange != null) {
-      String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
-      String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
-      dateRangeQuery =
-          "AND DATE_FORMAT(ci.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
+      String startDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
+        dateRange.start.year,
+        dateRange.start.month,
+        dateRange.start.day,
+        0,
+        0,
+        0,
+      ));
+      String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
+        dateRange.end.year,
+        dateRange.end.month,
+        dateRange.end.day,
+        23,
+        59,
+        59,
+      ));
+      dateRangeQuery = "AND ci.created BETWEEN '$startDate' AND '$endDate'";
     }
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
     String usernameCondition = loggedInUsername.isNotEmpty
@@ -75,20 +88,21 @@ class _ProductReportState extends State<ProductReport> {
     try {
       var results = await db.query('''
       SELECT 
-        b.id AS BrandID, 
-        b.brand AS BrandName, 
-        p.id AS ProductID, 
-        p.product_name AS ProductName, 
-        SUM(ci.qty) AS TotalQuantitySold, 
-        SUM(ci.total) AS TotalSalesValue, 
-        MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate
+          b.id AS BrandID, 
+          b.brand AS BrandName, 
+          p.id AS ProductID, 
+          p.product_name AS ProductName, 
+          ci.uom AS UnitOfMeasure,
+          SUM(ci.qty) AS TotalQuantitySold, 
+          SUM(ci.total) AS TotalSalesValue, 
+          MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate
       FROM cart_item ci 
       JOIN product p ON ci.product_id = p.id 
       JOIN brand b ON p.brand = b.id 
       JOIN cart ON ci.session = cart.session OR ci.cart_id = cart.id
       JOIN salesman ON cart.buyer_id = salesman.id
       WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
-      GROUP BY p.id
+      GROUP BY p.id, ci.uom  -- Group by product and UOM to ensure correct aggregation
       ORDER BY TotalSalesValue $sortOrder;
     ''');
 
@@ -103,6 +117,7 @@ class _ProductReportState extends State<ProductReport> {
           brandId: row['BrandID'],
           productName: row['ProductName'],
           brandName: row['BrandName'],
+          unitOfMeasure: row['UnitOfMeasure'],
           totalSales: row['TotalSalesValue'].toDouble(),
           totalQuantitySold: row['TotalQuantitySold'].toInt(),
           lastSold: DateTime.parse(row['SaleDate']),
@@ -162,8 +177,27 @@ class _ProductReportState extends State<ProductReport> {
                     selectedRange: _selectedDateRange,
                   );
                   if (picked != null && picked != _selectedDateRange) {
+                    DateTime adjustedStartDate = DateTime(
+                      picked.start.year,
+                      picked.start.month,
+                      picked.start.day,
+                      0,
+                      0,
+                      0,
+                    );
+
+                    DateTime adjustedEndDate = DateTime(
+                      picked.end.year,
+                      picked.end.month,
+                      picked.end.day,
+                      23,
+                      59,
+                      59,
+                    );
+
                     setState(() {
-                      _selectedDateRange = picked;
+                      _selectedDateRange = DateTimeRange(
+                          start: adjustedStartDate, end: adjustedEndDate);
                       selectedButtonIndex = 3;
                       products = fetchProducts(_selectedDateRange);
                     });
@@ -352,20 +386,45 @@ class _ProductReportState extends State<ProductReport> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '     UOM: ',
+                                          style: const TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            product.unitOfMeasure,
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
                                     Text(
                                       '     Total Sales: ${product.totalSalesDisplay}',
                                       style: const TextStyle(
-                                          color: Color.fromARGB(255, 0, 100, 0),
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w500),
+                                        color: Color.fromARGB(255, 0, 100, 0),
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       '     Total Quantity Sold: ${product.totalQuantitySold}',
                                       style: const TextStyle(
-                                          color: Color(0xFF004072),
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w500),
+                                        color: Color(0xFF004072),
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -434,6 +493,7 @@ class Product {
   final int brandId;
   final String productName;
   final String brandName;
+  final String unitOfMeasure;
   final double totalSales;
   final int totalQuantitySold;
   final DateTime lastSold;
@@ -444,6 +504,7 @@ class Product {
     required this.brandId,
     required this.productName,
     required this.brandName,
+    required this.unitOfMeasure,
     required this.totalSales,
     required this.totalQuantitySold,
     required this.lastSold,

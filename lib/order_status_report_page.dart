@@ -54,7 +54,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     super.initState();
     _loadUserDetails().then((_) {
       if (mounted) {
-        _loadSalesOrders();
+        _loadSalesOrders(days: selectedDays, dateRange: dateRange);
       }
     });
   }
@@ -118,7 +118,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     if (result != null) {
       setState(() {
         selectedCustomer = result;
-        _loadSalesOrders();
+        _loadSalesOrders(days: selectedDays, dateRange: dateRange);
       });
     }
   }
@@ -126,7 +126,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   void _updateSelectedCustomer(Customer customer) {
     setState(() {
       selectedCustomer = customer;
-      _loadSalesOrders();
+      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
     });
   }
 
@@ -553,7 +553,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   void _cancelSelectedCustomer() {
     setState(() {
       selectedCustomer = null;
-      _loadSalesOrders();
+      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
     });
   }
 
@@ -690,8 +690,13 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     );
 
     if (newDateRange != null) {
+      DateTime startOfDay = DateTime(newDateRange.start.year,
+          newDateRange.start.month, newDateRange.start.day, 0, 0, 0);
+      DateTime endOfDay = DateTime(newDateRange.end.year,
+          newDateRange.end.month, newDateRange.end.day, 23, 59, 59);
+
       setState(() {
-        dateRange = newDateRange;
+        dateRange = DateTimeRange(start: startOfDay, end: endOfDay);
         selectedDays = null;
         _loadSalesOrders(dateRange: dateRange);
       });
@@ -806,7 +811,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
           ),
         );
         if (result == true) {
-          _loadSalesOrders();
+          _loadSalesOrders(days: selectedDays, dateRange: dateRange);
         }
       },
       child: Card(

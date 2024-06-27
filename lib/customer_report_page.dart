@@ -73,8 +73,21 @@ class _CustomerReportState extends State<CustomerReport> {
     var db = await connectToDatabase();
     var sortOrder = isAscending ? 'ASC' : 'DESC';
     String dateCondition = dateRange != null
-        ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' "
-            "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'"
+        ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
+            dateRange.start.year,
+            dateRange.start.month,
+            dateRange.start.day,
+            0,
+            0,
+            0,
+          ))}' AND '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
+            dateRange.end.year,
+            dateRange.end.month,
+            dateRange.end.day,
+            23,
+            59,
+            59,
+          ))}'"
         : '';
     var results = await db.query('''
         
@@ -168,8 +181,27 @@ class _CustomerReportState extends State<CustomerReport> {
                     selectedRange: _selectedDateRange,
                   );
                   if (picked != null && picked != _selectedDateRange) {
+                    DateTime adjustedStartDate = DateTime(
+                      picked.start.year,
+                      picked.start.month,
+                      picked.start.day,
+                      0,
+                      0,
+                      0,
+                    );
+
+                    DateTime adjustedEndDate = DateTime(
+                      picked.end.year,
+                      picked.end.month,
+                      picked.end.day,
+                      23,
+                      59,
+                      59,
+                    );
+
                     setState(() {
-                      _selectedDateRange = picked;
+                      _selectedDateRange = DateTimeRange(
+                          start: adjustedStartDate, end: adjustedEndDate);
                       selectedButtonIndex = 3;
                       salesData =
                           fetchSalesData(isSortedAscending, _selectedDateRange);
@@ -385,7 +417,7 @@ class _CustomerReportState extends State<CustomerReport> {
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment
-                                        .start, // Added alignment here
+                                        .start,
                                     children: [
                                       Padding(
                                         padding: const EdgeInsets.all(10),

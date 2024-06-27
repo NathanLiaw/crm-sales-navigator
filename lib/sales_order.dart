@@ -55,7 +55,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     super.initState();
     _loadUserDetails().then((_) {
       if (mounted) {
-        _loadSalesOrders();
+        _loadSalesOrders(days: selectedDays, dateRange: dateRange);
       }
     });
   }
@@ -146,7 +146,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     if (result != null) {
       setState(() {
         selectedCustomer = result;
-        _loadSalesOrders();
+        _loadSalesOrders(days: selectedDays, dateRange: dateRange);
       });
     }
   }
@@ -154,7 +154,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   void _updateSelectedCustomer(Customer customer) {
     setState(() {
       selectedCustomer = customer;
-      _loadSalesOrders();
+      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
     });
   }
 
@@ -170,8 +170,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     String query;
 
     if (dateRange != null) {
-      String startDate =
-          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+      String startDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
     SELECT 
@@ -268,7 +267,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
       await DatabaseHelper.updateData(data, tableName);
       developer.log('Order status updated successfully');
-      _loadSalesOrders();
+      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
     } catch (e) {
       developer.log('Error updating order status: $e', error: e);
     }
@@ -597,7 +596,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   void _cancelSelectedCustomer() {
     setState(() {
       selectedCustomer = null;
-      _loadSalesOrders();
+      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
     });
   }
 
@@ -734,8 +733,13 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     );
 
     if (newDateRange != null) {
+      DateTime startOfDay = DateTime(newDateRange.start.year,
+          newDateRange.start.month, newDateRange.start.day, 0, 0, 0);
+      DateTime endOfDay = DateTime(newDateRange.end.year,
+          newDateRange.end.month, newDateRange.end.day, 23, 59, 59);
+
       setState(() {
-        dateRange = newDateRange;
+        dateRange = DateTimeRange(start: startOfDay, end: endOfDay);
         selectedDays = null;
         _loadSalesOrders(dateRange: dateRange);
       });
@@ -850,7 +854,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           ),
         );
         if (result == true) {
-          _loadSalesOrders();
+          _loadSalesOrders(days: selectedDays, dateRange: dateRange);
         }
       },
       child: Card(
