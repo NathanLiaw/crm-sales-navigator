@@ -65,7 +65,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
     if (dateRange != null) {
       String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
       String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
-      dateRangeQuery = "AND DATE_FORMAT(c.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
+      dateRangeQuery =
+          "AND DATE_FORMAT(c.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
     }
 
     String usernameCondition = _loggedInUsername.isNotEmpty
@@ -76,14 +77,22 @@ class _SalesReportPageState extends State<SalesReportPage> {
 
     var query = '''
       SELECT 
-        DATE(c.created) AS `Date`,
-        ROUND(SUM(c.final_total), 0) AS `Total Sales`,
-        SUM(cart_item.qty) AS `Total Qty`,
-        COUNT(DISTINCT c.id) AS `Total Orders`
+          DATE(c.created) AS `Date`,
+          ROUND(SUM(c.final_total), 3) AS `Total Sales`,
+          SUM(ci.TotalQty) AS `Total Qty`,
+          COUNT(DISTINCT c.id) AS `Total Orders`
       FROM cart c
       JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-      JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
-      WHERE c.status != 'void' $usernameCondition $dateRangeQuery
+      JOIN (
+          SELECT 
+              cart_id,
+              SUM(qty) AS TotalQty
+          FROM cart_item
+          GROUP BY cart_id
+      ) ci ON c.id = ci.cart_id
+      WHERE c.status != 'Void' 
+        $usernameCondition 
+        $dateRangeQuery
       GROUP BY DATE(c.created)
       ORDER BY DATE(c.created) $sortOrder;
     ''';
@@ -93,9 +102,14 @@ class _SalesReportPageState extends State<SalesReportPage> {
       return SalesData(
         day: DateFormat('EEEE').format(row['Date']),
         date: row['Date'],
-        totalSales: row['Total Sales'] != null ? (row['Total Sales'] as num).toDouble() : 0,
-        totalQuantity: row['Total Qty'] != null ? (row['Total Qty'] as num).toDouble() : 0,
-        totalOrders: row['Total Orders'] != null ? (row['Total Orders'] as num).toInt() : 0,
+        totalSales: row['Total Sales'] != null
+            ? (row['Total Sales'] as num).toDouble()
+            : 0,
+        totalQuantity:
+            row['Total Qty'] != null ? (row['Total Qty'] as num).toDouble() : 0,
+        totalOrders: row['Total Orders'] != null
+            ? (row['Total Orders'] as num).toInt()
+            : 0,
       );
     }).toList();
   }
@@ -278,7 +292,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
             Navigator.of(context).pop();
           },
         ),
-        title: const Text('Sales Report', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Sales Report', style: TextStyle(color: Colors.white)),
       ),
       body: Column(
         children: [
@@ -316,7 +331,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                           ),
                           child: ListTile(
                             title: Text(
-                              '${item.day}, ${DateFormat('dd-MM-yyyy').format(item.date!)}',
+                              DateFormat('dd-MM-yyyy').format(item.date!),
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -353,7 +368,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                 ),
                               ],
                             ),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 16),
                           ),
                         ),
                       );
@@ -369,7 +385,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
   }
 
   String _formatCurrency(double amount) {
-    final NumberFormat formatter = NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US');
+    final NumberFormat formatter =
+        NumberFormat.currency(symbol: 'RM', decimalDigits: 3, locale: 'en_US');
     return formatter.format(amount);
   }
 }
@@ -381,5 +398,10 @@ class SalesData {
   final double? totalQuantity;
   final int? totalOrders;
 
-  SalesData({this.day, this.date, this.totalSales, this.totalQuantity, this.totalOrders});
+  SalesData(
+      {this.day,
+      this.date,
+      this.totalSales,
+      this.totalQuantity,
+      this.totalOrders});
 }

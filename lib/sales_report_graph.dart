@@ -5,6 +5,10 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 
+void main() {
+  runApp(const MyApp());
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -14,6 +18,12 @@ class MyApp extends StatelessWidget {
       title: 'Sales Report',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        colorScheme: const ColorScheme.light(
+          primary: Colors.lightBlue,
+          onPrimary: Colors.white,
+          surface: Colors.lightBlue,
+        ),
+        iconTheme: const IconThemeData(color: Colors.lightBlue),
       ),
       home: const SalesReport(),
     );
@@ -29,7 +39,7 @@ class SalesReport extends StatefulWidget {
 
 class _SalesReportState extends State<SalesReport> {
   final Map<String, List<SalesData>> _salesDataMap = {};
-  String _selectedInterval = 'Weekly';
+  String _selectedInterval = '3D';
   String loggedInUsername = '';
 
   @override
@@ -48,29 +58,39 @@ class _SalesReportState extends State<SalesReport> {
   }
 
   Future<void> _preloadData() async {
-    await _fetchData('Weekly');
-    await _fetchData('Monthly');
-    await _fetchData('Yearly');
+    await _fetchData('3D');
+    await _fetchData('5D');
+    await _fetchData('1M');
+    await _fetchData('1Y');
+    await _fetchData('5Y');
   }
 
   Future<void> _fetchData(String interval) async {
     List<SalesData> fetchedData;
     switch (interval) {
-      case 'Weekly':
-        fetchedData = await fetchSalesData('Week');
+      case '3D':
+        fetchedData = await fetchSalesData('ThreeDays');
         break;
-      case 'Monthly':
-        fetchedData = await fetchSalesData('Month');
+      case '5D':
+        fetchedData = await fetchSalesData('FiveDays');
         break;
-      case 'Yearly':
+      case '1M':
+        fetchedData = await fetchSalesData('FourMonths');
+        break;
+      case '1Y':
         fetchedData = await fetchSalesData('Year');
+        break;
+      case '5Y':
+        fetchedData = await fetchSalesData('FiveYears');
         break;
       default:
         fetchedData = [];
     }
-    setState(() {
-      _salesDataMap[interval] = fetchedData;
-    });
+    if (mounted) {
+      setState(() {
+        _salesDataMap[interval] = fetchedData;
+      });
+    }
   }
 
   Future<List<SalesData>> fetchSalesData(String reportType) async {
@@ -78,84 +98,113 @@ class _SalesReportState extends State<SalesReport> {
     late String query;
 
     switch (reportType) {
-      case 'Week':
+      case 'ThreeDays':
         query = '''
-        SELECT 
-            Dates.`Date`,
-            DATE_FORMAT(Dates.`Date`, '%W') AS `Day`,
-            IFNULL(DailySales.`Total Sales`, 0) AS `Total Sales`,
-            IFNULL(DailySales.`Total Qty`, 0) AS `Total Qty`
-        FROM (
-            SELECT CURDATE() - INTERVAL 6 DAY AS `Date`
-            UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-            UNION ALL SELECT CURDATE()
-        ) AS Dates
-        LEFT JOIN (
-            SELECT 
-                DATE(c.created) AS `Date`,
-                ROUND(SUM(c.final_total), 0) AS `Total Sales`,
-                SUM(cart_item.qty) AS `Total Qty`
-            FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-            JOIN cart_item ON c.id = cart_item.cart_id
-            WHERE c.created >= CURDATE() - INTERVAL 6 DAY
-              AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
-            GROUP BY DATE(c.created)
-        ) AS DailySales ON Dates.`Date` = DailySales.`Date`
-        ORDER BY Dates.`Date` ASC;
-        ''';
+      SELECT 
+          Dates.Date,
+          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS Date,
+          IFNULL(DailySales.TotalSales, 0) AS TotalSales
+      FROM (
+          SELECT CURDATE() - INTERVAL 2 DAY AS Date
+          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+          UNION ALL SELECT CURDATE()
+      ) AS Dates
+      LEFT JOIN (
+          SELECT 
+              DATE(c.created) AS Date,
+              ROUND(SUM(c.final_total), 0) AS TotalSales
+          FROM cart c
+          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+          WHERE c.created >= CURDATE() - INTERVAL 2 DAY
+            AND c.status != 'void'
+            AND s.username = '$loggedInUsername'
+          GROUP BY DATE(c.created)
+      ) AS DailySales ON Dates.Date = DailySales.Date
+      ORDER BY Dates.Date ASC;
+      ''';
         break;
-
-      case 'Month':
+      case 'FiveDays':
         query = '''
-        SELECT
-            GeneratedYears.Year AS `Year`,
-            IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
-        FROM (
-            SELECT 
-                YEAR(CURDATE()) AS Year
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 1
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 2
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 3
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 4
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 5
-        ) AS GeneratedYears
-        LEFT JOIN (
-            SELECT 
-                YEAR(c.created) AS Year,
-                ROUND(SUM(c.final_total), 0) AS `Total Sales`
-            FROM 
-                cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-            JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
-            WHERE 
-                c.created >= CURDATE() - INTERVAL 6 YEAR
-              AND 
-                c.status != 'void' AND s.username = '$loggedInUsername'
-            GROUP BY 
-                YEAR(c.created)
-        ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
-        GROUP BY 
-            GeneratedYears.Year
-        ORDER BY 
-            GeneratedYears.Year ASC;
-        ''';
+      SELECT 
+          Dates.Date,
+          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS Date,
+          IFNULL(DailySales.TotalSales, 0) AS TotalSales
+      FROM (
+          SELECT CURDATE() - INTERVAL 4 DAY AS Date
+          UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
+          UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
+          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+          UNION ALL SELECT CURDATE()
+      ) AS Dates
+      LEFT JOIN (
+          SELECT 
+              DATE(c.created) AS Date,
+              ROUND(SUM(c.final_total), 0) AS TotalSales
+          FROM cart c
+          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+          WHERE c.created >= CURDATE() - INTERVAL 4 DAY
+            AND c.status != 'void'
+            AND s.username = '$loggedInUsername'
+          GROUP BY DATE(c.created)
+      ) AS DailySales ON Dates.Date = DailySales.Date
+      ORDER BY Dates.Date ASC;
+      ''';
+        break;
+      case 'FourMonths':
+        query = '''
+      SELECT
+          GeneratedMonths.Month AS Date,
+          IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
+      FROM (
+          SELECT 
+              DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
+          FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) a
+      ) AS GeneratedMonths
+      LEFT JOIN (
+          SELECT 
+              DATE_FORMAT(c.created, '%Y-%m') AS Month,
+              ROUND(SUM(c.final_total), 0) AS TotalSales
+          FROM cart c
+          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+          WHERE c.created >= CURDATE() - INTERVAL 4 MONTH
+            AND c.status != 'void'
+            AND s.username = '$loggedInUsername'
+          GROUP BY DATE_FORMAT(c.created, '%Y-%m')
+      ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
+      GROUP BY GeneratedMonths.Month
+      ORDER BY GeneratedMonths.Month ASC;
+      ''';
         break;
       case 'Year':
         query = '''
+      SELECT
+          GeneratedMonths.Month AS Date,
+          IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
+      FROM (
+          SELECT 
+              DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
+          FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11) a
+      ) AS GeneratedMonths
+      LEFT JOIN (
+          SELECT 
+              DATE_FORMAT(c.created, '%Y-%m') AS Month,
+              ROUND(SUM(c.final_total), 0) AS TotalSales
+          FROM cart c
+          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+          WHERE c.created >= CURDATE() - INTERVAL 12 MONTH
+            AND c.status != 'void'
+            AND s.username = '$loggedInUsername'
+          GROUP BY DATE_FORMAT(c.created, '%Y-%m')
+      ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
+      GROUP BY GeneratedMonths.Month
+      ORDER BY GeneratedMonths.Month ASC;
+      ''';
+        break;
+      case 'FiveYears':
+        query = '''
         SELECT
-            GeneratedYears.Year AS `Year`,
-            IFNULL(SUM(YearlySales.`Total Sales`), 0) AS `Total Sales`
+            GeneratedYears.Year AS Year,
+            IFNULL(SUM(YearlySales.TotalSales), 0) AS TotalSales
         FROM (
             SELECT 
                 YEAR(CURDATE()) AS Year
@@ -173,13 +222,12 @@ class _SalesReportState extends State<SalesReport> {
         LEFT JOIN (
             SELECT 
                 YEAR(c.created) AS Year,
-                ROUND(SUM(c.final_total), 0) AS `Total Sales`
+                ROUND(SUM(c.final_total), 0) AS TotalSales
             FROM 
                 cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-            JOIN cart_item ON c.session = cart_item.session OR c.id = cart_item.cart_id
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
             WHERE 
-                c.created >= CURDATE() - INTERVAL 6 YEAR
+                c.created >= CURDATE() - INTERVAL 5 YEAR
               AND 
                 c.status != 'void' AND s.username = '$loggedInUsername'
             GROUP BY 
@@ -189,17 +237,25 @@ class _SalesReportState extends State<SalesReport> {
             GeneratedYears.Year
         ORDER BY 
             GeneratedYears.Year ASC;
-        ''';
+      ''';
         break;
     }
 
     var results = await db.query(query);
 
     return results.map((row) {
+      DateTime date;
+      if (reportType == 'FiveYears') {
+        date = DateTime(row['Year']);
+      } else if (reportType == 'FourMonths' || reportType == 'Year') {
+        date = DateFormat('yyyy-MM').parse(row['Date']);
+      } else {
+        date = DateFormat('yyyy-MM-dd').parse(row['Date']);
+      }
       return SalesData(
-        date: row['Date'] != null ? row['Date'] as DateTime : DateTime.now(),
-        totalSales: row['Total Sales'] != null
-            ? (row['Total Sales'] as num).toDouble()
+        date: date,
+        totalSales: row['TotalSales'] != null
+            ? (row['TotalSales'] as num).toDouble()
             : 0,
       );
     }).toList();
@@ -207,6 +263,41 @@ class _SalesReportState extends State<SalesReport> {
 
   void _refreshData() async {
     await _fetchData(_selectedInterval);
+  }
+
+  Widget _buildQuickAccessButton(String interval) {
+    final bool isSelected = _selectedInterval == interval;
+    return TextButton(
+      onPressed: () {
+        setState(() {
+          _selectedInterval = interval;
+          _refreshData();
+        });
+      },
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            return isSelected
+                ? const Color(0xFF047CBD)
+                : const Color(0xFFD9D9D9);
+          },
+        ),
+        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            return isSelected ? Colors.white : Colors.black;
+          },
+        ),
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        ),
+      ),
+      child: Text(interval, style: const TextStyle(fontSize: 12)),
+    );
   }
 
   @override
@@ -218,70 +309,74 @@ class _SalesReportState extends State<SalesReport> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
-        actions: [
+      ),
+      body: Column(
+        children: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: DropdownButton<String>(
-              value: _selectedInterval,
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedInterval = newValue;
-                    _refreshData(); // Refresh data when interval changes
-                  });
-                }
-              },
-              items: <String>['Weekly', 'Monthly', 'Yearly']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildQuickAccessButton('3D'),
+                  const SizedBox(width: 10),
+                  _buildQuickAccessButton('5D'),
+                  const SizedBox(width: 10),
+                  _buildQuickAccessButton('1M'),
+                  const SizedBox(width: 10),
+                  _buildQuickAccessButton('1Y'),
+                  const SizedBox(width: 10),
+                  _buildQuickAccessButton('5Y'),
+                ],
+              ),
             ),
+          ),
+          Expanded(
+            child: _salesDataMap[_selectedInterval] != null
+                ? _salesDataMap[_selectedInterval]!.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4.0, horizontal: 4.0),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth:
+                                  MediaQuery.of(context).size.width * 0.95,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 24, horizontal: 18),
+                              height: MediaQuery.of(context).size.height * 0.52,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: LineChart(
+                                sampleData(_salesDataMap[_selectedInterval]!),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const Center(
+                        child: Text('No data available'),
+                      )
+                : const Center(
+                    child: CircularProgressIndicator(),
+                  ),
           ),
         ],
       ),
-      body: _salesDataMap[_selectedInterval] != null
-          ? _salesDataMap[_selectedInterval]!.isNotEmpty
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 4.0, horizontal: 4.0),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.95,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 24, horizontal: 18),
-                        height: MediaQuery.of(context).size.height * 0.52,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 2,
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: LineChart(
-                          sampleData(_salesDataMap[_selectedInterval]!),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : const Center(
-                  child: Text('No data available'),
-                )
-          : const Center(
-              child: CircularProgressIndicator(),
-            ),
     );
   }
 
@@ -305,6 +400,7 @@ class _SalesReportState extends State<SalesReport> {
           color: const Color(0xffe7e8ec),
           strokeWidth: 1,
         ),
+        drawVerticalLine: false,
       ),
       titlesData: FlTitlesData(
         leftTitles: SideTitles(
@@ -328,26 +424,28 @@ class _SalesReportState extends State<SalesReport> {
             int index = value.toInt();
             int lastIndex = salesData.length - 1;
 
-            if (_selectedInterval == 'Weekly') {
-              DateTime currentDate = DateTime.now();
-              DateTime date =
-                  currentDate.subtract(Duration(days: lastIndex - index));
-              return DateFormat('EEE').format(date);
-            } else if (_selectedInterval == 'Monthly') {
-              if (index == lastIndex) {
-                return DateFormat('MMM').format(DateTime.now());
-              } else {
-                DateTime date = DateTime.now()
-                    .subtract(Duration(days: (lastIndex - index) * 30));
-                return DateFormat('MMM').format(date);
+            if (_selectedInterval == '3D' || _selectedInterval == '5D') {
+              if (index >= 0 && index < salesData.length) {
+                return DateFormat('EEE').format(salesData[index].date);
               }
-            } else {
-              if (index == lastIndex) {
-                return DateFormat('yyyy').format(DateTime.now());
-              } else {
-                return (DateTime.now().year - (lastIndex - index)).toString();
+            } else if (_selectedInterval == '1M') {
+              if (index >= 0 && index < salesData.length) {
+                return DateFormat('MMM yyyy').format(salesData[index].date);
+              }
+            } else if (_selectedInterval == '1Y') {
+              // Display only 4 months in "Jul 23" format
+              int interval = (salesData.length / 4).round();
+              if (index % interval == 0 || index == lastIndex) {
+                if (index >= 0 && index < salesData.length) {
+                  return DateFormat('MMM yy').format(salesData[index].date);
+                }
+              }
+            } else if (_selectedInterval == '5Y') {
+              if (index >= 0 && index < salesData.length) {
+                return salesData[index].date.year.toString();
               }
             }
+            return '';
           },
           reservedSize: 22,
           margin: 8,
@@ -369,9 +467,9 @@ class _SalesReportState extends State<SalesReport> {
       lineBarsData: [
         LineChartBarData(
           spots: spots,
-          isCurved: false, // Make the line straight
+          isCurved: false,
           colors: [Colors.blue],
-          barWidth: 4,
+          barWidth: 3,
           isStrokeCapRound: true,
           dotData: FlDotData(show: true),
           belowBarData: BarAreaData(
@@ -386,13 +484,31 @@ class _SalesReportState extends State<SalesReport> {
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
           tooltipBgColor: Colors.blueAccent,
+          fitInsideHorizontally: true,
+          fitInsideVertically: true,
           getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+            DateTime date = salesData[spot.spotIndex].date;
+            String formattedDate;
+            if (_selectedInterval == '3D' || _selectedInterval == '5D') {
+              formattedDate = DateFormat('dd-MM-yyyy').format(date);
+            } else if (_selectedInterval == '1M' || _selectedInterval == '1Y') {
+              formattedDate = DateFormat('MMM yyyy').format(date);
+            } else if (_selectedInterval == '5Y') {
+              formattedDate = date.year.toString();
+            } else {
+              formattedDate = DateFormat('yyyy-MM-dd').format(date);
+            }
+
+            String formattedSales =
+                'RM${spot.y.toInt().toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+
             return LineTooltipItem(
-              'RM ${spot.y.toInt()}',
+              'Date: $formattedDate\nSales: $formattedSales',
               const TextStyle(color: Colors.white),
             );
           }).toList(),
         ),
+        handleBuiltInTouches: true,
       ),
     );
   }
