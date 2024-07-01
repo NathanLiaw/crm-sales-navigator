@@ -430,10 +430,9 @@ class _SalesReportState extends State<SalesReport> {
               }
             } else if (_selectedInterval == '1M') {
               if (index >= 0 && index < salesData.length) {
-                return DateFormat('MMM yyyy').format(salesData[index].date);
+                return DateFormat('MMM yy').format(salesData[index].date);
               }
             } else if (_selectedInterval == '1Y') {
-              // Display only 4 months in "Jul 23" format
               int interval = (salesData.length / 4).round();
               if (index % interval == 0 || index == lastIndex) {
                 if (index >= 0 && index < salesData.length) {

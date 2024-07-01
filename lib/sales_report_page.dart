@@ -39,6 +39,19 @@ class _SalesReportPageState extends State<SalesReportPage> {
   bool isSortedAscending = false;
   String _loggedInUsername = '';
 
+  final List<String> _sortingMethods = [
+    'By Date (Ascending)',
+    'By Date (Descending)',
+    'By Total Sales (Low to High)',
+    'By Total Sales (High to Low)',
+    'By Total Quantity (Low to High)',
+    'By Total Quantity (High to Low)',
+    'By Total Orders (Low to High)',
+    'By Total Orders (High to Low)',
+  ];
+
+  String _selectedMethod = 'By Date (Ascending)';
+
   @override
   void initState() {
     super.initState();
@@ -46,8 +59,12 @@ class _SalesReportPageState extends State<SalesReportPage> {
     _loadUsername().then((_) {
       setState(() {
         selectedButtonIndex = 3;
+        _selectedDateRange = DateTimeRange(
+          start: DateTime(2019),
+          end: DateTime.now(),
+        );
       });
-      salesData = fetchSalesData(null);
+      salesData = fetchSalesData(_selectedDateRange);
     });
   }
 
@@ -61,7 +78,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
   Future<List<SalesData>> fetchSalesData(DateTimeRange? dateRange) async {
     var db = await connectToDatabase();
     String dateRangeQuery = '';
-
     if (dateRange != null) {
       String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
       String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
@@ -76,25 +92,26 @@ class _SalesReportPageState extends State<SalesReportPage> {
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
 
     var query = '''
-      SELECT 
-          DATE(c.created) AS `Date`,
-          ROUND(SUM(c.final_total), 3) AS `Total Sales`,
-          SUM(ci.TotalQty) AS `Total Qty`,
-          COUNT(DISTINCT c.id) AS `Total Orders`
-      FROM cart c
-      JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-      JOIN (
-          SELECT 
-              cart_id,
-              SUM(qty) AS TotalQty
-          FROM cart_item
-          GROUP BY cart_id
-      ) ci ON c.id = ci.cart_id
-      WHERE c.status != 'Void' 
-        $usernameCondition 
-        $dateRangeQuery
-      GROUP BY DATE(c.created)
-      ORDER BY DATE(c.created) $sortOrder;
+        SELECT 
+            DATE(c.created) AS `Date`,
+            ROUND(SUM(c.final_total), 3) AS `Total Sales`,
+            SUM(ci.TotalQty) AS `Total Qty`,
+            COUNT(DISTINCT c.id) AS `Total Orders`
+        FROM cart c
+        JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
+        JOIN (
+            SELECT 
+                cart_id,
+                session,
+                SUM(qty) AS TotalQty
+            FROM cart_item
+            GROUP BY cart_id, session
+        ) ci ON c.id = ci.cart_id OR c.session = ci.session
+        WHERE c.status != 'Void'
+          $usernameCondition 
+          $dateRangeQuery
+        GROUP BY DATE(c.created)
+        ORDER BY DATE(c.created) $sortOrder;
     ''';
 
     var results = await db.query(query);
@@ -116,9 +133,12 @@ class _SalesReportPageState extends State<SalesReportPage> {
 
   void queryAllData() {
     setState(() {
-      _selectedDateRange = null;
+      _selectedDateRange = DateTimeRange(
+        start: DateTime(2019),
+        end: DateTime.now(),
+      );
       selectedButtonIndex = 3;
-      salesData = fetchSalesData(null);
+      salesData = fetchSalesData(_selectedDateRange);
     });
   }
 
@@ -137,6 +157,36 @@ class _SalesReportPageState extends State<SalesReportPage> {
       isSortedAscending = false;
       salesData = fetchSalesData(_selectedDateRange);
       selectedButtonIndex = selectedIndex;
+    });
+  }
+
+  void _showSortingOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: _sortingMethods.length,
+          itemBuilder: (BuildContext context, int index) {
+            return ListTile(
+              title: Text(_sortingMethods[index]),
+              onTap: () {
+                setState(() {
+                  _selectedMethod = _sortingMethods[index];
+                });
+                Navigator.pop(context);
+                _sortResults();
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _sortResults() {
+    setState(() {
+      salesData = fetchSalesData(_selectedDateRange);
     });
   }
 
@@ -203,23 +253,10 @@ class _SalesReportPageState extends State<SalesReportPage> {
                 ),
               ),
             ),
-            TextButton.icon(
-              onPressed: toggleSortOrder,
-              icon: Icon(
-                isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
-                color: Colors.black,
-              ),
-              label: const Text(
-                'Sort',
-                style: TextStyle(color: Colors.black),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFD9D9D9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            )
+            IconButton(
+              onPressed: () => _showSortingOptions(context),
+              icon: Icon(Icons.sort, color: Colors.black),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -315,10 +352,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('No data available'));
                 } else {
+                  List<SalesData> sortedData = _getSortedData(snapshot.data!);
                   return ListView.builder(
-                    itemCount: snapshot.data!.length,
+                    itemCount: sortedData.length,
                     itemBuilder: (context, index) {
-                      final item = snapshot.data![index];
+                      final item = sortedData[index];
                       return Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: screenWidth * 0.05,
@@ -382,6 +420,27 @@ class _SalesReportPageState extends State<SalesReportPage> {
         ],
       ),
     );
+  }
+
+  List<SalesData> _getSortedData(List<SalesData> data) {
+    if (_selectedMethod == 'By Date (Ascending)') {
+      data.sort((a, b) => a.date!.compareTo(b.date!));
+    } else if (_selectedMethod == 'By Date (Descending)') {
+      data.sort((a, b) => b.date!.compareTo(a.date!));
+    } else if (_selectedMethod == 'By Total Sales (Low to High)') {
+      data.sort((a, b) => a.totalSales!.compareTo(b.totalSales!));
+    } else if (_selectedMethod == 'By Total Sales (High to Low)') {
+      data.sort((a, b) => b.totalSales!.compareTo(a.totalSales!));
+    } else if (_selectedMethod == 'By Total Quantity (Low to High)') {
+      data.sort((a, b) => a.totalQuantity!.compareTo(b.totalQuantity!));
+    } else if (_selectedMethod == 'By Total Quantity (High to Low)') {
+      data.sort((a, b) => b.totalQuantity!.compareTo(a.totalQuantity!));
+    } else if (_selectedMethod == 'By Total Orders (Low to High)') {
+      data.sort((a, b) => a.totalOrders!.compareTo(b.totalOrders!));
+    } else if (_selectedMethod == 'By Total Orders (High to Low)') {
+      data.sort((a, b) => b.totalOrders!.compareTo(a.totalOrders!));
+    }
+    return data;
   }
 
   String _formatCurrency(double amount) {

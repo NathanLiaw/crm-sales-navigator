@@ -37,8 +37,21 @@ class _ProductReportState extends State<ProductReport> {
   late Future<List<Product>> products;
   DateTimeRange? _selectedDateRange;
   int selectedButtonIndex = -1;
-  bool isSortedAscending = false;
+  bool isSortedAscending = true;
   String loggedInUsername = '';
+
+  final List<String> _sortingMethods = [
+    'By Name (A to Z)',
+    'By Name (Z to A)',
+    'By Total Sales (Low to High)',
+    'By Total Sales (High to Low)',
+    'By Total Quantity Sold (Low to High)',
+    'By Total Quantity Sold (High to Low)',
+    'By Last Sold (Oldest to Newest)',
+    'By Last Sold (Newest to Oldest)',
+  ];
+
+  String _selectedMethod = 'By Name (A to Z)';
 
   @override
   void initState() {
@@ -103,7 +116,7 @@ class _ProductReportState extends State<ProductReport> {
       JOIN salesman ON cart.buyer_id = salesman.id
       WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
       GROUP BY p.id, ci.uom  -- Group by product and UOM to ensure correct aggregation
-      ORDER BY TotalSalesValue $sortOrder;
+      ORDER BY ${_getOrderByField()} $sortOrder;
     ''');
 
       if (results.isEmpty) {
@@ -155,6 +168,55 @@ class _ProductReportState extends State<ProductReport> {
       products = fetchProducts(_selectedDateRange);
       selectedButtonIndex = selectedIndex;
     });
+  }
+
+  void _showSortingOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: _sortingMethods.length,
+          itemBuilder: (BuildContext context, int index) {
+            return ListTile(
+              title: Text(_sortingMethods[index]),
+              onTap: () {
+                setState(() {
+                  _selectedMethod = _sortingMethods[index];
+                });
+                Navigator.pop(context);
+                _sortResults();
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _sortResults() {
+    setState(() {
+      products = fetchProducts(_selectedDateRange);
+    });
+  }
+
+  String _getOrderByField() {
+    switch (_selectedMethod) {
+      case 'By Name (A to Z)':
+      case 'By Name (Z to A)':
+        return 'ProductName';
+      case 'By Total Sales (Low to High)':
+      case 'By Total Sales (High to Low)':
+        return 'TotalSalesValue';
+      case 'By Total Quantity Sold (Low to High)':
+      case 'By Total Quantity Sold (High to Low)':
+        return 'TotalQuantitySold';
+      case 'By Last Sold (Oldest to Newest)':
+      case 'By Last Sold (Newest to Oldest)':
+        return 'SaleDate';
+      default:
+        return 'ProductName';
+    }
   }
 
   Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
@@ -239,23 +301,10 @@ class _ProductReportState extends State<ProductReport> {
                 ),
               ),
             ),
-            TextButton.icon(
-              onPressed: toggleSortOrder,
-              icon: Icon(
-                isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
-                color: Colors.black,
-              ),
-              label: const Text(
-                'Sort',
-                style: TextStyle(color: Colors.black),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFD9D9D9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            )
+            IconButton(
+              onPressed: () => _showSortingOptions(context),
+              icon: Icon(Icons.sort, color: Colors.black),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -347,8 +396,9 @@ class _ProductReportState extends State<ProductReport> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('No data available'));
                 } else {
+                  List<Product> sortedData = _getSortedData(snapshot.data!);
                   return ListView(
-                    children: snapshot.data!.map((product) {
+                    children: sortedData.map((product) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 5),
@@ -390,9 +440,9 @@ class _ProductReportState extends State<ProductReport> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
+                                        const Text(
                                           '     UOM: ',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -485,6 +535,36 @@ class _ProductReportState extends State<ProductReport> {
         ],
       ),
     );
+  }
+
+  List<Product> _getSortedData(List<Product> data) {
+    switch (_selectedMethod) {
+      case 'By Name (A to Z)':
+        data.sort((a, b) => a.productName.compareTo(b.productName));
+        break;
+      case 'By Name (Z to A)':
+        data.sort((a, b) => b.productName.compareTo(a.productName));
+        break;
+      case 'By Total Sales (Low to High)':
+        data.sort((a, b) => a.totalSales.compareTo(b.totalSales));
+        break;
+      case 'By Total Sales (High to Low)':
+        data.sort((a, b) => b.totalSales.compareTo(a.totalSales));
+        break;
+      case 'By Total Quantity Sold (Low to High)':
+        data.sort((a, b) => a.totalQuantitySold.compareTo(b.totalQuantitySold));
+        break;
+      case 'By Total Quantity Sold (High to Low)':
+        data.sort((a, b) => b.totalQuantitySold.compareTo(a.totalQuantitySold));
+        break;
+      case 'By Last Sold (Oldest to Newest)':
+        data.sort((a, b) => a.lastSold.compareTo(b.lastSold));
+        break;
+      case 'By Last Sold (Newest to Oldest)':
+        data.sort((a, b) => b.lastSold.compareTo(a.lastSold));
+        break;
+    }
+    return data;
   }
 }
 

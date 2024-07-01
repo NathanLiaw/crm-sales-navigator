@@ -50,6 +50,21 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   String loggedInUsername = '';
   Customer? selectedCustomer;
 
+  final List<String> _sortingMethods = [
+    'By Creation Date (Ascending)',
+    'By Creation Date (Descending)',
+    'By Amount (Low to High)',
+    'By Amount (High to Low)',
+  ];
+
+  String _selectedMethod = 'By Creation Date (Ascending)';
+
+  final Map<String, bool> _statusFilters = {
+    'Void': false,
+    'Pending': false,
+    'Confirm': false,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -161,16 +176,27 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
     if (!mounted) return;
     setState(() => isLoading = true);
+
     String orderByClause =
-        'ORDER BY cart.created ${isSortedAscending ? 'ASC' : 'DESC'}';
+        'ORDER BY ${_getOrderByField()} ${isSortedAscending ? 'ASC' : 'DESC'}';
     String usernameFilter = "AND salesman.username = '$loggedInUsername'";
     String customerFilter = selectedCustomer != null
         ? "AND cart.customer_id = '${selectedCustomer!.id}'"
         : "";
+    String statusFilter = _statusFilters.entries
+        .where((entry) => entry.value)
+        .map((entry) => "cart.status = '${entry.key.toLowerCase()}'")
+        .join(' OR ');
+
+    if (statusFilter.isNotEmpty) {
+      statusFilter = 'AND (' + statusFilter + ')';
+    }
+
     String query;
 
     if (dateRange != null) {
-      String startDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+      String startDate =
+          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
     SELECT 
@@ -192,6 +218,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     cart.created BETWEEN '$startDate' AND '$endDate'
     $usernameFilter
     $customerFilter
+    $statusFilter
     $orderByClause;
     ''';
     } else if (days != null) {
@@ -215,6 +242,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
     $usernameFilter
     $customerFilter
+    $statusFilter
     $orderByClause;
     ''';
     } else {
@@ -233,9 +261,10 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     JOIN 
         cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
     JOIN 
-    salesman ON cart.buyer_id = salesman.id
+        salesman ON cart.buyer_id = salesman.id
     $usernameFilter
     $customerFilter
+    $statusFilter
     $orderByClause;
     ''';
     }
@@ -511,6 +540,157 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     );
   }
 
+  void _showSortingOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _sortingMethods.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return ListTile(
+                          title: Text(
+                            _sortingMethods[index],
+                            style: TextStyle(
+                              fontWeight:
+                                  _selectedMethod == _sortingMethods[index]
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                              color: _selectedMethod == _sortingMethods[index]
+                                  ? Colors.blue
+                                  : Colors.black,
+                            ),
+                          ),
+                          trailing: _selectedMethod == _sortingMethods[index]
+                              ? Icon(Icons.check, color: Colors.blue)
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _selectedMethod = _sortingMethods[index];
+                            });
+                            Navigator.pop(context);
+                            _sortResults();
+                          },
+                        );
+                      },
+                    ),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        children: _statusFilters.keys.map((String key) {
+                          return CheckboxListTile(
+                            title: Text(key),
+                            value: _statusFilters[key],
+                            onChanged: (bool? value) {
+                              setState(() {
+                                _statusFilters[key] = value!;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFF047CBD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _loadSalesOrders(
+                              days: selectedDays, dateRange: dateRange);
+                        },
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _sortResults() {
+    setState(() {
+      orders.sort((a, b) {
+        switch (_selectedMethod) {
+          case 'By Creation Date (Ascending)':
+            return DateFormat('dd/MM/yyyy HH:mm:ss')
+                .parse(a['created_date'])
+                .compareTo(
+                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
+          case 'By Creation Date (Descending)':
+            return DateFormat('dd/MM/yyyy HH:mm:ss')
+                .parse(b['created_date'])
+                .compareTo(
+                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(a['created_date']));
+          case 'By Amount (Low to High)':
+            return a['final_total'].compareTo(b['final_total']);
+          case 'By Amount (High to Low)':
+            return b['final_total'].compareTo(a['final_total']);
+          default:
+            return DateFormat('dd/MM/yyyy HH:mm:ss')
+                .parse(a['created_date'])
+                .compareTo(
+                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
+        }
+      });
+    });
+  }
+
+  int _calculateTotalQuantity(Map<String, dynamic> order) {
+    int totalQuantity = 0;
+    if (order.containsKey('items') && order['items'] is List) {
+      for (final item in order['items']) {
+        totalQuantity += (item['qty'] as num).toInt();
+      }
+    } else {
+      developer.log('Order ${order['id']} does not contain valid items.');
+    }
+    developer.log('Total quantity for order ${order['id']}: $totalQuantity');
+    return totalQuantity;
+  }
+
+  String _getOrderByField() {
+    switch (_selectedMethod) {
+      case 'By Creation Date (Ascending)':
+      case 'By Creation Date (Descending)':
+        return 'cart.created';
+      case 'By Amount (Low to High)':
+      case 'By Amount (High to Low)':
+        return 'final_total';
+      default:
+        return 'cart.created';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -545,7 +725,10 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildDateRangePicker(),
-              _buildSortButton(),
+              IconButton(
+                onPressed: () => _showSortingOptions(context),
+                icon: Icon(Icons.sort, color: Colors.black),
+              ),
             ],
           ),
         ),
@@ -614,33 +797,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           const SizedBox(width: 10),
           _buildDateButton('Last 90d', 90, 2),
         ],
-      ),
-    );
-  }
-
-  void toggleSortOrder() {
-    setState(() {
-      isSortedAscending = !isSortedAscending;
-      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
-    });
-  }
-
-  Widget _buildSortButton() {
-    return TextButton.icon(
-      onPressed: toggleSortOrder,
-      icon: Icon(
-        isSortedAscending ? Icons.arrow_upward : Icons.arrow_downward,
-        color: Colors.black,
-      ),
-      label: const Text(
-        'Sort',
-        style: TextStyle(color: Colors.black),
-      ),
-      style: TextButton.styleFrom(
-        backgroundColor: const Color(0xFFD9D9D9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
       ),
     );
   }

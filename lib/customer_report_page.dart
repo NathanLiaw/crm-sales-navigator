@@ -40,6 +40,19 @@ class _CustomerReportState extends State<CustomerReport> {
   int selectedButtonIndex = -1;
   String loggedInUsername = '';
 
+  final List<String> _sortingMethods = [
+    'By Company Name (A-Z)',
+    'By Company Name (Z-A)',
+    'By Total Sales (Low to High)',
+    'By Total Sales (High to Low)',
+    'By Total Quantity (Low to High)',
+    'By Total Quantity (High to Low)',
+    'By Last Purchase (Ascending)',
+    'By Last Purchase (Descending)',
+  ];
+
+  String _selectedMethod = 'By Company Name (A-Z)';
+
   @override
   void initState() {
     super.initState();
@@ -90,7 +103,6 @@ class _CustomerReportState extends State<CustomerReport> {
           ))}'"
         : '';
     var results = await db.query('''
-        
         SELECT 
             cart.customer_company_name AS Company_Name,
             customer.id AS Customer_ID,
@@ -130,7 +142,43 @@ class _CustomerReportState extends State<CustomerReport> {
       serialNumber++;
     }
     await db.close();
-    return customersList;
+    return _getSortedData(customersList);
+  }
+
+  List<Customer> _getSortedData(List<Customer> data) {
+    if (_selectedMethod == 'By Company Name (A-Z)') {
+      data.sort((a, b) => a.companyName.compareTo(b.companyName));
+    } else if (_selectedMethod == 'By Company Name (Z-A)') {
+      data.sort((a, b) => b.companyName.compareTo(a.companyName));
+    } else if (_selectedMethod == 'By Total Sales (Low to High)') {
+      data.sort((a, b) => a.totalSales.compareTo(b.totalSales));
+    } else if (_selectedMethod == 'By Total Sales (High to Low)') {
+      data.sort((a, b) => b.totalSales.compareTo(a.totalSales));
+    } else if (_selectedMethod == 'By Total Quantity (Low to High)') {
+      data.sort((a, b) => a.totalQuantity.compareTo(b.totalQuantity));
+    } else if (_selectedMethod == 'By Total Quantity (High to Low)') {
+      data.sort((a, b) => b.totalQuantity.compareTo(a.totalQuantity));
+    } else if (_selectedMethod == 'By Last Purchase (Ascending)') {
+      data.sort((a, b) => a.lastPurchase.compareTo(b.lastPurchase));
+    } else if (_selectedMethod == 'By Last Purchase (Descending)') {
+      data.sort((a, b) => b.lastPurchase.compareTo(a.lastPurchase));
+    }
+
+    for (int i = 0; i < data.length; i++) {
+      data[i] = Customer(
+        id: data[i].id,
+        companyName: data[i].companyName,
+        customerUsername: data[i].customerUsername,
+        email: data[i].email,
+        contactNumber: data[i].contactNumber,
+        totalSales: data[i].totalSales,
+        totalQuantity: data[i].totalQuantity,
+        lastPurchase: data[i].lastPurchase,
+        serialNumber: i + 1,
+      );
+    }
+
+    return data;
   }
 
   void toggleSortOrder() {
@@ -157,6 +205,36 @@ class _CustomerReportState extends State<CustomerReport> {
     setState(() {
       _selectedDateRange = null;
       selectedButtonIndex = 3;
+      salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
+    });
+  }
+
+  void _showSortingOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: _sortingMethods.length,
+          itemBuilder: (BuildContext context, int index) {
+            return ListTile(
+              title: Text(_sortingMethods[index]),
+              onTap: () {
+                setState(() {
+                  _selectedMethod = _sortingMethods[index];
+                });
+                Navigator.pop(context);
+                _sortResults();
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _sortResults() {
+    setState(() {
       salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
     });
   }
@@ -244,23 +322,10 @@ class _CustomerReportState extends State<CustomerReport> {
                 ),
               ),
             ),
-            TextButton.icon(
-              onPressed: toggleSortOrder,
-              icon: Icon(
-                isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
-                color: Colors.black,
-              ),
-              label: const Text(
-                'Sort',
-                style: TextStyle(color: Colors.black),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFD9D9D9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            )
+            IconButton(
+              onPressed: () => _showSortingOptions(context),
+              icon: Icon(Icons.sort, color: Colors.black),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -352,8 +417,11 @@ class _CustomerReportState extends State<CustomerReport> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('No data available'));
                 } else {
-                  return ListView(
-                    children: snapshot.data!.map((customer) {
+                  List<Customer> sortedData = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: sortedData.length,
+                    itemBuilder: (context, index) {
+                      final customer = sortedData[index];
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 5),
@@ -416,8 +484,8 @@ class _CustomerReportState extends State<CustomerReport> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment
-                                        .start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Padding(
                                         padding: const EdgeInsets.all(10),
@@ -471,7 +539,7 @@ class _CustomerReportState extends State<CustomerReport> {
                           ),
                         ),
                       );
-                    }).toList(),
+                    },
                   );
                 }
               },
