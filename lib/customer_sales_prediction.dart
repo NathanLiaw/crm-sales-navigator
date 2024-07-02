@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
 class CustomerSalesPrediction extends StatelessWidget {
-  const CustomerSalesPrediction({Key? key}) : super(key: key);
+  const CustomerSalesPrediction({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class CustomerSalesPrediction extends StatelessWidget {
 }
 
 class CustomerSalesPredictionPage extends StatefulWidget {
-  const CustomerSalesPredictionPage({Key? key}) : super(key: key);
+  const CustomerSalesPredictionPage({super.key});
 
   @override
   _CustomerSalesPredictionPageState createState() =>
