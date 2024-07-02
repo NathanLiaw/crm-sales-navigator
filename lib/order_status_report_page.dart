@@ -287,6 +287,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   Future<void> _showItemSelectionDialog(
       List<Map<String, dynamic>> items) async {
     List<bool> checkedItems = List<bool>.filled(items.length, false);
+    bool selectAll = false;
 
     await showDialog(
       context: context,
@@ -324,6 +325,43 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       textAlign: TextAlign.center,
                     ),
                     const Divider(color: Colors.grey, height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Select Items',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF004072),
+                          ),
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: Colors.blue,
+                          ),
+                          child: const Text(
+                            'Select All',
+                            style: TextStyle(fontSize: 14, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              selectAll = !selectAll;
+                              for (int i = 0; i < checkedItems.length; i++) {
+                                checkedItems[i] = selectAll;
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                     if (items.length == 1)
                       ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -361,6 +399,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             if (mounted) {
                               setState(() {
                                 checkedItems[0] = value!;
+                                if (!value) selectAll = false;
                               });
                             }
                           },
@@ -420,6 +459,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                           if (mounted) {
                                             setState(() {
                                               checkedItems[index] = value!;
+                                              if (!value) selectAll = false;
                                             });
                                           }
                                         },

@@ -213,34 +213,40 @@ class _CustomerReportState extends State<CustomerReport> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return ListView.builder(
-          shrinkWrap: true,
-          itemCount: _sortingMethods.length,
-          itemBuilder: (BuildContext context, int index) {
-            return ListTile(
-              title: Text(
-                _sortingMethods[index],
-                style: TextStyle(
-                  fontWeight: _selectedMethod == _sortingMethods[index]
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: _selectedMethod == _sortingMethods[index]
-                      ? Colors.blue
-                      : Colors.black,
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _sortingMethods.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                child: ListTile(
+                  title: Text(
+                    _sortingMethods[index],
+                    style: TextStyle(
+                      fontWeight: _selectedMethod == _sortingMethods[index]
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _selectedMethod == _sortingMethods[index]
+                          ? Colors.blue
+                          : Colors.black,
+                    ),
+                  ),
+                  trailing: _selectedMethod == _sortingMethods[index]
+                      ? Icon(Icons.check, color: Colors.blue)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _selectedMethod = _sortingMethods[index];
+                    });
+                    Navigator.pop(context);
+                    _sortResults();
+                  },
                 ),
-              ),
-              trailing: _selectedMethod == _sortingMethods[index]
-                  ? Icon(Icons.check, color: Colors.blue)
-                  : null,
-              onTap: () {
-                setState(() {
-                  _selectedMethod = _sortingMethods[index];
-                });
-                Navigator.pop(context);
-                _sortResults();
-              },
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -303,7 +309,7 @@ class _CustomerReportState extends State<CustomerReport> {
                     setState(() {
                       _selectedDateRange = DateTimeRange(
                           start: adjustedStartDate, end: adjustedEndDate);
-                      selectedButtonIndex = -1; // Custom date range selected
+                      selectedButtonIndex = -1;
                       salesData =
                           fetchSalesData(isSortedAscending, _selectedDateRange);
                     });

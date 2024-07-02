@@ -305,6 +305,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   Future<void> _showItemSelectionDialog(
       List<Map<String, dynamic>> items) async {
     List<bool> checkedItems = List<bool>.filled(items.length, false);
+    bool selectAll = false;
 
     await showDialog(
       context: context,
@@ -342,6 +343,43 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       textAlign: TextAlign.center,
                     ),
                     const Divider(color: Colors.grey, height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Select Items',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF004072),
+                          ),
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: Colors.blue,
+                          ),
+                          child: const Text(
+                            'Select All',
+                            style: TextStyle(fontSize: 14, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              selectAll = !selectAll;
+                              for (int i = 0; i < checkedItems.length; i++) {
+                                checkedItems[i] = selectAll;
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                     if (items.length == 1)
                       ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -379,6 +417,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             if (mounted) {
                               setState(() {
                                 checkedItems[0] = value!;
+                                if (!value) selectAll = false;
                               });
                             }
                           },
@@ -438,6 +477,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                           if (mounted) {
                                             setState(() {
                                               checkedItems[index] = value!;
+                                              if (!value) selectAll = false;
                                             });
                                           }
                                         },
@@ -494,16 +534,20 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             for (int i = 0; i < items.length; i++) {
                               if (checkedItems[i]) {
                                 final item = items[i];
+                                final oriUnitPrice =
+                                    item['ori_unit_price'] ?? 0.0;
+                                final qty = item['qty'] ?? 0;
+
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
                                   productId: item['product_id'],
                                   productName: item['product_name'],
                                   uom: item['uom'],
-                                  quantity: item['qty'],
+                                  quantity: qty,
                                   discount: 0,
-                                  originalUnitPrice: item['ori_unit_price'],
-                                  unitPrice: item['ori_unit_price'],
-                                  total: item['ori_unit_price'] * item['qty'],
+                                  originalUnitPrice: oriUnitPrice,
+                                  unitPrice: oriUnitPrice,
+                                  total: oriUnitPrice * qty,
                                   cancel: null,
                                   remark: null,
                                   status: 'in progress',
@@ -559,29 +603,32 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       shrinkWrap: true,
                       itemCount: _sortingMethods.length,
                       itemBuilder: (BuildContext context, int index) {
-                        return ListTile(
-                          title: Text(
-                            _sortingMethods[index],
-                            style: TextStyle(
-                              fontWeight:
-                                  _selectedMethod == _sortingMethods[index]
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                              color: _selectedMethod == _sortingMethods[index]
-                                  ? Colors.blue
-                                  : Colors.black,
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: ListTile(
+                            title: Text(
+                              _sortingMethods[index],
+                              style: TextStyle(
+                                fontWeight:
+                                    _selectedMethod == _sortingMethods[index]
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                color: _selectedMethod == _sortingMethods[index]
+                                    ? Colors.blue
+                                    : Colors.black,
+                              ),
                             ),
+                            trailing: _selectedMethod == _sortingMethods[index]
+                                ? Icon(Icons.check, color: Colors.blue)
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedMethod = _sortingMethods[index];
+                              });
+                              Navigator.pop(context);
+                              _sortResults();
+                            },
                           ),
-                          trailing: _selectedMethod == _sortingMethods[index]
-                              ? Icon(Icons.check, color: Colors.blue)
-                              : null,
-                          onTap: () {
-                            setState(() {
-                              _selectedMethod = _sortingMethods[index];
-                            });
-                            Navigator.pop(context);
-                            _sortResults();
-                          },
                         );
                       },
                     ),

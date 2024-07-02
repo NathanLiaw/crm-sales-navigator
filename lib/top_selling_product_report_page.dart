@@ -170,28 +170,31 @@ class _ProductReportState extends State<ProductReport> {
           shrinkWrap: true,
           itemCount: _sortingMethods.length,
           itemBuilder: (BuildContext context, int index) {
-            return ListTile(
-              title: Text(
-                _sortingMethods[index],
-                style: TextStyle(
-                  fontWeight: _selectedMethod == _sortingMethods[index]
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: _selectedMethod == _sortingMethods[index]
-                      ? Colors.blue
-                      : Colors.black,
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5.0),
+              child: ListTile(
+                title: Text(
+                  _sortingMethods[index],
+                  style: TextStyle(
+                    fontWeight: _selectedMethod == _sortingMethods[index]
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: _selectedMethod == _sortingMethods[index]
+                        ? Colors.blue
+                        : Colors.black,
+                  ),
                 ),
+                trailing: _selectedMethod == _sortingMethods[index]
+                    ? Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedMethod = _sortingMethods[index];
+                  });
+                  Navigator.pop(context);
+                  _sortResults();
+                },
               ),
-              trailing: _selectedMethod == _sortingMethods[index]
-                  ? Icon(Icons.check, color: Colors.blue)
-                  : null,
-              onTap: () {
-                setState(() {
-                  _selectedMethod = _sortingMethods[index];
-                });
-                Navigator.pop(context);
-                _sortResults();
-              },
             );
           },
         );

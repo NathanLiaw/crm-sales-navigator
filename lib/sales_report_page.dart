@@ -168,28 +168,31 @@ class _SalesReportPageState extends State<SalesReportPage> {
           shrinkWrap: true,
           itemCount: _sortingMethods.length,
           itemBuilder: (BuildContext context, int index) {
-            return ListTile(
-              title: Text(
-                _sortingMethods[index],
-                style: TextStyle(
-                  fontWeight: _selectedMethod == _sortingMethods[index]
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: _selectedMethod == _sortingMethods[index]
-                      ? Colors.blue
-                      : Colors.black,
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5.0),
+              child: ListTile(
+                title: Text(
+                  _sortingMethods[index],
+                  style: TextStyle(
+                    fontWeight: _selectedMethod == _sortingMethods[index]
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: _selectedMethod == _sortingMethods[index]
+                        ? Colors.blue
+                        : Colors.black,
+                  ),
                 ),
+                trailing: _selectedMethod == _sortingMethods[index]
+                    ? Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedMethod = _sortingMethods[index];
+                  });
+                  Navigator.pop(context);
+                  _sortResults();
+                },
               ),
-              trailing: _selectedMethod == _sortingMethods[index]
-                  ? Icon(Icons.check, color: Colors.blue)
-                  : null,
-              onTap: () {
-                setState(() {
-                  _selectedMethod = _sortingMethods[index];
-                });
-                Navigator.pop(context);
-                _sortResults();
-              },
             );
           },
         );
@@ -203,108 +206,108 @@ class _SalesReportPageState extends State<SalesReportPage> {
     });
   }
 
-Widget _buildFilterButtonAndDateRangeSelection() {
-  final bool isCustomRangeSelected = selectedButtonIndex == -1;
+  Widget _buildFilterButtonAndDateRangeSelection() {
+    final bool isCustomRangeSelected = selectedButtonIndex == -1;
 
-  String formattedDate;
-  if (selectedButtonIndex == 3) {
-    formattedDate = 'Filter Date';
-  } else if (_selectedDateRange != null) {
-    formattedDate = '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';
-  } else {
-    formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
-  }
+    String formattedDate;
+    if (selectedButtonIndex == 3) {
+      formattedDate = 'Filter Date';
+    } else if (_selectedDateRange != null) {
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';
+    } else {
+      formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    }
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(left: 5.0),
-            child: TextButton.icon(
-              onPressed: () async {
-                final DateTimeRange? picked = await showRangePickerDialog(
-                  context: context,
-                  minDate: DateTime(2019),
-                  maxDate: DateTime.now(),
-                  selectedRange: _selectedDateRange,
-                );
-                if (picked != null && picked != _selectedDateRange) {
-                  setState(() {
-                    _selectedDateRange = picked;
-                    selectedButtonIndex = -1; // Custom date range selected
-                    salesData = fetchSalesData(_selectedDateRange);
-                  });
-                }
-              },
-              icon: Icon(
-                Icons.calendar_today,
-                color: isCustomRangeSelected ? Colors.white : Colors.black,
-              ),
-              label: Text(
-                formattedDate,
-                style: TextStyle(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(left: 5.0),
+              child: TextButton.icon(
+                onPressed: () async {
+                  final DateTimeRange? picked = await showRangePickerDialog(
+                    context: context,
+                    minDate: DateTime(2019),
+                    maxDate: DateTime.now(),
+                    selectedRange: _selectedDateRange,
+                  );
+                  if (picked != null && picked != _selectedDateRange) {
+                    setState(() {
+                      _selectedDateRange = picked;
+                      selectedButtonIndex = -1;
+                      salesData = fetchSalesData(_selectedDateRange);
+                    });
+                  }
+                },
+                icon: Icon(
+                  Icons.calendar_today,
                   color: isCustomRangeSelected ? Colors.white : Colors.black,
-                  fontSize: 15,
                 ),
-              ),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
-                      return const Color(0xFF047CBD);
-                    }
-                    return const Color(0xFFD9D9D9);
-                  },
+                label: Text(
+                  formattedDate,
+                  style: TextStyle(
+                    color: isCustomRangeSelected ? Colors.white : Colors.black,
+                    fontSize: 15,
+                  ),
                 ),
-                foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (isCustomRangeSelected) {
-                      return Colors.white;
-                    }
-                    return Colors.black;
-                  },
-                ),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (isCustomRangeSelected) {
+                        return const Color(0xFF047CBD);
+                      }
+                      return const Color(0xFFD9D9D9);
+                    },
+                  ),
+                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (isCustomRangeSelected) {
+                        return Colors.white;
+                      }
+                      return Colors.black;
+                    },
+                  ),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          IconButton(
-            onPressed: () => _showSortingOptions(context),
-            icon: Icon(Icons.sort, color: Colors.black),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Row(
-          children: [
-            _buildTimeFilterButton(
-                'All', () => queryAllData(), selectedButtonIndex == 3),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
-                selectedButtonIndex == 0),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
-                selectedButtonIndex == 1),
-            const SizedBox(width: 10),
-            _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
-                selectedButtonIndex == 2),
+            IconButton(
+              onPressed: () => _showSortingOptions(context),
+              icon: Icon(Icons.sort, color: Colors.black),
+            ),
           ],
         ),
-      ),
-      const SizedBox(height: 10),
-    ],
-  );
-}
-
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              _buildTimeFilterButton(
+                  'All', () => queryAllData(), selectedButtonIndex == 3),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+                  selectedButtonIndex == 0),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+                  selectedButtonIndex == 1),
+              const SizedBox(width: 10),
+              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+                  selectedButtonIndex == 2),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
 
   Widget _buildTimeFilterButton(
       String text, VoidCallback onPressed, bool isSelected) {
