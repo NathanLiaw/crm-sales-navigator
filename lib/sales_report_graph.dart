@@ -100,34 +100,34 @@ class _SalesReportState extends State<SalesReport> {
     switch (reportType) {
       case 'ThreeDays':
         query = '''
-      SELECT 
-          Dates.Date,
-          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS Date,
-          IFNULL(DailySales.TotalSales, 0) AS TotalSales
-      FROM (
-          SELECT CURDATE() - INTERVAL 2 DAY AS Date
-          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-          UNION ALL SELECT CURDATE()
-      ) AS Dates
-      LEFT JOIN (
-          SELECT 
-              DATE(c.created) AS Date,
-              ROUND(SUM(c.final_total), 0) AS TotalSales
-          FROM cart c
-          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-          WHERE c.created >= CURDATE() - INTERVAL 2 DAY
-            AND c.status != 'void'
-            AND s.username = '$loggedInUsername'
-          GROUP BY DATE(c.created)
-      ) AS DailySales ON Dates.Date = DailySales.Date
-      ORDER BY Dates.Date ASC;
+        SELECT 
+            Dates.Date,
+            DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS FormattedDate,
+            IFNULL(DailySales.TotalSales, 0) AS TotalSales
+        FROM (
+            SELECT CURDATE() - INTERVAL 2 DAY AS Date
+            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+            UNION ALL SELECT CURDATE()
+        ) AS Dates
+        LEFT JOIN (
+            SELECT 
+                DATE(c.created) AS Date,
+                ROUND(SUM(c.final_total), 0) AS TotalSales
+            FROM cart c
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            WHERE c.created >= CURDATE() - INTERVAL 2 DAY
+              AND c.status != 'void'
+              AND s.username = '$loggedInUsername'
+            GROUP BY DATE(c.created)
+        ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
+        ORDER BY Dates.Date ASC;
       ''';
         break;
       case 'FiveDays':
         query = '''
-      SELECT 
+        SELECT 
           Dates.Date,
-          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS Date,
+          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS FormattedDate,
           IFNULL(DailySales.TotalSales, 0) AS TotalSales
       FROM (
           SELECT CURDATE() - INTERVAL 4 DAY AS Date
@@ -146,58 +146,58 @@ class _SalesReportState extends State<SalesReport> {
             AND c.status != 'void'
             AND s.username = '$loggedInUsername'
           GROUP BY DATE(c.created)
-      ) AS DailySales ON Dates.Date = DailySales.Date
+      ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
       ORDER BY Dates.Date ASC;
       ''';
         break;
       case 'FourMonths':
         query = '''
-      SELECT
-          GeneratedMonths.Month AS Date,
-          IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
-      FROM (
-          SELECT 
-              DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
-          FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) a
-      ) AS GeneratedMonths
-      LEFT JOIN (
-          SELECT 
-              DATE_FORMAT(c.created, '%Y-%m') AS Month,
-              ROUND(SUM(c.final_total), 0) AS TotalSales
-          FROM cart c
-          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-          WHERE c.created >= CURDATE() - INTERVAL 4 MONTH
-            AND c.status != 'void'
-            AND s.username = '$loggedInUsername'
-          GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-      ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
-      GROUP BY GeneratedMonths.Month
-      ORDER BY GeneratedMonths.Month ASC;
+        SELECT
+            GeneratedMonths.Month AS Date,
+            IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
+        FROM (
+            SELECT 
+                DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
+            FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) a
+        ) AS GeneratedMonths
+        LEFT JOIN (
+            SELECT 
+                DATE_FORMAT(c.created, '%Y-%m') AS Month,
+                ROUND(SUM(c.final_total), 0) AS TotalSales
+            FROM cart c
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)
+              AND c.status != 'void'
+              AND s.username = '$loggedInUsername'
+            GROUP BY DATE_FORMAT(c.created, '%Y-%m')
+        ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
+        GROUP BY GeneratedMonths.Month
+        ORDER BY GeneratedMonths.Month ASC;
       ''';
         break;
       case 'Year':
         query = '''
-      SELECT
-          GeneratedMonths.Month AS Date,
-          IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
-      FROM (
-          SELECT 
-              DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
-          FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11) a
-      ) AS GeneratedMonths
-      LEFT JOIN (
-          SELECT 
-              DATE_FORMAT(c.created, '%Y-%m') AS Month,
-              ROUND(SUM(c.final_total), 0) AS TotalSales
-          FROM cart c
-          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-          WHERE c.created >= CURDATE() - INTERVAL 12 MONTH
-            AND c.status != 'void'
-            AND s.username = '$loggedInUsername'
-          GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-      ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
-      GROUP BY GeneratedMonths.Month
-      ORDER BY GeneratedMonths.Month ASC;
+        SELECT
+            GeneratedMonths.Month AS Date,
+            IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
+        FROM (
+            SELECT 
+                DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
+            FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11) a
+        ) AS GeneratedMonths
+        LEFT JOIN (
+            SELECT 
+                DATE_FORMAT(c.created, '%Y-%m') AS Month,
+                ROUND(SUM(c.final_total), 0) AS TotalSales
+            FROM cart c
+            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+              AND c.status != 'void'
+              AND s.username = '$loggedInUsername'
+            GROUP BY DATE_FORMAT(c.created, '%Y-%m')
+        ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
+        GROUP BY GeneratedMonths.Month
+        ORDER BY GeneratedMonths.Month ASC;
       ''';
         break;
       case 'FiveYears':
@@ -227,7 +227,7 @@ class _SalesReportState extends State<SalesReport> {
                 cart c
             JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
             WHERE 
-                c.created >= CURDATE() - INTERVAL 5 YEAR
+                c.created >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
               AND 
                 c.status != 'void' AND s.username = '$loggedInUsername'
             GROUP BY 
@@ -241,25 +241,29 @@ class _SalesReportState extends State<SalesReport> {
         break;
     }
 
-    var results = await db.query(query);
+  var results = await db.query(query);
 
-    return results.map((row) {
-      DateTime date;
+  return results.map((row) {
+    DateTime? date;
+    try {
       if (reportType == 'FiveYears') {
-        date = DateTime(row['Year']);
+        date = DateTime.utc(row['Year']);
       } else if (reportType == 'FourMonths' || reportType == 'Year') {
-        date = DateFormat('yyyy-MM').parse(row['Date']);
+        date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
       } else {
-        date = DateFormat('yyyy-MM-dd').parse(row['Date']);
+        date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
       }
-      return SalesData(
-        date: date,
-        totalSales: row['TotalSales'] != null
-            ? (row['TotalSales'] as num).toDouble()
-            : 0,
-      );
-    }).toList();
-  }
+    } catch (e) {
+      date = null;
+    }
+    return SalesData(
+      date: date?.toLocal() ?? DateTime.now(),
+      totalSales: row['TotalSales'] != null
+          ? (row['TotalSales'] as num).toDouble()
+          : 0,
+    );
+  }).toList();
+}
 
   void _refreshData() async {
     await _fetchData(_selectedInterval);
@@ -422,8 +426,6 @@ class _SalesReportState extends State<SalesReport> {
             if (salesData.isEmpty) return '';
 
             int index = value.toInt();
-            int lastIndex = salesData.length - 1;
-
             if (_selectedInterval == '3D' || _selectedInterval == '5D') {
               if (index >= 0 && index < salesData.length) {
                 return DateFormat('EEE').format(salesData[index].date);
@@ -434,10 +436,8 @@ class _SalesReportState extends State<SalesReport> {
               }
             } else if (_selectedInterval == '1Y') {
               int interval = (salesData.length / 4).round();
-              if (index % interval == 0 || index == lastIndex) {
-                if (index >= 0 && index < salesData.length) {
-                  return DateFormat('MMM yy').format(salesData[index].date);
-                }
+              if (index % interval == 0 || index == salesData.length - 1) {
+                return DateFormat('MMM yy').format(salesData[index].date);
               }
             } else if (_selectedInterval == '5Y') {
               if (index >= 0 && index < salesData.length) {

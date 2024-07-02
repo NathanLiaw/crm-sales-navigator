@@ -76,23 +76,13 @@ class _ProductReportState extends State<ProductReport> {
     var db = await connectToDatabase();
     String dateRangeQuery = '';
     if (dateRange != null) {
-      String startDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
-        dateRange.start.year,
-        dateRange.start.month,
-        dateRange.start.day,
-        0,
-        0,
-        0,
-      ));
-      String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
-        dateRange.end.year,
-        dateRange.end.month,
-        dateRange.end.day,
-        23,
-        59,
-        59,
-      ));
-      dateRangeQuery = "AND ci.created BETWEEN '$startDate' AND '$endDate'";
+      String formattedStartDate =
+          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start.toUtc());
+      String formattedEndDate =
+          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end.toUtc());
+
+      dateRangeQuery =
+          "AND ci.created BETWEEN '$formattedStartDate' AND '$formattedEndDate'";
     }
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
     String usernameCondition = loggedInUsername.isNotEmpty
@@ -108,14 +98,14 @@ class _ProductReportState extends State<ProductReport> {
           ci.uom AS UnitOfMeasure,
           SUM(ci.qty) AS TotalQuantitySold, 
           SUM(ci.total) AS TotalSalesValue, 
-          MAX(DATE_FORMAT(ci.created, '%Y-%m-%d')) AS SaleDate
+          MAX(DATE_FORMAT(cart.created, '%Y-%m-%d %H:%i:%s')) AS SaleDate
       FROM cart_item ci 
       JOIN product p ON ci.product_id = p.id 
       JOIN brand b ON p.brand = b.id 
       JOIN cart ON ci.session = cart.session OR ci.cart_id = cart.id
       JOIN salesman ON cart.buyer_id = salesman.id
       WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
-      GROUP BY p.id, ci.uom  -- Group by product and UOM to ensure correct aggregation
+      GROUP BY p.id, ci.uom
       ORDER BY ${_getOrderByField()} $sortOrder;
     ''');
 
@@ -133,7 +123,7 @@ class _ProductReportState extends State<ProductReport> {
           unitOfMeasure: row['UnitOfMeasure'],
           totalSales: row['TotalSalesValue'].toDouble(),
           totalQuantitySold: row['TotalQuantitySold'].toInt(),
-          lastSold: DateTime.parse(row['SaleDate']),
+          lastSold: DateTime.parse(row['SaleDate']).toLocal(),
           serialNumber: serialNumber++,
         );
       }).toList();
@@ -159,11 +149,13 @@ class _ProductReportState extends State<ProductReport> {
     });
   }
 
-  void setDateRange(int days, int selectedIndex) {
-    final DateTime now = DateTime.now();
+  setDateRange(int days, int selectedIndex) {
+    final DateTime now = DateTime.now().toUtc();
     final DateTime start = now.subtract(Duration(days: days));
     setState(() {
-      _selectedDateRange = DateTimeRange(start: start, end: now);
+      _selectedDateRange = DateTimeRange(
+          start: DateTime(start.year, start.month, start.day, 0, 0, 0).toUtc(),
+          end: DateTime(now.year, now.month, now.day, 23, 59, 59).toUtc());
       isSortedAscending = false;
       products = fetchProducts(_selectedDateRange);
       selectedButtonIndex = selectedIndex;
@@ -179,7 +171,20 @@ class _ProductReportState extends State<ProductReport> {
           itemCount: _sortingMethods.length,
           itemBuilder: (BuildContext context, int index) {
             return ListTile(
-              title: Text(_sortingMethods[index]),
+              title: Text(
+                _sortingMethods[index],
+                style: TextStyle(
+                  fontWeight: _selectedMethod == _sortingMethods[index]
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                  color: _selectedMethod == _sortingMethods[index]
+                      ? Colors.blue
+                      : Colors.black,
+                ),
+              ),
+              trailing: _selectedMethod == _sortingMethods[index]
+                  ? Icon(Icons.check, color: Colors.blue)
+                  : null,
               onTap: () {
                 setState(() {
                   _selectedMethod = _sortingMethods[index];
@@ -219,8 +224,18 @@ class _ProductReportState extends State<ProductReport> {
     }
   }
 
-  Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
+  Widget _buildFilterButtonAndDateRangeSelection() {
     final bool isCustomRangeSelected = selectedButtonIndex == -1;
+
+    String formattedDate;
+    if (selectedButtonIndex == 3) {
+      formattedDate = 'Filter Date';
+    } else if (_selectedDateRange != null) {
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';
+    } else {
+      formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,28 +254,15 @@ class _ProductReportState extends State<ProductReport> {
                     selectedRange: _selectedDateRange,
                   );
                   if (picked != null && picked != _selectedDateRange) {
-                    DateTime adjustedStartDate = DateTime(
-                      picked.start.year,
-                      picked.start.month,
-                      picked.start.day,
-                      0,
-                      0,
-                      0,
-                    );
-
-                    DateTime adjustedEndDate = DateTime(
-                      picked.end.year,
-                      picked.end.month,
-                      picked.end.day,
-                      23,
-                      59,
-                      59,
-                    );
+                    DateTime adjustedStartDate = DateTime(picked.start.year,
+                        picked.start.month, picked.start.day, 0, 0, 0);
+                    DateTime adjustedEndDate = DateTime(picked.end.year,
+                        picked.end.month, picked.end.day, 23, 59, 59);
 
                     setState(() {
                       _selectedDateRange = DateTimeRange(
                           start: adjustedStartDate, end: adjustedEndDate);
-                      selectedButtonIndex = 3;
+                      selectedButtonIndex = -1;
                       products = fetchProducts(_selectedDateRange);
                     });
                   }
@@ -363,10 +365,6 @@ class _ProductReportState extends State<ProductReport> {
 
   @override
   Widget build(BuildContext context) {
-    String formattedDate = _selectedDateRange != null
-        ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} '
-            '- ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
-        : DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004C87),
@@ -383,7 +381,7 @@ class _ProductReportState extends State<ProductReport> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            child: _buildFilterButtonAndDateRangeSelection(formattedDate),
+            child: _buildFilterButtonAndDateRangeSelection(),
           ),
           Expanded(
             child: FutureBuilder<List<Product>>(

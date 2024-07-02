@@ -115,6 +115,33 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     }
   }
 
+  Future<void> insertAllItemsIntoCart(List<Map<String, dynamic>> items) async {
+    try {
+      for (var item in items) {
+        final cartItem = CartItem(
+          buyerId: await UtilityFunction.getUserId(),
+          productId: item['product_id'],
+          productName: item['product_name'],
+          uom: item['uom'],
+          quantity: item['qty'],
+          discount: 0,
+          originalUnitPrice: item['ori_unit_price'],
+          unitPrice: item['ori_unit_price'],
+          total: item['ori_unit_price'] * item['qty'],
+          cancel: null,
+          remark: null,
+          status: 'in progress',
+          created: DateTime.now(),
+          modified: DateTime.now(),
+        );
+        await insertItemIntoCart(cartItem);
+      }
+      developer.log('All items copied to cart successfully');
+    } catch (e) {
+      developer.log('Error copying all items to cart: $e', error: e);
+    }
+  }
+
   Future<void> _loadUserDetails() async {
     final prefs = await SharedPreferences.getInstance();
     loggedInUsername = prefs.getString('username') ?? '';
@@ -146,7 +173,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   }
 
   Future<void> _loadSalesOrders({int? days, DateTimeRange? dateRange}) async {
+    if (!mounted) return;
     setState(() => isLoading = true);
+
     String orderByClause =
         'ORDER BY ${_getOrderByField()} ${isSortedAscending ? 'ASC' : 'DESC'}';
     String usernameFilter = "AND salesman.username = '$loggedInUsername'";
@@ -169,74 +198,74 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
           DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
-    SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    WHERE 
-    cart.created BETWEEN '$startDate' AND '$endDate'
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
+  SELECT 
+  cart.*, 
+  cart_item.product_id,
+  cart_item.product_name, 
+  cart_item.qty,
+  cart_item.uom,
+  cart_item.ori_unit_price,
+  salesman.salesman_name,
+  DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+  FROM 
+      cart
+  JOIN 
+      cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+  JOIN 
+      salesman ON cart.buyer_id = salesman.id
+  WHERE 
+  cart.created BETWEEN '$startDate' AND '$endDate'
+  $usernameFilter
+  $customerFilter
+  $statusFilter
+  $orderByClause;
+  ''';
     } else if (days != null) {
       query = '''
-      SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    WHERE 
-    cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
+    SELECT 
+  cart.*, 
+  cart_item.product_id,
+  cart_item.product_name, 
+  cart_item.qty,
+  cart_item.uom,
+  cart_item.ori_unit_price,
+  salesman.salesman_name,
+  DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+  FROM 
+      cart
+  JOIN 
+      cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+  JOIN 
+      salesman ON cart.buyer_id = salesman.id
+  WHERE 
+  cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
+  $usernameFilter
+  $customerFilter
+  $statusFilter
+  $orderByClause;
+  ''';
     } else {
       query = '''
-      SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-    salesman ON cart.buyer_id = salesman.id
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
+    SELECT 
+  cart.*, 
+  cart_item.product_id,
+  cart_item.product_name, 
+  cart_item.qty,
+  cart_item.uom,
+  cart_item.ori_unit_price,
+  salesman.salesman_name,
+  DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+  FROM 
+      cart
+  JOIN 
+      cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+  JOIN 
+      salesman ON cart.buyer_id = salesman.id
+  $usernameFilter
+  $customerFilter
+  $statusFilter
+  $orderByClause;
+  ''';
     }
 
     developer.log('Executing query: $query');
@@ -447,16 +476,20 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             for (int i = 0; i < items.length; i++) {
                               if (checkedItems[i]) {
                                 final item = items[i];
+                                final oriUnitPrice =
+                                    item['ori_unit_price'] ?? 0.0;
+                                final qty = item['qty'] ?? 0;
+
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
                                   productId: item['product_id'],
                                   productName: item['product_name'],
                                   uom: item['uom'],
-                                  quantity: item['qty'],
+                                  quantity: qty,
                                   discount: 0,
-                                  originalUnitPrice: item['ori_unit_price'],
-                                  unitPrice: item['ori_unit_price'],
-                                  total: item['ori_unit_price'] * item['qty'],
+                                  originalUnitPrice: oriUnitPrice,
+                                  unitPrice: oriUnitPrice,
+                                  total: oriUnitPrice * qty,
                                   cancel: null,
                                   remark: null,
                                   status: 'in progress',

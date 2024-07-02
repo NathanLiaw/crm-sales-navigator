@@ -218,7 +218,20 @@ class _CustomerReportState extends State<CustomerReport> {
           itemCount: _sortingMethods.length,
           itemBuilder: (BuildContext context, int index) {
             return ListTile(
-              title: Text(_sortingMethods[index]),
+              title: Text(
+                _sortingMethods[index],
+                style: TextStyle(
+                  fontWeight: _selectedMethod == _sortingMethods[index]
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                  color: _selectedMethod == _sortingMethods[index]
+                      ? Colors.blue
+                      : Colors.black,
+                ),
+              ),
+              trailing: _selectedMethod == _sortingMethods[index]
+                  ? Icon(Icons.check, color: Colors.blue)
+                  : null,
               onTap: () {
                 setState(() {
                   _selectedMethod = _sortingMethods[index];
@@ -239,8 +252,18 @@ class _CustomerReportState extends State<CustomerReport> {
     });
   }
 
-  Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
+  Widget _buildFilterButtonAndDateRangeSelection() {
     final bool isCustomRangeSelected = selectedButtonIndex == -1;
+
+    String formattedDate;
+    if (selectedButtonIndex == 3) {
+      formattedDate = 'Filter Date';
+    } else if (_selectedDateRange != null) {
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';
+    } else {
+      formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +303,7 @@ class _CustomerReportState extends State<CustomerReport> {
                     setState(() {
                       _selectedDateRange = DateTimeRange(
                           start: adjustedStartDate, end: adjustedEndDate);
-                      selectedButtonIndex = 3;
+                      selectedButtonIndex = -1; // Custom date range selected
                       salesData =
                           fetchSalesData(isSortedAscending, _selectedDateRange);
                     });
@@ -384,10 +407,6 @@ class _CustomerReportState extends State<CustomerReport> {
 
   @override
   Widget build(BuildContext context) {
-    String formattedDate = _selectedDateRange != null
-        ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} '
-            '- ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
-        : DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004C87),
@@ -404,7 +423,7 @@ class _CustomerReportState extends State<CustomerReport> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            child: _buildFilterButtonAndDateRangeSelection(formattedDate),
+            child: _buildFilterButtonAndDateRangeSelection(),
           ),
           Expanded(
             child: FutureBuilder<List<Customer>>(
