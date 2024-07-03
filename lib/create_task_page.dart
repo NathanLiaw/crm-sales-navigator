@@ -724,7 +724,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
             [taskTitle, taskDescription, taskDueDate, widget.taskId],
           );
         } else {
-          // 插入新任务
+          // 插入新任务，包括 creation_date
           Results leadResults = await conn.query(
             'SELECT id FROM sales_lead WHERE id = ?',
             [widget.id],
@@ -732,7 +732,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
           int leadId = leadResults.first['id'];
 
           await conn.query(
-            'INSERT INTO tasks (title, description, due_date, lead_id) VALUES (?, ?, ?, ?)',
+            'INSERT INTO tasks (title, description, due_date, lead_id, creation_date) VALUES (?, ?, ?, ?, NOW())',
             [taskTitle, taskDescription, taskDueDate, leadId],
           );
         }

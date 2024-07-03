@@ -35,6 +35,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   String? description;
   DateTime? dueDate;
   List<Map<String, dynamic>> tasks = [];
+  String _sortBy = 'creation_date'; // 新添加的状态变量
+  String _sortOrder = 'descending';
 
   @override
   void initState() {
@@ -55,8 +57,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results = await conn.query(
-        // 'SELECT t.id, t.title, t.description, t.due_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.customer_name = ?',
-        'SELECT t.id, t.title, t.description, t.due_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
+        'SELECT t.id, t.title, t.description, t.due_date, t.creation_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
         [widget.leadItem.id],
       );
       if (results.isNotEmpty && mounted) {
@@ -66,9 +67,13 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               'title': row['title'],
               'description': row['description'],
               'due_date': row['due_date'],
-              'id': row['id'], // add tasks ID
+              'creation_date': row['creation_date'],
+              'id': row['id'],
             };
           }).toList();
+          // 默认按创建日期排序
+          tasks
+              .sort((a, b) => b['creation_date'].compareTo(a['creation_date']));
         });
       }
     } catch (e) {
@@ -134,22 +139,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
         Navigator.pop(context);
       }
     }
-    // if (result != null && result['error'] == null) {
-    //   setState(() {
-    //     title = result['title'] as String?;
-    //     description = result['description'] as String?;
-    //     dueDate = result['dueDate'] as DateTime?;
-    //   });
-    //   // Move NegotiationLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
-    //   if (result['salesOrderId'] != null) {
-    //     String salesOrderId = result['salesOrderId'] as String;
-    //     int? quantity = result['quantity'];
-    //     await widget.onMoveToOrderProcessing(
-    //         widget.leadItem, salesOrderId, quantity);
-    //     Navigator.pop(context);
-    //   }
-    // }
-    // _fetchTaskDetails();
   }
 
   Future<void> _navigateToEditTaskPage(
@@ -177,17 +166,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
       ),
     );
     _fetchTaskDetails();
-    // if (result != null && result['error'] == null) {
-    //   _fetchTaskDetails(); // 刷新任务列表
-    //   // Move NegotiationLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
-    //   if (result['salesOrderId'] != null) {
-    //     String salesOrderId = result['salesOrderId'] as String;
-    //     int? quantity = result['quantity'];
-    //     await widget.onMoveToOrderProcessing(
-    //         widget.leadItem, salesOrderId, quantity);
-    //     Navigator.pop(context);
-    //   }
-    // }
   }
 
   Future<void> _deleteTask(int taskId) async {
@@ -231,6 +209,87 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     );
   }
 
+  void _showSortOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sort by'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: const Text('Creation Date'),
+                onTap: () {
+                  _sortTasks('creation_date');
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Due Date'),
+                onTap: () {
+                  _sortTasks('due_date');
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Title (A-Z)'),
+                onTap: () {
+                  _sortTasks('title');
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _sortTasks(String sortBy) {
+    setState(() {
+      if (_sortBy == sortBy) {
+        // 如果点击的是当前排序方式，则切换升序/降序
+        _sortOrder = _sortOrder == 'ascending' ? 'descending' : 'ascending';
+      } else {
+        // 如果是新的排序方式，默认为升序
+        _sortBy = sortBy;
+        _sortOrder = 'ascending';
+      }
+
+      switch (sortBy) {
+        case 'creation_date':
+          tasks.sort((a, b) => _sortOrder == 'ascending'
+              ? a['creation_date'].compareTo(b['creation_date'])
+              : b['creation_date'].compareTo(a['creation_date']));
+          break;
+        case 'due_date':
+          tasks.sort((a, b) => _sortOrder == 'ascending'
+              ? a['due_date'].compareTo(b['due_date'])
+              : b['due_date'].compareTo(a['due_date']));
+          break;
+        case 'title':
+          tasks.sort((a, b) => _sortOrder == 'ascending'
+              ? a['title'].compareTo(b['title'])
+              : b['title'].compareTo(a['title']));
+          break;
+      }
+    });
+  }
+
+  String _getSortButtonText() {
+    switch (_sortBy) {
+      case 'creation_date':
+        return 'Sort by Creation Date';
+      case 'due_date':
+        return 'Sort by Due Date';
+      case 'title':
+        return 'Sort by Title (A-Z)';
+      default:
+        return 'Sort';
+    }
+  }
+
   String _formatCurrency(String amount) {
     final formatter = NumberFormat("#,##0.00", "en_US");
     return formatter.format(double.parse(amount));
@@ -264,16 +323,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Text(
-                  //   widget.leadItem.customerName.length > 15
-                  //       ? '${widget.leadItem.customerName.substring(0, 15)}...'
-                  //       : widget.leadItem.customerName,
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 20,
-                  //   ),
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
                   Container(
                     width: 170,
                     child: Text(
@@ -477,13 +526,30 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Tasks',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tasks',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Spacer(),
+                        TextButton(
+                          onPressed: _showSortOptions,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.sort, color: Color(0xff0069BA)),
+                              const SizedBox(width: 4),
+                              Text(_getSortButtonText(),
+                                  style: TextStyle(color: Color(0xff0069BA))),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     SizedBox(
@@ -508,23 +574,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                           fontSize: 16,
                                         ),
                                       ),
-                                      // Column(
-                                      //   children: [
-                                      //     IconButton(
-                                      //       icon: const Icon(Icons.edit),
-                                      //       onPressed: () =>
-                                      //           _navigateToEditTaskPage(
-                                      //               context, task),
-                                      //     ),
-                                      //     IconButton(
-                                      //       icon: const Icon(Icons.delete,
-                                      //           color: Colors.red),
-                                      //       onPressed: () =>
-                                      //           _showDeleteConfirmationDialog(
-                                      //               task['id']),
-                                      //     ),
-                                      //   ],
-                                      // ),
                                       const SizedBox(height: 8),
                                       Text(task['description']),
                                       const SizedBox(height: 8),
@@ -663,16 +712,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    //   Container(
-                    //   width: 170,
-                    //   child: Text(
-                    //     widget.leadItem.customerName,
-                    //     style: const TextStyle(
-                    //         fontWeight: FontWeight.bold, fontSize: 18),
-                    //     maxLines: 3,
-                    //     overflow: TextOverflow.ellipsis,
-                    //   ),
-                    // ),
                   ),
                   Text(
                     'Created on: ${widget.leadItem.createdDate}',
