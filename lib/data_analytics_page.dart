@@ -50,7 +50,7 @@ class DataAnalyticsPage extends StatelessWidget {
                   );
                 },
                 child: const SizedBox(
-                  height: 510,
+                  height: 480,
                   child: SalesForecastGraph(),
                 ),
               ),
@@ -61,7 +61,8 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SalesReportPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const SalesReportPage()),
                   );
                 },
                 child: const SizedBox(
@@ -76,7 +77,8 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CustomerReport()),
+                    MaterialPageRoute(
+                        builder: (context) => const CustomerReport()),
                   );
                 },
                 child: const CustomersGraph(),
@@ -88,7 +90,8 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProductReport()),
+                    MaterialPageRoute(
+                        builder: (context) => const ProductReport()),
                   );
                 },
                 child: const SizedBox(
@@ -103,7 +106,9 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CustomerSalesPredictionPage()),
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const CustomerSalesPredictionPage()),
                   );
                 },
                 child: const SizedBox(
@@ -118,11 +123,12 @@ class DataAnalyticsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SalesOrderPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const SalesOrderPage()),
                   );
                 },
                 child: const SizedBox(
-                  height: 425,
+                  height: 420,
                   child: OrderStatusWidget(),
                 ),
               ),

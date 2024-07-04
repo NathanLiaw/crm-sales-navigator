@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:date_picker_plus/date_picker_plus.dart';
 import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
@@ -39,9 +40,23 @@ class _CustomerReportState extends State<CustomerReport> {
   int selectedButtonIndex = -1;
   String loggedInUsername = '';
 
+  final List<String> _sortingMethods = [
+    'By Company Name (A-Z)',
+    'By Company Name (Z-A)',
+    'By Total Sales (Low to High)',
+    'By Total Sales (High to Low)',
+    'By Total Quantity (Low to High)',
+    'By Total Quantity (High to Low)',
+    'By Last Purchase (Ascending)',
+    'By Last Purchase (Descending)',
+  ];
+
+  String _selectedMethod = 'By Company Name (A-Z)';
+
   @override
   void initState() {
     super.initState();
+    salesData = Future.value([]);
     loadPreferences().then((_) {
       setState(() {
         _selectedDateRange = null;
@@ -66,37 +81,54 @@ class _CustomerReportState extends State<CustomerReport> {
     }
   }
 
-  Future<List<Customer>> fetchSalesData(bool isAscending, DateTimeRange? dateRange) async {
+  Future<List<Customer>> fetchSalesData(
+      bool isAscending, DateTimeRange? dateRange) async {
     var db = await connectToDatabase();
     var sortOrder = isAscending ? 'ASC' : 'DESC';
     String dateCondition = dateRange != null
-        ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd').format(dateRange.start)}' "
-            "AND '${DateFormat('yyyy-MM-dd').format(dateRange.end)}'" : '';
-    var results = await db.query(
-        '''
+        ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
+            dateRange.start.year,
+            dateRange.start.month,
+            dateRange.start.day,
+            0,
+            0,
+            0,
+          ))}' AND '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
+            dateRange.end.year,
+            dateRange.end.month,
+            dateRange.end.day,
+            23,
+            59,
+            59,
+          ))}'"
+        : '';
+    var results = await db.query('''
         SELECT 
-        cart.customer_company_name AS Company_Name,
-        customer.id AS Customer_ID,
-        customer.username AS customer_username,
-        customer.contact_number AS Contact_Number,
-        customer.email AS Email,
-        salesman.id AS salesman_id,
-        salesman.username AS username,
-        salesman.salesman_name,
-        SUM(cart.final_total) AS Total_Sales,
-        MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase
+            cart.customer_company_name AS Company_Name,
+            customer.id AS Customer_ID,
+            customer.username AS customer_username,
+            customer.contact_number AS Contact_Number,
+            customer.email AS Email,
+            salesman.id AS Salesman_ID,
+            salesman.username AS Salesman_Username,
+            salesman.salesman_name,
+            SUM(ci.total) AS Total_Sales,
+            MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase,
+            SUM(ci.qty) AS Total_Quantity
         FROM cart
-        JOIN customer ON cart.buyer_id = customer.id
+        JOIN customer ON cart.customer_id = customer.id
         JOIN salesman ON cart.buyer_id = salesman.id
+        LEFT JOIN cart_item ci ON ci.cart_id = cart.id
         WHERE cart.buyer_user_group != 'customer'
-        AND cart.status != 'void' AND salesman.username = '$loggedInUsername' 
-        $dateCondition 
-        GROUP BY cart.customer_company_name, customer.id
+        AND cart.status != 'void'
+        AND salesman.username = '$loggedInUsername'
+        $dateCondition
+        GROUP BY cart.customer_company_name, customer.id, salesman.id
         ORDER BY Total_Sales $sortOrder;
         ''');
-    int serialNumber = 1; 
+    int serialNumber = 1;
     List<Customer> customersList = [];
-    for (var row in results) {  
+    for (var row in results) {
       customersList.add(Customer(
         id: row['Customer_ID'],
         companyName: row['Company_Name'],
@@ -104,13 +136,50 @@ class _CustomerReportState extends State<CustomerReport> {
         email: row['Email'],
         contactNumber: row['Contact_Number'],
         totalSales: row['Total_Sales'],
+        totalQuantity: row['Total_Quantity'],
         lastPurchase: DateTime.parse(row['Last_Purchase']),
-        serialNumber: serialNumber,  
+        serialNumber: serialNumber,
       ));
       serialNumber++;
     }
     await db.close();
-    return customersList;
+    return _getSortedData(customersList);
+  }
+
+  List<Customer> _getSortedData(List<Customer> data) {
+    if (_selectedMethod == 'By Company Name (A-Z)') {
+      data.sort((a, b) => a.companyName.compareTo(b.companyName));
+    } else if (_selectedMethod == 'By Company Name (Z-A)') {
+      data.sort((a, b) => b.companyName.compareTo(a.companyName));
+    } else if (_selectedMethod == 'By Total Sales (Low to High)') {
+      data.sort((a, b) => a.totalSales.compareTo(b.totalSales));
+    } else if (_selectedMethod == 'By Total Sales (High to Low)') {
+      data.sort((a, b) => b.totalSales.compareTo(a.totalSales));
+    } else if (_selectedMethod == 'By Total Quantity (Low to High)') {
+      data.sort((a, b) => a.totalQuantity.compareTo(b.totalQuantity));
+    } else if (_selectedMethod == 'By Total Quantity (High to Low)') {
+      data.sort((a, b) => b.totalQuantity.compareTo(a.totalQuantity));
+    } else if (_selectedMethod == 'By Last Purchase (Ascending)') {
+      data.sort((a, b) => a.lastPurchase.compareTo(b.lastPurchase));
+    } else if (_selectedMethod == 'By Last Purchase (Descending)') {
+      data.sort((a, b) => b.lastPurchase.compareTo(a.lastPurchase));
+    }
+
+    for (int i = 0; i < data.length; i++) {
+      data[i] = Customer(
+        id: data[i].id,
+        companyName: data[i].companyName,
+        customerUsername: data[i].customerUsername,
+        email: data[i].email,
+        contactNumber: data[i].contactNumber,
+        totalSales: data[i].totalSales,
+        totalQuantity: data[i].totalQuantity,
+        lastPurchase: data[i].lastPurchase,
+        serialNumber: i + 1,
+      );
+    }
+
+    return data;
   }
 
   void toggleSortOrder() {
@@ -135,14 +204,73 @@ class _CustomerReportState extends State<CustomerReport> {
 
   void queryAllData() {
     setState(() {
-      _selectedDateRange = null; 
+      _selectedDateRange = null;
       selectedButtonIndex = 3;
       salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
     });
   }
 
-  Widget _buildFilterButtonAndDateRangeSelection(String formattedDate) {
+  void _showSortingOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _sortingMethods.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                child: ListTile(
+                  title: Text(
+                    _sortingMethods[index],
+                    style: TextStyle(
+                      fontWeight: _selectedMethod == _sortingMethods[index]
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _selectedMethod == _sortingMethods[index]
+                          ? Colors.blue
+                          : Colors.black,
+                    ),
+                  ),
+                  trailing: _selectedMethod == _sortingMethods[index]
+                      ? Icon(Icons.check, color: Colors.blue)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _selectedMethod = _sortingMethods[index];
+                    });
+                    Navigator.pop(context);
+                    _sortResults();
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _sortResults() {
+    setState(() {
+      salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
+    });
+  }
+
+  Widget _buildFilterButtonAndDateRangeSelection() {
     final bool isCustomRangeSelected = selectedButtonIndex == -1;
+
+    String formattedDate;
+    if (selectedButtonIndex == 3) {
+      formattedDate = 'Filter Date';
+    } else if (_selectedDateRange != null) {
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';
+    } else {
+      formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,28 +282,35 @@ class _CustomerReportState extends State<CustomerReport> {
               padding: const EdgeInsets.only(left: 5.0),
               child: TextButton.icon(
                 onPressed: () async {
-                  final DateTimeRange? picked = await showDateRangePicker(
+                  final DateTimeRange? picked = await showRangePickerDialog(
                     context: context,
-                    initialDateRange: _selectedDateRange,
-                    firstDate: DateTime(2019),
-                    lastDate: DateTime.now(),
-                    builder: (BuildContext context, Widget? child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: Colors.lightBlue,
-                            onPrimary: Colors.white,
-                            surface: const Color.fromARGB(255, 212, 234, 255),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
+                    minDate: DateTime(2019),
+                    maxDate: DateTime.now(),
+                    selectedRange: _selectedDateRange,
                   );
                   if (picked != null && picked != _selectedDateRange) {
+                    DateTime adjustedStartDate = DateTime(
+                      picked.start.year,
+                      picked.start.month,
+                      picked.start.day,
+                      0,
+                      0,
+                      0,
+                    );
+
+                    DateTime adjustedEndDate = DateTime(
+                      picked.end.year,
+                      picked.end.month,
+                      picked.end.day,
+                      23,
+                      59,
+                      59,
+                    );
+
                     setState(() {
-                      _selectedDateRange = picked;
-                      selectedButtonIndex = 3;
+                      _selectedDateRange = DateTimeRange(
+                          start: adjustedStartDate, end: adjustedEndDate);
+                      selectedButtonIndex = -1;
                       salesData =
                           fetchSalesData(isSortedAscending, _selectedDateRange);
                     });
@@ -217,23 +352,10 @@ class _CustomerReportState extends State<CustomerReport> {
                 ),
               ),
             ),
-            TextButton.icon(
-              onPressed: toggleSortOrder,
-              icon: Icon(
-                isSortedAscending ? Icons.arrow_downward : Icons.arrow_upward,
-                color: Colors.black,
-              ),
-              label: const Text(
-                'Sort',
-                style: TextStyle(color: Colors.black),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFD9D9D9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            )
+            IconButton(
+              onPressed: () => _showSortingOptions(context),
+              icon: Icon(Icons.sort, color: Colors.black),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -241,8 +363,8 @@ class _CustomerReportState extends State<CustomerReport> {
           alignment: Alignment.centerLeft,
           child: Row(
             children: [
-              _buildTimeFilterButton('All', () => queryAllData(),
-                  selectedButtonIndex == 3),
+              _buildTimeFilterButton(
+                  'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
               _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
@@ -292,10 +414,6 @@ class _CustomerReportState extends State<CustomerReport> {
 
   @override
   Widget build(BuildContext context) {
-    String formattedDate = _selectedDateRange != null
-        ? '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} '
-        '- ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}'
-        : DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004C87),
@@ -312,7 +430,7 @@ class _CustomerReportState extends State<CustomerReport> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            child: _buildFilterButtonAndDateRangeSelection(formattedDate),
+            child: _buildFilterButtonAndDateRangeSelection(),
           ),
           Expanded(
             child: FutureBuilder<List<Customer>>(
@@ -322,95 +440,133 @@ class _CustomerReportState extends State<CustomerReport> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData) {
-                  return ListView(
-                    children: snapshot.data!.map((customer) {
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No data available'));
+                } else {
+                  List<Customer> sortedData = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: sortedData.length,
+                    itemBuilder: (context, index) {
+                      final customer = sortedData[index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: ExpansionTile(
-                          backgroundColor: Colors.grey[200],
-                          title: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${customer.serialNumber}. ',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  customer.companyName,
-                                  style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 5),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromRGBO(111, 188, 249, 0.35),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          subtitle: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              '     Total Sales: ${customer.totalSalesDisplay}',
-                              style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 100, 0),
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                              child: Align(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: ExpansionTile(
+                              backgroundColor: Colors.transparent,
+                              title: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${customer.serialNumber}. ',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      customer.companyName,
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              subtitle: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '    ID: ${customer.id}',
+                                      '     Total Sales: ${customer.totalSalesDisplay}',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
+                                          color: Color.fromARGB(255, 0, 100, 0),
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '    Username: ${customer.customerUsername}',
+                                      '     Total Quantity: ${customer.totalQuantityDisplay}',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Email: ${customer.email}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Contact Number: ${customer.contactNumber}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '    Last Purchase: ${DateFormat('dd-MM-yyyy').format(customer.lastPurchase)}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 17),
+                                          color: Color(0xFF004072),
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
                               ),
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE1F5FE),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '      ID: ${customer.id}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Username: ${customer.customerUsername}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Email: ${customer.email}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Contact Number: ${customer.contactNumber}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '      Last Purchase: ${DateFormat('dd-MM-yyyy').format(customer.lastPurchase)}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 17),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Divider(color: Colors.transparent),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
-                    }).toList(),
+                    },
                   );
-                } else {
-                  return const Center(child: Text('No data available'));
                 }
               },
             ),
@@ -428,6 +584,7 @@ class Customer {
   final String email;
   final String contactNumber;
   final double totalSales;
+  final double totalQuantity;
   final DateTime lastPurchase;
   final int serialNumber;
 
@@ -438,9 +595,13 @@ class Customer {
     required this.email,
     required this.contactNumber,
     required this.totalSales,
+    required this.totalQuantity,
     required this.lastPurchase,
     required this.serialNumber,
   });
 
-  String get totalSalesDisplay => 'RM ${NumberFormat("#,##0", "en_US").format(totalSales)}';
+  String get totalSalesDisplay =>
+      'RM ${NumberFormat("#,##0.000", "en_US").format(totalSales)}';
+  String get totalQuantityDisplay =>
+      NumberFormat("#,##0", "en_US").format(totalQuantity);
 }

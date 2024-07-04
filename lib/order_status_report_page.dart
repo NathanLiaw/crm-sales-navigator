@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
@@ -18,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sales Order',
+      title: 'Sales Order Report',
       theme: ThemeData(
         primaryColor: const Color(0xFF004C87),
         hintColor: const Color(0xFF004C87),
@@ -28,25 +27,25 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.white),
         ),
       ),
-      home: const SalesOrderPage(),
+      home: const OrderStatusReportPage(),
     );
   }
 }
 
-class SalesOrderPage extends StatefulWidget {
-  const SalesOrderPage({super.key});
+class OrderStatusReportPage extends StatefulWidget {
+  const OrderStatusReportPage({super.key});
 
   @override
-  _SalesOrderPageState createState() => _SalesOrderPageState();
+  _OrderStatusReportPageState createState() => _OrderStatusReportPageState();
 }
 
-class _SalesOrderPageState extends State<SalesOrderPage> {
+class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   List<Map<String, dynamic>> orders = [];
   bool isLoading = true;
   DateTimeRange? dateRange;
   int? selectedDays;
   int selectedButtonIndex = 3;
-  bool isSortedAscending = false; // Ensure this is set to false
+  bool isSortedAscending = false; // Set to false for descending order
   String loggedInUsername = '';
   Customer? selectedCustomer;
 
@@ -200,74 +199,74 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
-    SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    WHERE 
-    cart.created BETWEEN '$startDate' AND '$endDate'
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
+  SELECT 
+  cart.*, 
+  cart_item.product_id,
+  cart_item.product_name, 
+  cart_item.qty,
+  cart_item.uom,
+  cart_item.ori_unit_price,
+  salesman.salesman_name,
+  DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+  FROM 
+      cart
+  JOIN 
+      cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+  JOIN 
+      salesman ON cart.buyer_id = salesman.id
+  WHERE 
+  cart.created BETWEEN '$startDate' AND '$endDate'
+  $usernameFilter
+  $customerFilter
+  $statusFilter
+  $orderByClause;
+  ''';
     } else if (days != null) {
       query = '''
-      SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    WHERE 
-    cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
+    SELECT 
+  cart.*, 
+  cart_item.product_id,
+  cart_item.product_name, 
+  cart_item.qty,
+  cart_item.uom,
+  cart_item.ori_unit_price,
+  salesman.salesman_name,
+  DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+  FROM 
+      cart
+  JOIN 
+      cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+  JOIN 
+      salesman ON cart.buyer_id = salesman.id
+  WHERE 
+  cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
+  $usernameFilter
+  $customerFilter
+  $statusFilter
+  $orderByClause;
+  ''';
     } else {
       query = '''
-      SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
+    SELECT 
+  cart.*, 
+  cart_item.product_id,
+  cart_item.product_name, 
+  cart_item.qty,
+  cart_item.uom,
+  cart_item.ori_unit_price,
+  salesman.salesman_name,
+  DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
+  FROM 
+      cart
+  JOIN 
+      cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+  JOIN 
+      salesman ON cart.buyer_id = salesman.id
+  $usernameFilter
+  $customerFilter
+  $statusFilter
+  $orderByClause;
+  ''';
     }
 
     developer.log('Executing query: $query');
@@ -283,23 +282,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       if (mounted) {
         setState(() => isLoading = false);
       }
-    }
-  }
-
-  Future<void> _updateOrderStatus(int orderId, String status) async {
-    try {
-      const tableName = 'cart';
-      final data = {
-        'id': orderId,
-        'status': status,
-        'modified': UtilityFunction.getCurrentDateTime(),
-      };
-
-      await DatabaseHelper.updateData(data, tableName);
-      developer.log('Order status updated successfully');
-      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
-    } catch (e) {
-      developer.log('Error updating order status: $e', error: e);
     }
   }
 
@@ -622,32 +604,29 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       shrinkWrap: true,
                       itemCount: _sortingMethods.length,
                       itemBuilder: (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            title: Text(
-                              _sortingMethods[index],
-                              style: TextStyle(
-                                fontWeight:
-                                    _selectedMethod == _sortingMethods[index]
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                color: _selectedMethod == _sortingMethods[index]
-                                    ? Colors.blue
-                                    : Colors.black,
-                              ),
+                        return ListTile(
+                          title: Text(
+                            _sortingMethods[index],
+                            style: TextStyle(
+                              fontWeight:
+                                  _selectedMethod == _sortingMethods[index]
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                              color: _selectedMethod == _sortingMethods[index]
+                                  ? Colors.blue
+                                  : Colors.black,
                             ),
-                            trailing: _selectedMethod == _sortingMethods[index]
-                                ? Icon(Icons.check, color: Colors.blue)
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                _selectedMethod = _sortingMethods[index];
-                              });
-                              Navigator.pop(context);
-                              _sortResults();
-                            },
                           ),
+                          trailing: _selectedMethod == _sortingMethods[index]
+                              ? Icon(Icons.check, color: Colors.blue)
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _selectedMethod = _sortingMethods[index];
+                            });
+                            Navigator.pop(context);
+                            _sortResults();
+                          },
                         );
                       },
                     ),
@@ -761,12 +740,15 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
-          'Sales Order',
+          'Sales Order Report',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF004C87),
-        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: <Widget>[
@@ -774,7 +756,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           Expanded(child: _buildSalesOrderList()),
         ],
       ),
-      bottomNavigationBar: const CustomNavigationBar(),
     );
   }
 
@@ -1007,7 +988,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           creationDate: firstItem['created_date'] != null
               ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
               : DateTime.now(),
-          amount: '${firstItem['final_total']?.toStringAsFixed(3) ?? '0.000'}',
+          amount: '${firstItem['final_total']?.toStringAsFixed(2) ?? '0.00'}',
           status: firstItem['status'] ?? 'Unknown Status',
           items: items,
         );

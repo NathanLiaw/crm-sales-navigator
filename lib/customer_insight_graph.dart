@@ -5,56 +5,23 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+class CustomerSalesReport extends StatefulWidget {
+  final String username;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const CustomerSalesReport({super.key, required this.username}); // Updated constructor
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sales Report',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.lightBlue,
-          onPrimary: Colors.white,
-          surface: Colors.lightBlue,
-        ),
-        iconTheme: const IconThemeData(color: Colors.lightBlue),
-      ),
-      home: const SalesReport(),
-    );
-  }
+  _CustomerSalesReportState createState() => _CustomerSalesReportState();
 }
 
-class SalesReport extends StatefulWidget {
-  const SalesReport({super.key});
-
-  @override
-  _SalesReportState createState() => _SalesReportState();
-}
-
-class _SalesReportState extends State<SalesReport> {
+class _CustomerSalesReportState extends State<CustomerSalesReport> {
   final Map<String, List<SalesData>> _salesDataMap = {};
   String _selectedInterval = '3D';
-  String loggedInUsername = '';
 
   @override
   void initState() {
     super.initState();
-    _loadUsername().then((_) {
-      _preloadData();
-    });
-  }
-
-  Future<void> _loadUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      loggedInUsername = prefs.getString('username') ?? 'default_username';
-    });
+    _preloadData();
   }
 
   Future<void> _preloadData() async {
@@ -69,19 +36,19 @@ class _SalesReportState extends State<SalesReport> {
     List<SalesData> fetchedData;
     switch (interval) {
       case '3D':
-        fetchedData = await fetchSalesData('ThreeDays');
+        fetchedData = await fetchCustomerSalesData('ThreeDays', widget.username); // Pass username
         break;
       case '5D':
-        fetchedData = await fetchSalesData('FiveDays');
+        fetchedData = await fetchCustomerSalesData('FiveDays', widget.username); // Pass username
         break;
       case '1M':
-        fetchedData = await fetchSalesData('FourMonths');
+        fetchedData = await fetchCustomerSalesData('FourMonths', widget.username); // Pass username
         break;
       case '1Y':
-        fetchedData = await fetchSalesData('Year');
+        fetchedData = await fetchCustomerSalesData('Year', widget.username); // Pass username
         break;
       case '5Y':
-        fetchedData = await fetchSalesData('FiveYears');
+        fetchedData = await fetchCustomerSalesData('FiveYears', widget.username); // Pass username
         break;
       default:
         fetchedData = [];
@@ -93,7 +60,7 @@ class _SalesReportState extends State<SalesReport> {
     }
   }
 
-  Future<List<SalesData>> fetchSalesData(String reportType) async {
+  Future<List<SalesData>> fetchCustomerSalesData(String reportType, String username) async {
     var db = await connectToDatabase();
     late String query;
 
@@ -114,10 +81,10 @@ class _SalesReportState extends State<SalesReport> {
                 DATE(c.created) AS Date,
                 ROUND(SUM(c.final_total), 0) AS TotalSales
             FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            JOIN customer cust ON c.customer_id = cust.id
             WHERE c.created >= CURDATE() - INTERVAL 2 DAY
               AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
+              AND cust.username = '$username'
             GROUP BY DATE(c.created)
         ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
         ORDER BY Dates.Date ASC;
@@ -141,10 +108,10 @@ class _SalesReportState extends State<SalesReport> {
               DATE(c.created) AS Date,
               ROUND(SUM(c.final_total), 0) AS TotalSales
           FROM cart c
-          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+          JOIN customer cust ON c.customer_id = cust.id
           WHERE c.created >= CURDATE() - INTERVAL 4 DAY
             AND c.status != 'void'
-            AND s.username = '$loggedInUsername'
+            AND cust.username = '$username'
           GROUP BY DATE(c.created)
       ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
       ORDER BY Dates.Date ASC;
@@ -165,10 +132,10 @@ class _SalesReportState extends State<SalesReport> {
                 DATE_FORMAT(c.created, '%Y-%m') AS Month,
                 ROUND(SUM(c.final_total), 0) AS TotalSales
             FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            JOIN customer cust ON c.customer_id = cust.id
             WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)
               AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
+              AND cust.username = '$username'
             GROUP BY DATE_FORMAT(c.created, '%Y-%m')
         ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
         GROUP BY GeneratedMonths.Month
@@ -190,10 +157,10 @@ class _SalesReportState extends State<SalesReport> {
                 DATE_FORMAT(c.created, '%Y-%m') AS Month,
                 ROUND(SUM(c.final_total), 0) AS TotalSales
             FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            JOIN customer cust ON c.customer_id = cust.id
             WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
               AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
+              AND cust.username = '$username'
             GROUP BY DATE_FORMAT(c.created, '%Y-%m')
         ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
         GROUP BY GeneratedMonths.Month
@@ -225,11 +192,11 @@ class _SalesReportState extends State<SalesReport> {
                 ROUND(SUM(c.final_total), 0) AS TotalSales
             FROM 
                 cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
+            JOIN customer cust ON c.customer_id = cust.id
             WHERE 
                 c.created >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
               AND 
-                c.status != 'void' AND s.username = '$loggedInUsername'
+                c.status != 'void' AND cust.username = '$username'
             GROUP BY 
                 YEAR(c.created)
         ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
@@ -241,29 +208,29 @@ class _SalesReportState extends State<SalesReport> {
         break;
     }
 
-  var results = await db.query(query);
+    var results = await db.query(query);
 
-  return results.map((row) {
-    DateTime? date;
-    try {
-      if (reportType == 'FiveYears') {
-        date = DateTime.utc(row['Year']);
-      } else if (reportType == 'FourMonths' || reportType == 'Year') {
-        date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
-      } else {
-        date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
+    return results.map((row) {
+      DateTime? date;
+      try {
+        if (reportType == 'FiveYears') {
+          date = DateTime.utc(row['Year']);
+        } else if (reportType == 'FourMonths' || reportType == 'Year') {
+          date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
+        } else {
+          date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
+        }
+      } catch (e) {
+        date = null;
       }
-    } catch (e) {
-      date = null;
-    }
-    return SalesData(
-      date: date?.toLocal() ?? DateTime.now(),
-      totalSales: row['TotalSales'] != null
-          ? (row['TotalSales'] as num).toDouble()
-          : 0,
-    );
-  }).toList();
-}
+      return SalesData(
+        date: date?.toLocal() ?? DateTime.now(),
+        totalSales: row['TotalSales'] != null
+            ? (row['TotalSales'] as num).toDouble()
+            : 0,
+      );
+    }).toList();
+  }
 
   void _refreshData() async {
     await _fetchData(_selectedInterval);
@@ -306,81 +273,72 @@ class _SalesReportState extends State<SalesReport> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Sales Report',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildQuickAccessButton('3D'),
-                  const SizedBox(width: 10),
-                  _buildQuickAccessButton('5D'),
-                  const SizedBox(width: 10),
-                  _buildQuickAccessButton('1M'),
-                  const SizedBox(width: 10),
-                  _buildQuickAccessButton('1Y'),
-                  const SizedBox(width: 10),
-                  _buildQuickAccessButton('5Y'),
-                ],
-              ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildQuickAccessButton('3D'),
+                const SizedBox(width: 10),
+                _buildQuickAccessButton('5D'),
+                const SizedBox(width: 10),
+                _buildQuickAccessButton('1M'),
+                const SizedBox(width: 10),
+                _buildQuickAccessButton('1Y'),
+                const SizedBox(width: 10),
+                _buildQuickAccessButton('5Y'),
+              ],
             ),
           ),
-          Expanded(
-            child: _salesDataMap[_selectedInterval] != null
-                ? _salesDataMap[_selectedInterval]!.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 4.0, horizontal: 4.0),
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth:
-                                  MediaQuery.of(context).size.width * 0.95,
+        ),
+        Expanded(
+          child: _salesDataMap[_selectedInterval] != null
+              ? _salesDataMap[_selectedInterval]!.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4.0, horizontal: 4.0),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.95,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 24, horizontal: 18),
+                            height:
+                                MediaQuery.of(context).size.height * 0.52,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  spreadRadius: 2,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 24, horizontal: 18),
-                              height: MediaQuery.of(context).size.height * 0.52,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(5),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.5),
-                                    spreadRadius: 2,
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: LineChart(
-                                sampleData(_salesDataMap[_selectedInterval]!),
-                              ),
+                            child: LineChart(
+                              sampleData(_salesDataMap[_selectedInterval]!),
                             ),
                           ),
                         ),
-                      )
-                    : const Center(
-                        child: Text('No data available'),
-                      )
-                : const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-          ),
-        ],
-      ),
+                      ),
+                    )
+                  : const Center(
+                      child: Text('No data available'),
+                    )
+              : const Center(
+                  child: CircularProgressIndicator(),
+                ),
+        ),
+      ],
     );
   }
 
