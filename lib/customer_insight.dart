@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/customer.dart' as Customer;
 import 'package:sales_navigator/customer_graph.dart';
+import 'package:sales_navigator/customer_insight_graph.dart';
 import 'package:sales_navigator/db_connection.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:sales_navigator/item_screen.dart';
-import 'package:sales_navigator/recent_order_page.dart';
-import 'package:sales_navigator/sales_report_graph.dart';
 import 'dart:developer' as developer;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:sales_navigator/item_screen.dart';
+import 'package:sales_navigator/recent_order_page.dart';
 
 class CustomerInsightPage extends StatefulWidget {
   final String customerName;
@@ -24,6 +23,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
   late Future<List<Map<String, dynamic>>> salesDataFuture = Future.value([]);
   late Future<List<Map<String, dynamic>>> productsFuture = Future.value([]);
   late int customerId = 0;
+  late String customerUsername = ''; 
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
     customerFuture = fetchCustomer().then((customer) {
       setState(() {
         customerId = customer.id!;
-        // After customerId is set, fetch sales and products data
+        customerUsername = customer.username;
         salesDataFuture = fetchSalesDataByCustomer(customerId);
         productsFuture = fetchProductsByCustomer(customerId);
       });
@@ -108,7 +108,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
         GROUP BY product_id
       ) AS first_uom_per_product ON ci.product_id = first_uom_per_product.product_id
           AND ci.uom = first_uom_per_product.first_uom
-      WHERE ci.customer_id = 6 AND p.status = 1
+      WHERE ci.customer_id = $customerId AND p.status = 1
       GROUP BY p.product_name, p.photo1, ci.uom
       LIMIT 10
     ''');
@@ -120,7 +120,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
       }).toList();
     } catch (e) {
       developer.log('Error fetching products: $e');
-      return []; // Return empty list on error
+      return [];
     }
   }
 
@@ -308,9 +308,9 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                     style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10.0),
-                  const SizedBox(
+                  SizedBox(
                     height: 400.0,
-                    child: SalesReport(),
+                    child: CustomerSalesReport(username: customerUsername),
                   ),
                   const SizedBox(height: 16),
                   const SizedBox(
@@ -331,7 +331,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id!,)),
+                                MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id!)),
                               );
                             },
                             child: const Text(
@@ -424,61 +424,3 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
     );
   }
 }
-
-class SalesLineChart extends StatelessWidget {
-  final List<Map<String, dynamic>> salesData;
-
-  const SalesLineChart({super.key, required this.salesData});
-
-  @override
-  Widget build(BuildContext context) {
-    List<double> monthlySales = List.filled(12, 0);
-
-    for (var data in salesData) {
-      int month = data['sales_month'];
-      double totalSales = data['total_sales'];
-
-      monthlySales[month - 1] = totalSales; // Month index is zero-based in List
-    }
-
-    return LineChart(
-      LineChartData(
-        titlesData: FlTitlesData(
-          bottomTitles: SideTitles(
-            showTitles: true,
-            margin: 10,
-            getTitles: (value) {
-              final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-              return months[value.toInt()]; // Use value to access month directly
-            },
-          ),
-          leftTitles: SideTitles(
-            showTitles: true,
-            getTitles: (value) {
-              // Custom formatting to display y-axis values by hundreds
-              return '${(value ~/ 100).toInt()}00'; // Rounds to nearest hundred
-            },
-          ),
-        ),
-        gridData: FlGridData(show: true),
-        borderData: FlBorderData(show: true, border: Border.all(color: Colors.grey)),
-        lineBarsData: [
-          LineChartBarData(
-            spots: monthlySales.asMap().entries.map((entry) {
-              final index = entry.key;
-              final sales = entry.value;
-              return FlSpot(index.toDouble(), sales);
-            }).toList(),
-            isCurved: true,
-            colors: [Colors.blue],
-            barWidth: 4,
-            isStrokeCapRound: true,
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-

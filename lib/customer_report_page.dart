@@ -112,7 +112,7 @@ class _CustomerReportState extends State<CustomerReport> {
             salesman.id AS Salesman_ID,
             salesman.username AS Salesman_Username,
             salesman.salesman_name,
-            SUM(cart.final_total) AS Total_Sales,
+            SUM(ci.total) AS Total_Sales,
             MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase,
             SUM(ci.qty) AS Total_Quantity
         FROM cart
@@ -121,7 +121,8 @@ class _CustomerReportState extends State<CustomerReport> {
         LEFT JOIN cart_item ci ON ci.cart_id = cart.id
         WHERE cart.buyer_user_group != 'customer'
         AND cart.status != 'void'
-        AND salesman.username = '$loggedInUsername' $dateCondition 
+        AND salesman.username = '$loggedInUsername'
+        $dateCondition
         GROUP BY cart.customer_company_name, customer.id, salesman.id
         ORDER BY Total_Sales $sortOrder;
         ''');

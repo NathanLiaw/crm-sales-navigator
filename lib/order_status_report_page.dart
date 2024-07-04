@@ -45,7 +45,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   DateTimeRange? dateRange;
   int? selectedDays;
   int selectedButtonIndex = 3;
-  bool isSortedAscending = true;
+  bool isSortedAscending = false; // Set to false for descending order
   String loggedInUsername = '';
   Customer? selectedCustomer;
 
@@ -56,7 +56,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     'By Amount (High to Low)',
   ];
 
-  String _selectedMethod = 'By Creation Date (Ascending)';
+  String _selectedMethod =
+      'By Creation Date (Descending)'; // Default to descending
 
   final Map<String, bool> _statusFilters = {
     'Void': false,
@@ -298,6 +299,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
             var screenHeight = mediaQuery.size.height;
             var screenWidth = mediaQuery.size.width;
 
+            int selectedCount = checkedItems.where((item) => item).length;
+
             return Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -328,9 +331,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Select Items',
-                          style: TextStyle(
+                        Text(
+                          '   Select Items: $selectedCount',
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             color: Color(0xFF004072),
@@ -347,9 +350,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             ),
                             backgroundColor: Colors.blue,
                           ),
-                          child: const Text(
-                            'Select All',
-                            style: TextStyle(fontSize: 14, color: Colors.white),
+                          child: Text(
+                            selectAll ? 'Unselect All' : 'Select All',
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.white),
                           ),
                           onPressed: () {
                             setState(() {
@@ -365,33 +369,36 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                     if (items.length == 1)
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              items[0]['product_name'],
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: screenWidth * 0.045,
+                        title: Padding(
+                          padding: EdgeInsets.only(left: 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                items[0]['product_name'],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: screenWidth * 0.045,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: screenHeight * 0.005),
-                            Text(
-                              'UOM: ${items[0]['uom']}',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w500,
+                              SizedBox(height: screenHeight * 0.005),
+                              Text(
+                                'UOM: ${items[0]['uom']}',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: screenHeight * 0.005),
-                            Text(
-                              'Qty: ${items[0]['qty']}',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w500,
+                              SizedBox(height: screenHeight * 0.005),
+                              Text(
+                                'Qty: ${items[0]['qty']}',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         leading: Checkbox(
                           value: checkedItems[0],
@@ -406,69 +413,81 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                         ),
                       ),
                     if (items.length > 1)
-                      SizedBox(
-                        height: screenHeight * 0.5,
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: Column(
-                                children: items.asMap().entries.map((entry) {
-                                  int index = entry.key;
-                                  var item = entry.value;
-                                  return Column(
-                                    children: [
-                                      CheckboxListTile(
-                                        controlAffinity:
-                                            ListTileControlAffinity.leading,
-                                        title: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item['product_name'],
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: screenWidth * 0.045,
-                                              ),
+                      Flexible(
+                        child: SizedBox(
+                          height: items.length <= 3 ? null : screenHeight * 0.5,
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Column(
+                                  children: items.asMap().entries.map((entry) {
+                                    int index = entry.key;
+                                    var item = entry.value;
+                                    return Column(
+                                      children: [
+                                        CheckboxListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          controlAffinity:
+                                              ListTileControlAffinity.leading,
+                                          title: Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item['product_name'],
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize:
+                                                        screenWidth * 0.045,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                    height:
+                                                        screenHeight * 0.005),
+                                                Text(
+                                                  'UOM: ${item['uom']}',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        screenWidth * 0.04,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                    height:
+                                                        screenHeight * 0.005),
+                                                Text(
+                                                  'Qty: ${item['qty']}',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        screenWidth * 0.04,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            SizedBox(
-                                                height: screenHeight * 0.005),
-                                            Text(
-                                              'UOM: ${item['uom']}',
-                                              style: TextStyle(
-                                                fontSize: screenWidth * 0.04,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                                height: screenHeight * 0.005),
-                                            Text(
-                                              'Qty: ${item['qty']}',
-                                              style: TextStyle(
-                                                fontSize: screenWidth * 0.04,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
+                                          value: checkedItems[index],
+                                          onChanged: (bool? value) {
+                                            if (mounted) {
+                                              setState(() {
+                                                checkedItems[index] = value!;
+                                                if (!value) selectAll = false;
+                                              });
+                                            }
+                                          },
                                         ),
-                                        value: checkedItems[index],
-                                        onChanged: (bool? value) {
-                                          if (mounted) {
-                                            setState(() {
-                                              checkedItems[index] = value!;
-                                              if (!value) selectAll = false;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                      if (index != items.length - 1)
-                                        const Divider(color: Colors.grey),
-                                    ],
-                                  );
-                                }).toList(),
+                                        if (index != items.length - 1)
+                                          const Divider(color: Colors.grey),
+                                      ],
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ),
                           ),
