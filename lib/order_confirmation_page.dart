@@ -64,7 +64,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     String name = prefs.getString('salesmanName') ?? '';
     int areaId = prefs.getInt('area') ?? 0;
     int id = prefs.getInt('id') ?? 0;
-    String stringOrderOptions = '["${orderOptions.join('","')}"]';
+
+    // Filter selected order options
+    List<String> selectedOrderOptions = [];
+    selectedIndices.forEach((index) {
+      selectedOrderOptions.add(orderOptions[index]);
+    });
+    String stringOrderOptions = '["${selectedOrderOptions.join('","')}"]';
 
     try {
       MySqlConnection conn = await connectToDatabase();

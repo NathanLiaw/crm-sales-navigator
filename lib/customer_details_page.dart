@@ -215,7 +215,7 @@ Future<List<Customer>> fetchCustomers() async {
       conn,
       'customer',
       'status=1',
-      '',
+      'company_name',
       '*',
     );
     await conn.close();
