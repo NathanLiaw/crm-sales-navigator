@@ -39,27 +39,51 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     var db = await connectToDatabase();
     var results = await db.query('''
       SELECT 
-          salesman.id AS salesman_id,
-          salesman.salesman_name,
-          MONTH(cart.created) AS purchase_month,
-          YEAR(cart.created) AS purchase_year,
-          SUM(cart.final_total) AS total_sales,
-          SUM(cart_item.qty) AS cart_quantity
+          s.id AS salesman_id,
+          s.salesman_name,
+          c.purchase_month,
+          c.purchase_year,
+          c.total_sales,
+          ci.cart_quantity
       FROM 
-          cart
+          salesman s
       JOIN 
-          salesman ON cart.buyer_id = salesman.id 
+          (SELECT 
+              c.buyer_id,
+              MONTH(c.created) AS purchase_month,
+              YEAR(c.created) AS purchase_year,
+              SUM(c.final_total) AS total_sales
+          FROM 
+              cart c
+          WHERE 
+              c.buyer_user_group != 'customer' 
+              AND c.status != 'void'
+          GROUP BY 
+              c.buyer_id, MONTH(c.created), YEAR(c.created)
+          ) c ON s.id = c.buyer_id
       JOIN 
-          cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
+          (SELECT 
+              c.buyer_id,
+              MONTH(c.created) AS purchase_month,
+              YEAR(c.created) AS purchase_year,
+              SUM(ci.qty) AS cart_quantity
+          FROM 
+              cart_item ci
+          JOIN 
+              cart c ON ci.cart_id = c.id
+          WHERE 
+              ci.status != 'void' 
+              AND c.buyer_user_group != 'customer'
+              AND c.status != 'void'
+          GROUP BY 
+              c.buyer_id, MONTH(c.created), YEAR(c.created)
+          ) ci ON s.id = ci.buyer_id 
+            AND c.purchase_month = ci.purchase_month 
+            AND c.purchase_year = ci.purchase_year
       WHERE 
-          cart.buyer_user_group != 'customer' 
-          AND cart.status != 'void' 
-          AND cart_item.status != 'void' 
-          AND salesman.username = '$loggedInUsername'
-      GROUP BY 
-          salesman.id, salesman.salesman_name, purchase_month, purchase_year
+          s.username = '$loggedInUsername'
       ORDER BY 
-          purchase_year DESC, purchase_month DESC
+          c.purchase_year DESC, c.purchase_month DESC
       LIMIT 2;
     ''');
 
