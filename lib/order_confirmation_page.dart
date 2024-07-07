@@ -62,7 +62,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   Future<void> createCart() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String name = prefs.getString('salesmanName') ?? '';
-    int areaId = prefs.getInt('area') ?? 0;
+    int areaId = prefs.getInt('areaId') ?? 0;
     int id = prefs.getInt('id') ?? 0;
 
     // Filter selected order options
@@ -70,7 +70,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     selectedIndices.forEach((index) {
       selectedOrderOptions.add(orderOptions[index]);
     });
-    String stringOrderOptions = '["${selectedOrderOptions.join('","')}"]';
+    String stringOrderOptions = 'null';
+    if (selectedOrderOptions.isNotEmpty) {
+      stringOrderOptions = '["${selectedOrderOptions.join('","')}"]';
+    }
 
     try {
       MySqlConnection conn = await connectToDatabase();

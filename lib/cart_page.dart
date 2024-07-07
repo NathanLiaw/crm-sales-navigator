@@ -856,19 +856,8 @@ class _CartPage extends State<CartPage> {
                     if (!editCart)
                       ElevatedButton(
                         onPressed: () {
-                          if (customer != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OrderConfirmationPage(
-                                  customer: customer!,
-                                  total: total,
-                                  subtotal: subtotal,
-                                  cartItems: cartItems,
-                                ),
-                              ),
-                            );
-                          } else {
+                          if (customer == null) {
+                            // Show dialog if customer is not selected
                             showDialog(
                               context: context,
                               builder: (BuildContext context) {
@@ -885,6 +874,38 @@ class _CartPage extends State<CartPage> {
                                   ],
                                 );
                               },
+                            );
+                          } else if (cartItems.isEmpty) {
+                            // Show dialog if cart items are empty
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Cart is Empty'),
+                                  content: const Text('Please add items to the cart before proceeding.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close the dialog
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            // Proceed to the order confirmation page if both customer is selected and cart is not empty
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrderConfirmationPage(
+                                  customer: customer!,
+                                  total: total,
+                                  subtotal: subtotal,
+                                  cartItems: cartItems,
+                                ),
+                              ),
                             );
                           }
                         },
@@ -906,7 +927,7 @@ class _CartPage extends State<CartPage> {
                             fontSize: 20,
                           ),
                         ),
-                      ),
+                      )
                   ],
                 ),
               ],
