@@ -132,108 +132,119 @@ class LoginPage extends StatelessWidget {
           // If logged in, navigate to HomePage
           return HomePage();
         } else {
-          // If not logged in, show the login page
-          return Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 50),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.only(top: 30),
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: Image.asset(
-                        'asset/logo/logo_fyh.png',
-                        width: 300,
-                        height: 250,
-                      ),
-                    ),
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.only(
-                        left: 20,
-                      ),
-                      child: const Text(
-                        'Salesman',
-                        style: TextStyle(
-                            fontSize: 25, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-
-                    // Email input field
-                    const SizedBox(height: 10),
-                    Container(
-                      margin: const EdgeInsets.only(
-                          top: 10, bottom: 10, left: 20, right: 20),
-                      child: TextFormField(
-                        controller: usernameController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Username',
-                          // hintText: 'fyh@mail.com',
+          // If not logged in, show the login page with gradient background
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.blue, Colors.white, Colors.lightBlueAccent],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 50),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.only(top: 30),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: Image.asset(
+                          'asset/logo/logo_fyh.png',
+                          width: 300,
+                          height: 250,
                         ),
                       ),
-                    ),
-
-                    // Password input field
-                    const SizedBox(height: 10),
-                    Container(
-                      margin:
-                          const EdgeInsets.only(top: 10, left: 20, right: 20),
-                      child: TextFormField(
-                        controller: passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Password',
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(
+                          left: 20,
                         ),
-                      ),
-                    ),
-
-                    // Sign in button
-                    const SizedBox(height: 20),
-                    Container(
-                      margin:
-                          const EdgeInsets.only(top: 20, left: 20, right: 20),
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Call the sign in method
-                          signIn(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0069BA),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                        ),
-                        child: const Text(
-                          'Sign In',
+                        child: Text(
+                          'Salesman',
                           style: TextStyle(
-                            color: Colors.white,
+                              fontSize: 25, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+
+                      // Email input field
+                      const SizedBox(height: 10),
+                      Container(
+                        margin: const EdgeInsets.only(
+                            top: 10, bottom: 10, left: 20, right: 20),
+                        child: TextFormField(
+                          controller: usernameController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Username',
+                            // hintText: 'fyh@mail.com',
                           ),
                         ),
                       ),
-                    ),
 
-                    // Forgot password button
-                    const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () {
-                        // Show pop up window
-                        showContactInfoDialog(context);
-                      },
-                      child: const Text(
-                        'Forgot Password',
-                        style: TextStyle(
-                          color: Colors.black,
-                          decoration: TextDecoration.underline,
-                          decorationThickness: 2.0,
+                      // Password input field
+                      const SizedBox(height: 10),
+                      Container(
+                        margin:
+                            const EdgeInsets.only(top: 10, left: 20, right: 20),
+                        child: TextFormField(
+                          controller: passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Password',
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+
+                      // Sign in button
+                      const SizedBox(height: 20),
+                      Container(
+                        margin:
+                            const EdgeInsets.only(top: 20, left: 20, right: 20),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Call the sign in method
+                            signIn(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff0069BA),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          child: const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Forgot password button
+                      const SizedBox(height: 10),
+                      TextButton(
+                        onPressed: () {
+                          // Show pop up window
+                          showContactInfoDialog(context);
+                        },
+                        child: const Text(
+                          'Forgot Password',
+                          style: TextStyle(
+                            color: Colors.black,
+                            decoration: TextDecoration.underline,
+                            decorationThickness: 2.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
