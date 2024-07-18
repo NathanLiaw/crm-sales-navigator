@@ -59,6 +59,15 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       }
       chips.add(Chip(
         label: Text(subCatName),
+        padding: EdgeInsets.all(2.0),
+        deleteIconColor: Color.fromARGB(255, 13, 13, 13),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        backgroundColor: Color.fromARGB(255, 57, 141, 225),
+        labelStyle: TextStyle(
+          color: Colors.white,
+        ),
         onDeleted: () {
           setState(() {
             selectedSubCategoryIds.remove(subCatId);
@@ -72,6 +81,15 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       String brandName = _brands.firstWhere((b) => b.id == brandId).brand;
       chips.add(Chip(
         label: Text(brandName),
+        padding: EdgeInsets.all(2.0),
+        deleteIconColor: Color.fromARGB(255, 13, 13, 13),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        backgroundColor: Color.fromARGB(255, 57, 141, 225),
+        labelStyle: TextStyle(
+          color: Colors.white,
+        ),
         onDeleted: () {
           setState(() {
             _selectedBrandIds.remove(brandId);
@@ -81,8 +99,8 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
     }
 
     return Wrap(
-      spacing: 8.0,
-      runSpacing: 4.0,
+      spacing: 4.0,
+      runSpacing: 2.0,
       children: chips,
     );
   }
@@ -185,16 +203,36 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                   ),
                 ),
                 // Display chips for selected items
-                Container(
-                  padding: EdgeInsets.all(8.0),
-                  color: Colors.grey[200],
-                  child: _buildChips(),
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    padding: EdgeInsets.all(8.0),
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (selectedSubCategoryIds.isNotEmpty ||
+                            _selectedBrandIds.isNotEmpty)
+                          Padding(
+                            padding: EdgeInsets.only(bottom: 8.0),
+                            child: Text(
+                              'Selected Filter:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        _buildChips(),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
-        color: Color.fromARGB(255, 255, 255, 255),
+        color: Color.fromARGB(255, 240, 248, 255), // Light blue color
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -203,6 +241,11 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                 setState(() {
                   selectedSubCategoryIds.clear();
                   _selectedBrandIds.clear();
+                });
+
+                Navigator.pop(context, {
+                  'selectedSubCategoryIds': selectedSubCategoryIds,
+                  'selectedBrandIds': _selectedBrandIds,
                 });
               },
               child: Text(
