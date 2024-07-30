@@ -134,30 +134,31 @@ class LoginPage extends StatelessWidget {
         } else {
           // If not logged in, show the login page
           return Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 50),
+            body: Container(
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.only(top: 30),
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: Image.asset(
-                        'asset/logo/logo_fyh.png',
-                        width: 300,
-                        height: 250,
+                      padding: EdgeInsets.only(
+                        left: 18,
+                        top: 50,
+                        bottom: 20,
                       ),
+                      alignment: Alignment.centerLeft,
+                      child: Image.asset('asset/logo/logo_fyh.png',
+                          width: 200, height: 100),
                     ),
                     Container(
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(
                         left: 20,
+                        bottom: 24,
                       ),
                       child: const Text(
-                        'Salesman',
+                        'Control your Sales\ntoday.',
                         style: TextStyle(
-                            fontSize: 25, fontWeight: FontWeight.bold),
+                            fontSize: 20, fontWeight: FontWeight.w400),
                       ),
                     ),
 
@@ -192,10 +193,10 @@ class LoginPage extends StatelessWidget {
                     ),
 
                     // Sign in button
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     Container(
-                      margin:
-                          const EdgeInsets.only(top: 20, left: 20, right: 20),
+                      padding:
+                          const EdgeInsets.only(top: 10, left: 80, right: 80),
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
@@ -203,9 +204,9 @@ class LoginPage extends StatelessWidget {
                           signIn(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0069BA),
+                          backgroundColor: Color.fromARGB(255, 7, 148, 255),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                         ),
                         child: const Text(
@@ -218,7 +219,7 @@ class LoginPage extends StatelessWidget {
                     ),
 
                     // Forgot password button
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 4),
                     TextButton(
                       onPressed: () {
                         // Show pop up window
@@ -232,6 +233,28 @@ class LoginPage extends StatelessWidget {
                           decorationThickness: 2.0,
                         ),
                       ),
+                    ),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 800, // Set your desired width
+                          child: Image.asset(
+                            'asset/SN_ELEMENTS_CENTER.png',
+                          ),
+                        ),
+                        Positioned(
+                          top: 10,
+                          // Adjust the position of the new image as needed
+                          child: Container(
+                            width:
+                                200, // Set your desired width for the new image
+                            child: Image.asset(
+                              'asset/chart_illu.png',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
