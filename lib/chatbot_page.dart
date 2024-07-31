@@ -23,6 +23,23 @@ class _ChatScreenState extends State<ChatScreen> {
   int currentQuestionIndex = 0;
   bool showSuggestionBox = true;
   int? selectedAreaId;
+  bool feedbackEnabled = false;
+  int thumbsUpResponseIndex = 0;
+  int thumbsDownResponseIndex = 0;
+
+  final List<String> thumbsUpResponses = [
+    "Thank you for your feedback!",
+    "Thanks! We're happy to help.",
+    "Your feedback is appreciated!",
+    "Thanks for the thumbs up!",
+  ];
+
+  final List<String> thumbsDownResponses = [
+    "Sorry to hear that. We'll strive to do better.",
+    "Sorry for the inconvenience. We'll work on improving.",
+    "We appreciate your feedback and will work to improve.",
+    "Your feedback helps us get better. Thank you.",
+  ];
 
   @override
   void initState() {
@@ -47,9 +64,11 @@ class _ChatScreenState extends State<ChatScreen> {
         });
         _controller.clear();
         isTyping = false;
+        feedbackEnabled = false;
       });
 
-      final url = Uri.parse('http://10.0.2.2:5000/chat');
+      final url =
+          Uri.parse('https://salesnavigator-production.up.railway.app/chat');
       try {
         final response = await http.post(
           url,
@@ -91,6 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
               });
             }
             showSuggestionBox = false;
+            feedbackEnabled = true;
           });
         } else {
           setState(() {
@@ -116,6 +136,46 @@ class _ChatScreenState extends State<ChatScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+  }
+
+  Future<void> _handleFeedback(bool isThumbsUp) async {
+    final message =
+        isThumbsUp ? "User gave thumbs up" : "User gave thumbs down";
+    String feedbackResponse;
+
+    if (isThumbsUp) {
+      feedbackResponse = thumbsUpResponses[thumbsUpResponseIndex];
+      thumbsUpResponseIndex =
+          (thumbsUpResponseIndex + 1) % thumbsUpResponses.length;
+    } else {
+      feedbackResponse = thumbsDownResponses[thumbsDownResponseIndex];
+      thumbsDownResponseIndex =
+          (thumbsDownResponseIndex + 1) % thumbsDownResponses.length;
+    }
+
+    final url =
+        Uri.parse('https://salesnavigator-production.up.railway.app/feedback');
+    try {
+      await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'message': message,
+        }),
+      );
+
+      setState(() {
+        feedbackEnabled = false;
+        _messages.add({
+          "message": feedbackResponse,
+          "isUser": false,
+          "timestamp": _getCurrentTime()
+        });
+      });
+    } catch (e) {
+      // Handle error if needed
     }
   }
 
@@ -296,12 +356,18 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.thumb_up_alt_outlined),
-                        onPressed: () {},
+                        icon: Icon(Icons.thumb_up_alt_outlined,
+                            color: feedbackEnabled ? Colors.blue : Colors.grey),
+                        onPressed: feedbackEnabled
+                            ? () => _handleFeedback(true)
+                            : null,
                       ),
                       IconButton(
-                        icon: const Icon(Icons.thumb_down_alt_outlined),
-                        onPressed: () {},
+                        icon: Icon(Icons.thumb_down_alt_outlined,
+                            color: feedbackEnabled ? Colors.blue : Colors.grey),
+                        onPressed: feedbackEnabled
+                            ? () => _handleFeedback(false)
+                            : null,
                       ),
                     ],
                   ),
