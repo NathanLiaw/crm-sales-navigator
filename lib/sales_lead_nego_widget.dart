@@ -479,14 +479,19 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                           color: Color(0xff0069BA),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          widget.leadItem.contactNumber.isNotEmpty
-                              ? widget.leadItem.contactNumber
-                              : 'Unavailable',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
+                        Container(
+                          width: 100,
+                          child: Text(
+                            widget.leadItem.contactNumber.isNotEmpty
+                                ? widget.leadItem.contactNumber
+                                : 'Unavailable',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              decoration: TextDecoration.underline,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -505,14 +510,19 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                           color: Color(0xff0069BA),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          widget.leadItem.emailAddress.isNotEmpty
-                              ? widget.leadItem.emailAddress
-                              : 'Unavailable',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
+                        Container(
+                          width: 150,
+                          child: Text(
+                            widget.leadItem.emailAddress.isNotEmpty
+                                ? widget.leadItem.emailAddress
+                                : 'Unavailable',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              decoration: TextDecoration.underline,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

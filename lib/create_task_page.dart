@@ -145,6 +145,40 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     _fetchSalesOrderDetails(selectedSalesOrderId);
   }
 
+  void updateSelectedSalesOrderId(String? newId) {
+    setState(() {
+      selectedSalesOrderId = newId;
+      if (newId != null && salesOrderIds.contains(newId)) {
+        _fetchSalesOrderDetails(newId);
+      } else {
+        // Reset related fields if the selected ID is not valid
+        createdDate = null;
+        expirationDate = null;
+        total = null;
+        quantity = null;
+        formattedCreatedDate = null;
+        cartItemList = [];
+      }
+    });
+  }
+
+  // Future<void> _navigateToSelectOrderIDPage() async {
+  //   final selectedOrderID = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) =>
+  //           SelectOrderIDPage(customerName: widget.customerName),
+  //     ),
+  //   );
+
+  //   if (selectedOrderID != null) {
+  //     setState(() {
+  //       selectedSalesOrderId = selectedOrderID.toString();
+  //     });
+  //     _fetchSalesOrderDetails(selectedSalesOrderId);
+  //   }
+  // }
+
   Future<void> _navigateToSelectOrderIDPage() async {
     final selectedOrderID = await Navigator.push(
       context,
@@ -155,10 +189,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     );
 
     if (selectedOrderID != null) {
-      setState(() {
-        selectedSalesOrderId = selectedOrderID.toString();
-      });
-      _fetchSalesOrderDetails(selectedSalesOrderId);
+      updateSelectedSalesOrderId(selectedOrderID.toString());
     }
   }
 
@@ -238,15 +269,33 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     }
   }
 
+  // Future<List<String>> fetchSalesOrderIds() async {
+  //   try {
+  //     List<Map<String, dynamic>> salesOrders =
+  //         await fetchSalesOrderDropdown(widget.customerName);
+  //     setState(() {
+  //       salesOrderIds = salesOrders.map((order) {
+  //         final orderId = order['id'];
+  //         return orderId.toString();
+  //       }).toList();
+  //     });
+  //   } catch (e) {
+  //     developer.log('Error fetching sales order IDs: $e');
+  //   }
+  //   return salesOrderIds;
+  // }
+
   Future<List<String>> fetchSalesOrderIds() async {
     try {
       List<Map<String, dynamic>> salesOrders =
           await fetchSalesOrderDropdown(widget.customerName);
+      Set<String> uniqueIds = Set<String>();
+      salesOrders.forEach((order) {
+        final orderId = order['id'].toString();
+        uniqueIds.add(orderId);
+      });
       setState(() {
-        salesOrderIds = salesOrders.map((order) {
-          final orderId = order['id'];
-          return orderId.toString();
-        }).toList();
+        salesOrderIds = uniqueIds.toList();
       });
     } catch (e) {
       developer.log('Error fetching sales order IDs: $e');

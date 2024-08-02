@@ -25,6 +25,34 @@ final List<String> tabbarNames = [
   'Closed',
 ];
 
+class SalesmanPerformanceUpdater {
+  Timer? _timer;
+
+  void startPeriodicUpdate(int salesmanId) {
+    // 每小时更新一次
+    _timer = Timer.periodic(Duration(hours: 1), (timer) {
+      _updateSalesmanPerformance(salesmanId);
+    });
+  }
+
+  void stopPeriodicUpdate() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  Future<void> _updateSalesmanPerformance(int salesmanId) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      await conn.query(
+          'CALL update_salesman_performance(?, CURDATE())', [salesmanId]);
+    } catch (e) {
+      print('Error updating salesman performance: $e');
+    } finally {
+      await conn.close();
+    }
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -44,12 +72,15 @@ class _HomePageState extends State<HomePage> {
   late int salesmanId;
 
   bool _isLoading = true; // Track loading state
+  late SalesmanPerformanceUpdater _performanceUpdater;
 
   @override
   void initState() {
     super.initState();
+    _performanceUpdater = SalesmanPerformanceUpdater();
     _initializeSalesmanId();
-    _fetchLeadItems();
+    // _fetchLeadItems();
+    _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
     Future.delayed(Duration(seconds: 2), () {
       setState(() {
         _isLoading = false; // Set loading state to false when data is loaded
@@ -62,6 +93,89 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       salesmanId = id;
     });
+    _performanceUpdater.startPeriodicUpdate(salesmanId);
+  }
+
+  @override
+  void dispose() {
+    _performanceUpdater?.stopPeriodicUpdate();
+    super.dispose();
+  }
+
+  // Update salesman performance by calling the sql Stored Procedure
+  Future<void> _updateSalesmanPerformance(int salesmanId) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      await conn.query(
+          'CALL update_salesman_performance(?, CURDATE())', [salesmanId]);
+    } catch (e) {
+      developer.log('Error updating salesman performance: $e');
+    } finally {
+      await conn.close();
+    }
+  }
+
+  // Get average closed value by calling the sql function
+  Future<double> _getAverageClosedValue(
+      int salesmanId, String startDate, String endDate) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      var result = await conn.query(
+          'SELECT calculate_average_closed_value(?, ?, ?)',
+          [salesmanId, startDate, endDate]);
+      return (result.first.values!.first as num).toDouble();
+    } catch (e) {
+      developer.log('Error getting average closed value: $e');
+      return 0;
+    } finally {
+      await conn.close();
+    }
+  }
+
+  // Get stage duration by calling the sql function
+  Future<int> getStageDuration(int leadId, String stage) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      var results = await conn.query(
+          'SELECT calculate_stage_duration(?, ?) AS duration', [leadId, stage]);
+      if (results.isNotEmpty) {
+        return results.first['duration'] as int;
+      }
+      return 0;
+    } catch (e) {
+      developer.log('Error calculating stage duration: $e');
+      return 0;
+    } finally {
+      await conn.close();
+    }
+  }
+
+  // Clean and validate lead data
+  Future<void> _cleanAndValidateLeadData() async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      await conn.query('''
+      UPDATE sales_lead
+      SET 
+        engagement_start_date = CASE 
+          WHEN stage IN ('Engagement', 'Negotiation', 'Order Processing', 'Closed') AND engagement_start_date IS NULL 
+          THEN created_date 
+          ELSE engagement_start_date 
+        END,
+        negotiation_start_date = CASE 
+          WHEN stage IN ('Negotiation', 'Order Processing', 'Closed') AND negotiation_start_date IS NULL 
+          THEN COALESCE(engagement_start_date, created_date)
+          ELSE negotiation_start_date 
+        END
+      WHERE salesman_id = ?
+    ''', [salesmanId]);
+
+      developer.log('Lead data cleaned and validated');
+    } catch (e) {
+      developer.log('Error cleaning and validating lead data: $e');
+    } finally {
+      await conn.close();
+    }
   }
 
   Future<void> _fetchLeadItems() async {
@@ -193,6 +307,9 @@ class _HomePageState extends State<HomePage> {
         var salesOrderId = row['so_id']?.toString();
         var previousStage = row['previous_stage']?.toString();
         var quantity = row['quantity'];
+        // 添加这两行来获取 engagement_start_date 和 negotiation_start_date
+        var engagementStartDate = row['engagement_start_date'] as DateTime?;
+        var negotiationStartDate = row['negotiation_start_date'] as DateTime?;
 
         var leadItem = LeadItem(
           id: row['id'] as int, // 添加这一行
@@ -208,6 +325,8 @@ class _HomePageState extends State<HomePage> {
           salesOrderId: salesOrderId,
           previousStage: previousStage,
           quantity: quantity,
+          engagementStartDate: engagementStartDate, // 添加这行
+          negotiationStartDate: negotiationStartDate, // 添加这行
         );
 
         setState(() {
@@ -246,17 +365,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _moveFromNegotiationToOrderProcessing(
-      LeadItem leadItem, String salesOrderId, int? quantity) async {
-    setState(() {
-      negotiationLeads.remove(leadItem);
-      leadItem.salesOrderId = salesOrderId;
-      leadItem.quantity = quantity;
-    });
-    await _updateLeadStage(leadItem, 'Order Processing');
-    await _updateSalesOrderId(leadItem, salesOrderId);
-  }
-
   Future<void> _updateSalesOrderId(
       LeadItem leadItem, String salesOrderId) async {
     MySqlConnection conn = await connectToDatabase();
@@ -272,9 +380,26 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _moveFromNegotiationToOrderProcessing(
+      LeadItem leadItem, String salesOrderId, int? quantity) async {
+    setState(() {
+      negotiationLeads.remove(leadItem);
+      leadItem.salesOrderId = salesOrderId;
+      leadItem.quantity = quantity;
+    });
+    await _updateLeadStage(leadItem, 'Order Processing');
+    await _updateSalesOrderId(leadItem, salesOrderId);
+    // 调用更新销售人员表现的函数
+    await _updateSalesmanPerformance(salesmanId);
+  }
+
   Future<void> _moveToEngagement(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
+      // 更新阶段和开始时间
+      await conn.query(
+          'UPDATE sales_lead SET stage = ?, engagement_start_date = NOW() WHERE id = ?',
+          ['Engagement', leadItem.id]);
       Results results = await conn.query(
         'SELECT contact_number, email_address FROM sales_lead WHERE id = ?',
         [leadItem.id],
@@ -284,6 +409,8 @@ class _HomePageState extends State<HomePage> {
         leadItem.contactNumber = row['contact_number'];
         leadItem.emailAddress = row['email_address'];
       }
+      // 调用更新销售人员表现的函数
+      await _updateSalesmanPerformance(salesmanId);
     } catch (e) {
       developer.log('Error fetching contact number and email address: $e');
     } finally {
@@ -300,6 +427,10 @@ class _HomePageState extends State<HomePage> {
   Future<void> _moveToNegotiation(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
+      // 更新阶段和开始时间
+      await conn.query(
+          'UPDATE sales_lead SET stage = ?, negotiation_start_date = NOW() WHERE id = ?',
+          ['Negotiation', leadItem.id]);
       Results results = await conn.query(
         'SELECT contact_number, email_address FROM sales_lead WHERE id = ?',
         [leadItem.id],
@@ -309,12 +440,13 @@ class _HomePageState extends State<HomePage> {
         leadItem.contactNumber = row['contact_number'];
         leadItem.emailAddress = row['email_address'];
       }
+      // 调用更新销售人员表现的函数
+      await _updateSalesmanPerformance(salesmanId);
     } catch (e) {
       developer.log('Error fetching contact number and email address: $e');
     } finally {
       await conn.close();
     }
-
     setState(() {
       leadItems.remove(leadItem);
       negotiationLeads.add(leadItem);
@@ -328,6 +460,8 @@ class _HomePageState extends State<HomePage> {
       negotiationLeads.add(leadItem);
     });
     await _updateLeadStage(leadItem, 'Negotiation');
+    // 调用更新销售人员表现的函数
+    await _updateSalesmanPerformance(salesmanId);
   }
 
   Future<void> _moveFromOrderProcessingToClosed(LeadItem leadItem) async {
@@ -336,14 +470,65 @@ class _HomePageState extends State<HomePage> {
       closedLeads.add(leadItem);
     });
     await _updateLeadStage(leadItem, 'Closed');
+    // 调用更新销售人员表现的函数
+    await _updateSalesmanPerformance(salesmanId);
   }
 
+  // Future<void> _updateLeadStage(LeadItem leadItem, String stage) async {
+  //   setState(() {
+  //     leadItem.previousStage = leadItem.stage;
+  //     leadItem.stage = stage;
+  //   });
+  //   await _updateLeadStageInDatabase(leadItem);
+  // }
+
   Future<void> _updateLeadStage(LeadItem leadItem, String stage) async {
-    setState(() {
-      leadItem.previousStage = leadItem.stage;
-      leadItem.stage = stage;
-    });
-    await _updateLeadStageInDatabase(leadItem);
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      String query;
+      List<Object> params;
+
+      if (stage == 'Negotiation' && leadItem.negotiationStartDate == null) {
+        query = '''
+        UPDATE sales_lead 
+        SET stage = ?, previous_stage = ?, negotiation_start_date = NOW() 
+        WHERE id = ?
+      ''';
+        params = [stage, leadItem.stage, leadItem.id];
+      } else if (stage == 'Engagement' &&
+          leadItem.engagementStartDate == null) {
+        query = '''
+        UPDATE sales_lead 
+        SET stage = ?, previous_stage = ?, engagement_start_date = NOW() 
+        WHERE id = ?
+      ''';
+        params = [stage, leadItem.stage, leadItem.id];
+      } else {
+        query =
+            'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
+        params = [stage, leadItem.stage, leadItem.id];
+      }
+
+      await conn.query(query, params);
+
+      setState(() {
+        leadItem.previousStage = leadItem.stage;
+        leadItem.stage = stage;
+        if (stage == 'Negotiation' && leadItem.negotiationStartDate == null) {
+          leadItem.negotiationStartDate = DateTime.now();
+        } else if (stage == 'Engagement' &&
+            leadItem.engagementStartDate == null) {
+          leadItem.engagementStartDate = DateTime.now();
+        }
+      });
+
+      developer.log(
+          'Successfully updated lead stage to $stage for lead ${leadItem.id}');
+    } catch (e) {
+      developer.log('Error updating stage: $e');
+    } finally {
+      await conn.close();
+    }
   }
 
   Future<void> _moveToCreateTaskPage(
@@ -414,15 +599,54 @@ class _HomePageState extends State<HomePage> {
     });
     await _updateLeadStage(leadItem, 'Order Processing');
     await _updateSalesOrderId(leadItem, salesOrderId);
+    // 调用更新销售人员表现的函数
+    await _updateSalesmanPerformance(salesmanId);
   }
+
+  // Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query(
+  //       'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?',
+  //       [leadItem.stage, leadItem.previousStage, leadItem.id],
+  //     );
+  //   } catch (e) {
+  //     developer.log('Error updating stage: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
-      await conn.query(
-        'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?',
-        [leadItem.stage, leadItem.previousStage, leadItem.id],
-      );
+      String query;
+      List<Object> params;
+
+      if (leadItem.stage == 'Negotiation') {
+        query = '''
+        UPDATE sales_lead 
+        SET stage = ?, previous_stage = ?, negotiation_start_date = NOW() 
+        WHERE id = ?
+      ''';
+        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+      } else if (leadItem.stage == 'Engagement') {
+        query = '''
+        UPDATE sales_lead 
+        SET stage = ?, previous_stage = ?, engagement_start_date = NOW() 
+        WHERE id = ?
+      ''';
+        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+      } else {
+        query =
+            'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
+        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+      }
+
+      await conn.query(query, params);
+
+      developer.log(
+          'Successfully updated lead stage to ${leadItem.stage} for lead ${leadItem.id}');
     } catch (e) {
       developer.log('Error updating stage: $e');
     } finally {
@@ -434,12 +658,16 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       engagementLeads.remove(leadItem);
     });
+    // 调用更新销售人员表现的函数
+    _updateSalesmanPerformance(salesmanId);
   }
 
   void _onDeleteNegotiationLead(LeadItem leadItem) {
     setState(() {
       negotiationLeads.remove(leadItem);
     });
+    // 调用更新销售人员表现的函数
+    _updateSalesmanPerformance(salesmanId);
   }
 
   void _onUndoEngagementLead(LeadItem leadItem, String previousStage) {
@@ -454,6 +682,8 @@ class _HomePageState extends State<HomePage> {
       }
     });
     _updateLeadStageInDatabase(leadItem);
+    // 调用更新销售人员表现的函数
+    _updateSalesmanPerformance(salesmanId);
   }
 
   void _onUndoNegotiationLead(LeadItem leadItem, String previousStage) {
@@ -468,6 +698,8 @@ class _HomePageState extends State<HomePage> {
       }
     });
     _updateLeadStageInDatabase(leadItem);
+    // 调用更新销售人员表现的函数
+    _updateSalesmanPerformance(salesmanId);
   }
 
   Future<void> _createLead(
@@ -507,6 +739,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       leadItems.add(leadItem);
     });
+    await _updateSalesmanPerformance(salesmanId); // 添加这行
   }
 
   Future<void> _handleIgnore(LeadItem leadItem) async {
@@ -545,6 +778,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           leadItems.remove(leadItem);
         });
+        await _updateSalesmanPerformance(salesmanId); // 添加这行
       } catch (e) {
         developer.log('Error deleting lead item: $e');
       } finally {
@@ -987,6 +1221,8 @@ class _HomePageState extends State<HomePage> {
           leadItem: leadItem,
           onMoveToNegotiation: () => _moveFromEngagementToNegotiation(leadItem),
           onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
+            // 调用更新销售人员表现的函数
+            await _updateSalesmanPerformance(salesmanId);
             await _moveFromEngagementToOrderProcessing(
                 leadItem, salesOrderId, quantity);
             setState(() {
@@ -1047,6 +1283,8 @@ class _HomePageState extends State<HomePage> {
           onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
             await _moveFromNegotiationToOrderProcessing(
                 leadItem, salesOrderId, quantity);
+            // 调用更新销售人员表现的函数
+            await _updateSalesmanPerformance(salesmanId);
             setState(() {
               negotiationLeads.remove(leadItem);
               orderProcessingLeads.add(leadItem);
@@ -1266,6 +1504,8 @@ class LeadItem {
   final String description;
   final String createdDate;
   final String amount;
+  DateTime? engagementStartDate;
+  DateTime? negotiationStartDate;
   String? selectedValue;
   String contactNumber;
   String emailAddress;
@@ -1294,6 +1534,8 @@ class LeadItem {
     this.previousStage,
     this.quantity,
     required this.id,
+    this.engagementStartDate,
+    this.negotiationStartDate,
   });
 
   void moveToEngagement(Function(LeadItem) onMoveToEngagement) {
