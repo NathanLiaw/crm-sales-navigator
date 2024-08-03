@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
 import 'about_us_page.dart';
 import 'account_setting_page.dart';
@@ -92,6 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
+              buildProfileOption('Chatbot', Icons.chat, context),
               const SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
@@ -148,6 +150,12 @@ class _ProfilePageState extends State<ProfilePage> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AboutUs()),
+          );
+        }
+        if (title == 'Chatbot') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatScreen()),
           );
         }
       },

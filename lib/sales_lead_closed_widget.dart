@@ -130,14 +130,19 @@ class ClosedLeadItem extends StatelessWidget {
                         color: Color(0xff0069BA),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        leadItem.contactNumber.isNotEmpty
-                            ? leadItem.contactNumber
-                            : 'XXX-XXXXXXX',
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          decoration: TextDecoration.underline,
+                      Container(
+                        width: 100,
+                        child: Text(
+                          leadItem.contactNumber.isNotEmpty
+                              ? leadItem.contactNumber
+                              : 'Unavailable',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -155,14 +160,19 @@ class ClosedLeadItem extends StatelessWidget {
                         color: Color(0xff0069BA),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        leadItem.emailAddress.isNotEmpty
-                            ? leadItem.emailAddress
-                            : 'XXX@domain.com',
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          decoration: TextDecoration.underline,
+                      Container(
+                        width: 150,
+                        child: Text(
+                          leadItem.emailAddress.isNotEmpty
+                              ? leadItem.emailAddress
+                              : 'Unavailable',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
