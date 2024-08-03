@@ -70,8 +70,8 @@ class _CartPage extends State<CartPage> {
         cartItems = items;
         updateCartItemsWithLatestPrices();
       });
-      await fetchProductPhotos();
       calculateTotalAndSubTotal();
+      await fetchProductPhotos();
     } catch (e) {
       developer.log('Error loading cart items and photos: $e', error: e);
     }
@@ -1035,9 +1035,12 @@ class _CustomerInfoState extends State<CustomerInfo> {
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 20),
-                      Text(
-                        _customer.email,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      Flexible(
+                        child: Text(
+                          _customer.email,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.visible, // Allow text to wrap
+                        ),
                       ),
                     ],
                   ),
