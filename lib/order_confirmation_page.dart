@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/cart_item.dart';
+import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   static TextEditingController remarkController = TextEditingController();
   bool agreedToTerms = false;
   String remark = remarkController.text;
+  bool isProcessing = false;
 
   Future<List<String>> fetchOrderOptions() async {
     List<String> fetchedOrderOptions = [];
@@ -211,11 +213,23 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     final formattedTotal = formatter.format(widget.total);
     final formattedSubtotal = formatter.format(widget.subtotal);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff004c87),
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text('Order Confirmation', style: TextStyle(color: Colors.white)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CartPage(),
+              ),
+            );
+          },
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -350,8 +364,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 ],
               ),
               ElevatedButton(
-                onPressed: () async {
+                onPressed: isProcessing
+                    ? null
+                    : () async {
                   if (agreedToTerms) {
+                    setState(() {
+                      isProcessing = true;
+                    });
+
                     // Show loading animation
                     showDialog(
                       context: context,
@@ -420,6 +440,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                         );
                       },
                     );
+
+                    setState(() {
+                      isProcessing = false;
+                    });
                   } else {
                     showDialog(
                       context: context,

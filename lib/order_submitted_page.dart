@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
@@ -39,6 +40,17 @@ class OrderSubmittedPage extends StatelessWidget {
         title: const Text(
           'Order Submitted',
           style: TextStyle(color: Color(0xffF8F9FA)),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CartPage(),
+              ),
+            );
+          },
         ),
       ),
       body: FutureBuilder<int>(
