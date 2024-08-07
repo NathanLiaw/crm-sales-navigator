@@ -56,10 +56,13 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final photoUrl1 = _formatImageUrl(product['photo1']);
-    // ignore: unused_local_variable
     final photoUrl2 = _formatImageUrl(product['photo2']);
-    // ignore: unused_local_variable
     final photoUrl3 = _formatImageUrl(product['photo3']);
+
+    // Filter out any null or empty URLs
+    final List<String> photoUrls = [photoUrl1, photoUrl2, photoUrl3]
+        .where((url) => url.isNotEmpty)
+        .toList();
 
     return GestureDetector(
       onTap: () async {
@@ -68,16 +71,13 @@ class ProductCard extends StatelessWidget {
             await _fetchProductDetails(productId, areaId ?? -1);
 
         Navigator.push(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(
             builder: (context) => ItemScreen(
               productId: productId,
               productName: product['product_name'],
-              itemAssetNames: [
-                product['photo1'] ?? '',
-                product['photo2'] ?? '',
-                product['photo3'] ?? '',
-              ],
+              itemAssetNames: photoUrls,
               itemDescription: productDetails['description'],
               priceByUom: productDetails['price_by_uom'].toString(),
             ),
@@ -92,7 +92,7 @@ class ProductCard extends StatelessWidget {
         padding: EdgeInsets.all(mediaQuery.size.width * 0.03),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15.0),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.3),
@@ -104,7 +104,9 @@ class ProductCard extends StatelessWidget {
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
+            // ignore: deprecated_member_use
             double fontSize = mediaQuery.textScaleFactor * 18;
+            // ignore: deprecated_member_use
             while (fontSize > mediaQuery.textScaleFactor * 16) {
               final textPainter = TextPainter(
                 text: TextSpan(
@@ -130,7 +132,8 @@ class ProductCard extends StatelessWidget {
               children: [
                 if (photoUrl1.isNotEmpty)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius:
+                        BorderRadius.circular(15.0),
                     child: CachedNetworkImage(
                       imageUrl: photoUrl1,
                       height: mediaQuery.size.height * 0.2,
@@ -160,6 +163,7 @@ class ProductCard extends StatelessWidget {
                   Text(
                     product['price_by_uom'],
                     style: TextStyle(
+                      // ignore: deprecated_member_use
                       fontSize: mediaQuery.textScaleFactor * 16,
                       color: Colors.grey[700],
                     ),
@@ -192,7 +196,12 @@ class SalesOrderCard extends StatelessWidget {
         );
       },
       child: Card(
+        color: Colors.white,
         margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        elevation: 5,
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
@@ -202,12 +211,12 @@ class SalesOrderCard extends StatelessWidget {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                         text: 'Sales Order Id: ',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
                         text: '${order['order_id']}',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -215,12 +224,12 @@ class SalesOrderCard extends StatelessWidget {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                         text: 'Customer Name: ',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
                         text: '${order['company_name']}',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -228,12 +237,12 @@ class SalesOrderCard extends StatelessWidget {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                         text: 'Created on: ',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
                         text: '${order['created_date']}',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -241,12 +250,12 @@ class SalesOrderCard extends StatelessWidget {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                         text: 'Order Status: ',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
                         text: '${order['status']}',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -254,12 +263,12 @@ class SalesOrderCard extends StatelessWidget {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style,
                   children: [
-                    TextSpan(
+                    const TextSpan(
                         text: 'Total: ',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
                         text: 'RM ${order['total']}',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -276,6 +285,7 @@ class SalesOrderCard extends StatelessWidget {
                   },
                   children: [
                     TableRow(
+                      decoration: const BoxDecoration(color: Colors.white),
                       children: [
                         _buildTableCell('Product', isHeader: true),
                         _buildTableCell('Qty', isHeader: true),
@@ -284,6 +294,7 @@ class SalesOrderCard extends StatelessWidget {
                     ),
                     ...order['items'].map<TableRow>((item) {
                       return TableRow(
+                        decoration: const BoxDecoration(color: Colors.white),
                         children: [
                           _buildTableCell(item['product_name']),
                           _buildTableCell('${item['qty']} pcs'),
