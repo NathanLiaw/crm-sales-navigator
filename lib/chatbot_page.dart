@@ -71,7 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
 
       final url =
-          Uri.parse('http://10.0.2.2:5000/chat');
+          Uri.parse('https://salesnavigator-production.up.railway.app/chat');
       try {
         final response = await http.post(
           url,
@@ -161,7 +161,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final url =
-        Uri.parse('http://10.0.2.2:5000/feedback');
+        Uri.parse('https://salesnavigator-production.up.railway.app/feedback');
     try {
       await http.post(
         url,
