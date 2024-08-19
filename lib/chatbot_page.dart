@@ -71,7 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
 
       final url =
-          Uri.parse('https://salesnavigator-production.up.railway.app/chat');
+          Uri.parse('http://10.0.2.2:5000/chat');
       try {
         final response = await http.post(
           url,
@@ -161,7 +161,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final url =
-        Uri.parse('https://salesnavigator-production.up.railway.app/feedback');
+        Uri.parse('http://10.0.2.2:5000/feedback');
     try {
       await http.post(
         url,
@@ -489,16 +489,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       final products = message["products"] as List<dynamic>?;
                       final salesOrders =
                           message["sales_orders"] as List<dynamic>?;
-
                       return Column(
                         crossAxisAlignment: isUser
                             ? CrossAxisAlignment.end
                             : CrossAxisAlignment.start,
                         children: [
                           Container(
-                            margin: EdgeInsets.symmetric(
-                                vertical: mediaQuery.size.width * 0.01,
-                                horizontal: mediaQuery.size.width * 0.02),
+                            margin: EdgeInsets.only(
+                                left: mediaQuery.size.width * 0.03,
+                                right: mediaQuery.size.width * 0.02,
+                                top: mediaQuery.size.width * 0.01,
+                                bottom: mediaQuery.size.width * 0.01),
                             padding:
                                 EdgeInsets.all(mediaQuery.size.width * 0.03),
                             decoration: BoxDecoration(
@@ -515,73 +516,73 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: isUser
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  message["message"],
-                                  style: TextStyle(
-                                      color:
-                                          isUser ? Colors.white : Colors.black),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  timestamp,
-                                  style: TextStyle(
-                                      color: isUser
-                                          ? Colors.white70
-                                          : Colors.black54,
-                                      fontSize: 10),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (salesOrders != null && salesOrders.isNotEmpty)
-                            ...salesOrders
-                                .map((order) => SalesOrderCard(order: order)),
-                          if (products != null && products.isNotEmpty)
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                  childAspectRatio: 0.7,
-                                ),
-                                itemCount: products.length,
-                                itemBuilder: (context, index) {
-                                  return _buildProductCard(products[index]);
-                                },
+                              child: Column(
+                                crossAxisAlignment: isUser
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message["message"],
+                                    style: TextStyle(
+                                        color:
+                                            isUser ? Colors.white : Colors.black),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    timestamp,
+                                    style: TextStyle(
+                                        color: isUser
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                        fontSize: 10),
+                                  ),
+                                ],
                               ),
                             ),
-                        ],
-                      );
-                    },
+                            if (salesOrders != null && salesOrders.isNotEmpty)
+                              ...salesOrders
+                                  .map((order) => SalesOrderCard(order: order)),
+                            if (products != null && products.isNotEmpty)
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                    childAspectRatio: 0.7,
+                                  ),
+                                  itemCount: products.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildProductCard(products[index]);
+                                  },
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              if (isTyping)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(width: 10),
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
+                if (isTyping)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(width: 10),
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      Text('F.Y.H Smart Agent is typing...'),
+                        SizedBox(width: 10),
+                        Text('F.Y.H Smart Agent is typing...'),
                     ],
                   ),
                 ),
@@ -668,7 +669,7 @@ class FAQSelection extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
               child: Container(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withOpacity(0.7),
               ),
             ),
           ),
@@ -678,13 +679,13 @@ class FAQSelection extends StatelessWidget {
             const SizedBox(height: 20),
             Center(
               child: Image.asset('asset/logo/logo_fyh.png',
-                  width: 200, height: 150),
+                  width: 240, height: 170),
             ),
             const SizedBox(height: 20),
             const Text(
               'WELCOME\nHow May I Assist You?',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             Flexible(
@@ -719,7 +720,7 @@ class FAQSelection extends StatelessWidget {
                         ),
                         _buildCategoryCard(
                           icon: Icons.description,
-                          label: 'Inquire about Sales Order',
+                          label: 'Sales Inquiry',
                           onTap: () => onCategorySelected('sales_order'),
                         ),
                       ],
@@ -740,13 +741,13 @@ class FAQSelection extends StatelessWidget {
       required VoidCallback onTap}) {
     return SizedBox(
       width: 107,
-      height: 107,
+      height: 117,
       child: Card(
         elevation: 5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.0),
         ),
-        color: const Color.fromRGBO(111, 188, 249, 0.5),
+        color: const Color.fromRGBO(111, 188, 249, 0.7),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(15.0),
@@ -761,8 +762,8 @@ class FAQSelection extends StatelessWidget {
                   label,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: Colors.black),
                 ),
               ],

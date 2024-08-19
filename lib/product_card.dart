@@ -132,8 +132,7 @@ class ProductCard extends StatelessWidget {
               children: [
                 if (photoUrl1.isNotEmpty)
                   ClipRRect(
-                    borderRadius:
-                        BorderRadius.circular(15.0),
+                    borderRadius: BorderRadius.circular(15.0),
                     child: CachedNetworkImage(
                       imageUrl: photoUrl1,
                       height: mediaQuery.size.height * 0.2,
@@ -203,7 +202,7 @@ class SalesOrderCard extends StatelessWidget {
         ),
         elevation: 5,
         child: Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(13.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
