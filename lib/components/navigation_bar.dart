@@ -32,12 +32,14 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   }
 
   void _scrollListener() {
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       setState(() {
         _isVisible = false;
       });
     }
-    if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       setState(() {
         _isVisible = true;
       });
@@ -60,6 +62,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
+              tabBorderRadius: 6,
               gap: 7,
               selectedIndex: _selectedIndex,
               color: Colors.grey,
@@ -67,7 +70,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
               iconSize: 24,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               duration: const Duration(milliseconds: 500),
-              tabBackgroundColor: const Color(0xff0069BA),
+              tabBackgroundColor: Color.fromARGB(255, 48, 162, 250),
               tabs: [
                 const GButton(
                   icon: Icons.home,

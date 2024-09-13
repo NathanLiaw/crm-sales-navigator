@@ -4,6 +4,7 @@ import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/customer_insight.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -799,7 +800,8 @@ class _HomePageState extends State<HomePage> {
             return Scaffold(
               appBar: AppBar(
                 automaticallyImplyLeading: false,
-                backgroundColor: const Color(0xff004c87),
+
+                backgroundColor: const Color(0xff0175FF),
                 title: Text(
                   'Welcome, $salesmanName',
                   style: const TextStyle(color: Colors.white),
@@ -820,16 +822,41 @@ class _HomePageState extends State<HomePage> {
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'Sales Lead Pipeline',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
+                  Stack(
+                    children: [
+                      Container(
+                          padding: EdgeInsets.zero,
+                          color: Colors.white,
+                          child: Image.asset(
+                            'asset/SalesPipeline_Head2.png',
+                            width: 700,
+                            height: 78,
+                            fit: BoxFit.cover,
+                          )),
+                      Container(
+                        height: 78,
+                        padding: EdgeInsets.only(left: 12, bottom: 2),
+                        child: Column(
+                          children: [
+                            Spacer(),
+                            Text(
+                              'Sales Lead Pipeline',
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(letterSpacing: -0.8),
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: const Color.fromARGB(255, 255, 255, 255),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   TabBar(
                     isScrollable: true,
+                    labelColor: const Color(0xff0175FF),
+                    indicatorColor: const Color(0xff0175FF),
                     indicatorSize: TabBarIndicatorSize.label,
                     tabs: [
                       Tab(text: 'Opportunities(${leadItems.length})'),
@@ -949,9 +976,11 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8))),
                 label: const Text('Create Lead',
                     style: TextStyle(color: Colors.white)),
-                backgroundColor: const Color(0xff0069BA),
+                backgroundColor: const Color(0xff0175FF),
               )
             : Container();
       },
@@ -992,110 +1021,145 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
-      child: Card(
-        color: const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+            image: DecorationImage(
+              image: ResizeImage(AssetImage('asset/bttm_start.png'),
+                  width: 128, height: 98),
+              alignment: Alignment.bottomLeft,
+            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ]),
         margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  // Text(
-                  //   leadItem.customerName.length > 20
-                  //       ? '${leadItem.customerName.substring(0, 20)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //       fontWeight: FontWeight.bold, fontSize: 18),
-                  //   maxLines: 2,
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
-                  Container(
-                    width: 200,
-                    child: Text(
-                      leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Spacer(),
-                  Container(
-                    margin: const EdgeInsets.only(left: 20),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      leadItem.formattedAmount,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+              Container(
+                margin: EdgeInsets.only(bottom: 1),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    // Text(
+                    //   leadItem.customerName.length > 20
+                    //       ? '${leadItem.customerName.substring(0, 20)}...'
+                    //       : leadItem.customerName,
+                    //   style: const TextStyle(
+                    //       fontWeight: FontWeight.bold, fontSize: 18),
+                    //   maxLines: 2,
+                    //   overflow: TextOverflow.ellipsis,
+                    // ),
+                    Container(
+                      width: 200,
+                      child: Text(
+                        leadItem.customerName,
+                        style: GoogleFonts.inter(
+                          textStyle: TextStyle(letterSpacing: -0.8),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: const Color.fromARGB(255, 25, 23, 49),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                  // const Spacer(),
-                  // DropdownButtonHideUnderline(
-                  //   child: DropdownButton2<String>(
-                  //     isExpanded: true,
-                  //     hint: const Text(
-                  //       'Opportunities',
-                  //       style: TextStyle(fontSize: 12, color: Colors.black),
-                  //     ),
-                  //     items: tabbarNames
-                  //         .skip(1)
-                  //         .map((item) => DropdownMenuItem<String>(
-                  //               value: item,
-                  //               child: Text(
-                  //                 item,
-                  //                 style: const TextStyle(fontSize: 12),
-                  //               ),
-                  //             ))
-                  //         .toList(),
-                  //     value: leadItem.selectedValue,
-                  //     onChanged: (String? value) {
-                  //       if (value == 'Engagement') {
-                  //         _moveToEngagement(leadItem);
-                  //       } else if (value == 'Negotiation') {
-                  //         _moveToNegotiation(leadItem);
-                  //       } else if (value == 'Closed') {
-                  //         _moveToCreateTaskPage(context, leadItem);
-                  //       } else if (value == 'Order Processing') {
-                  //         _navigateToCreateTaskPage(context, leadItem, false);
-                  //       }
-                  //     },
-                  //     buttonStyleData: const ButtonStyleData(
-                  //       padding: EdgeInsets.symmetric(horizontal: 16),
-                  //       height: 32,
-                  //       width: 140,
-                  //       decoration: BoxDecoration(color: Colors.white),
-                  //     ),
-                  //     menuItemStyleData: const MenuItemStyleData(
-                  //       height: 30,
-                  //     ),
-                  //   ),
-                  // ),
-                ],
+                    Spacer(),
+                    Container(
+                      margin: const EdgeInsets.only(left: 18),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Color.fromARGB(71, 148, 255, 223),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        leadItem.formattedAmount,
+                        style: const TextStyle(
+                          color: Color(0xff008A64),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    // const Spacer(),
+                    // DropdownButtonHideUnderline(
+                    //   child: DropdownButton2<String>(
+                    //     isExpanded: true,
+                    //     hint: const Text(
+                    //       'Opportunities',
+                    //       style: TextStyle(fontSize: 12, color: Colors.black),
+                    //     ),
+                    //     items: tabbarNames
+                    //         .skip(1)
+                    //         .map((item) => DropdownMenuItem<String>(
+                    //               value: item,
+                    //               child: Text(
+                    //                 item,
+                    //                 style: const TextStyle(fontSize: 12),
+                    //               ),
+                    //             ))
+                    //         .toList(),
+                    //     value: leadItem.selectedValue,
+                    //     onChanged: (String? value) {
+                    //       if (value == 'Engagement') {
+                    //         _moveToEngagement(leadItem);
+                    //       } else if (value == 'Negotiation') {
+                    //         _moveToNegotiation(leadItem);
+                    //       } else if (value == 'Closed') {
+                    //         _moveToCreateTaskPage(context, leadItem);
+                    //       } else if (value == 'Order Processing') {
+                    //         _navigateToCreateTaskPage(context, leadItem, false);
+                    //       }
+                    //     },
+                    //     buttonStyleData: const ButtonStyleData(
+                    //       padding: EdgeInsets.symmetric(horizontal: 16),
+                    //       height: 32,
+                    //       width: 140,
+                    //       decoration: BoxDecoration(color: Colors.white),
+                    //     ),
+                    //     menuItemStyleData: const MenuItemStyleData(
+                    //       height: 30,
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
-              Text(leadItem.description),
-              const SizedBox(height: 10),
+              Text(
+                leadItem.description,
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(letterSpacing: -0.5),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color.fromARGB(255, 25, 23, 49),
+                ),
+              ),
+              Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
+                      iconStyleData: IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconDisabledColor: Colors.white,
+                          iconEnabledColor: Colors.white),
                       isExpanded: true,
                       hint: const Text(
                         'Opportunities',
-                        style: TextStyle(fontSize: 12, color: Colors.black),
+                        style: TextStyle(fontSize: 12, color: Colors.white),
                       ),
                       items: tabbarNames
                           .skip(1)
@@ -1103,7 +1167,10 @@ class _HomePageState extends State<HomePage> {
                                 value: item,
                                 child: Text(
                                   item,
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ))
                           .toList(),
@@ -1120,10 +1187,11 @@ class _HomePageState extends State<HomePage> {
                         }
                       },
                       buttonStyleData: const ButtonStyleData(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        height: 32,
-                        width: 140,
-                        decoration: BoxDecoration(color: Colors.white),
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        height: 24,
+                        width: 136,
+                        decoration:
+                            BoxDecoration(color: const Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -1134,18 +1202,20 @@ class _HomePageState extends State<HomePage> {
               ),
               // const SizedBox(height: 8),
               // Text(leadItem.description),
+              const SizedBox(
+                height: 10,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: Text(
-                      leadItem.createdDate,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
+                  Text(
+                    leadItem.createdDate,
+                    style: const TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontWeight: FontWeight.w600),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1165,6 +1235,8 @@ class _HomePageState extends State<HomePage> {
                         //   child: const Text('Ignore',
                         //       style: TextStyle(color: Colors.red)),
                         // ),
+
+                        /*
                         IconButton(
                           iconSize: 40,
                           icon: Icon(
@@ -1172,8 +1244,40 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.red,
                           ),
                           onPressed: () {
-                            _handleIgnore(leadItem);
+                            _handleIgnore(leadItem);  
                           },
+                        ),*/
+
+                        SizedBox(
+                          height: 22,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding:
+                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side: BorderSide(color: Colors.red))),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xffF01C54)),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _handleIgnore(leadItem);
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: 12,
                         ),
                         // const SizedBox(width: 8),
                         // ElevatedButton(
@@ -1190,6 +1294,37 @@ class _HomePageState extends State<HomePage> {
                         //   child: const Text('Accept',
                         //       style: TextStyle(color: Colors.white)),
                         // ),
+
+                        SizedBox(
+                          height: 22,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding:
+                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side: BorderSide(
+                                          color: const Color(0xff4566DD)))),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xff4566DD)),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _moveToEngagement(leadItem);
+                            },
+                            child: Text(
+                              'Accept',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
+                            ),
+                          ),
+                        ),
+
+                        /*
                         IconButton(
                           iconSize: 40,
                           icon: Icon(
@@ -1200,6 +1335,7 @@ class _HomePageState extends State<HomePage> {
                             _moveToEngagement(leadItem);
                           },
                         ),
+                        */
                       ],
                     ),
                   ),

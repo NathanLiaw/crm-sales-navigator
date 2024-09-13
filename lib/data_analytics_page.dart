@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sales_navigator/order_status_graph.dart';
 import 'package:sales_navigator/sales_report_graph.dart';
 import 'package:sales_navigator/sales_report_page.dart';
 import 'package:sales_navigator/top_selling_product_graph.dart';
 import 'package:sales_navigator/top_selling_product_report_page.dart';
 import 'package:sales_navigator/predicted_product_stocks.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/customer_sales_prediction.dart';
 import 'package:sales_navigator/sales_forecast_graph.dart';
 import 'customer_graph.dart';
@@ -22,7 +24,7 @@ class DataAnalyticsPage extends StatelessWidget {
           'Data Analytics',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: Theme(
           data: Theme.of(context).copyWith(
             iconTheme: const IconThemeData(color: Colors.white),
@@ -35,106 +37,143 @@ class DataAnalyticsPage extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const CustomerSalesPredictionPage()),
-                  );
-                },
-                child: const SizedBox(
-                  height: 480,
-                  child: SalesForecastGraph(),
+      body: Column(
+        children: [
+          Stack(
+            children: [
+              Container(
+                  padding: EdgeInsets.zero,
+                  color: Colors.white,
+                  child: Image.asset(
+                    'asset/SALEFORECASE_LABEL.png',
+                    width: 700,
+                    height: 78,
+                    fit: BoxFit.cover,
+                  )),
+              Container(
+                height: 78,
+                padding: EdgeInsets.only(left: 12, bottom: 2),
+                child: Column(
+                  children: [
+                    Spacer(),
+                    Text(
+                      'Sales Forecast',
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(letterSpacing: -0.8),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 255, 255, 255),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SalesReportPage()),
-                  );
-                },
-                child: const SizedBox(
-                  height: 425,
-                  child: SalesReport(),
-                ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CustomerSalesPredictionPage()),
+                        );
+                      },
+                      child: const SizedBox(
+                        height: 538,
+                        child: SalesForecastGraph(),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SalesReportPage()),
+                        );
+                      },
+                      child: const SizedBox(
+                        height: 425,
+                        child: SalesReport(),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CustomerReport()),
+                        );
+                      },
+                      child: const CustomersGraph(),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const ProductReport()),
+                        );
+                      },
+                      child: const SizedBox(
+                        height: 427,
+                        child: TopSellingProductsPage(),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CustomerSalesPredictionPage()),
+                        );
+                      },
+                      child: const SizedBox(
+                        height: 452,
+                        child: PredictedProductsTarget(),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SalesOrderPage()),
+                        );
+                      },
+                      child: const SizedBox(
+                        height: 420,
+                        child: OrderStatusWidget(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CustomerReport()),
-                  );
-                },
-                child: const CustomersGraph(),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ProductReport()),
-                  );
-                },
-                child: const SizedBox(
-                  height: 427,
-                  child: TopSellingProductsPage(),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const CustomerSalesPredictionPage()),
-                  );
-                },
-                child: const SizedBox(
-                  height: 452,
-                  child: PredictedProductsTarget(),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SalesOrderPage()),
-                  );
-                },
-                child: const SizedBox(
-                  height: 420,
-                  child: OrderStatusWidget(),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
