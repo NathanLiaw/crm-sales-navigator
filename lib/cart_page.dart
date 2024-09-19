@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/edit_item_page.dart';
+import 'package:sales_navigator/event_logger.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:sales_navigator/order_confirmation_page.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,8 @@ class _CartPage extends State<CartPage> {
   double total = 0;
   double subtotal = 0;
 
+  late int salesmanId;
+
   // Tax Section
   double gst = 0;
   double sst = 0;
@@ -52,10 +55,21 @@ class _CartPage extends State<CartPage> {
     loadCartItemsAndPhotos();
     getTax();
     initializeTextControllers();
+    _initializeSalesmanId();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
+    });
   }
 
   void initializeTextControllers() {
-    textControllers = List.generate(cartItems.length, (index) => TextEditingController(text: cartItems[index].quantity.toString()));
+    textControllers = List.generate(
+        cartItems.length,
+        (index) =>
+            TextEditingController(text: cartItems[index].quantity.toString()));
   }
 
   Future<void> getTax() async {
@@ -87,15 +101,17 @@ class _CartPage extends State<CartPage> {
     String order = 'created DESC';
     String field = '*';
 
-    List<Map<String, dynamic>> queryResults =
-    await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
+    List<Map<String, dynamic>> queryResults = await DatabaseHelper.readData(
+        database, cartItemTableName, condition, order, field);
 
     setState(() {
       totalCartItems = queryResults.length;
     });
-    List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+    List<CartItem> cartItems =
+        queryResults.map((map) => CartItem.fromMap(map)).toList();
 
-    textControllers = List.generate(cartItems.length, (index) => TextEditingController());
+    textControllers =
+        List.generate(cartItems.length, (index) => TextEditingController());
 
     return cartItems;
   }
@@ -104,9 +120,10 @@ class _CartPage extends State<CartPage> {
     List<List<String>> photosList = [];
 
     for (CartItem item in cartItems) {
-      List<Map<String, dynamic>> photos = await getProductPhoto(item.productName);
+      List<Map<String, dynamic>> photos =
+          await getProductPhoto(item.productName);
       List<String> imagePaths =
-      photos.map((photo) => photo['photo1'].toString()).toList();
+          photos.map((photo) => photo['photo1'].toString()).toList();
 
       photosList.add(imagePaths);
     }
@@ -153,12 +170,22 @@ class _CartPage extends State<CartPage> {
   Future<void> deleteSelectedCartItems() async {
     try {
       // Get the list of cart item IDs to be deleted
-      List<int?> cartItemIds = selectedCartItems.map((item) => item.id).toList();
+      List<int?> cartItemIds =
+          selectedCartItems.map((item) => item.id).toList();
 
       // Delete the selected cart items from the database
       for (int? cartItemId in cartItemIds) {
-        await DatabaseHelper.deleteData(cartItemId, DatabaseHelper.cartItemTableName);
+        await DatabaseHelper.deleteData(
+            cartItemId, DatabaseHelper.cartItemTableName);
       }
+
+      // Log the event
+      int deletedItemsCount = selectedCartItems.length;
+      await EventLogger.logEvent(
+        salesmanId,
+        'Deleted $deletedItemsCount item(s) from cart',
+        'Cart Item Deletion',
+      );
 
       // Reload the cart items after deletion
       await loadCartItemsAndPhotos();
@@ -167,8 +194,25 @@ class _CartPage extends State<CartPage> {
       setState(() {
         selectedCartItems.clear();
       });
+
+      // Show a snackbar to confirm deletion
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$deletedItemsCount item(s) deleted from cart'),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       developer.log('Error deleting selected cart items: $e', error: e);
+      // Show an error message if deletion fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete items. Please try again.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -181,10 +225,10 @@ class _CartPage extends State<CartPage> {
         'qty': quantity,
       };
 
-      int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+      int rowsAffected =
+          await DatabaseHelper.updateData(updateData, 'cart_item');
       if (rowsAffected > 0) {
         developer.log('Item quantity updated successfully');
-
       } else {
         developer.log('Failed to update item quantity');
       }
@@ -254,8 +298,7 @@ class _CartPage extends State<CartPage> {
     try {
       // Construct a query to get the latest price for each product in the list
       var results = await conn.query(
-          "SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC"
-      );
+          "SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC");
 
       // Use a map to store the latest price for each product
       Map<int, double> latestPrices = {};
@@ -285,14 +328,16 @@ class _CartPage extends State<CartPage> {
       if (latestPrices.containsKey(item.productId)) {
         item.previousPrice = latestPrices[item.productId]!;
       } else {
-        developer.log('No previous price found for product ID ${item.productId}');
+        developer
+            .log('No previous price found for product ID ${item.productId}');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formatter =
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     final formattedTotal = formatter.format(total);
     final formattedSubtotal = formatter.format(subtotal);
 
@@ -335,7 +380,9 @@ class _CartPage extends State<CartPage> {
                   });
                 },
                 child: Text(
-                  editCart ? 'Done' : 'Edit', // Display 'Done' or 'Edit' based on editCart state
+                  editCart
+                      ? 'Done'
+                      : 'Edit', // Display 'Done' or 'Edit' based on editCart state
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -409,16 +456,20 @@ class _CartPage extends State<CartPage> {
                 Column(
                   children: List.generate(cartItems.length, (index) {
                     CartItem item = cartItems[index];
-                    List<String> itemPhotos = productPhotos.isNotEmpty ? productPhotos[index] : [];
+                    List<String> itemPhotos =
+                        productPhotos.isNotEmpty ? productPhotos[index] : [];
                     bool isSelected = selectedCartItems.contains(item);
                     final currentQuantity = item.quantity;
-                    final formattedPrice = formatter.format(item.unitPrice * item.quantity);
+                    final formattedPrice =
+                        formatter.format(item.unitPrice * item.quantity);
                     // Format previous price only if it's not null
                     String? formattedPreviousPrice;
                     if (item.previousPrice != null) {
-                      formattedPreviousPrice = formatter.format(item.previousPrice! * item.quantity);
+                      formattedPreviousPrice =
+                          formatter.format(item.previousPrice! * item.quantity);
                     }
-                    TextEditingController textController = textControllers[index];
+                    TextEditingController textController =
+                        textControllers[index];
                     textController.text = item.quantity.toString();
 
                     return Padding(
@@ -432,10 +483,12 @@ class _CartPage extends State<CartPage> {
                             cartItems.removeAt(index);
                             selectedCartItems.remove(item);
                           });
-                          await DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName);
+                          await DatabaseHelper.deleteData(
+                              item.id, DatabaseHelper.cartItemTableName);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('${item.productName} removed from cart'),
+                              content:
+                                  Text('${item.productName} removed from cart'),
                               duration: const Duration(seconds: 1),
                               backgroundColor: Colors.green,
                             ),
@@ -486,25 +539,27 @@ class _CartPage extends State<CartPage> {
                                     width: 90,
                                     child: (itemPhotos.isNotEmpty)
                                         ? Image.network(
-                                      'https://haluansama.com/crm-sales/${itemPhotos[0]}',
-                                      height: 90,
-                                      width: 90,
-                                      fit: BoxFit.cover,
-                                    )
+                                            'https://haluansama.com/crm-sales/${itemPhotos[0]}',
+                                            height: 90,
+                                            width: 90,
+                                            fit: BoxFit.cover,
+                                          )
                                         : Image.asset(
-                                      'asset/no_image.jpg',
-                                      height: 90,
-                                      width: 90,
-                                      fit: BoxFit.cover,
-                                    ),
+                                            'asset/no_image.jpg',
+                                            height: 90,
+                                            width: 90,
+                                            fit: BoxFit.cover,
+                                          ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Flexible(
                                               child: SizedBox(
@@ -515,22 +570,31 @@ class _CartPage extends State<CartPage> {
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                   ),
-                                                  overflow: TextOverflow.ellipsis, // Overflow handling
-                                                  maxLines: 3, // Allow up to 3 lines of text
+                                                  overflow: TextOverflow
+                                                      .ellipsis, // Overflow handling
+                                                  maxLines:
+                                                      3, // Allow up to 3 lines of text
                                                 ),
                                               ),
                                             ),
                                             IconButton(
                                               icon: const Icon(Icons.edit),
                                               onPressed: () async {
-                                                final updatedPrice = await Navigator.push<double?>(
+                                                final updatedPrice =
+                                                    await Navigator.push<
+                                                        double?>(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (context) => EditItemPage(
+                                                    builder: (context) =>
+                                                        EditItemPage(
                                                       itemId: item.id,
-                                                      itemName: item.productName,
+                                                      itemName:
+                                                          item.productName,
                                                       itemUom: item.uom,
-                                                      itemPhoto: itemPhotos.isNotEmpty ? itemPhotos[0] : '',
+                                                      itemPhoto:
+                                                          itemPhotos.isNotEmpty
+                                                              ? itemPhotos[0]
+                                                              : '',
                                                       itemPrice: item.unitPrice,
                                                     ),
                                                   ),
@@ -538,7 +602,8 @@ class _CartPage extends State<CartPage> {
 
                                                 if (updatedPrice != null) {
                                                   setState(() {
-                                                    item.unitPrice = updatedPrice;
+                                                    item.unitPrice =
+                                                        updatedPrice;
                                                   });
                                                 }
                                               },
@@ -550,20 +615,22 @@ class _CartPage extends State<CartPage> {
                                           width: 200,
                                           child: item.uom.isNotEmpty
                                               ? Text(
-                                            item.uom,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                            ),
-                                            softWrap: true,
-                                          )
+                                                  item.uom,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                  softWrap: true,
+                                                )
                                               : const SizedBox.shrink(),
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 // Display the item price
                                                 Row(
@@ -574,36 +641,58 @@ class _CartPage extends State<CartPage> {
                                                         children: [
                                                           Flexible(
                                                             child: Row(
-                                                              mainAxisAlignment: MainAxisAlignment.start,
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
                                                               children: [
                                                                 Text(
                                                                   formattedPrice,
-                                                                  style: const TextStyle(
-                                                                    fontSize: 16,
-                                                                    fontWeight: FontWeight.bold,
-                                                                    color: Colors.green,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                        .green,
                                                                   ),
-                                                                  overflow: TextOverflow.ellipsis,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                 ),
-                                                                if (item.previousPrice != null) // Check if previousPrice is not null
+                                                                if (item.previousPrice !=
+                                                                    null) // Check if previousPrice is not null
                                                                   Text(
-                                                                    item.unitPrice - item.previousPrice! > 0
+                                                                    item.unitPrice - item.previousPrice! >
+                                                                            0
                                                                         ? ' ▲'
-                                                                        : (item.unitPrice - item.previousPrice! < 0 ? ' ▼' : ''),
-                                                                    style: TextStyle(
-                                                                      color: (item.unitPrice - item.previousPrice! > 0)
-                                                                          ? Colors.red
+                                                                        : (item.unitPrice - item.previousPrice! <
+                                                                                0
+                                                                            ? ' ▼'
+                                                                            : ''),
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: (item.unitPrice - item.previousPrice! >
+                                                                              0)
+                                                                          ? Colors
+                                                                              .red
                                                                           : ((item.unitPrice - item.previousPrice! < 0)
-                                                                          ? Colors.green
-                                                                          : null),
+                                                                              ? Colors.green
+                                                                              : null),
                                                                     ),
                                                                   ),
-                                                                if (item.previousPrice != null &&
-                                                                    (item.unitPrice - item.previousPrice!) != 0) // Check if previousPrice is not null and price difference is not 0
+                                                                if (item.previousPrice !=
+                                                                        null &&
+                                                                    (item.unitPrice -
+                                                                            item.previousPrice!) !=
+                                                                        0) // Check if previousPrice is not null and price difference is not 0
                                                                   Text(
                                                                     '${((item.unitPrice - item.previousPrice!) / item.previousPrice! * 100).toStringAsFixed(0)}%',
-                                                                    style: const TextStyle(
-                                                                      fontSize: 12,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          12,
                                                                     ),
                                                                   ),
                                                               ],
@@ -615,17 +704,25 @@ class _CartPage extends State<CartPage> {
                                                   ],
                                                 ),
                                                 SizedBox(
-                                                  child: (item.previousPrice != null && item.previousPrice != item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
+                                                  child: (item.previousPrice !=
+                                                              null &&
+                                                          item.previousPrice !=
+                                                              item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
                                                       ? Text(
-                                                    formattedPreviousPrice!,
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.grey,
-                                                      decoration: TextDecoration.lineThrough,
-                                                    ),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  )
+                                                          formattedPreviousPrice!,
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.grey,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .lineThrough,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        )
                                                       : const SizedBox.shrink(),
                                                 ),
                                               ],
@@ -634,9 +731,11 @@ class _CartPage extends State<CartPage> {
                                         ),
                                         // Group for quantity controls (IconButton and TextField)
                                         Visibility(
-                                          visible: !editCart, // Set visibility based on the value of editCart
+                                          visible:
+                                              !editCart, // Set visibility based on the value of editCart
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               IconButton(
                                                 iconSize: 28,
@@ -644,43 +743,72 @@ class _CartPage extends State<CartPage> {
                                                   // Decrement quantity when minus button is pressed
                                                   if (currentQuantity > 1) {
                                                     setState(() {
-                                                      item.quantity = currentQuantity - 1;
-                                                      textController.text = item.quantity.toString();
-                                                      updateItemQuantity(item.id, item.quantity);
+                                                      item.quantity =
+                                                          currentQuantity - 1;
+                                                      textController.text = item
+                                                          .quantity
+                                                          .toString();
+                                                      updateItemQuantity(
+                                                          item.id,
+                                                          item.quantity);
                                                       calculateTotalAndSubTotal();
                                                     });
                                                   } else {
                                                     showDialog(
                                                       context: context,
-                                                      builder: (context) => AlertDialog(
-                                                        title: const Text('Delete Item?'),
-                                                        content: const Text('Are you sure you want to delete this item from the cart?'),
+                                                      builder: (context) =>
+                                                          AlertDialog(
+                                                        title: const Text(
+                                                            'Delete Item?'),
+                                                        content: const Text(
+                                                            'Are you sure you want to delete this item from the cart?'),
                                                         actions: [
                                                           TextButton(
                                                             onPressed: () {
-                                                              Navigator.pop(context); // Close the dialog
+                                                              Navigator.pop(
+                                                                  context); // Close the dialog
                                                             },
-                                                            child: const Text('Cancel'),
+                                                            child: const Text(
+                                                                'Cancel'),
                                                           ),
                                                           TextButton(
                                                             onPressed: () {
                                                               // Remove the item from the list and delete from the database
                                                               setState(() {
-                                                                cartItems.removeAt(index);
-                                                                selectedCartItems.remove(item);
-                                                                totalCartItems = cartItems.length;
+                                                                cartItems
+                                                                    .removeAt(
+                                                                        index);
+                                                                selectedCartItems
+                                                                    .remove(
+                                                                        item);
+                                                                totalCartItems =
+                                                                    cartItems
+                                                                        .length;
                                                               });
-                                                              DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName); // Assuming this is an asynchronous operation
-                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                              DatabaseHelper.deleteData(
+                                                                  item.id,
+                                                                  DatabaseHelper
+                                                                      .cartItemTableName); // Assuming this is an asynchronous operation
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
                                                                 SnackBar(
-                                                                  content: Text('${item.productName} removed from cart'),
-                                                                  duration: const Duration(seconds: 1),
-                                                                  backgroundColor: Colors.green,
+                                                                  content: Text(
+                                                                      '${item.productName} removed from cart'),
+                                                                  duration:
+                                                                      const Duration(
+                                                                          seconds:
+                                                                              1),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .green,
                                                                 ),
                                                               );
-                                                              Navigator.pop(context); // Close the dialog
+                                                              Navigator.pop(
+                                                                  context); // Close the dialog
                                                             },
-                                                            child: const Text('Delete'),
+                                                            child: const Text(
+                                                                'Delete'),
                                                           ),
                                                         ],
                                                       ),
@@ -689,78 +817,117 @@ class _CartPage extends State<CartPage> {
                                                 },
                                                 icon: const Icon(Icons.remove),
                                               ),
-                                          SizedBox(
-                                            width: 60, // Adjust the width of the TextField container
-                                            child: TextField(
-                                              textAlign: TextAlign.center,
-                                              keyboardType: TextInputType.number,
-                                              inputFormatters: [
-                                                FilteringTextInputFormatter.allow(RegExp(r'[0-9]')), // Only allow numeric input
-                                                LengthLimitingTextInputFormatter(5), // Limit the length of input to 5 characters
-                                              ],
-                                              controller: textController,
-                                              onChanged: (value) {
-                                                final newValue = int.tryParse(value);
-                                                if (newValue != null) {
-                                                  setState(() {
-                                                    item.quantity = newValue;
-                                                    updateItemQuantity(item.id, item.quantity);
-                                                    calculateTotalAndSubTotal();
-                                                  });
-                                                }
-                                                // Check if the entered value is 0 and show confirmation dialog
-                                                if (newValue == 0 || newValue == null) {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) => AlertDialog(
-                                                      title: const Text('Delete Item?'),
-                                                      content: const Text('Are you sure you want to delete this item from the cart?'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            // Reset quantity to 1 and close the dialog
-                                                            setState(() {
-                                                              item.quantity = 1;
-                                                              textController.text = '1'; // Reset text field value
-                                                              totalCartItems = cartItems.length;
-                                                            });
-                                                            Navigator.pop(context); // Close the dialog
-                                                          },
-                                                          child: const Text('Cancel'),
+                                              SizedBox(
+                                                width:
+                                                    60, // Adjust the width of the TextField container
+                                                child: TextField(
+                                                  textAlign: TextAlign.center,
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  inputFormatters: [
+                                                    FilteringTextInputFormatter
+                                                        .allow(RegExp(
+                                                            r'[0-9]')), // Only allow numeric input
+                                                    LengthLimitingTextInputFormatter(
+                                                        5), // Limit the length of input to 5 characters
+                                                  ],
+                                                  controller: textController,
+                                                  onChanged: (value) {
+                                                    final newValue =
+                                                        int.tryParse(value);
+                                                    if (newValue != null) {
+                                                      setState(() {
+                                                        item.quantity =
+                                                            newValue;
+                                                        updateItemQuantity(
+                                                            item.id,
+                                                            item.quantity);
+                                                        calculateTotalAndSubTotal();
+                                                      });
+                                                    }
+                                                    // Check if the entered value is 0 and show confirmation dialog
+                                                    if (newValue == 0 ||
+                                                        newValue == null) {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AlertDialog(
+                                                          title: const Text(
+                                                              'Delete Item?'),
+                                                          content: const Text(
+                                                              'Are you sure you want to delete this item from the cart?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                // Reset quantity to 1 and close the dialog
+                                                                setState(() {
+                                                                  item.quantity =
+                                                                      1;
+                                                                  textController
+                                                                          .text =
+                                                                      '1'; // Reset text field value
+                                                                  totalCartItems =
+                                                                      cartItems
+                                                                          .length;
+                                                                });
+                                                                Navigator.pop(
+                                                                    context); // Close the dialog
+                                                              },
+                                                              child: const Text(
+                                                                  'Cancel'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                // Remove the item from the list and delete from the database
+                                                                setState(() {
+                                                                  cartItems
+                                                                      .removeAt(
+                                                                          index);
+                                                                  selectedCartItems
+                                                                      .remove(
+                                                                          item);
+                                                                });
+                                                                DatabaseHelper
+                                                                    .deleteData(
+                                                                        item.id,
+                                                                        DatabaseHelper
+                                                                            .cartItemTableName); // Assuming this is an asynchronous operation
+                                                                ScaffoldMessenger.of(
+                                                                        context)
+                                                                    .showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                        '${item.productName} removed from cart'),
+                                                                    duration: const Duration(
+                                                                        seconds:
+                                                                            1),
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .green,
+                                                                  ),
+                                                                );
+                                                                Navigator.pop(
+                                                                    context); // Close the dialog
+                                                              },
+                                                              child: const Text(
+                                                                  'Delete'),
+                                                            ),
+                                                          ],
                                                         ),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            // Remove the item from the list and delete from the database
-                                                            setState(() {
-                                                              cartItems.removeAt(index);
-                                                              selectedCartItems.remove(item);
-                                                            });
-                                                            DatabaseHelper.deleteData(item.id, DatabaseHelper.cartItemTableName); // Assuming this is an asynchronous operation
-                                                            ScaffoldMessenger.of(context).showSnackBar(
-                                                              SnackBar(
-                                                                content: Text('${item.productName} removed from cart'),
-                                                                duration: const Duration(seconds: 1),
-                                                                backgroundColor: Colors.green,
-                                                              ),
-                                                            );
-                                                            Navigator.pop(context); // Close the dialog
-                                                          },
-                                                          child: const Text('Delete'),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                          IconButton(
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                              IconButton(
                                                 iconSize: 28,
                                                 onPressed: () {
                                                   // Increment quantity when plus button is pressed
                                                   setState(() {
-                                                    item.quantity = currentQuantity + 1;
-                                                    updateItemQuantity(item.id, item.quantity);
+                                                    item.quantity =
+                                                        currentQuantity + 1;
+                                                    updateItemQuantity(
+                                                        item.id, item.quantity);
                                                     calculateTotalAndSubTotal();
                                                   });
                                                 },
@@ -803,32 +970,32 @@ class _CartPage extends State<CartPage> {
                     Expanded(
                       child: editCart
                           ? Text(
-                        '${selectedCartItems.length} item(s) selected',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
+                              '${selectedCartItems.length} item(s) selected',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
                           : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total: $formattedTotal',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total: $formattedTotal',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Subtotal: $formattedSubtotal',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Subtotal: $formattedSubtotal',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                     if (editCart)
                       ElevatedButton(
@@ -838,8 +1005,10 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor:
+                              MaterialStateProperty.all<Color>(Colors.red),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
@@ -863,11 +1032,13 @@ class _CartPage extends State<CartPage> {
                               builder: (BuildContext context) {
                                 return AlertDialog(
                                   title: const Text('Customer Not Selected'),
-                                  content: const Text('Please select a customer before proceeding.'),
+                                  content: const Text(
+                                      'Please select a customer before proceeding.'),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pop(context); // Close the dialog
+                                        Navigator.pop(
+                                            context); // Close the dialog
                                       },
                                       child: const Text('OK'),
                                     ),
@@ -882,11 +1053,13 @@ class _CartPage extends State<CartPage> {
                               builder: (BuildContext context) {
                                 return AlertDialog(
                                   title: const Text('Cart is Empty'),
-                                  content: const Text('Please add items to the cart before proceeding.'),
+                                  content: const Text(
+                                      'Please add items to the cart before proceeding.'),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pop(context); // Close the dialog
+                                        Navigator.pop(
+                                            context); // Close the dialog
                                       },
                                       child: const Text('OK'),
                                     ),
@@ -895,6 +1068,12 @@ class _CartPage extends State<CartPage> {
                               },
                             );
                           } else {
+                            // Logging event
+                            EventLogger.logEvent(
+                                salesmanId,
+                                'Moved to order confirmation page',
+                                'Cart Proceeding',
+                                leadId: null);
                             // Proceed to the order confirmation page if both customer is selected and cart is not empty
                             Navigator.push(
                               context,
@@ -910,14 +1089,17 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              const Color(0xff0069BA)),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
                           minimumSize: MaterialStateProperty.all<Size>(
-                            const Size(120, 40), // Adjust the minimum width and height of the button
+                            const Size(120,
+                                40), // Adjust the minimum width and height of the button
                           ),
                         ),
                         child: const Text(
@@ -1008,7 +1190,8 @@ class _CustomerInfoState extends State<CustomerInfo> {
       child: Card(
         elevation: 6,
         color: Colors.white,
-        child: Stack( // Use Stack to position the "Select" text
+        child: Stack(
+          // Use Stack to position the "Select" text
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -1017,7 +1200,8 @@ class _CustomerInfoState extends State<CustomerInfo> {
                 children: [
                   Text(
                     _customer.companyName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -1032,13 +1216,15 @@ class _CustomerInfoState extends State<CustomerInfo> {
                     children: [
                       Text(
                         _customer.contactNumber,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 20),
                       Flexible(
                         child: Text(
                           _customer.email,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
                           overflow: TextOverflow.visible, // Allow text to wrap
                         ),
                       ),
@@ -1054,7 +1240,8 @@ class _CustomerInfoState extends State<CustomerInfo> {
                 elevation: 0,
                 color: Color(0xffffffff),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                   child: Text(
                     'Select',
                     style: TextStyle(

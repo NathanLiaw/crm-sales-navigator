@@ -140,10 +140,10 @@ class EngagementLeadItem extends StatelessWidget {
                             if (confirmDelete == true) {
                               MySqlConnection conn = await connectToDatabase();
                               try {
-                                await conn.query(
-                                  'DELETE FROM sales_lead WHERE id = ?',
-                                  [leadItem.id],
-                                );
+                                // await conn.query(
+                                //   'DELETE FROM sales_lead WHERE id = ?',
+                                //   [leadItem.id],
+                                // );
                                 onDeleteLead(leadItem);
                               } catch (e) {
                                 developer.log('Error deleting lead item: $e');
