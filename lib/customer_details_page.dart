@@ -27,7 +27,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'Customer Details',
@@ -79,7 +79,8 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                           onTap: () {
                             setState(() {
                               selectedIndex = isSelected ? null : index;
-                              selectedCustomer = isSelected ? Customer() : customer;
+                              selectedCustomer =
+                                  isSelected ? Customer() : customer;
 
                               // Call the callback with the updated selected customer
                               widget.onSelectionChanged?.call(selectedCustomer);
@@ -88,14 +89,18 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                             Navigator.pop(context, selectedCustomer);
                           },
                           child: Padding(
-                            padding: const EdgeInsets.only(
-                                left: 4.0,
-                                right: 4.0,
-                                bottom: 2.0
-                            ),
-                            child: Card(
-                              elevation: 2.0,
-                              color: isSelected ? const Color(0xfff8f9fa) : const Color(0xffcde5f2),
+                            padding: const EdgeInsets.only(bottom: 2.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: BorderDirectional(
+                                    bottom: BorderSide(
+                                        color: const Color.fromARGB(
+                                            255, 231, 231, 231),
+                                        width: 2)),
+                                color: isSelected
+                                    ? const Color(0xfff8f9fa)
+                                    : Color.fromARGB(255, 255, 255, 255),
+                              ),
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child: Column(
@@ -106,7 +111,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                                       style: const TextStyle(
                                         fontSize: 16.0,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xff191731),
+                                        color: const Color(0xff0175FF),
                                       ),
                                     ),
                                     const SizedBox(height: 8.0),
@@ -119,7 +124,8 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                                     ),
                                     const SizedBox(height: 16.0),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           customer.contactNumber,

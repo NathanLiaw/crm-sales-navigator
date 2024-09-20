@@ -91,7 +91,7 @@ class _AccountSettingState extends State<AccountSetting> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'Account Setting',
@@ -176,7 +176,7 @@ class _AccountSettingState extends State<AccountSetting> {
                       updateSalesmanDetailsInDatabase();
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: const Color(0xff0175FF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),

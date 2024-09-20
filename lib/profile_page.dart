@@ -44,7 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -63,7 +63,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(2.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -162,8 +162,8 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Container(
         margin: const EdgeInsets.only(top: 10),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.black),
-          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: const Color.fromARGB(255, 245, 245, 245)),
+          borderRadius: BorderRadius.circular(2),
         ),
         child: ListTile(
           leading: Icon(icon),

@@ -287,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
     var mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'F.Y.H Chat Bot',
@@ -516,73 +516,73 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               ],
                             ),
-                              child: Column(
-                                crossAxisAlignment: isUser
-                                    ? CrossAxisAlignment.end
-                                    : CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    message["message"],
-                                    style: TextStyle(
-                                        color:
-                                            isUser ? Colors.white : Colors.black),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    timestamp,
-                                    style: TextStyle(
-                                        color: isUser
-                                            ? Colors.white70
-                                            : Colors.black54,
-                                        fontSize: 10),
-                                  ),
-                                ],
+                            child: Column(
+                              crossAxisAlignment: isUser
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  message["message"],
+                                  style: TextStyle(
+                                      color:
+                                          isUser ? Colors.white : Colors.black),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  timestamp,
+                                  style: TextStyle(
+                                      color: isUser
+                                          ? Colors.white70
+                                          : Colors.black54,
+                                      fontSize: 10),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (salesOrders != null && salesOrders.isNotEmpty)
+                            ...salesOrders
+                                .map((order) => SalesOrderCard(order: order)),
+                          if (products != null && products.isNotEmpty)
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio: 0.7,
+                                ),
+                                itemCount: products.length,
+                                itemBuilder: (context, index) {
+                                  return _buildProductCard(products[index]);
+                                },
                               ),
                             ),
-                            if (salesOrders != null && salesOrders.isNotEmpty)
-                              ...salesOrders
-                                  .map((order) => SalesOrderCard(order: order)),
-                            if (products != null && products.isNotEmpty)
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 8,
-                                    mainAxisSpacing: 8,
-                                    childAspectRatio: 0.7,
-                                  ),
-                                  itemCount: products.length,
-                                  itemBuilder: (context, index) {
-                                    return _buildProductCard(products[index]);
-                                  },
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
+                        ],
+                      );
+                    },
                   ),
-                if (isTyping)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                          ),
+                ),
+              if (isTyping)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(width: 10),
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
                         ),
-                        SizedBox(width: 10),
-                        Text('F.Y.H Smart Agent is typing...'),
+                      ),
+                      SizedBox(width: 10),
+                      Text('F.Y.H Smart Agent is typing...'),
                     ],
                   ),
                 ),
