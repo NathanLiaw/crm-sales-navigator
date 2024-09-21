@@ -56,9 +56,25 @@ class EngagementLeadItem extends StatelessWidget {
           ),
         );
       },
-      child: Card(
-        color: const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
+      child: Container(
+        height: 210,
+        decoration: BoxDecoration(
+            image: DecorationImage(
+              image: ResizeImage(AssetImage('asset/bttm_start.png'),
+                  width: 108, height: 78),
+              alignment: Alignment.bottomLeft,
+            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ]),
         margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -96,13 +112,13 @@ class EngagementLeadItem extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: Color.fromARGB(71, 148, 255, 223),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           'RM$formattedAmount',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Color(0xff008A64),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -231,7 +247,7 @@ class EngagementLeadItem extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.phone,
-                          color: Color(0xff0069BA),
+                          color: const Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
                         Container(
@@ -242,7 +258,8 @@ class EngagementLeadItem extends StatelessWidget {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -252,7 +269,7 @@ class EngagementLeadItem extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
                         ? () => _launchURL('mailto:${leadItem.emailAddress}')
@@ -261,18 +278,19 @@ class EngagementLeadItem extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.email,
-                          color: Color(0xff0069BA),
+                          color: const Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          width: 150,
+                          width: 160,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty
                                 ? leadItem.emailAddress
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -292,32 +310,40 @@ class EngagementLeadItem extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 20),
+              Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Created on: ${leadItem.createdDate}',
+                    '${leadItem.createdDate}',
                     style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
                   ),
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
+                      iconStyleData: IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconDisabledColor: Colors.white,
+                          iconEnabledColor: Colors.white),
                       isExpanded: true,
-                      hint: const Text('Engagement'),
+                      hint: const Text(
+                        'Engagement',
+                        style: TextStyle(fontSize: 12, color: Colors.white),
+                      ),
                       items: tabbarNames
                           .skip(1)
                           .map((item) => DropdownMenuItem<String>(
                                 value: item,
                                 child: Text(
                                   item,
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.black),
                                 ),
                               ))
                           .toList(),
-                      value: 'Engagement',
+                      value: leadItem.selectedValue,
                       onChanged: (value) {
                         if (value == 'Negotiation') {
                           onMoveToNegotiation();
@@ -328,16 +354,17 @@ class EngagementLeadItem extends StatelessWidget {
                         }
                       },
                       buttonStyleData: const ButtonStyleData(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        height: 32,
-                        width: 130,
-                        decoration: BoxDecoration(color: Colors.white),
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        height: 24,
+                        width: 136,
+                        decoration: BoxDecoration(color: Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
                       ),
+                      // Add this to style the dropdown menu items
                     ),
-                  ),
+                  )
                 ],
               ),
             ],

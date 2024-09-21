@@ -1183,7 +1183,7 @@ class _CustomerInfoState extends State<CustomerInfo> {
       child: Container(
         margin: EdgeInsets.all(8),
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(8),
             color: Colors.white,
             boxShadow: const [
               BoxShadow(

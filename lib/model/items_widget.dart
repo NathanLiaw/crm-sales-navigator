@@ -15,7 +15,8 @@ class ItemsWidget extends StatefulWidget {
   final String sortOrder;
   final bool isFeatured;
 
-  const ItemsWidget({super.key,
+  const ItemsWidget({
+    super.key,
     this.brandId,
     this.subCategoryId,
     this.subCategoryIds,
@@ -113,19 +114,19 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
       return results
           .map((row) => {
-        'id': row['id'],
-        'product_name': row['product_name'],
-        'photo1': row['photo1'],
-        'photo2': row['photo2'],
-        'photo3': row['photo3'],
-        'description': row['description'],
-        'sub_category': row['sub_category'],
-        'brand': row['brand'],
-        'price_by_uom': row['price_by_uom'],
-        'featured': row['featured'],
-        'created': row['created'],
-        'viewed': row['viewed'],
-      })
+                'id': row['id'],
+                'product_name': row['product_name'],
+                'photo1': row['photo1'],
+                'photo2': row['photo2'],
+                'photo3': row['photo3'],
+                'description': row['description'],
+                'sub_category': row['sub_category'],
+                'brand': row['brand'],
+                'price_by_uom': row['price_by_uom'],
+                'featured': row['featured'],
+                'created': row['created'],
+                'viewed': row['viewed'],
+              })
           .toList();
     } catch (e) {
       developer.log('Error fetching product: $e');
@@ -149,7 +150,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                 baseColor: Colors.grey[300]!,
                 highlightColor: Colors.grey[100]!,
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -202,11 +204,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                       MaterialPageRoute(
                         builder: (context) => ItemScreen(
                           productId: productId,
-                          itemAssetNames: [
-                            photoUrl1,
-                            photoUrl2,
-                            photoUrl3
-                          ],
+                          itemAssetNames: [photoUrl1, photoUrl2, photoUrl3],
                           productName: productName,
                           itemDescription: itemDescription,
                           priceByUom: product['price_by_uom'].toString(),
@@ -220,7 +218,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                 child: Container(
                   padding: const EdgeInsets.only(
                       left: 8, right: 8, top: 10, bottom: 2),
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
                   decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(2),
@@ -251,12 +250,14 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                                     ],
                                     productName: productName,
                                     itemDescription: itemDescription,
-                                    priceByUom: product['price_by_uom'].toString(),
+                                    priceByUom:
+                                        product['price_by_uom'].toString(),
                                   ),
                                 ),
                               );
                             } catch (e) {
-                              developer.log('Error navigating to ItemScreen: $e');
+                              developer
+                                  .log('Error navigating to ItemScreen: $e');
                             }
                           },
                           child: Container(
@@ -284,7 +285,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                                 ),
                               ),
                               errorWidget: (context, url, error) =>
-                              const Icon(Icons.error_outline),
+                                  const Icon(Icons.error_outline),
                             ),
                           ),
                         ),
@@ -299,14 +300,18 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                               Flexible(
                                 child: Column(
                                   children: [
-                                    Text(
-                                      productName,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 2,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color.fromARGB(255, 25, 23, 49),
+                                    Container(
+                                      margin: EdgeInsets.only(left: 12),
+                                      child: Text(
+                                        productName,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromARGB(
+                                              255, 25, 23, 49),
+                                        ),
                                       ),
                                     ),
                                   ],

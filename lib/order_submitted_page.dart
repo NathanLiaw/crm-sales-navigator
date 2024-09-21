@@ -20,7 +20,9 @@ class OrderSubmittedPage extends StatelessWidget {
         // Extract the 'id' field from the first row of the result
         salesOrderId = result['id'] as int;
       } else {
-        developer.log('No sales order ID found in the cart table: $salesOrderId', level: 1);
+        developer.log(
+            'No sales order ID found in the cart table: $salesOrderId',
+            level: 1);
       }
 
       await conn.close();
@@ -35,7 +37,7 @@ class OrderSubmittedPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'Order Submitted',
@@ -125,8 +127,10 @@ class OrderSubmittedPage extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff004c87)),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              const Color(0xff0175FF)),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
@@ -150,17 +154,20 @@ class OrderSubmittedPage extends StatelessWidget {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => OrderDetailsPage(cartID: salesOrderId),
+                              builder: (context) =>
+                                  OrderDetailsPage(cartID: salesOrderId),
                             ),
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xffffffff)),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              const Color(0xffffffff)),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                               side: const BorderSide(
-                                color: Color(0xff004c87),
+                                color: const Color(0xff0175FF),
                                 width: 1.0,
                               ),
                             ),
@@ -175,7 +182,7 @@ class OrderSubmittedPage extends StatelessWidget {
                         child: const Text(
                           'View Order',
                           style: TextStyle(
-                            color: Color(0xff004c87),
+                            color: const Color(0xff0175FF),
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
