@@ -255,7 +255,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Order Details',
           style: TextStyle(color: Colors.white),
@@ -314,7 +314,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   const Row(
                     children: [
                       Expanded(
@@ -330,7 +330,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                               Text('Fong Yuan Hung Import & Export Sdn Bhd.')),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       const Expanded(
@@ -343,7 +343,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       Expanded(flex: 5, child: Text(salesmanName)),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       const Expanded(
@@ -356,7 +356,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       Expanded(flex: 5, child: Text(salesOrderId)),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       const Expanded(
@@ -369,7 +369,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       Expanded(flex: 5, child: Text(createdDate)),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Expanded(
                     child: Scrollbar(
                       thumbVisibility: true,
@@ -382,7 +382,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

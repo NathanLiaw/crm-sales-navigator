@@ -39,9 +39,20 @@ class ClosedLeadItem extends StatelessWidget {
         : '';
     double formattedTotal = double.parse(total);
 
-    return Card(
-      color: const Color.fromARGB(255, 205, 229, 242),
-      elevation: 2,
+    return Container(
+      height: 278,
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: const [
+            BoxShadow(
+              blurStyle: BlurStyle.normal,
+              color: Color.fromARGB(75, 117, 117, 117),
+              spreadRadius: 0.1,
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ]),
       margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -66,7 +77,7 @@ class ClosedLeadItem extends StatelessWidget {
                   child: Text(
                     leadItem.customerName,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18),
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -127,7 +138,7 @@ class ClosedLeadItem extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.phone,
-                        color: Color(0xff0069BA),
+                        color: const Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -157,7 +168,7 @@ class ClosedLeadItem extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.email,
-                        color: Color(0xff0069BA),
+                        color: const Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -183,7 +194,10 @@ class ClosedLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               formattedSalesOrderId,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: const Color(0xff0175FF)),
             ),
             const SizedBox(
               height: 8,
@@ -197,7 +211,7 @@ class ClosedLeadItem extends StatelessWidget {
                   : 'Quantity: Unknown      Total: RM${_formatCurrency(formattedTotal)}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

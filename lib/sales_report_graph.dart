@@ -241,29 +241,29 @@ class _SalesReportState extends State<SalesReport> {
         break;
     }
 
-  var results = await db.query(query);
+    var results = await db.query(query);
 
-  return results.map((row) {
-    DateTime? date;
-    try {
-      if (reportType == 'FiveYears') {
-        date = DateTime.utc(row['Year']);
-      } else if (reportType == 'FourMonths' || reportType == 'Year') {
-        date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
-      } else {
-        date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
+    return results.map((row) {
+      DateTime? date;
+      try {
+        if (reportType == 'FiveYears') {
+          date = DateTime.utc(row['Year']);
+        } else if (reportType == 'FourMonths' || reportType == 'Year') {
+          date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
+        } else {
+          date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
+        }
+      } catch (e) {
+        date = null;
       }
-    } catch (e) {
-      date = null;
-    }
-    return SalesData(
-      date: date?.toLocal() ?? DateTime.now(),
-      totalSales: row['TotalSales'] != null
-          ? (row['TotalSales'] as num).toDouble()
-          : 0,
-    );
-  }).toList();
-}
+      return SalesData(
+        date: date?.toLocal() ?? DateTime.now(),
+        totalSales: row['TotalSales'] != null
+            ? (row['TotalSales'] as num).toDouble()
+            : 0,
+      );
+    }).toList();
+  }
 
   void _refreshData() async {
     await _fetchData(_selectedInterval);
@@ -282,7 +282,7 @@ class _SalesReportState extends State<SalesReport> {
         backgroundColor: MaterialStateProperty.resolveWith<Color>(
           (Set<MaterialState> states) {
             return isSelected
-                ? const Color(0xFF047CBD)
+                ? const Color(0xff0175FF)
                 : const Color(0xFFD9D9D9);
           },
         ),

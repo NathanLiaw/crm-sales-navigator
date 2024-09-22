@@ -111,7 +111,7 @@ class _ItemScreenState extends State<ItemScreen> {
           },
         ),
         foregroundColor: Colors.white,
-        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color(0xff0175FF),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(

@@ -416,7 +416,7 @@ class _CustomerReportState extends State<CustomerReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
