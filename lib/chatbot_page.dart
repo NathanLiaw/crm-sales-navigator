@@ -284,6 +284,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     var mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -306,6 +307,25 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Stack(
         children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Image.asset(
+              "asset/chatbot_top.png",
+              width: size.width * 0.4,
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Image.asset(
+              "asset/chatbot_bttm.png",
+              width: size.width * 0.55,
+            ),
+          ),
+          /*
+
+
           Positioned(
             top: 0,
             right: -40,
@@ -332,6 +352,9 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
+
+          */
+
           Column(
             children: <Widget>[
               if (selectedCategory.isEmpty)
@@ -504,7 +527,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 EdgeInsets.all(mediaQuery.size.width * 0.03),
                             decoration: BoxDecoration(
                               color: isUser
-                                  ? const Color.fromARGB(255, 0, 100, 177)
+                                  ? const Color(0xff0175FF)
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(15.0),
                               boxShadow: [
@@ -587,8 +610,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               if (selectedCategory.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                Container(
                   child: Column(
                     children: [
                       if (faqQuestions.isNotEmpty)
@@ -618,25 +640,33 @@ class _ChatScreenState extends State<ChatScreen> {
                             }).toList(),
                           ),
                         ),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              decoration: InputDecoration(
-                                hintText: 'Write a message',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                      Container(
+                        padding: EdgeInsets.all(10.0),
+                        color: Colors.white,
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: TextField(
+                                controller: _controller,
+                                decoration: InputDecoration(
+                                  hintText: 'Write a message',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.send),
-                            onPressed: () =>
-                                _handleSendMessage(_controller.text),
-                          ),
-                        ],
+                            IconButton(
+                              icon: const Icon(
+                                Icons.send,
+                                size: 30,
+                                color: const Color(0xff0175FF),
+                              ),
+                              onPressed: () =>
+                                  _handleSendMessage(_controller.text),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -661,33 +691,30 @@ class FAQSelection extends StatelessWidget {
         Positioned.fill(
           child: Container(
             decoration: const BoxDecoration(
-              image: DecorationImage(
+
+                /* image: DecorationImage(
                 image: AssetImage('asset/chart_illu.png'),
                 fit: BoxFit.cover,
-              ),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-              child: Container(
-                color: Colors.white.withOpacity(0.7),
-              ),
-            ),
+              ), */
+
+                ),
           ),
         ),
         Column(
           children: [
-            const SizedBox(height: 20),
             Center(
               child: Image.asset('asset/logo/logo_fyh.png',
-                  width: 240, height: 170),
+                  width: 240, height: 140),
             ),
-            const SizedBox(height: 20),
+
+            /*
             const Text(
               'WELCOME\nHow May I Assist You?',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
+
+            */
             Flexible(
               child: Center(
                 child: Padding(
@@ -740,14 +767,21 @@ class FAQSelection extends StatelessWidget {
       required String label,
       required VoidCallback onTap}) {
     return SizedBox(
-      width: 107,
+      width: 120,
       height: 117,
-      child: Card(
-        elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        color: const Color.fromRGBO(111, 188, 249, 0.7),
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ]),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(15.0),
@@ -764,7 +798,7 @@ class FAQSelection extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black),
+                      color: const Color(0xff0175FF)),
                 ),
               ],
             ),
