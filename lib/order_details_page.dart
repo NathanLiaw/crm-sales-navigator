@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 
@@ -201,7 +202,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         'id': widget.cartID,
       });
       if (!success) {
-        print('Failed to void order in cart');
+        developer.log('Failed to void order in cart');
         return;
       }
 
@@ -230,7 +231,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       // Fetch order details again to update the status on the page
       await fetchOrderDetails();
     } catch (e) {
-      print('Error voiding order: $e');
+      developer.log('Error voiding order: $e');
     } finally {
       await conn.close();
     }
@@ -251,6 +252,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     sst = await UtilityFunction.retrieveTax('SST');
   }
 
+  Future<void> showVoidConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // Prevent dismissal by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Void Order'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to void this order?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            ElevatedButton(
+              child: Text(
+                'Confirm',
+                style: TextStyle(color: Colors.white), // White text color
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+                voidOrder(); // Proceed with voiding the order
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, // Make the button background red
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -263,7 +304,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SalesOrderPage(),
+              ),
+            );
           },
         ),
       ),
@@ -438,18 +484,17 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                 ? 0.0
                                 : 1.0,
                         child: ElevatedButton(
-                          onPressed: shouldHideVoidButton() ? null : voidOrder,
+                          onPressed: shouldHideVoidButton()
+                              ? null
+                              : () => showVoidConfirmationDialog(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: shouldHideVoidButton()
-                                ? Colors.transparent
-                                : Colors.white,
+                            backgroundColor: shouldHideVoidButton() ? Colors.transparent : Colors.white,
                             shape: shouldHideVoidButton()
                                 ? null
                                 : RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
-                                    side:
-                                        BorderSide(color: Colors.red, width: 2),
-                                  ),
+                              borderRadius: BorderRadius.circular(5),
+                              side: BorderSide(color: Colors.red, width: 2),
+                            ),
                             minimumSize: Size(120, 40),
                           ),
                           child: shouldHideVoidButton()

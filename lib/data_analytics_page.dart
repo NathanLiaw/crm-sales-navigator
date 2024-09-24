@@ -9,7 +9,7 @@ import 'package:sales_navigator/customer_sales_prediction.dart';
 import 'package:sales_navigator/sales_forecast_graph.dart';
 import 'customer_graph.dart';
 import 'customer_report_page.dart';
-import 'sales_order.dart';
+import 'sales_order_page.dart';
 
 class DataAnalyticsPage extends StatelessWidget {
   const DataAnalyticsPage({super.key});

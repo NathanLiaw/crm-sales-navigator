@@ -16,6 +16,9 @@ import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 import 'package:shimmer/shimmer.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -30,7 +33,7 @@ class SalesmanPerformanceUpdater {
 
   void startPeriodicUpdate(int salesmanId) {
     // 每小时更新一次
-    _timer = Timer.periodic(Duration(hours: 1), (timer) {
+    _timer = Timer.periodic(const Duration(hours: 1), (timer) {
       _updateSalesmanPerformance(salesmanId);
     });
   }
@@ -46,7 +49,7 @@ class SalesmanPerformanceUpdater {
       await conn.query(
           'CALL update_salesman_performance(?, CURDATE())', [salesmanId]);
     } catch (e) {
-      print('Error updating salesman performance: $e');
+      developer.log('Error updating salesman performance: $e');
     } finally {
       await conn.close();
     }
@@ -77,11 +80,11 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _performanceUpdater = SalesmanPerformanceUpdater();
     _initializeSalesmanId();
+    _performanceUpdater = SalesmanPerformanceUpdater();
     // _fetchLeadItems();
     _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
-    Future.delayed(Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 2), () {
       setState(() {
         _isLoading = false; // Set loading state to false when data is loaded
       });
@@ -98,7 +101,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _performanceUpdater?.stopPeriodicUpdate();
+    _performanceUpdater.stopPeriodicUpdate();
     super.dispose();
   }
 
@@ -150,42 +153,60 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Clean and validate lead data
   Future<void> _cleanAndValidateLeadData() async {
-    MySqlConnection conn = await connectToDatabase();
-    try {
-      await conn.query('''
-      UPDATE sales_lead
-      SET 
-        engagement_start_date = CASE 
-          WHEN stage IN ('Engagement', 'Negotiation', 'Order Processing', 'Closed') AND engagement_start_date IS NULL 
-          THEN created_date 
-          ELSE engagement_start_date 
-        END,
-        negotiation_start_date = CASE 
-          WHEN stage IN ('Negotiation', 'Order Processing', 'Closed') AND negotiation_start_date IS NULL 
-          THEN COALESCE(engagement_start_date, created_date)
-          ELSE negotiation_start_date 
-        END
-      WHERE salesman_id = ?
-    ''', [salesmanId]);
+    final url = Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
 
-      developer.log('Lead data cleaned and validated');
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          developer.log('Lead data cleaned and validated successfully.');
+        } else {
+          developer.log('Error: ${data['message']}');
+        }
+      } else {
+        developer.log('Failed to load data. Status code: ${response.statusCode}');
+      }
     } catch (e) {
-      developer.log('Error cleaning and validating lead data: $e');
-    } finally {
-      await conn.close();
+      developer.log('Error making API call: $e');
     }
   }
+
+  // Clean and validate lead data
+  // Future<void> _cleanAndValidateLeadData() async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query('''
+  //     UPDATE sales_lead
+  //     SET
+  //       engagement_start_date = CASE
+  //         WHEN stage IN ('Engagement', 'Negotiation', 'Order Processing', 'Closed') AND engagement_start_date IS NULL
+  //         THEN created_date
+  //         ELSE engagement_start_date
+  //       END,
+  //       negotiation_start_date = CASE
+  //         WHEN stage IN ('Negotiation', 'Order Processing', 'Closed') AND negotiation_start_date IS NULL
+  //         THEN COALESCE(engagement_start_date, created_date)
+  //         ELSE negotiation_start_date
+  //       END
+  //     WHERE salesman_id = ?
+  //   ''', [salesmanId]);
+  //   } catch (e) {
+  //     developer.log('Error cleaning and validating lead data: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
     MySqlConnection conn = await connectToDatabase();
     try {
-      print(salesmanId);
       Results results =
           await conn.query('SELECT * FROM cart WHERE buyer_id = $salesmanId');
-      await _fetchCreateLeadItems(conn);
+      await _fetchCreateLeadItems();
 
       for (var row in results) {
         var modifiedDate = row['modified'] as DateTime;
@@ -249,7 +270,7 @@ class _HomePageState extends State<HomePage> {
             try {
               // Save the lead item to the sales_lead table
               await conn.query(
-                'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                   leadItem.salesmanId,
                   leadItem.customerName,
@@ -283,70 +304,148 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('Error fetching lead items: $e');
+      developer.log('Error fetching lead items: $e');
     } finally {
       await conn.close();
     }
   }
 
-  Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
+  Future<void> _fetchCreateLeadItems() async {
+    final apiUrl = dotenv.env['API_URL'];
+    const offset = 0;
+    const limit = 50;
+
     try {
-      Results results = await conn
-          .query('SELECT * FROM sales_lead WHERE salesman_id = $salesmanId');
-      for (var row in results) {
-        var customerName = row['customer_name'] as String;
-        var description = row['description'] as String? ?? '';
-        var amount = row['predicted_sales'].toString();
-        var createdDate = row['created_date'] != null
-            ? DateFormat('MM/dd/yyyy').format(row['created_date'])
-            : DateFormat('MM/dd/yyyy').format(DateTime.now());
-        var stage = row['stage'].toString();
-        var contactNumber = row['contact_number'].toString();
-        var emailAddress = row['email_address'].toString();
-        var addressLine1 = row['address'].toString();
-        var salesOrderId = row['so_id']?.toString();
-        var previousStage = row['previous_stage']?.toString();
-        var quantity = row['quantity'];
-        // 添加这两行来获取 engagement_start_date 和 negotiation_start_date
-        var engagementStartDate = row['engagement_start_date'] as DateTime?;
-        var negotiationStartDate = row['negotiation_start_date'] as DateTime?;
+      // Make the HTTP request to the API
+      final response = await http.get(Uri.parse('$apiUrl/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
 
-        var leadItem = LeadItem(
-          id: row['id'] as int, // 添加这一行
-          salesmanId: salesmanId,
-          customerName: customerName,
-          description: description,
-          createdDate: createdDate,
-          amount: 'RM$amount',
-          contactNumber: contactNumber,
-          emailAddress: emailAddress,
-          stage: stage,
-          addressLine1: addressLine1,
-          salesOrderId: salesOrderId,
-          previousStage: previousStage,
-          quantity: quantity,
-          engagementStartDate: engagementStartDate, // 添加这行
-          negotiationStartDate: negotiationStartDate, // 添加这行
-        );
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        final data = jsonDecode(response.body);
+        
+        if (data['status'] == 'success') {
+          final salesLeads = data['salesLeads'] as List;
 
-        setState(() {
-          if (stage == 'Opportunities') {
-            leadItems.add(leadItem);
-          } else if (stage == 'Engagement') {
-            engagementLeads.add(leadItem);
-          } else if (stage == 'Negotiation') {
-            negotiationLeads.add(leadItem);
-          } else if (stage == 'Order Processing') {
-            orderProcessingLeads.add(leadItem);
-          } else if (stage == 'Closed') {
-            closedLeads.add(leadItem);
+          // Clear existing lead lists (uncomment if necessary)
+          leadItems.clear();
+          engagementLeads.clear();
+          negotiationLeads.clear();
+          orderProcessingLeads.clear();
+          closedLeads.clear();
+
+          for (var item in salesLeads) {
+            // Ensure the created date is formatted correctly
+            String createdDate = item['created_date'] != null
+                ? DateFormat('MM/dd/yyyy').format(DateTime.parse(item['created_date']))
+                : DateFormat('MM/dd/yyyy').format(DateTime.now());
+
+            // Map the lead item data
+            final leadItem = LeadItem(
+              id: item['id'] != null ? item['id'] as int : 0,
+              salesmanId: salesmanId,
+              customerName: item['customer_name'] as String,
+              description: item['description'] ?? '',
+              createdDate: createdDate,
+              amount: 'RM${item['predicted_sales']}',
+              contactNumber: item['contact_number'] ?? '',
+              emailAddress: item['email_address'] ?? '',
+              stage: item['stage'] as String,
+              addressLine1: item['address'] ?? '',
+              salesOrderId: item['so_id']?.toString(),
+              previousStage: item['previous_stage']?.toString(),
+              quantity: item['quantity'] != null ? item['quantity'] as int : 0,
+              engagementStartDate: item['engagement_start_date'] != null
+                  ? DateTime.parse(item['engagement_start_date'])
+                  : null,
+              negotiationStartDate: item['negotiation_start_date'] != null
+                  ? DateTime.parse(item['negotiation_start_date'])
+                  : null,
+            );
+
+            // Add the lead item to the appropriate list based on its stage
+            setState(() {
+              if (leadItem.stage == 'Opportunities') {
+                leadItems.add(leadItem);
+              } else if (leadItem.stage == 'Engagement') {
+                engagementLeads.add(leadItem);
+              } else if (leadItem.stage == 'Negotiation') {
+                negotiationLeads.add(leadItem);
+              } else if (leadItem.stage == 'Order Processing') {
+                orderProcessingLeads.add(leadItem);
+              } else if (leadItem.stage == 'Closed') {
+                closedLeads.add(leadItem);
+              }
+            });
           }
-        });
+        } else {
+          developer.log('Error: ${data['message']}');
+        }
+      } else {
+        developer.log('Error: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching sales_lead items: $e');
     }
   }
+  
+  // Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
+  //   try {
+  //     Results results = await conn
+  //         .query('SELECT * FROM sales_lead WHERE salesman_id = $salesmanId');
+  //     for (var row in results) {
+  //       var customerName = row['customer_name'] as String;
+  //       var description = row['description'] as String? ?? '';
+  //       var amount = row['predicted_sales'].toString();
+  //       var createdDate = row['created_date'] != null
+  //           ? DateFormat('MM/dd/yyyy').format(row['created_date'])
+  //           : DateFormat('MM/dd/yyyy').format(DateTime.now());
+  //       var stage = row['stage'].toString();
+  //       var contactNumber = row['contact_number'].toString();
+  //       var emailAddress = row['email_address'].toString();
+  //       var addressLine1 = row['address'].toString();
+  //       var salesOrderId = row['so_id']?.toString();
+  //       var previousStage = row['previous_stage']?.toString();
+  //       var quantity = row['quantity'];
+  //       // 添加这两行来获取 engagement_start_date 和 negotiation_start_date
+  //       var engagementStartDate = row['engagement_start_date'] as DateTime?;
+  //       var negotiationStartDate = row['negotiation_start_date'] as DateTime?;
+  //
+  //       var leadItem = LeadItem(
+  //         id: row['id'] as int, // 添加这一行
+  //         salesmanId: salesmanId,
+  //         customerName: customerName,
+  //         description: description,
+  //         createdDate: createdDate,
+  //         amount: 'RM$amount',
+  //         contactNumber: contactNumber,
+  //         emailAddress: emailAddress,
+  //         stage: stage,
+  //         addressLine1: addressLine1,
+  //         salesOrderId: salesOrderId,
+  //         previousStage: previousStage,
+  //         quantity: quantity,
+  //         engagementStartDate: engagementStartDate, // 添加这行
+  //         negotiationStartDate: negotiationStartDate, // 添加这行
+  //       );
+  //
+  //       setState(() {
+  //         if (stage == 'Opportunities') {
+  //           leadItems.add(leadItem);
+  //         } else if (stage == 'Engagement') {
+  //           engagementLeads.add(leadItem);
+  //         } else if (stage == 'Negotiation') {
+  //           negotiationLeads.add(leadItem);
+  //         } else if (stage == 'Order Processing') {
+  //           orderProcessingLeads.add(leadItem);
+  //         } else if (stage == 'Closed') {
+  //           closedLeads.add(leadItem);
+  //         }
+  //       });
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching sales_lead items: $e');
+  //   }
+  // }
 
   Future<String> _fetchCustomerName(
       MySqlConnection connection, int customerId) async {
@@ -910,13 +1009,13 @@ class _HomePageState extends State<HomePage> {
                   height: 64.0,
                   color: Colors.white,
                 ),
-                SizedBox(height: 8.0),
+                const SizedBox(height: 8.0),
                 Container(
                   width: double.infinity,
                   height: 16.0,
                   color: Colors.white,
                 ),
-                SizedBox(height: 8.0),
+                const SizedBox(height: 8.0),
                 Container(
                   width: double.infinity,
                   height: 16.0,
@@ -1013,7 +1112,7 @@ class _HomePageState extends State<HomePage> {
                   //   maxLines: 2,
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 200,
                     child: Text(
                       leadItem.customerName,
@@ -1023,7 +1122,7 @@ class _HomePageState extends State<HomePage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Container(
                     margin: const EdgeInsets.only(left: 20),
                     padding:
@@ -1166,9 +1265,9 @@ class _HomePageState extends State<HomePage> {
                         //       style: TextStyle(color: Colors.red)),
                         // ),
                         IconButton(
-                          iconSize: 40,
-                          icon: Icon(
-                            Icons.cancel,
+                          iconSize: 32,
+                          icon: const Icon(
+                            Icons.delete, // Changed to the delete icon
                             color: Colors.red,
                           ),
                           onPressed: () {
@@ -1190,15 +1289,20 @@ class _HomePageState extends State<HomePage> {
                         //   child: const Text('Accept',
                         //       style: TextStyle(color: Colors.white)),
                         // ),
-                        IconButton(
-                          iconSize: 40,
-                          icon: Icon(
-                            Icons.check_circle,
-                            color: Color(0xff0069BA),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff3796DF), // Set the background color
+                            foregroundColor: Colors.white, // Set the text color to white
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                            textStyle: const TextStyle(fontSize: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0), // Decrease the radius
+                            ),
                           ),
                           onPressed: () {
                             _moveToEngagement(leadItem);
                           },
+                          child: const Text('Accept'), // The button text
                         ),
                       ],
                     ),
@@ -1362,13 +1466,13 @@ class _HomePageState extends State<HomePage> {
                               height: 200.0,
                               color: Colors.white,
                             ),
-                            SizedBox(height: 8.0),
+                            const SizedBox(height: 8.0),
                             Container(
                               width: double.infinity,
                               height: 24.0,
                               color: Colors.white,
                             ),
-                            SizedBox(height: 8.0),
+                            const SizedBox(height: 8.0),
                             Container(
                               width: double.infinity,
                               height: 24.0,
