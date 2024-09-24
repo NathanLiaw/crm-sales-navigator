@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/edit_item_page.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:sales_navigator/order_confirmation_page.dart';
@@ -15,6 +14,8 @@ import 'db_sqlite.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -35,22 +36,25 @@ class _CartPage extends State<CartPage> {
   late List<List<String>> productPhotos = [];
   double total = 0;
   double subtotal = 0;
+  String formattedTotal = 'RM0.00';
+  String formattedSubtotal = 'RM0.00';
 
   // Tax Section
-  double gst = 0;
-  double sst = 0;
+  static double gst = 0;
+  static double sst = 0;
 
   // Edit Cart
   bool editCart = false;
   bool isChecked = false;
+  bool selectAll = false;
 
   List<TextEditingController> textControllers = [];
 
   @override
   void initState() {
     super.initState();
+    loadTaxFromCacheOrApi();
     loadCartItemsAndPhotos();
-    getTax();
     initializeTextControllers();
   }
 
@@ -58,20 +62,83 @@ class _CartPage extends State<CartPage> {
     textControllers = List.generate(cartItems.length, (index) => TextEditingController(text: cartItems[index].quantity.toString()));
   }
 
+  Future<void> loadTaxFromCacheOrApi() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Try to load from cache
+    gst = prefs.getDouble('gst') ?? 0;
+    sst = prefs.getDouble('sst') ?? 0;
+
+    // If not found in cache, load from API and save to cache
+    if (gst == 0 || sst == 0) {
+      await getTax();
+    }
+  }
+
   Future<void> getTax() async {
     gst = await UtilityFunction.retrieveTax('GST');
     sst = await UtilityFunction.retrieveTax('SST');
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('gst', gst);
+    await prefs.setDouble('sst', sst);
+  }
+
+  Future<void> calculateTotalAndSubTotal() async {
+    double calculatedSubtotal = 0;
+
+    // Calculate total and subtotal based on cart items
+    for (CartItem item in cartItems) {
+      calculatedSubtotal += item.unitPrice * item.quantity;
+    }
+
+    // Calculate final total using fetched tax values
+    double finalTotal = 0.000;
+    if (customerSelected) {
+      finalTotal = (calculatedSubtotal * (1 + gst + sst)) - (calculatedSubtotal * customer!.discountRate / 100);
+    }
+    else {
+      finalTotal = calculatedSubtotal * (1 + gst + sst);
+    }
+
+    // Format the total and subtotal
+    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    String formattedTotal = formatter.format(finalTotal);
+    String formattedSubtotal = formatter.format(calculatedSubtotal);
+
+    // Update state with calculated values
+    setState(() {
+      total = finalTotal;
+      subtotal = calculatedSubtotal;
+      this.formattedTotal = formattedTotal;
+      this.formattedSubtotal = formattedSubtotal;
+    });
   }
 
   Future<void> loadCartItemsAndPhotos() async {
     try {
-      List<CartItem> items = await readCartItems();
+      // Load cart items
+      final List<CartItem> items = await readCartItems();
+
+      // Fetch product photos concurrently
+      final List<Future<List<String>>> photoFutures = items.map((item) async {
+        final List<Map<String, dynamic>> photos = await getProductPhoto(item.productId);
+
+        // Convert the dynamic map entries to List<String>, ensuring type safety
+        return photos.map<String>((photo) => photo['photo1']?.toString() ?? '').toList();
+            }).toList();
+
+      // Wait for all photo fetch requests to complete
+      final List<List<String>> photosList = await Future.wait(photoFutures);
+
       setState(() {
         cartItems = items;
         updateCartItemsWithLatestPrices();
+        totalCartItems = items.length;
+        productPhotos = photosList;
+        calculateTotalAndSubTotal();
       });
-      calculateTotalAndSubTotal();
-      await fetchProductPhotos();
+
     } catch (e) {
       developer.log('Error loading cart items and photos: $e', error: e);
     }
@@ -87,67 +154,37 @@ class _CartPage extends State<CartPage> {
     String order = 'created DESC';
     String field = '*';
 
-    List<Map<String, dynamic>> queryResults =
-    await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
+    List<Map<String, dynamic>> queryResults = await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
 
-    setState(() {
-      totalCartItems = queryResults.length;
-    });
+    // Initialize text controllers after fetching items
+    textControllers = List.generate(queryResults.length, (index) => TextEditingController());
+
     List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
-
-    textControllers = List.generate(cartItems.length, (index) => TextEditingController());
 
     return cartItems;
   }
 
-  Future<void> fetchProductPhotos() async {
-    List<List<String>> photosList = [];
-
-    for (CartItem item in cartItems) {
-      List<Map<String, dynamic>> photos = await getProductPhoto(item.productName);
-      List<String> imagePaths =
-      photos.map((photo) => photo['photo1'].toString()).toList();
-
-      photosList.add(imagePaths);
-    }
-
-    setState(() {
-      productPhotos = photosList;
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> getProductPhoto(String productName) async {
+  Future<List<Map<String, dynamic>>> getProductPhoto(int productId) async {
     try {
-      final conn = await connectToDatabase();
-      final results = await conn.query(
-        'SELECT photo1 FROM product WHERE status = 1 AND product_name LIKE ?',
-        ['%$productName%'],
+      final response = await http.get(
+        Uri.parse('https://haluansama.com/crm-sales/api/product/get_product_photo.php?productId=$productId'),
       );
-      await conn.close();
 
-      return results.map((row) => {'photo1': row['photo1']}).toList();
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'success') {
+          return List<Map<String, dynamic>>.from(data['photos']);
+        } else {
+          return [];
+        }
+      } else {
+        throw Exception('Failed to load photos');
+      }
     } catch (e) {
-      developer.log('Error fetching product photo: $e', error: e);
+      developer.log('Error fetching product photo: $e');
       return [];
     }
-  }
-
-  Future<void> calculateTotalAndSubTotal() async {
-    double calculatedSubtotal = 0;
-
-    // Calculate total and subtotal based on cart items
-    for (CartItem item in cartItems) {
-      calculatedSubtotal += item.unitPrice * item.quantity;
-    }
-
-    // Calculate final total using fetched tax values
-    double finalTotal = calculatedSubtotal * (1 + gst + sst);
-
-    // Update state with calculated values
-    setState(() {
-      total = finalTotal;
-      subtotal = calculatedSubtotal;
-    });
   }
 
   Future<void> deleteSelectedCartItems() async {
@@ -179,6 +216,7 @@ class _CartPage extends State<CartPage> {
       Map<String, dynamic> updateData = {
         'id': itemId,
         'qty': quantity,
+        'total': cartItems.firstWhere((element) => element.id == itemId).unitPrice * quantity,
       };
 
       int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
@@ -193,51 +231,52 @@ class _CartPage extends State<CartPage> {
     }
   }
 
-  void _navigateToItemScreen(String selectedProductName) async {
-    MySqlConnection conn = await connectToDatabase();
+  void navigateToItemScreen(int selectedProductId) async {
+    final apiUrl = 'https://haluansama.com/crm-sales/api/product/get_product_by_id.php?id=$selectedProductId';
 
     try {
-      final productData = await readData(
-        conn,
-        'product',
-        "status = 1 AND product_name = '$selectedProductName'",
-        '',
-        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
-      );
+      // Make an HTTP GET request to fetch the product details
+      final response = await http.get(Uri.parse(apiUrl));
 
-      if (productData.isNotEmpty) {
-        Map<String, dynamic> product = productData.first;
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
 
-        int productId = product['id'];
-        String productName = product['product_name'];
-        List<String> itemAssetName = [
-          'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
-          'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
-          'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
-        ];
-        Blob description = stringToBlob(product['description']);
-        String priceByUom = product['price_by_uom'];
+        // Check if the status is success and product data is present
+        if (jsonResponse['status'] == 'success' && jsonResponse['product'] != null) {
+          Map<String, dynamic> product = jsonResponse['product'];
 
-        // Navigate to ItemScreen and pass necessary parameters
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ItemScreen(
-              productId: productId,
-              productName: productName,
-              itemAssetNames: itemAssetName,
-              itemDescription: description,
-              priceByUom: priceByUom,
+          // Extract the product details from the JSON response
+          int productId = product['id'];
+          String productName = product['product_name'];
+          List<String> itemAssetName = [
+            'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
+            'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
+            'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
+          ];
+          Blob description = stringToBlob(product['description']);
+          String priceByUom = product['price_by_uom'] ?? '';
+
+          // Navigate to ItemScreen and pass the necessary parameters
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ItemScreen(
+                productId: productId,
+                productName: productName,
+                itemAssetNames: itemAssetName,
+                itemDescription: description,
+                priceByUom: priceByUom,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          developer.log('Product not found or API returned error: ${jsonResponse['message']}');
+        }
       } else {
-        developer.log('Product not found for name: $selectedProductName');
+        developer.log('Failed to fetch product details: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching product details: $e', error: e);
-    } finally {
-      await conn.close();
     }
   }
 
@@ -248,26 +287,47 @@ class _CartPage extends State<CartPage> {
     return blob;
   }
 
-  // Function to retrieve the latest prices for all products in cartItems
   Future<Map<int, double>> retrieveLatestPrices(List<int> productIds) async {
-    MySqlConnection conn = await connectToDatabase();
-    try {
-      // Construct a query to get the latest price for each product in the list
-      var results = await conn.query(
-          "SELECT product_id, uom, unit_price FROM cart_item WHERE product_id IN (${productIds.join(',')}) ORDER BY created DESC"
-      );
+    // API URL
+    const String apiUrl = 'https://haluansama.com/crm-sales/api/sales_order/get_product_prices.php';
 
-      // Use a map to store the latest price for each product
-      Map<int, double> latestPrices = {};
-      for (var row in results) {
-        int productId = row['product_id'];
-        if (!latestPrices.containsKey(productId)) {
-          latestPrices[productId] = row['unit_price'];
-        }
+    // Prepare the JSON body
+    final Map<String, dynamic> body = {
+      'customer_id': customer?.id,
+      'product_ids': productIds,
+    };
+
+    // Send a POST request to the API
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(body),
+    );
+
+    // Check if the request was successful
+    if (response.statusCode == 200) {
+      // Parse the JSON response
+      final Map<String, dynamic> data = json.decode(response.body);
+
+      if (data['status'] == 'success') {
+        // Create a map for latest prices
+        Map<int, double> latestPrices = {};
+        final pricesData = data['data'] as Map<String, dynamic>;
+
+        // Populate the latest prices map
+        pricesData.forEach((key, value) {
+          // Ensure the value is a number and convert to double
+          latestPrices[int.parse(key)] = (value is String) ? double.tryParse(value) ?? 0.0 : value.toDouble();
+        });
+
+        return latestPrices;
+      } else {
+        throw Exception(data['message']);
       }
-      return latestPrices;
-    } finally {
-      await conn.close();
+    } else {
+      throw Exception('Failed to load product prices: ${response.reasonPhrase}');
     }
   }
 
@@ -278,23 +338,38 @@ class _CartPage extends State<CartPage> {
       return;
     }
 
+    // Reset previous prices for all items
+    for (var item in cartItems) {
+      item.previousPrice = null;
+    }
+
     List<int> productIds = cartItems.map((item) => item.productId).toList();
+
     Map<int, double> latestPrices = await retrieveLatestPrices(productIds);
 
-    for (var item in cartItems) {
-      if (latestPrices.containsKey(item.productId)) {
-        item.previousPrice = latestPrices[item.productId]!;
-      } else {
-        developer.log('No previous price found for product ID ${item.productId}');
+    setState(() {
+      for (var item in cartItems) {
+        if (latestPrices.containsKey(item.productId)) {
+          item.previousPrice = latestPrices[item.productId]!;
+        } else {
+          developer.log('No previous price found for product ID ${item.productId}');
+        }
       }
-    }
+    });
+  }
+
+  // Callback function to update customer info
+  void updateCustomer(Customer newCustomer) {
+    setState(() {
+      customer = newCustomer; // Update the customer in the cart
+      calculateTotalAndSubTotal(); // Recalculate total when customer is updated
+      updateCartItemsWithLatestPrices(); // Update cart items with latest prices
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
-    final formattedTotal = formatter.format(total);
-    final formattedSubtotal = formatter.format(subtotal);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -365,18 +440,46 @@ class _CartPage extends State<CartPage> {
               ),
               const SizedBox(height: 2),
               customerSelected
-                  ? CustomerInfo(initialCustomer: customer!)
+                  ? CustomerInfo(
+                initialCustomer: customer!,
+                onCustomerUpdated: updateCustomer, // Pass callback to update customer
+                )
                   : _buildSelectCustomerCard(context),
               const SizedBox(height: 32),
               Padding(
                 padding: const EdgeInsets.only(
                   left: 8.0,
                 ),
-                child: Text(
-                  'Cart ($totalCartItems)',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                child: SizedBox(
+                  height: 32,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (editCart)
+                        Checkbox(
+                          value: selectAll,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              selectAll = value ?? false; // Toggle "Select All" state
+
+                              if (selectAll) {
+                                // Select all cart items
+                                selectedCartItems = List.from(cartItems);
+                              } else {
+                                // Deselect all cart items
+                                selectedCartItems.clear();
+                              }
+                            });
+                          },
+                        ),
+                      Text(
+                        'Cart ($totalCartItems)',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -426,6 +529,31 @@ class _CartPage extends State<CartPage> {
                       child: Dismissible(
                         key: Key(item.id.toString()),
                         direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Confirm Removal"),
+                                content: Text("Are you sure you want to remove ${item.productName} from the cart?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(false); // User canceled the action
+                                    },
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(true); // User confirmed the action
+                                    },
+                                    child: const Text("Remove"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                         onDismissed: (direction) async {
                           // Remove the item from the list and delete from the database
                           setState(() {
@@ -452,7 +580,7 @@ class _CartPage extends State<CartPage> {
                         ),
                         child: GestureDetector(
                           onTap: () {
-                            _navigateToItemScreen(item.productName);
+                            navigateToItemScreen(item.productId);
                           },
                           child: Card(
                             elevation: 2,
@@ -508,7 +636,7 @@ class _CartPage extends State<CartPage> {
                                           children: [
                                             Flexible(
                                               child: SizedBox(
-                                                width: 180,
+                                                width: 200,
                                                 child: Text(
                                                   item.productName,
                                                   style: const TextStyle(
@@ -569,7 +697,7 @@ class _CartPage extends State<CartPage> {
                                                 Row(
                                                   children: [
                                                     SizedBox(
-                                                      width: 220,
+                                                      width: 200,
                                                       child: Row(
                                                         children: [
                                                           Flexible(
@@ -831,27 +959,105 @@ class _CartPage extends State<CartPage> {
                       ),
                     ),
                     if (editCart)
-                      ElevatedButton(
-                        onPressed: () {
-                          if (selectedCartItems.isNotEmpty) {
-                            deleteSelectedCartItems();
-                          }
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5.0),
+                      Builder(
+                        builder: (BuildContext context) {
+                          return ElevatedButton(
+                            onPressed: () {
+                              if (selectedCartItems.isNotEmpty) {
+                                // Show confirmation dialog
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('Confirm Delete'),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Are you sure you want to delete the following items?'),
+                                          const SizedBox(height: 10),
+                                          ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxHeight: 200.0, // Limit height to 200px for scrollable content
+                                            ),
+                                            child: Scrollbar(
+                                              thumbVisibility: true,
+                                              child: SingleChildScrollView(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.only(right: 8.0),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: selectedCartItems.asMap().entries.map((entry) {
+                                                      int index = entry.key;
+                                                      var item = entry.value;
+                                                      return Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            item.productName,
+                                                            textAlign: TextAlign.start,
+                                                            style: const TextStyle(
+                                                              fontSize: 16,
+                                                            ),
+                                                          ),
+                                                          if (index < selectedCartItems.length - 1)
+                                                            const Divider(
+                                                              thickness: 1.0,
+                                                              color: Colors.grey,
+                                                            ),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context); // Close the dialog
+                                          },
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            // Perform the delete action
+                                            deleteSelectedCartItems();
+                                            Navigator.pop(context); // Close the dialog
+                                            setState(() {
+                                              editCart = false;
+                                            });
+                                          },
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                            },
+                            style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
+                              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5.0),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     if (!editCart)
                       ElevatedButton(
@@ -901,6 +1107,8 @@ class _CartPage extends State<CartPage> {
                               MaterialPageRoute(
                                 builder: (context) => OrderConfirmationPage(
                                   customer: customer!,
+                                  gst: gst,
+                                  sst: sst,
                                   total: total,
                                   subtotal: subtotal,
                                   cartItems: cartItems,
@@ -910,13 +1118,13 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(120, 40), // Adjust the minimum width and height of the button
                           ),
                         ),
@@ -927,7 +1135,7 @@ class _CartPage extends State<CartPage> {
                             fontSize: 20,
                           ),
                         ),
-                      )
+                      ),
                   ],
                 ),
               ],
@@ -942,9 +1150,18 @@ class _CartPage extends State<CartPage> {
     return GestureDetector(
       onTap: () async {
         // Navigate to the CustomerDetails page and wait for result
-        final selectedCustomer = await Navigator.push<Customer?>(
+        Customer? selectedCustomer = await Navigator.push<Customer?>(
           context,
-          MaterialPageRoute(builder: (context) => const CustomerDetails()),
+          MaterialPageRoute(
+            builder: (context) => CustomerDetails(
+              onSelectionChanged: (Customer selectedCustomer) {
+                setState(() {
+                  customer = selectedCustomer;
+                  customerSelected = true;
+                });
+              },
+            ),
+          ),
         );
 
         // Handle the selected customer received from CustomerDetails page
@@ -952,6 +1169,8 @@ class _CartPage extends State<CartPage> {
           setState(() {
             customer = selectedCustomer;
             customerSelected = true;
+            calculateTotalAndSubTotal();
+            updateCartItemsWithLatestPrices();
           });
         }
       },
@@ -967,11 +1186,13 @@ class _CartPage extends State<CartPage> {
 }
 
 class CustomerInfo extends StatefulWidget {
-  final Customer initialCustomer;
+  Customer initialCustomer;
+  final Function(Customer) onCustomerUpdated; // Callback to notify cart page
 
-  const CustomerInfo({
+  CustomerInfo({
     super.key,
     required this.initialCustomer,
+    required this.onCustomerUpdated, // Inject callback
   });
 
   @override
@@ -992,7 +1213,7 @@ class _CustomerInfoState extends State<CustomerInfo> {
     return GestureDetector(
       onTap: () async {
         // Navigate to the CustomerDetails page and wait for result
-        final selectedCustomer = await Navigator.push<Customer?>(
+        Customer? selectedCustomer = await Navigator.push<Customer?>(
           context,
           MaterialPageRoute(builder: (context) => const CustomerDetails()),
         );
@@ -1003,12 +1224,15 @@ class _CustomerInfoState extends State<CustomerInfo> {
           setState(() {
             _customer = selectedCustomer;
           });
+
+          // Notify cart page of the update
+          widget.onCustomerUpdated(_customer);
         }
       },
       child: Card(
         elevation: 6,
         color: Colors.white,
-        child: Stack( // Use Stack to position the "Select" text
+        child: Stack(
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -1017,7 +1241,17 @@ class _CustomerInfoState extends State<CustomerInfo> {
                 children: [
                   Text(
                     _customer.companyName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '${_customer.customerRate}: ${_customer.discountRate.toString()}% Discount',
+                    style: const TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff317E33),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -1071,3 +1305,4 @@ class _CustomerInfoState extends State<CustomerInfo> {
     );
   }
 }
+

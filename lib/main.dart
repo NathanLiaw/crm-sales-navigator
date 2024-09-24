@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/starting_page.dart';
 import 'package:sales_navigator/login_page.dart';
 import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_order.dart';
+import 'package:sales_navigator/sales_order_page.dart';
 import 'db_sqlite.dart';
 import 'products_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load the .env file
+  await dotenv.load(fileName: '.env');
 
   // Initialize the SQLite database
   await DatabaseHelper.database;

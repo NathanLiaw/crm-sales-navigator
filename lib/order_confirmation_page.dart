@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_connection.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_sqlite.dart';
@@ -12,12 +11,16 @@ import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class OrderConfirmationPage extends StatefulWidget {
   final Customer customer;
   final double total;
   final double subtotal;
   final List<CartItem> cartItems;
+  final double gst;
+  final double sst;
 
   const OrderConfirmationPage({
     super.key,
@@ -25,6 +28,8 @@ class OrderConfirmationPage extends StatefulWidget {
     required this.total,
     required this.subtotal,
     required this.cartItems,
+    required this.gst,
+    required this.sst,
   });
 
   @override
@@ -38,26 +43,31 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   bool agreedToTerms = false;
   String remark = remarkController.text;
   bool isProcessing = false;
+  double totalDiscount = 0;
 
   Future<List<String>> fetchOrderOptions() async {
     List<String> fetchedOrderOptions = [];
-    try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readData(
-        conn,
-        'order_option',
-        "order_type='Sales Order' AND status=1",
-        '',
-        '*',
-      );
-      await conn.close();
+    const String apiUrl = 'https://haluansama.com/crm-sales/api/order_option/get_order_options.php'; 
 
-      for (var row in results) {
-        fetchedOrderOptions.add(row['order_option'] as String);
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          // Add each order option to the list
+          fetchedOrderOptions = List<String>.from(data['data']);
+        } else {
+          // Handle error case
+          developer.log('Error: ${data['message']}');
+        }
+      } else {
+        developer.log('Failed to load order options: ${response.statusCode}');
       }
     } catch (e) {
-      developer.log('Error fetching order options: $e', error: e);
+      developer.log('Error fetching order options: $e');
     }
+
     return fetchedOrderOptions;
   }
 
@@ -69,9 +79,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
     // Filter selected order options
     List<String> selectedOrderOptions = [];
-    selectedIndices.forEach((index) {
+    for (var index in selectedIndices) {
       selectedOrderOptions.add(orderOptions[index]);
-    });
+    }
     String stringOrderOptions = 'null';
     if (selectedOrderOptions.isNotEmpty) {
       stringOrderOptions = '["${selectedOrderOptions.join('","')}"]';
@@ -96,8 +106,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'expiration_date': UtilityFunction.calculateExpirationDate(),
         'gst': gstAmount,
         'sst': sstAmount,
-        'final_total': widget.subtotal,
-        'total': finalTotal,
+        'final_total': widget.total,
+        'total': widget.subtotal,
         'remark': remark,
         'order_option': stringOrderOptions,
         'buyer_user_group': 'salesman',
@@ -198,21 +208,47 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     return salesOrderId;
   }
 
+  double calculateTotalDiscount(List<CartItem> items) {
+    double totalDiscount = 0.0;
+
+    for (var item in items) {
+      // Original price of the item
+      double originalPrice = item.originalUnitPrice;
+      // Current unit price of the item
+      double currentPrice = item.unitPrice;
+
+      // Check if the original price is different from the current unit price
+      if (originalPrice != currentPrice) {
+        // Calculate the discount amount per item
+        double discountAmount = (originalPrice - currentPrice) * item.quantity;
+
+        // Add the discount amount to the total discount
+        totalDiscount += discountAmount;
+      }
+    }
+
+    return totalDiscount;
+  }
+
   @override
   void initState() {
     super.initState();
     fetchOrderOptions().then((value) {
       setState(() {
         orderOptions = value;
+        totalDiscount = calculateTotalDiscount(widget.cartItems);
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 2);
     final formattedTotal = formatter.format(widget.total);
     final formattedSubtotal = formatter.format(widget.subtotal);
+    final formattedDiscount = formatter.format(totalDiscount);
+    final formattedGST = formatter.format(widget.gst * widget.subtotal);
+    final formattedSST = formatter.format(widget.sst * widget.subtotal);
 
     return Scaffold(
       appBar: AppBar(
@@ -241,245 +277,305 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           const SizedBox(height: 6.0),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: orderOptions.asMap().entries.map((entry) {
-              final index = entry.key;
-              final option = entry.value;
-              return Row(
-                children: [
-                  Checkbox(
-                    value: selectedIndices.contains(index),
-                    onChanged: (bool? checked) {
-                      setState(() {
-                        if (checked ?? false) {
-                          selectedIndices.add(index);
-                        } else {
-                          selectedIndices.remove(index);
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 4.0),
-                  Text(option),
-                ],
+            children: List.generate(orderOptions.length, (index) {
+              return CheckboxListTile(
+                title: Text(orderOptions[index]),
+                value: selectedIndices.contains(index),
+                onChanged: (bool? value) {
+                  setState(() {
+                    if (value != null) {
+                      if (value) {
+                        selectedIndices.add(index);
+                      } else {
+                        selectedIndices.remove(index);
+                      }
+                    }
+                  });
+                },
               );
-            }).toList(),
-          ),
-          const SizedBox(height: 24.0),
-          const Text(
-            'Remark',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            }),
           ),
           const SizedBox(height: 16.0),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
+          const Text(
+            'Order Details',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6.0),
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Displaying order details
+                SizedBox(
+                  height: 250.0,
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Table(
+                          border: TableBorder(
+                            horizontalInside: BorderSide(color: Colors.grey.shade300),
+                            verticalInside: BorderSide(color: Colors.grey.shade300),
+                            bottom: const BorderSide(color: Colors.black, width: 2.0),
+                          ),
+                          columnWidths: const {
+                            0: FixedColumnWidth(130), // Width for product name
+                            1: FixedColumnWidth(50),  // Width for quantity
+                            2: FixedColumnWidth(70),  // Width for original price
+                            3: FixedColumnWidth(70),  // Width for discounted price
+                            4: FixedColumnWidth(70),  // Width for total price
+                          },
+                          children: [
+                            // Header Row
+                            const TableRow(
+                              children: [
+                                Text('Product', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Qty', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Orig', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Disc', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            // Data Rows
+                            for (var item in widget.cartItems)
+                              TableRow(
+                                children: [
+                                  Text(
+                                    item.productName,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item.quantity}',
+                                    style: const TextStyle(fontSize: 12, color: Colors.black),
+                                  ),
+                                  Text(
+                                    formatter.format(item.originalUnitPrice),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: item.originalUnitPrice != item.unitPrice ? Colors.red[700] : Colors.black,
+                                      decoration: item.originalUnitPrice != item.unitPrice ? TextDecoration.lineThrough : null,
+                                    ),
+                                  ),
+                                  Text(
+                                    item.originalUnitPrice != item.unitPrice
+                                        ? formatter.format(item.unitPrice)
+                                        : '-', // Display '-' if prices are the same
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Text(
+                                    formatter.format(item.unitPrice * item.quantity),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 16.0),
+                // Order summary
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4.0,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Order Summary',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      const Divider(color: Colors.black54),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Subtotal:', style: TextStyle(fontSize: 16)),
+                            Text(formattedSubtotal, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('GST:', style: TextStyle(fontSize: 16)),
+                            Text(formattedGST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('SST:', style: TextStyle(fontSize: 16)),
+                            Text(formattedSST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Discount:', style: TextStyle(fontSize: 16)),
+                            Text(formattedDiscount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            Text(formattedTotal, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green[800])),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               ],
             ),
-            child: TextField(
-              controller: remarkController,
-              decoration: const InputDecoration(
-                hintText: 'Write your remark here...',
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              minLines: 2,
-              maxLines: null,
-            ),
           ),
-          const SizedBox(height: 30.0),
+        ),
+
+        const SizedBox(height: 16.0),
+          TextField(
+            controller: remarkController,
+            decoration: const InputDecoration(
+              labelText: 'Remark',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) {
+              setState(() {
+                remark = value;
+              });
+            },
+          ),
+          const SizedBox(height: 16.0),
+          const Text('*This is not an invoice & price not finalised in this order.'),
+          const SizedBox(height: 16.0),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Checkbox(
                 value: agreedToTerms,
-                onChanged: (bool? value) {
+                onChanged: (value) {
                   setState(() {
                     agreedToTerms = value ?? false;
                   });
                 },
               ),
-              Expanded(
-                child: RichText(
-                  text: TextSpan(
-                    text: 'By clicking Confirm Order, I confirm that I have read '
-                        'and agree to the ',
-                    style: const TextStyle(color: Colors.black),
-                    children: [
-                      TextSpan(
-                        text: 'Terms and Conditions',
-                        style: const TextStyle(color: Colors.purple, decoration: TextDecoration.underline),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const TermsandConditions(),
-                              ),
-                            );
-                          },
-                      ),
-                      const TextSpan(text: '.'),
-                    ],
-                  ),
+              const Text('I agree to the '),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TermsandConditions(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Terms and Conditions',
+                  style: TextStyle(color: Colors.blue),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16.0),
-          const Text(
-            '*This is not an invoice & prices are not finalized in this order.',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+              ),
+              minimumSize: WidgetStateProperty.all<Size>(
+                const Size(120, 40),
+              ),
+            ),
+            onPressed: () async {
+              if (!agreedToTerms) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You must agree to the terms and conditions'),
+                  ),
+                );
+                return;
+              }
+
+              setState(() {
+                isProcessing = true;
+              });
+
+              await createCart();
+              await completeCart();
+
+              setState(() {
+                isProcessing = false;
+              });
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrderSubmittedPage(),
+                ),
+              );
+            },
+            child: isProcessing
+                ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+                : const Text(
+              'Submit Order',
+              style: TextStyle(
+                color: Colors.white, // Set text color
+                fontSize: 20, // Set text size
+              ),
+            ),
           ),
-          const SizedBox(height: 50),
         ],
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Padding(
-          padding: const EdgeInsets.all(2.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total: $formattedTotal',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
-                  Text(
-                    'Subtotal: $formattedSubtotal',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-              ElevatedButton(
-                onPressed: isProcessing
-                    ? null
-                    : () async {
-                  if (agreedToTerms) {
-                    setState(() {
-                      isProcessing = true;
-                    });
-
-                    // Show loading animation
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (BuildContext context) {
-                        return const AlertDialog(
-                          backgroundColor: Colors.green,
-                          content: SizedBox(
-                            height: 80,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                                SizedBox(height: 20),
-                                Text(
-                                  'Processing order...',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-
-                    // Perform the operations
-                    await createCart();
-                    await completeCart();
-                    remarkController.clear();
-
-                    // Close the loading animation
-                    Navigator.pop(context);
-
-                    // Show order submitted dialog
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.green,
-                          title: const Text(
-                            'Order Submitted',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          content: const Text(
-                            'Your order has been successfully submitted.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const OrderSubmittedPage(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'OK',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-
-                    setState(() {
-                      isProcessing = false;
-                    });
-                  } else {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Terms and Conditions'),
-                          content: const Text('Please agree to the terms and conditions before proceeding.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-                },
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff004c87)),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                  ),
-                ),
-                child: const Text(
-                  'Confirm',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
