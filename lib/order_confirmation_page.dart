@@ -109,6 +109,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'customer_company_name': widget.customer.companyName,
         'customer_discount': widget.customer.customerRate,
         'status': 'Pending',
+        'last_checked_status': 'Pending',
         'created': UtilityFunction.getCurrentDateTime(),
         'modified': UtilityFunction.getCurrentDateTime(),
       };
@@ -161,7 +162,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           'status': 'Confirm',
         };
 
-        int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+        int rowsAffected =
+            await DatabaseHelper.updateData(updateData, 'cart_item');
         if (rowsAffected > 0) {
           developer.log('Item status updated successfully');
         }
@@ -210,7 +212,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formatter =
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     final formattedTotal = formatter.format(widget.total);
     final formattedSubtotal = formatter.format(widget.subtotal);
 
@@ -218,7 +221,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xff004c87),
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Order Confirmation', style: TextStyle(color: Colors.white)),
+        title: const Text('Order Confirmation',
+            style: TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -286,7 +290,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
               controller: remarkController,
               decoration: const InputDecoration(
                 hintText: 'Write your remark here...',
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -312,19 +317,23 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
               Expanded(
                 child: RichText(
                   text: TextSpan(
-                    text: 'By clicking Confirm Order, I confirm that I have read '
+                    text:
+                        'By clicking Confirm Order, I confirm that I have read '
                         'and agree to the ',
                     style: const TextStyle(color: Colors.black),
                     children: [
                       TextSpan(
                         text: 'Terms and Conditions',
-                        style: const TextStyle(color: Colors.purple, decoration: TextDecoration.underline),
+                        style: const TextStyle(
+                            color: Colors.purple,
+                            decoration: TextDecoration.underline),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const TermsandConditions(),
+                                builder: (context) =>
+                                    const TermsandConditions(),
                               ),
                             );
                           },
@@ -355,7 +364,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 children: [
                   Text(
                     'Total: $formattedTotal',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                   Text(
                     'Subtotal: $formattedSubtotal',
@@ -367,105 +377,110 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 onPressed: isProcessing
                     ? null
                     : () async {
-                  if (agreedToTerms) {
-                    setState(() {
-                      isProcessing = true;
-                    });
+                        if (agreedToTerms) {
+                          setState(() {
+                            isProcessing = true;
+                          });
 
-                    // Show loading animation
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (BuildContext context) {
-                        return const AlertDialog(
-                          backgroundColor: Colors.green,
-                          content: SizedBox(
-                            height: 80,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          // Show loading animation
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return const AlertDialog(
+                                backgroundColor: Colors.green,
+                                content: SizedBox(
+                                  height: 80,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                      SizedBox(height: 20),
+                                      Text(
+                                        'Processing order...',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                SizedBox(height: 20),
-                                Text(
-                                  'Processing order...',
+                              );
+                            },
+                          );
+
+                          // Perform the operations
+                          await createCart();
+                          await completeCart();
+                          remarkController.clear();
+
+                          // Close the loading animation
+                          Navigator.pop(context);
+
+                          // Show order submitted dialog
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                backgroundColor: Colors.green,
+                                title: const Text(
+                                  'Order Submitted',
                                   style: TextStyle(color: Colors.white),
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-
-                    // Perform the operations
-                    await createCart();
-                    await completeCart();
-                    remarkController.clear();
-
-                    // Close the loading animation
-                    Navigator.pop(context);
-
-                    // Show order submitted dialog
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.green,
-                          title: const Text(
-                            'Order Submitted',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          content: const Text(
-                            'Your order has been successfully submitted.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const OrderSubmittedPage(),
+                                content: const Text(
+                                  'Your order has been successfully submitted.',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const OrderSubmittedPage(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'OK',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                );
-                              },
-                              child: const Text(
-                                'OK',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
+                                ],
+                              );
+                            },
+                          );
 
-                    setState(() {
-                      isProcessing = false;
-                    });
-                  } else {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Terms and Conditions'),
-                          content: const Text('Please agree to the terms and conditions before proceeding.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        );
+                          setState(() {
+                            isProcessing = false;
+                          });
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Terms and Conditions'),
+                                content: const Text(
+                                    'Please agree to the terms and conditions before proceeding.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
                       },
-                    );
-                  }
-                },
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff004c87)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(const Color(0xff004c87)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5.0),

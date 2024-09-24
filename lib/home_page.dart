@@ -1,6 +1,8 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
+import 'package:sales_navigator/api/firebase_api.dart';
+import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/customer_insight.dart';
@@ -8,6 +10,7 @@ import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/notification_page.dart';
 import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
 import 'package:sales_navigator/sales_lead_nego_widget.dart';
@@ -54,13 +57,15 @@ class SalesmanPerformanceUpdater {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialIndex;
+
+  const HomePage({Key? key, this.initialIndex = 0}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<LeadItem> leadItems = [];
   List<LeadItem> engagementLeads = [];
   List<LeadItem> negotiationLeads = [];
@@ -74,6 +79,8 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true; // Track loading state
   late SalesmanPerformanceUpdater _performanceUpdater;
 
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
@@ -86,6 +93,11 @@ class _HomePageState extends State<HomePage> {
         _isLoading = false; // Set loading state to false when data is loaded
       });
     });
+    _tabController = TabController(
+      length: tabbarNames.length,
+      vsync: this,
+      initialIndex: widget.initialIndex,
+    );
   }
 
   void _initializeSalesmanId() async {
@@ -98,6 +110,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _performanceUpdater?.stopPeriodicUpdate();
     super.dispose();
   }
@@ -654,20 +667,82 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _onDeleteEngagementLead(LeadItem leadItem) {
-    setState(() {
-      engagementLeads.remove(leadItem);
-    });
-    // 调用更新销售人员表现的函数
-    _updateSalesmanPerformance(salesmanId);
+  // void _onDeleteEngagementLead(LeadItem leadItem) {
+  //   setState(() {
+  //     engagementLeads.remove(leadItem);
+  //   });
+  //   _updateSalesmanPerformance(salesmanId);
+  // }
+
+  // void _onDeleteNegotiationLead(LeadItem leadItem) {
+  //   setState(() {
+  //     negotiationLeads.remove(leadItem);
+  //   });
+  //   _updateSalesmanPerformance(salesmanId);
+  // }
+
+  Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      // Start transaction
+      await conn.query('START TRANSACTION');
+
+      // Delete related tasks
+      await conn.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+
+      // Delete related notifications
+      await conn.query(
+          'DELETE FROM notifications WHERE related_lead_id = ?', [leadItem.id]);
+
+      // Delete sales_lead
+      await conn.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+
+      // Submit transaction
+      await conn.query('COMMIT');
+
+      setState(() {
+        engagementLeads.remove(leadItem);
+      });
+      // Call _updateSalesmanPerformance function
+      await _updateSalesmanPerformance(salesmanId);
+    } catch (e) {
+      await conn.query('ROLLBACK');
+      developer.log('Error deleting engagement lead: $e');
+    } finally {
+      await conn.close();
+    }
   }
 
-  void _onDeleteNegotiationLead(LeadItem leadItem) {
-    setState(() {
-      negotiationLeads.remove(leadItem);
-    });
-    // 调用更新销售人员表现的函数
-    _updateSalesmanPerformance(salesmanId);
+  Future<void> _onDeleteNegotiationLead(LeadItem leadItem) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      // Start transaction
+      await conn.query('START TRANSACTION');
+
+      // Delete related tasks
+      await conn.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+
+      // Delete related notifications
+      await conn.query(
+          'DELETE FROM notifications WHERE related_lead_id = ?', [leadItem.id]);
+
+      // Delete sales_lead
+      await conn.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+
+      // Submit transaction
+      await conn.query('COMMIT');
+
+      setState(() {
+        negotiationLeads.remove(leadItem);
+      });
+      // Call _updateSalesmanPerformance function
+      await _updateSalesmanPerformance(salesmanId);
+    } catch (e) {
+      await conn.query('ROLLBACK');
+      developer.log('Error deleting negotiation lead: $e');
+    } finally {
+      await conn.close();
+    }
   }
 
   void _onUndoEngagementLead(LeadItem leadItem, String previousStage) {
@@ -804,18 +879,46 @@ class _HomePageState extends State<HomePage> {
                   'Welcome, $salesmanName',
                   style: const TextStyle(color: Colors.white),
                 ),
-                // actions: [
-                //   IconButton(
-                //     icon: const Icon(Icons.notifications, color: Colors.white),
-                //     onPressed: () {
-                //       Navigator.push(
-                //         context,
-                //         MaterialPageRoute(
-                //             builder: (context) => const NotificationsPage()),
-                //       );
-                //     },
-                //   ),
-                // ],
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications, color: Colors.white),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const NotificationsPage()),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    onPressed: () async {
+                      // Show loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        },
+                      );
+
+                      // Trigger notification check
+                      await checkOrderStatusAndNotify();
+                      // await checkTaskDueDatesAndNotify();
+                      // await checkNewSalesLeadsAndNotify();
+
+                      // Close the loading indicator
+                      Navigator.of(context).pop();
+
+                      // Show completion message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Notification check completed')),
+                      );
+                    },
+                  ),
+                ],
               ),
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -829,6 +932,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   TabBar(
+                    controller: _tabController,
                     isScrollable: true,
                     indicatorSize: TabBarIndicatorSize.label,
                     tabs: [
@@ -845,6 +949,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Expanded(
                     child: TabBarView(
+                      controller: _tabController,
                       children: [
                         _isLoading
                             ? _buildShimmerTab()
@@ -1397,6 +1502,30 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
+  //   int salesOrderIdInt = int.parse(salesOrderId);
+  //   try {
+  //     MySqlConnection conn = await connectToDatabase();
+  //     Results results = await conn.query(
+  //       'SELECT status, created, expiration_date, total FROM cart WHERE id = ?',
+  //       [salesOrderIdInt],
+  //     );
+  //     if (results.isNotEmpty) {
+  //       var row = results.first;
+  //       String status = row['status'].toString();
+  //       String createdDate = row['created'].toString();
+  //       String expirationDate = row['expiration_date'].toString();
+  //       String total = row['total'].toString();
+  //       return '$status|$createdDate|$expirationDate|$total';
+  //     } else {
+  //       return 'Unknown|Unknown|Unknown|Unknown';
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching sales order status: $e');
+  //     return 'Unknown|Unknown|Unknown|Unknown';
+  //   }
+  // }
+
   Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
     int salesOrderIdInt = int.parse(salesOrderId);
     try {
@@ -1407,11 +1536,45 @@ class _HomePageState extends State<HomePage> {
       );
       if (results.isNotEmpty) {
         var row = results.first;
-        String status = row['status'].toString();
+        String newStatus = row['status'].toString();
         String createdDate = row['created'].toString();
         String expirationDate = row['expiration_date'].toString();
         String total = row['total'].toString();
-        return '$status|$createdDate|$expirationDate|$total';
+
+        // Check if status has changed from 'Pending' to 'Confirm'
+        LeadItem leadItem = orderProcessingLeads.firstWhere(
+          (item) => item.salesOrderId == salesOrderId,
+          orElse: () => LeadItem(
+            id: -1,
+            salesmanId: -1,
+            customerName: '',
+            description: '',
+            createdDate: '',
+            amount: '',
+            contactNumber: '',
+            emailAddress: '',
+            stage: '',
+            addressLine1: '',
+            salesOrderId: '',
+            status: '',
+          ),
+        );
+
+        // if (leadItem.id != -1 &&
+        //     leadItem.status == 'Pending' &&
+        //     newStatus == 'Confirm') {
+        //   await _generateNotification(leadItem, newStatus);
+        //   setState(() {
+        //     leadItem.status = newStatus;
+        //   });
+        // }
+
+        // Update the lead item status
+        if (leadItem.id != -1) {
+          leadItem.status = newStatus;
+        }
+
+        return '$newStatus|$createdDate|$expirationDate|$total';
       } else {
         return 'Unknown|Unknown|Unknown|Unknown';
       }
@@ -1420,6 +1583,39 @@ class _HomePageState extends State<HomePage> {
       return 'Unknown|Unknown|Unknown|Unknown';
     }
   }
+
+  // Future<void> _generateNotification(
+  //     LeadItem leadItem, String newStatus) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query(
+  //       'INSERT INTO notifications (salesman_id, title, description, related_lead_id) VALUES (?, ?, ?, ?)',
+  //       [
+  //         salesmanId,
+  //         'Order Status Changed',
+  //         'Order for ${leadItem.customerName} has changed from Pending to Confirm.',
+  //         leadItem.id,
+  //       ],
+  //     );
+
+  //     // Send push notification
+  //     await FirebaseApi().sendPushNotification(
+  //       salesmanId.toString(),
+  //       'Order Status Changed',
+  //       'Order for ${leadItem.customerName} has changed from Pending to Confirm.',
+  //     );
+
+  //     // Show local notification
+  //     await FirebaseApi().showLocalNotification(
+  //       'Order Status Changed',
+  //       'Order for ${leadItem.customerName} has changed from Pending to Confirm.',
+  //     );
+  //   } catch (e) {
+  //     print('Error generating notification: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<Map<String, String>> _fetchSalesOrderDetails(
       String salesOrderId) async {
@@ -1498,8 +1694,8 @@ class _HomePageState extends State<HomePage> {
 }
 
 class LeadItem {
-  final int id; // 添加这一行
-  final int salesmanId;
+  final int id;
+  final int? salesmanId;
   final String customerName;
   final String description;
   final String createdDate;
@@ -1514,13 +1710,14 @@ class LeadItem {
   String? salesOrderId;
   String? previousStage;
   int? quantity;
+  String status;
   String get formattedAmount {
     final formatter = NumberFormat("#,##0.00", "en_US");
     return 'RM${formatter.format(double.parse(amount.substring(2)))}';
   }
 
   LeadItem({
-    required this.salesmanId,
+    this.salesmanId,
     required this.customerName,
     required this.description,
     required this.createdDate,
@@ -1536,6 +1733,7 @@ class LeadItem {
     required this.id,
     this.engagementStartDate,
     this.negotiationStartDate,
+    this.status = 'Pending',
   });
 
   void moveToEngagement(Function(LeadItem) onMoveToEngagement) {
