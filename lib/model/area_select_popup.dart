@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sales_navigator/event_logger.dart';
+import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,6 +17,7 @@ class AreaSelectPopUp extends StatefulWidget {
 class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
   late Map<int, String> area = {};
   static late int selectedAreaId;
+  late int salesmanId;
 
   Future<void> setAreaId(int areaId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -22,6 +25,15 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
     setState(() {
       selectedAreaId = areaId;
     });
+
+    // Log the event when an area is selected
+    String selectedAreaName = area[areaId] ?? 'Unknown Area';
+    await EventLogger.logEvent(
+      salesmanId,
+      'Area selected: $selectedAreaName',
+      'Area Selection',
+      leadId: null,
+    );
   }
 
   Future<void> fetchAreaFromDb() async {
@@ -84,6 +96,14 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
     super.initState();
     selectedAreaId = -1;
     fetchAreaFromDb();
+    _initializeSalesmanId();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
+    });
   }
 
   @override

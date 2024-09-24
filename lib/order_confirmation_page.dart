@@ -10,6 +10,7 @@ import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
+import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -44,6 +45,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   String remark = remarkController.text;
   bool isProcessing = false;
   double totalDiscount = 0;
+
+  late int salesmanId;
 
   Future<List<String>> fetchOrderOptions() async {
     List<String> fetchedOrderOptions = [];
@@ -119,6 +122,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'customer_company_name': widget.customer.companyName,
         'customer_discount': widget.customer.customerRate,
         'status': 'Pending',
+        'last_checked_status': 'Pending',
         'created': UtilityFunction.getCurrentDateTime(),
         'modified': UtilityFunction.getCurrentDateTime(),
       };
@@ -171,7 +175,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           'status': 'Confirm',
         };
 
-        int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+        int rowsAffected =
+            await DatabaseHelper.updateData(updateData, 'cart_item');
         if (rowsAffected > 0) {
           developer.log('Item status updated successfully');
         }
@@ -239,6 +244,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         totalDiscount = calculateTotalDiscount(widget.cartItems);
       });
     });
+    _initializeSalesmanId();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
+    });
   }
 
   @override
@@ -254,7 +267,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xff004c87),
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Order Confirmation', style: TextStyle(color: Colors.white)),
+        title: const Text('Order Confirmation',
+            style: TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {

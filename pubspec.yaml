@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.2.2
   fl_chart: ^0.36.0
   sqflite: ^2.0.0+3
   path_provider: ^2.0.0
@@ -19,7 +20,7 @@ dependencies:
   crypto: any
   flutter_widget_from_html: ^0.14.11
   google_fonts: ^6.2.0
-  timezone: ^0.7.0
+  timezone: 0.8.0
   dropdown_button2: ^2.3.9
   email_validator: ^2.1.17
   path: any
@@ -31,6 +32,10 @@ dependencies:
   html: ^0.15.0
   flutter_dotenv: ^5.1.0
 
+  firebase_core: ^3.4.0
+  firebase_messaging: ^15.1.0
+  flutter_local_notifications: ^9.8.0+1
+  workmanager: ^0.5.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
