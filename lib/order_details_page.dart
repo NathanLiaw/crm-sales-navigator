@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
 
 class OrderDetailsPage extends StatefulWidget {
@@ -25,6 +26,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   double total = 0.0;
   bool isVoidButtonDisabled = false;
 
+  late int salesmanId;
+
   // Tax Section
   double gst = 0;
   double sst = 0;
@@ -34,6 +37,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     super.initState();
     _orderDetailsFuture = fetchOrderDetails();
     getTax();
+    _initializeSalesmanId();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
+    });
   }
 
   Future<void> fetchOrderDetails() async {
@@ -229,6 +240,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
       // Fetch order details again to update the status on the page
       await fetchOrderDetails();
+
+      // Log the event after successfully voiding the order
+      await EventLogger.logEvent(
+        salesmanId,
+        'Order voided',
+        'Order Void',
+        leadId: null,
+      );
     } catch (e) {
       print('Error voiding order: $e');
     } finally {

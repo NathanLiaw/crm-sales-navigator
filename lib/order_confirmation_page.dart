@@ -11,6 +11,7 @@ import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
+import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
 
 class OrderConfirmationPage extends StatefulWidget {
@@ -38,6 +39,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   bool agreedToTerms = false;
   String remark = remarkController.text;
   bool isProcessing = false;
+
+  late int salesmanId;
 
   Future<List<String>> fetchOrderOptions() async {
     List<String> fetchedOrderOptions = [];
@@ -207,6 +210,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       setState(() {
         orderOptions = value;
       });
+    });
+    _initializeSalesmanId();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
     });
   }
 
@@ -436,6 +447,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
+                                      // Logging event
+                                      EventLogger.logEvent(
+                                          salesmanId,
+                                          'Confirmation of order',
+                                          'Order Confirmation',
+                                          leadId: null);
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(

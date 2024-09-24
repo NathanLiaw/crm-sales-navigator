@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/notification_page.dart';
+import 'package:sales_navigator/event_logger.dart';
 import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
 import 'package:sales_navigator/sales_lead_nego_widget.dart';
@@ -28,11 +29,12 @@ final List<String> tabbarNames = [
   'Closed',
 ];
 
+// Auto update salesman performance
 class SalesmanPerformanceUpdater {
   Timer? _timer;
 
   void startPeriodicUpdate(int salesmanId) {
-    // 每小时更新一次
+    // Update every hour
     _timer = Timer.periodic(Duration(hours: 1), (timer) {
       _updateSalesmanPerformance(salesmanId);
     });
@@ -191,6 +193,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
     MySqlConnection conn = await connectToDatabase();
@@ -221,39 +224,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           var customerName = await _fetchCustomerName(conn, customerId);
           var total = latestTotals[customerId]!;
           var description = "Hasn't purchased since 30 days ago";
-          var createdDate =
-              DateFormat('yyyy-MM-dd').format(currentDate); // Use current date
-          var leadItem = LeadItem(
-            id: 0,
-            salesmanId: salesmanId,
-            customerName: customerName,
-            description: description,
-            createdDate: createdDate,
-            amount: 'RM${total.toStringAsFixed(2)}',
-            contactNumber: '',
-            emailAddress: '',
-            addressLine1: '',
-            stage: 'Opportunities',
-            salesOrderId: '',
-          );
+          var createdDate = DateFormat('yyyy-MM-dd').format(currentDate);
 
           // Query the customer table for information based on customer_name.
           Results customerResults = await conn.query(
             'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
             [customerName],
           );
+
+          String contactNumber = '';
+          String emailAddress = '';
+          String addressLine1 = '';
           if (customerResults.isNotEmpty) {
             var customerRow = customerResults.first;
-            leadItem.contactNumber = customerRow['contact_number'].toString();
-            leadItem.emailAddress = customerRow['email'].toString();
-            leadItem.addressLine1 = customerRow['address_line_1'].toString();
+            contactNumber = customerRow['contact_number'].toString();
+            emailAddress = customerRow['email'].toString();
+            addressLine1 = customerRow['address_line_1'].toString();
           }
 
           // Check if the customer already exists in the sales_lead table
           Results existingLeadResults = await conn.query(
             'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
-            [leadItem.customerName],
+            [customerName],
           );
+
           // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
           // save it to the sales_lead table and add it to the list of leadItems.
           if (existingLeadResults.isEmpty ||
@@ -261,36 +255,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   existingLeadResults.first['stage'] == 'Closed')) {
             try {
               // Save the lead item to the sales_lead table
-              await conn.query(
-                'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+              var insertResult = await conn.query(
+                'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
-                  leadItem.salesmanId,
-                  leadItem.customerName,
-                  leadItem.description,
-                  leadItem.createdDate,
-                  leadItem.amount.substring(2),
-                  leadItem.contactNumber,
-                  leadItem.emailAddress,
-                  leadItem.addressLine1,
-                  leadItem.stage,
+                  salesmanId,
+                  customerName,
+                  description,
+                  createdDate,
+                  total,
+                  contactNumber,
+                  emailAddress,
+                  addressLine1,
+                  'Opportunities',
                 ],
               );
+
+              int newLeadId = insertResult.insertId!;
+
+              // Log the event for the new lead
+              await EventLogger.logEvent(salesmanId,
+                  'Created new lead for customer: $customerName', 'Create Lead',
+                  leadId: newLeadId);
+
               // If the INSERT operation is successful, add the leadItem to the list
               setState(() {
-                leadItems.add(leadItem);
+                leadItems.add(LeadItem(
+                  id: newLeadId,
+                  salesmanId: salesmanId,
+                  customerName: customerName,
+                  description: description,
+                  createdDate: createdDate,
+                  amount: 'RM${total.toStringAsFixed(2)}',
+                  contactNumber: contactNumber,
+                  emailAddress: emailAddress,
+                  stage: 'Opportunities',
+                  addressLine1: addressLine1,
+                  salesOrderId: '',
+                ));
               });
             } catch (e) {
               developer
                   .log('Error inserting lead item into sales_lead table: $e');
               developer.log('Lead item details:');
-              developer.log('customerName: ${leadItem.customerName}');
-              developer.log('description: ${leadItem.description}');
-              developer.log('createdDate: ${leadItem.createdDate}');
-              developer.log('amount: ${leadItem.amount}');
-              developer.log('contactNumber: ${leadItem.contactNumber}');
-              developer.log('emailAddress: ${leadItem.emailAddress}');
-              developer.log('addressLine1: ${leadItem.addressLine1}');
-              developer.log('stage: ${leadItem.stage}');
+              developer.log('customerName: $customerName');
+              developer.log('description: $description');
+              developer.log('createdDate: $createdDate');
+              developer.log('amount: RM${total.toStringAsFixed(2)}');
+              developer.log('contactNumber: $contactNumber');
+              developer.log('emailAddress: $emailAddress');
+              developer.log('addressLine1: $addressLine1');
+              developer.log('stage: Opportunities');
             }
           }
         }
@@ -302,6 +316,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  // Fetch lead items from sales lead table
   Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
     try {
       Results results = await conn
@@ -320,12 +335,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var salesOrderId = row['so_id']?.toString();
         var previousStage = row['previous_stage']?.toString();
         var quantity = row['quantity'];
-        // 添加这两行来获取 engagement_start_date 和 negotiation_start_date
         var engagementStartDate = row['engagement_start_date'] as DateTime?;
         var negotiationStartDate = row['negotiation_start_date'] as DateTime?;
 
         var leadItem = LeadItem(
-          id: row['id'] as int, // 添加这一行
+          id: row['id'] as int,
           salesmanId: salesmanId,
           customerName: customerName,
           description: description,
@@ -338,8 +352,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           salesOrderId: salesOrderId,
           previousStage: previousStage,
           quantity: quantity,
-          engagementStartDate: engagementStartDate, // 添加这行
-          negotiationStartDate: negotiationStartDate, // 添加这行
+          engagementStartDate: engagementStartDate,
+          negotiationStartDate: negotiationStartDate,
         );
 
         setState(() {
@@ -402,14 +416,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
     await _updateLeadStage(leadItem, 'Order Processing');
     await _updateSalesOrderId(leadItem, salesOrderId);
-    // 调用更新销售人员表现的函数
     await _updateSalesmanPerformance(salesmanId);
   }
 
   Future<void> _moveToEngagement(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
-      // 更新阶段和开始时间
       await conn.query(
           'UPDATE sales_lead SET stage = ?, engagement_start_date = NOW() WHERE id = ?',
           ['Engagement', leadItem.id]);
@@ -422,13 +434,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         leadItem.contactNumber = row['contact_number'];
         leadItem.emailAddress = row['email_address'];
       }
-      // 调用更新销售人员表现的函数
       await _updateSalesmanPerformance(salesmanId);
     } catch (e) {
       developer.log('Error fetching contact number and email address: $e');
     } finally {
       await conn.close();
     }
+
+    // Log the event
+    await EventLogger.logEvent(
+        salesmanId,
+        'Moved lead from Opportunities stage to Engagement stage',
+        'Stage Movement',
+        leadId: leadItem.id);
 
     setState(() {
       leadItems.remove(leadItem);
@@ -440,7 +458,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _moveToNegotiation(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
-      // 更新阶段和开始时间
       await conn.query(
           'UPDATE sales_lead SET stage = ?, negotiation_start_date = NOW() WHERE id = ?',
           ['Negotiation', leadItem.id]);
@@ -453,13 +470,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         leadItem.contactNumber = row['contact_number'];
         leadItem.emailAddress = row['email_address'];
       }
-      // 调用更新销售人员表现的函数
       await _updateSalesmanPerformance(salesmanId);
     } catch (e) {
       developer.log('Error fetching contact number and email address: $e');
     } finally {
       await conn.close();
     }
+
+    // Log the event
+    await EventLogger.logEvent(
+        salesmanId,
+        'Moved lead from Opportunities stage to Negotiation stage',
+        'Stage Movement',
+        leadId: leadItem.id);
+
     setState(() {
       leadItems.remove(leadItem);
       negotiationLeads.add(leadItem);
@@ -472,8 +496,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       engagementLeads.remove(leadItem);
       negotiationLeads.add(leadItem);
     });
+    // Log the event
+    await EventLogger.logEvent(
+        salesmanId,
+        'Moved lead from Engagement stage to Negotiation stage',
+        'Stage Movement',
+        leadId: leadItem.id);
     await _updateLeadStage(leadItem, 'Negotiation');
-    // 调用更新销售人员表现的函数
     await _updateSalesmanPerformance(salesmanId);
   }
 
@@ -482,8 +511,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       orderProcessingLeads.remove(leadItem);
       closedLeads.add(leadItem);
     });
+    // Log the event
+    await EventLogger.logEvent(
+        salesmanId,
+        'Moved lead from Order Processing stage to Closed stage',
+        'Stage Movement',
+        leadId: leadItem.id);
     await _updateLeadStage(leadItem, 'Closed');
-    // 调用更新销售人员表现的函数
     await _updateSalesmanPerformance(salesmanId);
   }
 
@@ -612,7 +646,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
     await _updateLeadStage(leadItem, 'Order Processing');
     await _updateSalesOrderId(leadItem, salesOrderId);
-    // 调用更新销售人员表现的函数
     await _updateSalesmanPerformance(salesmanId);
   }
 
@@ -667,46 +700,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  // void _onDeleteEngagementLead(LeadItem leadItem) {
-  //   setState(() {
-  //     engagementLeads.remove(leadItem);
-  //   });
-  //   _updateSalesmanPerformance(salesmanId);
-  // }
-
-  // void _onDeleteNegotiationLead(LeadItem leadItem) {
-  //   setState(() {
-  //     negotiationLeads.remove(leadItem);
-  //   });
-  //   _updateSalesmanPerformance(salesmanId);
-  // }
-
   Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
-      // Start transaction
-      await conn.query('START TRANSACTION');
+      await conn.transaction((ctx) async {
+        // Delete related tasks
+        await ctx.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
 
-      // Delete related tasks
-      await conn.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+        // Delete related notifications
+        await ctx.query('DELETE FROM notifications WHERE related_lead_id = ?',
+            [leadItem.id]);
 
-      // Delete related notifications
-      await conn.query(
-          'DELETE FROM notifications WHERE related_lead_id = ?', [leadItem.id]);
+        // Delete the sales_lead record
+        await ctx.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
 
-      // Delete sales_lead
-      await conn.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+        // Delete the corresponding record in the event_log table
+        await ctx
+            .query('DELETE FROM event_log WHERE lead_id = ?', [leadItem.id]);
 
-      // Submit transaction
-      await conn.query('COMMIT');
+        // Logging a new "Lead Deleted" event
+        await ctx.query(
+            'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+            [salesmanId, 'Deleted Engagement lead', 'Lead Deleted']);
+      });
 
       setState(() {
         engagementLeads.remove(leadItem);
       });
+
       // Call _updateSalesmanPerformance function
       await _updateSalesmanPerformance(salesmanId);
+
+      developer.log('Engagement lead deleted and event logged successfully');
     } catch (e) {
-      await conn.query('ROLLBACK');
       developer.log('Error deleting engagement lead: $e');
     } finally {
       await conn.close();
@@ -716,66 +742,186 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _onDeleteNegotiationLead(LeadItem leadItem) async {
     MySqlConnection conn = await connectToDatabase();
     try {
-      // Start transaction
-      await conn.query('START TRANSACTION');
+      await conn.transaction((ctx) async {
+        // Delete related tasks
+        await ctx.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
 
-      // Delete related tasks
-      await conn.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+        // Delete related notifications
+        await ctx.query('DELETE FROM notifications WHERE related_lead_id = ?',
+            [leadItem.id]);
 
-      // Delete related notifications
-      await conn.query(
-          'DELETE FROM notifications WHERE related_lead_id = ?', [leadItem.id]);
+        // Delete the sales_lead record
+        await ctx.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
 
-      // Delete sales_lead
-      await conn.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+        // Delete the corresponding record in the event_log table
+        await ctx
+            .query('DELETE FROM event_log WHERE lead_id = ?', [leadItem.id]);
 
-      // Submit transaction
-      await conn.query('COMMIT');
+        // Logging a new "Lead Deleted" event
+        await ctx.query(
+            'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+            [salesmanId, 'Deleted Negotiation lead', 'Lead Deleted']);
+      });
 
       setState(() {
         negotiationLeads.remove(leadItem);
       });
+
       // Call _updateSalesmanPerformance function
       await _updateSalesmanPerformance(salesmanId);
+
+      developer.log('Negotiation lead deleted and event logged successfully');
     } catch (e) {
-      await conn.query('ROLLBACK');
       developer.log('Error deleting negotiation lead: $e');
     } finally {
       await conn.close();
     }
   }
 
-  void _onUndoEngagementLead(LeadItem leadItem, String previousStage) {
-    setState(() {
-      engagementLeads.remove(leadItem);
-      leadItem.stage = previousStage;
-      leadItem.previousStage = null;
-      if (previousStage == 'Opportunities') {
-        leadItems.add(leadItem);
-      } else if (previousStage == 'Negotiation') {
-        negotiationLeads.add(leadItem);
-      }
-    });
-    _updateLeadStageInDatabase(leadItem);
-    // 调用更新销售人员表现的函数
-    _updateSalesmanPerformance(salesmanId);
+  // void _onDeleteEngagementLead(LeadItem leadItem) {
+  //   setState(() {
+  //     engagementLeads.remove(leadItem);
+  //   });
+  //   // Log the event
+  //   EventLogger.logEvent(salesmanId, 'Deleted Engagement lead', 'Lead Deleted',
+  //       leadId: leadItem.id);
+  //   _updateSalesmanPerformance(salesmanId);
+  // }
+
+  // void _onDeleteNegotiationLead(LeadItem leadItem) {
+  //   setState(() {
+  //     negotiationLeads.remove(leadItem);
+  //   });
+  //   // Log the event
+  //   EventLogger.logEvent(salesmanId, 'Deleted Negotiation lead', 'Lead Deleted',
+  //       leadId: leadItem.id);
+  //   _updateSalesmanPerformance(salesmanId);
+  // }
+
+  Future<void> _onUndoEngagementLead(
+      LeadItem leadItem, String previousStage) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      await conn.query(
+          'UPDATE sales_lead SET stage = ?, previous_stage = NULL, engagement_start_date = NULL WHERE id = ?',
+          [previousStage, leadItem.id]);
+
+      setState(() {
+        engagementLeads.remove(leadItem);
+        leadItem.stage = previousStage;
+        leadItem.previousStage = null;
+        leadItem.engagementStartDate = null;
+        if (previousStage == 'Opportunities') {
+          leadItems.add(leadItem);
+        } else if (previousStage == 'Negotiation') {
+          negotiationLeads.add(leadItem);
+        }
+      });
+
+      // Log the event
+      await EventLogger.logEvent(
+          salesmanId, 'Undo Engagement lead', 'Lead Undo',
+          leadId: leadItem.id);
+
+      await _updateSalesmanPerformance(salesmanId);
+    } catch (e) {
+      developer.log('Error undoing engagement lead: $e');
+    } finally {
+      await conn.close();
+    }
   }
 
-  void _onUndoNegotiationLead(LeadItem leadItem, String previousStage) {
-    setState(() {
-      negotiationLeads.remove(leadItem);
-      leadItem.stage = previousStage;
-      leadItem.previousStage = null;
-      if (previousStage == 'Opportunities') {
-        leadItems.add(leadItem);
-      } else if (previousStage == 'Engagement') {
-        engagementLeads.add(leadItem);
-      }
-    });
-    _updateLeadStageInDatabase(leadItem);
-    // 调用更新销售人员表现的函数
-    _updateSalesmanPerformance(salesmanId);
+  Future<void> _onUndoNegotiationLead(
+      LeadItem leadItem, String previousStage) async {
+    MySqlConnection conn = await connectToDatabase();
+    try {
+      await conn.query(
+          'UPDATE sales_lead SET stage = ?, previous_stage = NULL, negotiation_start_date = NULL WHERE id = ?',
+          [previousStage, leadItem.id]);
+
+      setState(() {
+        negotiationLeads.remove(leadItem);
+        leadItem.stage = previousStage;
+        leadItem.previousStage = null;
+        leadItem.negotiationStartDate = null;
+        if (previousStage == 'Opportunities') {
+          leadItems.add(leadItem);
+        } else if (previousStage == 'Engagement') {
+          engagementLeads.add(leadItem);
+        }
+      });
+
+      // Log the event
+      await EventLogger.logEvent(
+          salesmanId, 'Undo Negotiation lead', 'Lead Undo',
+          leadId: leadItem.id);
+
+      await _updateSalesmanPerformance(salesmanId);
+    } catch (e) {
+      developer.log('Error undoing negotiation lead: $e');
+    } finally {
+      await conn.close();
+    }
   }
+
+  // Future<void> _createLead(
+  //     String customerName, String description, String amount) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.transaction((ctx) async {
+  //       // 使用正确的日期格式
+  //       String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  //       var result = await ctx.query(
+  //           'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, stage) VALUES (?, ?, ?, ?, ?, ?)',
+  //           [
+  //             salesmanId,
+  //             customerName,
+  //             description,
+  //             formattedDate,
+  //             amount,
+  //             'Opportunities'
+  //           ]);
+
+  //       int newLeadId = result.insertId!;
+
+  //       // 现在记录事件
+  //       await ctx.query(
+  //           'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), ?)',
+  //           [
+  //             salesmanId,
+  //             'Created new lead for customer: $customerName',
+  //             'Lead Accepted',
+  //             newLeadId
+  //           ]);
+
+  //       LeadItem newLeadItem = LeadItem(
+  //         id: newLeadId,
+  //         salesmanId: salesmanId,
+  //         customerName: customerName,
+  //         description: description,
+  //         createdDate: formattedDate,
+  //         amount: 'RM$amount',
+  //         contactNumber: '',
+  //         emailAddress: '',
+  //         stage: 'Opportunities',
+  //         addressLine1: '',
+  //         salesOrderId: '',
+  //       );
+
+  //       setState(() {
+  //         leadItems.add(newLeadItem);
+  //       });
+  //     });
+
+  //     await _updateSalesmanPerformance(salesmanId);
+  //     print('Lead created and event logged successfully');
+  //   } catch (e) {
+  //     print('Error creating lead: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<void> _createLead(
       String customerName, String description, String amount) async {
@@ -811,10 +957,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       await conn.close();
     }
 
+    // // Log the event
+    // await EventLogger.logEvent(salesmanId,
+    //     'Created new lead for customer: $customerName', 'Lead Accepted',
+    //     leadId: leadItem.id);
+
     setState(() {
       leadItems.add(leadItem);
     });
-    await _updateSalesmanPerformance(salesmanId); // 添加这行
+    await _updateSalesmanPerformance(salesmanId);
   }
 
   Future<void> _handleIgnore(LeadItem leadItem) async {
@@ -846,16 +997,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (confirmDelete == true) {
       MySqlConnection conn = await connectToDatabase();
       try {
-        await conn.query(
-          'DELETE FROM sales_lead WHERE id = ?',
-          [leadItem.id],
-        );
-        setState(() {
-          leadItems.remove(leadItem);
+        await conn.transaction((ctx) async {
+          // Delete the related event_log records
+          await ctx.query(
+            'DELETE FROM event_log WHERE lead_id = ?',
+            [leadItem.id],
+          );
+
+          // Delete the sales_lead record
+          var result = await ctx.query(
+            'DELETE FROM sales_lead WHERE id = ?',
+            [leadItem.id],
+          );
+
+          if (result.affectedRows! > 0) {
+            // If the deletion is successful, a new event log is inserted
+            await ctx.query(
+              'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+              [salesmanId, 'Ignored lead', 'Lead Ignored'],
+            );
+
+            setState(() {
+              leadItems.remove(leadItem);
+            });
+            await _updateSalesmanPerformance(salesmanId);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Lead successfully deleted')),
+            );
+          } else {
+            throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
+          }
         });
-        await _updateSalesmanPerformance(salesmanId); // 添加这行
       } catch (e) {
-        developer.log('Error deleting lead item: $e');
+        developer.log('Error during transaction: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete lead: $e')),
+        );
       } finally {
         await conn.close();
       }
@@ -1326,7 +1504,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           leadItem: leadItem,
           onMoveToNegotiation: () => _moveFromEngagementToNegotiation(leadItem),
           onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
-            // 调用更新销售人员表现的函数
+            // Log the event
+            await EventLogger.logEvent(
+                salesmanId,
+                'Moved lead from Engagement stage to Order Processing stage',
+                'Stage Movement',
+                leadId: leadItem.id);
             await _updateSalesmanPerformance(salesmanId);
             await _moveFromEngagementToOrderProcessing(
                 leadItem, salesOrderId, quantity);
@@ -1386,9 +1569,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return NegotiationLeadItem(
           leadItem: leadItem,
           onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
+            // Log the event
+            await EventLogger.logEvent(
+                salesmanId,
+                'Moved lead from Negotiation stage to Order Processing stage',
+                'Stage Movement',
+                leadId: leadItem.id);
             await _moveFromNegotiationToOrderProcessing(
                 leadItem, salesOrderId, quantity);
-            // 调用更新销售人员表现的函数
             await _updateSalesmanPerformance(salesmanId);
             setState(() {
               negotiationLeads.remove(leadItem);

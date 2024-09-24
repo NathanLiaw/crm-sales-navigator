@@ -272,27 +272,88 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
       'address': addressController.text,
       'description': descriptionController.text,
       'predicted_sales': amountController.text,
-      'stage': 'Opportunities', // Add the default stage for new leads
+      'stage': 'Opportunities',
       'previous_stage': 'Opportunities',
       'so_id': null,
-      'created_date':
-          DateTime.now().toString(), // Add the current date as created_date
+      'created_date': DateTime.now().toString(), // Current date as created_date
     };
 
-    // Validate description length
     if (leadData['description'].length > 255) {
-      developer.log('Description cannot exceed 255 characters.');
+      developer.log('The description cannot exceed 255 characters.');
       return;
     }
 
     // Save data to database
-    bool success = await saveData(conn, 'sales_lead', leadData);
-    if (success) {
-      developer.log('Lead data saved successfully.');
+    var result = await conn.query(
+        'INSERT INTO sales_lead (salesman_id, customer_name, contact_number, email_address, address, description, predicted_sales, stage, previous_stage, so_id, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          leadData['salesman_id'],
+          leadData['customer_name'],
+          leadData['contact_number'],
+          leadData['email_address'],
+          leadData['address'],
+          leadData['description'],
+          leadData['predicted_sales'],
+          leadData['stage'],
+          leadData['previous_stage'],
+          leadData['so_id'],
+          leadData['created_date']
+        ]);
+
+    if (result.affectedRows == 1) {
+      int? leadId = result.insertId; // Get new inserted lead_id
+      developer.log('Lead data saved successfully,lead_id: $leadId');
+
+      // Log the event
+      await conn.query(
+          'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, ?, ?)',
+          [
+            leadData['salesman_id'],
+            'Created new lead for customer: ${leadData['customer_name']}',
+            'Create Lead',
+            DateTime.now().toString(),
+            leadId
+          ]);
+      developer.log('Event Logging Successful,lead_id: $leadId');
     } else {
-      developer.log('Failed to save lead data.');
+      developer.log('Failure to save lead data');
     }
 
     await conn.close();
   }
+
+  // Future<void> _saveLeadToDatabase() async {
+  //   MySqlConnection conn = await connectToDatabase();
+
+  //   Map<String, dynamic> leadData = {
+  //     'salesman_id': widget.salesmanId,
+  //     'customer_name': customerNameController.text,
+  //     'contact_number': contactNumberController.text,
+  //     'email_address': emailAddressController.text,
+  //     'address': addressController.text,
+  //     'description': descriptionController.text,
+  //     'predicted_sales': amountController.text,
+  //     'stage': 'Opportunities', // Add the default stage for new leads
+  //     'previous_stage': 'Opportunities',
+  //     'so_id': null,
+  //     'created_date':
+  //         DateTime.now().toString(), // Add the current date as created_date
+  //   };
+
+  //   // Validate description length
+  //   if (leadData['description'].length > 255) {
+  //     developer.log('Description cannot exceed 255 characters.');
+  //     return;
+  //   }
+
+  //   // Save data to database
+  //   bool success = await saveData(conn, 'sales_lead', leadData);
+  //   if (success) {
+  //     developer.log('Lead data saved successfully.');
+  //   } else {
+  //     developer.log('Failed to save lead data.');
+  //   }
+
+  //   await conn.close();
+  // }
 }

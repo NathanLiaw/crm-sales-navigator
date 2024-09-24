@@ -70,11 +70,11 @@ class _ChatScreenState extends State<ChatScreen> {
         feedbackEnabled = false;
       });
 
-      final url =
-          Uri.parse('https://salesnavigator-production.up.railway.app/chat');
+      const String url = 'https://salesnavigator-production-fdd1.up.railway.app/chat';
+
       try {
         final response = await http.post(
-          url,
+          Uri.parse(url),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({
             'user_id': userId,
@@ -87,24 +87,42 @@ class _ChatScreenState extends State<ChatScreen> {
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           String botResponse = data['response'];
-          List<dynamic> products = data['products'] ?? [];
-          List<dynamic> salesOrders = data['sales_orders'] ?? [];
 
           setState(() {
-            if (salesOrders.isNotEmpty) {
-              _messages.add({
-                "message": "Got it! Here is the result of your Sales Order:",
-                "isUser": false,
-                "timestamp": _getCurrentTime(),
-                "sales_orders": salesOrders
-              });
-            } else if (products.isNotEmpty) {
-              _messages.add({
-                "message": botResponse,
-                "isUser": false,
-                "timestamp": _getCurrentTime(),
-                "products": products
-              });
+            if (selectedCategory == 'sales_order' &&
+                data.containsKey('sales_orders')) {
+              List<dynamic> salesOrders = data['sales_orders'];
+              if (salesOrders.isNotEmpty) {
+                _messages.add({
+                  "message": "Here is the result of your Sales Order Inquiry:",
+                  "isUser": false,
+                  "timestamp": _getCurrentTime(),
+                  "sales_orders": salesOrders
+                });
+              } else {
+                _messages.add({
+                  "message": "No sales orders found.",
+                  "isUser": false,
+                  "timestamp": _getCurrentTime()
+                });
+              }
+            } else if (selectedCategory == 'search_product' &&
+                data.containsKey('products')) {
+              List<dynamic> products = data['products'];
+              if (products.isNotEmpty) {
+                _messages.add({
+                  "message": "Here are the products I found:",
+                  "isUser": false,
+                  "timestamp": _getCurrentTime(),
+                  "products": products
+                });
+              } else {
+                _messages.add({
+                  "message": "No products found.",
+                  "isUser": false,
+                  "timestamp": _getCurrentTime()
+                });
+              }
             } else {
               _messages.add({
                 "message": botResponse,
@@ -112,6 +130,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 "timestamp": _getCurrentTime()
               });
             }
+
             showSuggestionBox = false;
             feedbackEnabled = true;
             isTyping = false;
@@ -160,8 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
           (thumbsDownResponseIndex + 1) % thumbsDownResponses.length;
     }
 
-    final url =
-        Uri.parse('https://salesnavigator-production.up.railway.app/feedback');
+    final url = Uri.parse('https://salesnavigator-production-fdd1.up.railway.app/feedback');
     try {
       await http.post(
         url,
@@ -203,10 +221,6 @@ class _ChatScreenState extends State<ChatScreen> {
     switch (category) {
       case 'general':
         return 'General FAQs';
-      case 'customer_faq':
-        return 'Customer FAQs';
-      case 'salesman_faq':
-        return 'Salesman FAQs';
       case 'search_product':
         return 'Search Product';
       case 'sales_order':
@@ -230,9 +244,6 @@ class _ChatScreenState extends State<ChatScreen> {
         'What should I do if I forgot my password?',
         'How do I change my password?',
         'Who can access the admin features?',
-      ];
-    } else if (category == 'customer_faq') {
-      return [
         'How do I place an order?',
         'What are the payment methods available?',
         'How can I track my order status?',
@@ -243,9 +254,6 @@ class _ChatScreenState extends State<ChatScreen> {
         'Can I cancel or modify my order after placing it?',
         'What warranties do you offer on your products?',
         'How do I register an account on your website?',
-      ];
-    } else if (category == 'salesman_faq') {
-      return [
         'How do I log in to the admin or salesman portal?',
         'Are there any promotions or discounts available?',
         'How can I check the availability of a specific product?',
@@ -516,73 +524,73 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               ],
                             ),
-                              child: Column(
-                                crossAxisAlignment: isUser
-                                    ? CrossAxisAlignment.end
-                                    : CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    message["message"],
-                                    style: TextStyle(
-                                        color:
-                                            isUser ? Colors.white : Colors.black),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    timestamp,
-                                    style: TextStyle(
-                                        color: isUser
-                                            ? Colors.white70
-                                            : Colors.black54,
-                                        fontSize: 10),
-                                  ),
-                                ],
+                            child: Column(
+                              crossAxisAlignment: isUser
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  message["message"],
+                                  style: TextStyle(
+                                      color:
+                                          isUser ? Colors.white : Colors.black),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  timestamp,
+                                  style: TextStyle(
+                                      color: isUser
+                                          ? Colors.white70
+                                          : Colors.black54,
+                                      fontSize: 10),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (salesOrders != null && salesOrders.isNotEmpty)
+                            ...salesOrders
+                                .map((order) => SalesOrderCard(order: order)),
+                          if (products != null && products.isNotEmpty)
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio: 0.7,
+                                ),
+                                itemCount: products.length,
+                                itemBuilder: (context, index) {
+                                  return _buildProductCard(products[index]);
+                                },
                               ),
                             ),
-                            if (salesOrders != null && salesOrders.isNotEmpty)
-                              ...salesOrders
-                                  .map((order) => SalesOrderCard(order: order)),
-                            if (products != null && products.isNotEmpty)
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 8,
-                                    mainAxisSpacing: 8,
-                                    childAspectRatio: 0.7,
-                                  ),
-                                  itemCount: products.length,
-                                  itemBuilder: (context, index) {
-                                    return _buildProductCard(products[index]);
-                                  },
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
+                        ],
+                      );
+                    },
                   ),
-                if (isTyping)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                          ),
+                ),
+              if (isTyping)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(width: 10),
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
                         ),
-                        SizedBox(width: 10),
-                        Text('F.Y.H Smart Agent is typing...'),
+                      ),
+                      SizedBox(width: 10),
+                      Text('F.Y.H Smart Agent is typing...'),
                     ],
                   ),
                 ),
@@ -702,16 +710,6 @@ class FAQSelection extends StatelessWidget {
                           icon: Icons.help_outline,
                           label: 'General FAQs',
                           onTap: () => onCategorySelected('general'),
-                        ),
-                        _buildCategoryCard(
-                          icon: Icons.person_outline,
-                          label: 'Customer FAQs',
-                          onTap: () => onCategorySelected('customer_faq'),
-                        ),
-                        _buildCategoryCard(
-                          icon: Icons.supervisor_account_outlined,
-                          label: 'Salesman FAQs',
-                          onTap: () => onCategorySelected('salesman_faq'),
                         ),
                         _buildCategoryCard(
                           icon: Icons.search,

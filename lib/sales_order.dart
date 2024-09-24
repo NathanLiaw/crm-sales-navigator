@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/event_logger.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -550,6 +551,10 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
                           onPressed: () async {
+                            int copiedItemsCount = 0;
+                            String salesOrderId = items.isNotEmpty
+                                ? items.first['id'].toString()
+                                : 'Unknown';
                             for (int i = 0; i < items.length; i++) {
                               if (checkedItems[i]) {
                                 final item = items[i];
@@ -574,8 +579,21 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                   modified: DateTime.now(),
                                 );
                                 await insertItemIntoCart(cartItem);
+                                copiedItemsCount++;
                               }
                             }
+
+                            // Log the event
+                            if (copiedItemsCount > 0) {
+                              int salesmanId =
+                                  await UtilityFunction.getUserId();
+                              await EventLogger.logEvent(
+                                salesmanId,
+                                'Copied $copiedItemsCount items from sales order ID: $salesOrderId to cart',
+                                'Copy to Cart',
+                              );
+                            }
+
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
