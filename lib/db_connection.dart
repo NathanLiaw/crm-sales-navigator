@@ -1,22 +1,18 @@
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
-    // Aiven Database
-    host: 'fyh-crm-sm.h.aivencloud.com',
-    port: 19991,
-    user: 'avnadmin',
-    password: 'AVNS_Iqrl_2qmZTRxm7WrA30',
-    db: 'fyh',
-
-    // Localhost Database
-    // host: '10.0.2.2',
-    // port: 3306,
-    // user: 'root',
-    // password: '901022',
-    // db: 'fyh',
+    // Database
+    host: dotenv.env['LOCAL_DB_HOST']!,
+    port: dotenv.env['LOCAL_DB_PORT'] == null
+        ? 3306
+        : int.parse(dotenv.env['LOCAL_DB_PORT']!),
+    user: dotenv.env['LOCAL_DB_USER']!,
+    password: dotenv.env['LOCAL_DB_PASSWORD']!,
+    db: dotenv.env['LOCAL_DB_NAME']!,
   );
 
   try {
