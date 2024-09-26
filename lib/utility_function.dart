@@ -107,4 +107,11 @@ class UtilityFunction{
     int userId = pref.getInt('id') as int;
     return userId;
   }
+
+  static Blob stringToBlob(String data) {
+    // Create a Blob instance from the string using Blob.fromString
+    Blob blob = Blob.fromString(data);
+
+    return blob;
+  }
 }

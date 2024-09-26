@@ -23,15 +23,14 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
   late Future<List<Map<String, dynamic>>> salesDataFuture = Future.value([]);
   late Future<List<Map<String, dynamic>>> productsFuture = Future.value([]);
   late int customerId = 0;
-  late String customerUsername = ''; 
+  late String customerUsername = '';
 
   @override
   void initState() {
     super.initState();
     customerFuture = fetchCustomer().then((customer) {
       setState(() {
-        customerId = customer.id!;
-        customerUsername = customer.username;
+        customerId = customer.id;
         salesDataFuture = fetchSalesDataByCustomer(customerId);
         productsFuture = fetchProductsByCustomer(customerId);
       });
@@ -56,16 +55,16 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
           customerId = row['id'];
         });
         return Customer.Customer(
-          id: row['id'] as int?,
-          area: row['area'] as int,
-          userGroup: row['user_group'] as String? ?? '',
+          id: row['id'] as int? ?? 0,
           companyName: row['company_name'] as String? ?? '',
-          customerRate: row['customer_rate'] as int,
-          username: row['username'] as String? ?? '',
           addressLine1: row['address_line_1'] as String? ?? '',
           addressLine2: row['address_line_2'] as String? ?? '',
           contactNumber: row['contact_number'] as String? ?? '',
           email: row['email'] as String? ?? '',
+          customerRate: row['customer_rate'] != null
+              ? row['customer_rate'].toString() // Convert int to String if necessary
+              : '',
+          discountRate: row['discount_rate'] as int? ?? 0,
         );
       } else {
         throw Exception('Customer not found with company name: ${widget.customerName}');
@@ -302,7 +301,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 48.0),
+                  const SizedBox(height: 32.0),
                   const Text(
                     'Past Sales',
                     style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
@@ -312,12 +311,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                     height: 400.0,
                     child: CustomerSalesReport(username: customerUsername),
                   ),
-                  const SizedBox(height: 16),
-                  const SizedBox(
-                    height: 300.0,
-                    child: CustomersGraph(),
-                  ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 36.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -331,7 +325,7 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id!)),
+                                MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id)),
                               );
                             },
                             child: const Text(
@@ -347,6 +341,104 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
                         ],
                       ),
                     ]
+                  ),
+                  const SizedBox(height: 10.0),
+                  SizedBox(
+                    height: 250.0,
+                    child: products.isEmpty
+                        ? const Text('No purchases yet')
+                        : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        var product = products[index];
+                        final localPath = product['photo1'] ?? '';
+                        final photoUrl = "https://haluansama.com/crm-sales/$localPath";
+                        final productName = product['product_name'] ?? '';
+                        final productUom = product['uom'] ?? '';
+
+                        return GestureDetector(
+                          onTap: () {
+                            _navigateToItemScreen(productName);
+                          },
+                          child: Card(
+                            elevation: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Container for product photo
+                                  SizedBox(
+                                    width: 120.0,
+                                    height: 120.0,
+                                    child: CachedNetworkImage(
+                                      imageUrl: photoUrl.isNotEmpty ? photoUrl : 'asset/no_image.jpg',
+                                      placeholder: (context, url) => const CircularProgressIndicator(),
+                                      errorWidget: (context, url, error) => const Icon(Icons.error_outline),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Container for product name with fixed width
+                                  SizedBox(
+                                    width: 120.0,
+                                    child: Text(
+                                      productName,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Container for product uom with fixed width
+                                  SizedBox(
+                                    width: 120.0,
+                                    child: Text(
+                                      productUom,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.normal, color: Colors.grey),
+                                      softWrap: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 32,),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recommended Products',
+                          style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                        ),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id)),
+                                );
+                              },
+                              child: const Text(
+                                'View more',
+                                style: TextStyle(fontSize: 16.0, color: Colors.grey),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right,
+                              size: 24,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      ]
                   ),
                   const SizedBox(height: 10.0),
                   SizedBox(

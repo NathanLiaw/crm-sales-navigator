@@ -2,6 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(

@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sales_navigator/api/firebase_api.dart';
 import 'package:sales_navigator/background_tasks.dart';
@@ -12,10 +12,12 @@ import 'package:sales_navigator/notification_page.dart';
 import 'package:sales_navigator/starting_page.dart';
 import 'package:sales_navigator/login_page.dart';
 import 'package:sales_navigator/profile_page.dart';
+import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/sales_order.dart';
 import 'package:workmanager/workmanager.dart';
 import 'db_sqlite.dart';
 import 'products_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -87,6 +89,9 @@ void main() async {
       );
     });
   });
+
+  // Load the .env file
+  await dotenv.load(fileName: '.env');
 
   // Initialize the SQLite database
   await DatabaseHelper.database;

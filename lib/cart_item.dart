@@ -9,7 +9,7 @@ class CartItem {
   final int discount;
   final double originalUnitPrice;
   double unitPrice;
-  final double total;
+  late  double total;
   final String? cancel;
   final String? remark;
   final String status;

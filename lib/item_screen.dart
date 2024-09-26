@@ -95,6 +95,7 @@ class _ItemScreenState extends State<ItemScreen> {
   void initState() {
     super.initState();
     initializeData();
+    developer.log(widget.itemAssetNames.toString());
   }
 
   @override
@@ -146,9 +147,12 @@ class _ItemScreenState extends State<ItemScreen> {
               itemCount: widget.itemAssetNames.length,
               itemBuilder: (context, index) {
                 final assetName = widget.itemAssetNames[index];
-                if (assetName == 'https://haluansama.com/crm-sales/null') {
-                  return const SizedBox.shrink();
+
+                // Check if the assetName is empty or 'null' placeholder
+                if (assetName.isEmpty || assetName == 'https://haluansama.com/crm-sales/null') {
+                  return const SizedBox.shrink(); // Shrinks if the assetName is empty
                 }
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {

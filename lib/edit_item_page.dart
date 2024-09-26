@@ -93,6 +93,12 @@ class _EditItemPageState extends State<EditItemPage> {
         ? double.parse(discountController.text)
         : 0.0;
 
+    // Check if discount is within the valid range
+    if (inputDiscount < 0.0 || inputDiscount >= 100.0) {
+      showAlertDialog('Discount must be between 0% and 100%', Colors.red);
+      return;
+    }
+
     // Determine if input values are provided and user has corresponding authority
     bool hasRepriceAuthority = repriceAuthority && inputPrice > 0.0;
     bool hasDiscountAuthority = discountAuthority && inputDiscount > 0.0;
