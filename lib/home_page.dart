@@ -409,7 +409,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _fetchCreateLeadItems() async {
     final apiUrl = dotenv.env['API_URL'];
     const offset = 0;
-    const limit = 50;
+    const limit = 100;
 
     try {
       // Make the HTTP request to the API

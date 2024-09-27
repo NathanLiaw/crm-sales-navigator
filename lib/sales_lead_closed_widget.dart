@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -81,46 +82,81 @@ class ClosedLeadItem extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 10),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Column(
-                        children: [
-                          Text(
-                            'Closed',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                  const SizedBox(width: 10),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Column(
+                          children: [
+                            Text(
+                              'Closed',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      PopupMenuButton<String>(
+                        onSelected: (String value) {
+                          // Perform an action based on the selected value
+                        },
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'view details',
+                            child: Text('View details'),
                           ),
                         ],
+                        child: const Icon(Icons.more_horiz_outlined,
+                            color: Colors.black),
                       ),
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    PopupMenuButton<String>(
-                      onSelected: (String value) {
-                        // Perform an action based on the selected value
-                      },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'view details',
-                          child: Text('View details'),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: leadItem.contactNumber.isNotEmpty
+                        ? () => _launchURL('tel:${leadItem.contactNumber}')
+                        : null,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.phone,
+                          color: Color(0xff0069BA),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 100,
+                          child: Text(
+                            leadItem.contactNumber.isNotEmpty
+                                ? leadItem.contactNumber
+                                : 'Unavailable',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              decoration: TextDecoration.underline,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
-                      child: const Icon(Icons.more_horiz_outlined,
-                          color: Colors.black),
                     ),
                   ],
                 ),
@@ -182,11 +218,9 @@ class ClosedLeadItem extends StatelessWidget {
                             fontSize: 14,
                             decoration: TextDecoration.underline,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -222,10 +256,10 @@ class ClosedLeadItem extends StatelessWidget {
                     color: Colors.black,
                     fontSize: 14,
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

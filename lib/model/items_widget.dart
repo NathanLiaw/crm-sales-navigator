@@ -139,41 +139,32 @@ class _ItemsWidgetState extends State<ItemsWidget> {
     return GridView.builder(
       controller: _scrollController,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio:
-            MediaQuery.of(context).size.width < 2000 ? 0.65 : 0.70,
+        crossAxisCount: 2, // Two items per row
+        childAspectRatio: MediaQuery.of(context).size.width < 2000 ? 0.65 : 0.70,
       ),
-      itemCount: _products.length + (_hasMore ? 1 : 0),
+      itemCount: _products.length + (_hasMore ? 4 : 0), // Add four shimmer placeholders
       itemBuilder: (context, index) {
         if (index >= _products.length) {
-          // Display the shimmer effect if more items are being fetched
-          return GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1,
-              childAspectRatio: 0.65,
-            ),
-            itemCount: 1, // Number of shimmer placeholders
-            itemBuilder: (context, shimmerIndex) {
-              return Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
+          // Display four shimmer effects in a 2x2 grid
+          return Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
-              );
-            },
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
           );
         }
 
+        // If products are available, display them here
         final product = _products[index];
         final productId = product['id'] as int;
         final productName = product['product_name'] as String;
