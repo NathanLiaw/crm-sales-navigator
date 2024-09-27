@@ -161,41 +161,44 @@ class _ProductsScreenState extends State<ProductsScreen>
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
-          backgroundColor: const Color.fromARGB(255, 0, 76, 135),
-          leading: IconButton(
-            icon: const Icon(
-              Icons.location_on,
-              size: 34,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (BuildContext context) {
-                  return SizedBox(
-                    height: 380,
-                    width: double.infinity,
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
-                          child: Text(
-                            'Select Area',
-                            style: GoogleFonts.inter(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500,
+          backgroundColor: const Color(0xff0175FF),
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: IconButton(
+              icon: const Icon(
+                Icons.location_on,
+                size: 34,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return SizedBox(
+                      height: 380,
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                            child: Text(
+                              'Select Area',
+                              style: GoogleFonts.inter(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                        const AreaSelectPopUp(),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
+                          const AreaSelectPopUp(),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
           title: GestureDetector(
             onTap: () {
@@ -249,13 +252,12 @@ class _ProductsScreenState extends State<ProductsScreen>
         ),
         child: Column(
           children: [
-            const SizedBox(height: 2),
-            const Divider(
-              color: Color.fromARGB(255, 0, 76, 135),
-            ),
-            SizedBox(
-              height: 24,
-              width: 316,
+            Container(
+              padding: const EdgeInsets.all(4),
+              alignment: Alignment.center,
+              color: const Color(0xff0175FF),
+              height: 42,
+              width: double.infinity,
               child: Row(
                 children: [
                   Expanded(
@@ -277,6 +279,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                                       'Sort',
                                       style: GoogleFonts.inter(
                                         fontSize: 24,
+                                        color: Colors.black,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -304,18 +307,18 @@ class _ProductsScreenState extends State<ProductsScreen>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.sort),
+                            const Icon(
+                              Icons.sort,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Sort',
                               style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
-                                color: const Color.fromARGB(255, 25, 23, 49),
+                                color: Colors.white,
                               ),
-                            ),
-                            const SizedBox(
-                              width: 48,
                             ),
                           ],
                         ),
@@ -323,7 +326,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                     ),
                   ),
                   const VerticalDivider(
-                    color: Colors.grey,
+                    color: Colors.white,
                   ),
                   Expanded(
                     child: InkWell(
@@ -335,17 +338,17 @@ class _ProductsScreenState extends State<ProductsScreen>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(
-                              width: 48,
+                            const Icon(
+                              Icons.filter_alt,
+                              color: Colors.white,
                             ),
-                            const Icon(Icons.filter_alt),
                             const SizedBox(width: 4),
                             Text(
                               'Filter',
                               style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
-                                color: const Color.fromARGB(255, 25, 23, 49),
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -355,9 +358,6 @@ class _ProductsScreenState extends State<ProductsScreen>
                   ),
                 ],
               ),
-            ),
-            const Divider(
-              color: Color.fromARGB(255, 0, 76, 135),
             ),
             Expanded(
               child: Container(

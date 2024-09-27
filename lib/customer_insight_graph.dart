@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 class CustomerSalesReport extends StatefulWidget {
   final String username;
 
@@ -115,24 +116,24 @@ Future<List<SalesData>> fetchCustomerSalesData(String reportType, String usernam
         });
       },
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xFF047CBD)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),

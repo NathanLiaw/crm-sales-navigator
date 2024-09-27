@@ -16,9 +16,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
     required this.onMoveToClosed,
   });
 
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
       throw 'Could not launch $url';
     }
@@ -46,11 +47,23 @@ class OrderProcessingLeadItem extends StatelessWidget {
     String formattedCreatedDate = _formatDate(createdDate);
     String formattedTotal = _formatCurrency(total);
 
-    return Card(
-      color: orderStatus == 'Pending'
+    return Container(
+      height: 278,
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: const [
+            BoxShadow(
+              blurStyle: BlurStyle.normal,
+              color: Color.fromARGB(75, 117, 117, 117),
+              spreadRadius: 0.1,
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ]),
+      /* color: orderStatus == 'Pending'
           ? const Color.fromARGB(255, 255, 237, 188)
-          : const Color.fromARGB(255, 205, 229, 242),
-      elevation: 2,
+          : const Color.fromARGB(255, 205, 229, 242), */
       margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -75,7 +88,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   child: Text(
                     leadItem.customerName,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18),
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -92,9 +105,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   child: Text(
                     orderStatus,
                     style: TextStyle(
-                      color: orderStatus == 'Pending'
-                          ? Colors.black
-                          : Colors.white,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -114,7 +125,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.phone,
-                        color: Color(0xff0069BA),
+                        color: const Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -144,7 +155,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.email,
-                        color: Color(0xff0069BA),
+                        color: const Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -170,7 +181,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               formattedSalesOrderId,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: const Color(0xff0175FF)),
             ),
             const SizedBox(
               height: 8,
@@ -223,8 +237,8 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     'View Order',
                     style: TextStyle(
                       decoration: TextDecoration.underline,
-                      decorationColor: Color(0xff0069BA),
-                      color: Color(0xff0069BA),
+                      decorationColor: const Color(0xff0175FF),
+                      color: const Color(0xff0175FF),
                       fontSize: 14,
                     ),
                   ),
@@ -232,7 +246,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                 Text(
                   'Created on: ${leadItem.createdDate}',
                   style: const TextStyle(
-                    color: Colors.grey,
+                    color: Color.fromARGB(255, 0, 0, 0),
                     fontSize: 14,
                   ),
                 ),

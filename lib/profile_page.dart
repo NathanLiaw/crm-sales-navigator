@@ -18,7 +18,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   String? salesmanName;
-
+  int currentPageIndex = 4;
   @override
   void initState() {
     super.initState();
@@ -44,7 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -161,12 +161,12 @@ class _ProfilePageState extends State<ProfilePage> {
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black),
-          borderRadius: BorderRadius.circular(5),
-        ),
+        decoration: const BoxDecoration(),
         child: ListTile(
-          leading: Icon(icon),
+          leading: Icon(
+            icon,
+            color: const Color(0xff0175FF),
+          ),
           title: Text(title),
         ),
       ),

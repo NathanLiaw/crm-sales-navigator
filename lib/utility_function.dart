@@ -1,6 +1,7 @@
 import 'dart:core';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -113,5 +114,27 @@ class UtilityFunction{
     Blob blob = Blob.fromString(data);
 
     return blob;
+  }
+
+  static Future<int> getNumberOfItemsInCart() async {
+    final userId = await UtilityFunction.getUserId();
+
+    try {
+      const tableName = 'cart_item';
+      final condition = "buyer_id = $userId AND status = 'in progress'";
+
+      final db = await DatabaseHelper.database;
+
+      final itemCount = await DatabaseHelper.countData(
+        db,
+        tableName,
+        condition,
+      );
+
+      return itemCount;
+    } catch (e) {
+      developer.log('Error fetching count of cart items: $e', error: e);
+      return 0;
+    }
   }
 }

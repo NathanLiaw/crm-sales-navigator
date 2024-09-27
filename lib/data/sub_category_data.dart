@@ -17,7 +17,7 @@ Future<List<List<SubCategoryData>>> fetchSubCategories(
 
   for (var category in categories) {
     final results = await conn
-        .query('SELECT * FROM sub_category WHERE category = ?', [category.id]);
+        .query('SELECT * FROM sub_category WHERE category = ? ORDER BY sub_category ASC', [category.id]);
     final subCategoryList = results.map<SubCategoryData>((row) {
       return SubCategoryData(
         id: row['id'] as int,

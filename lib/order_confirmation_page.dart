@@ -10,7 +10,6 @@ import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
-import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -50,7 +49,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   Future<List<String>> fetchOrderOptions() async {
     List<String> fetchedOrderOptions = [];
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/order_option/get_order_options.php'; 
+    const String apiUrl =
+        'https://haluansama.com/crm-sales/api/order_option/get_order_options.php';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -99,7 +99,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       String areaName = await UtilityFunction.getAreaNameById(areaId);
 
       // Calculate final total using fetched tax values
-      double finalTotal = widget.subtotal * (1 + gst + sst);
+      // double total = widget.subtotal * (1 + gst + sst);
       double gstAmount = widget.subtotal * gst;
       double sstAmount = widget.subtotal * sst;
 
@@ -256,7 +256,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 2);
+    final formatter =
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 2);
     final formattedTotal = formatter.format(widget.total);
     final formattedSubtotal = formatter.format(widget.subtotal);
     final formattedDiscount = formatter.format(totalDiscount);
@@ -315,182 +316,228 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6.0),
-        Card(
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Displaying order details
-                SizedBox(
-                  height: 250.0,
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Displaying order details
+                  SizedBox(
+                    height: 250.0,
+                    child: Scrollbar(
+                      thumbVisibility: true,
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Table(
-                          border: TableBorder(
-                            horizontalInside: BorderSide(color: Colors.grey.shade300),
-                            verticalInside: BorderSide(color: Colors.grey.shade300),
-                            bottom: const BorderSide(color: Colors.black, width: 2.0),
-                          ),
-                          columnWidths: const {
-                            0: FixedColumnWidth(130), // Width for product name
-                            1: FixedColumnWidth(50),  // Width for quantity
-                            2: FixedColumnWidth(70),  // Width for original price
-                            3: FixedColumnWidth(70),  // Width for discounted price
-                            4: FixedColumnWidth(70),  // Width for total price
-                          },
-                          children: [
-                            // Header Row
-                            const TableRow(
-                              children: [
-                                Text('Product', style: TextStyle(fontWeight: FontWeight.bold)),
-                                Text('Qty', style: TextStyle(fontWeight: FontWeight.bold)),
-                                Text('Orig', style: TextStyle(fontWeight: FontWeight.bold)),
-                                Text('Disc', style: TextStyle(fontWeight: FontWeight.bold)),
-                                Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                              ],
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Table(
+                            border: TableBorder(
+                              horizontalInside:
+                                  BorderSide(color: Colors.grey.shade300),
+                              verticalInside:
+                                  BorderSide(color: Colors.grey.shade300),
+                              bottom: const BorderSide(
+                                  color: Colors.black, width: 2.0),
                             ),
-                            // Data Rows
-                            for (var item in widget.cartItems)
-                              TableRow(
+                            columnWidths: const {
+                              0: FixedColumnWidth(
+                                  130), // Width for product name
+                              1: FixedColumnWidth(50), // Width for quantity
+                              2: FixedColumnWidth(
+                                  70), // Width for original price
+                              3: FixedColumnWidth(
+                                  70), // Width for discounted price
+                              4: FixedColumnWidth(70), // Width for total price
+                            },
+                            children: [
+                              // Header Row
+                              const TableRow(
                                 children: [
-                                  Text(
-                                    item.productName,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item.quantity}',
-                                    style: const TextStyle(fontSize: 12, color: Colors.black),
-                                  ),
-                                  Text(
-                                    formatter.format(item.originalUnitPrice),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: item.originalUnitPrice != item.unitPrice ? Colors.red[700] : Colors.black,
-                                      decoration: item.originalUnitPrice != item.unitPrice ? TextDecoration.lineThrough : null,
-                                    ),
-                                  ),
-                                  Text(
-                                    item.originalUnitPrice != item.unitPrice
-                                        ? formatter.format(item.unitPrice)
-                                        : '-', // Display '-' if prices are the same
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  Text(
-                                    formatter.format(item.unitPrice * item.quantity),
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green,
-                                    ),
-                                  ),
+                                  Text('Product',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Text('Qty',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Text('Orig',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Text('Disc',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Text('Total',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                          ],
+                              // Data Rows
+                              for (var item in widget.cartItems)
+                                TableRow(
+                                  children: [
+                                    Text(
+                                      item.productName,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item.quantity}',
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.black),
+                                    ),
+                                    Text(
+                                      formatter.format(item.originalUnitPrice),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: item.originalUnitPrice !=
+                                                item.unitPrice
+                                            ? Colors.red[700]
+                                            : Colors.black,
+                                        decoration: item.originalUnitPrice !=
+                                                item.unitPrice
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                      ),
+                                    ),
+                                    Text(
+                                      item.originalUnitPrice != item.unitPrice
+                                          ? formatter.format(item.unitPrice)
+                                          : '-', // Display '-' if prices are the same
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Text(
+                                      formatter.format(
+                                          item.unitPrice * item.quantity),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16.0),
-                // Order summary
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4.0,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
+                  const SizedBox(height: 16.0),
+                  // Order summary
+                  Container(
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4.0,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Order Summary',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        const Divider(color: Colors.black54),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Subtotal:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedSubtotal,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('GST:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedGST,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('SST:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedSST,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Discount:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedDiscount,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total:',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              Text(formattedTotal,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green[800])),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Order Summary',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      const Divider(color: Colors.black54),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Subtotal:', style: TextStyle(fontSize: 16)),
-                            Text(formattedSubtotal, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('GST:', style: TextStyle(fontSize: 16)),
-                            Text(formattedGST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('SST:', style: TextStyle(fontSize: 16)),
-                            Text(formattedSST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Discount:', style: TextStyle(fontSize: 16)),
-                            Text(formattedDiscount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            Text(formattedTotal, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green[800])),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-
-        const SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
           TextField(
             controller: remarkController,
             decoration: const InputDecoration(
@@ -504,7 +551,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             },
           ),
           const SizedBox(height: 16.0),
-          const Text('*This is not an invoice & price not finalised in this order.'),
+          const Text(
+              '*This is not an invoice & price not finalised in this order.'),
           const SizedBox(height: 16.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -537,7 +585,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           const SizedBox(height: 16.0),
           ElevatedButton(
             style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+              backgroundColor:
+                  WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
               shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
@@ -577,17 +626,17 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             },
             child: isProcessing
                 ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(color: Colors.white),
-            )
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
                 : const Text(
-              'Submit Order',
-              style: TextStyle(
-                color: Colors.white, // Set text color
-                fontSize: 20, // Set text size
-              ),
-            ),
+                    'Submit Order',
+                    style: TextStyle(
+                      color: Colors.white, // Set text color
+                      fontSize: 20, // Set text size
+                    ),
+                  ),
           ),
         ],
       ),

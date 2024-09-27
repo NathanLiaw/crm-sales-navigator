@@ -120,18 +120,18 @@ class OrderSubmittedPage extends StatelessWidget {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomePage(),
+                              builder: (context) => const HomePage(),
                             ),
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff004c87)),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff004c87)),
+                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(130.0, 40.0),
                           ),
                         ),
@@ -155,8 +155,8 @@ class OrderSubmittedPage extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xffffffff)),
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xffffffff)),
+                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                               side: const BorderSide(
@@ -165,10 +165,10 @@ class OrderSubmittedPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(120.0, 40.0),
                           ),
-                          maximumSize: MaterialStateProperty.all<Size>(
+                          maximumSize: WidgetStateProperty.all<Size>(
                             const Size(150.0, 40.0),
                           ),
                         ),

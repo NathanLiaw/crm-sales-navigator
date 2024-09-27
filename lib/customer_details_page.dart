@@ -33,13 +33,15 @@ class _CustomerDetailsState extends State<CustomerDetails> {
 
   Future<List<Customer>> fetchCustomers(int limit, int offset) async {
     List<Customer> fetchedCustomers = [];
-    final String apiUrl = 'https://haluansama.com/crm-sales/api/customer/get_customers.php?limit=$limit&offset=$offset';
+    final String apiUrl =
+        'https://haluansama.com/crm-sales/api/customer/get_customers.php?limit=$limit&offset=$offset';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body); // Decode JSON into a Map
+        final Map<String, dynamic> responseData =
+            json.decode(response.body); // Decode JSON into a Map
 
         // Extract total customers count from responseData
         totalCustomers = responseData['total_customers'] ?? 0;
@@ -48,16 +50,21 @@ class _CustomerDetailsState extends State<CustomerDetails> {
         final List<dynamic> customerList = responseData['customers'] ?? [];
 
         for (var item in customerList) {
-          final Map<String, dynamic> customerData = item as Map<String, dynamic>;
+          final Map<String, dynamic> customerData =
+              item as Map<String, dynamic>;
           fetchedCustomers.add(Customer(
-            id: customerData['id'] is int ? customerData['id'] : int.tryParse(customerData['id'].toString()) ?? 0,
+            id: customerData['id'] is int
+                ? customerData['id']
+                : int.tryParse(customerData['id'].toString()) ?? 0,
             companyName: customerData['company_name'] as String? ?? '',
             addressLine1: customerData['address_line_1'] as String? ?? '',
             addressLine2: customerData['address_line_2'] as String? ?? '',
             contactNumber: customerData['contact_number'] as String? ?? '',
             email: customerData['email'] as String? ?? '',
             customerRate: customerData['customer_rate'] as String? ?? '',
-            discountRate: customerData['discount_rate'] is int ? customerData['discount_rate'] : int.tryParse(customerData['discount_rate'].toString()) ?? 0,
+            discountRate: customerData['discount_rate'] is int
+                ? customerData['discount_rate']
+                : int.tryParse(customerData['discount_rate'].toString()) ?? 0,
           ));
         }
       } else {
@@ -96,11 +103,13 @@ class _CustomerDetailsState extends State<CustomerDetails> {
       searchQuery = query;
       filteredCustomers = customers
           .where((customer) =>
-      customer.companyName.toLowerCase().contains(query.toLowerCase()) ||
-          customer.email.toLowerCase().contains(query.toLowerCase()) ||
-          customer.contactNumber.contains(query) ||
-          customer.addressLine1.contains(query) ||
-          customer.addressLine2.contains(query))
+              customer.companyName
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ||
+              customer.email.toLowerCase().contains(query.toLowerCase()) ||
+              customer.contactNumber.contains(query) ||
+              customer.addressLine1.contains(query) ||
+              customer.addressLine2.contains(query))
           .toList();
     });
   }
@@ -109,7 +118,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'Customer Details',
@@ -156,6 +165,9 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                 ),
               ),
             ),
+            const SizedBox(
+              height: 8,
+            ),
             Expanded(
               child: NotificationListener<ScrollNotification>(
                 onNotification: (scrollInfo) {
@@ -178,8 +190,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                       onTap: () {
                         setState(() {
                           selectedIndex = isSelected ? null : index;
-                          selectedCustomer =
-                          isSelected ? Customer() : customer;
+                          selectedCustomer = isSelected ? Customer() : customer;
 
                           // Call the callback with the updated selected customer
                           widget.onSelectionChanged?.call(selectedCustomer);
@@ -190,11 +201,17 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                       child: Padding(
                         padding: const EdgeInsets.only(
                             left: 6.0, right: 6.0, bottom: 4.0),
-                        child: Card(
-                          elevation: 2.0,
-                          color: isSelected
-                              ? const Color(0xfff8f9fa)
-                              : const Color(0xffcde5f2),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: const BorderDirectional(
+                                top: BorderSide(
+                                    color: Color.fromARGB(
+                                        255, 231, 231, 231),
+                                    width: 2)),
+                            color: isSelected
+                                ? const Color(0xfff8f9fa)
+                                : const Color.fromARGB(255, 255, 255, 255),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: Column(
@@ -205,7 +222,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                                   style: const TextStyle(
                                     fontSize: 16.0,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xff191731),
+                                    color: Color(0xff0175FF),
                                   ),
                                 ),
                                 const SizedBox(height: 2.0),
@@ -228,7 +245,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                                 const SizedBox(height: 16.0),
                                 Row(
                                   mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       customer.contactNumber,
@@ -273,5 +290,3 @@ class _CustomerDetailsState extends State<CustomerDetails> {
     );
   }
 }
-
-

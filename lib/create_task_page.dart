@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
@@ -289,11 +288,11 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     try {
       List<Map<String, dynamic>> salesOrders =
           await fetchSalesOrderDropdown(widget.customerName);
-      Set<String> uniqueIds = Set<String>();
-      salesOrders.forEach((order) {
+      Set<String> uniqueIds = <String>{};
+      for (var order in salesOrders) {
         final orderId = order['id'].toString();
         uniqueIds.add(orderId);
-      });
+      }
       setState(() {
         salesOrderIds = uniqueIds.toList();
       });
@@ -309,8 +308,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     final formatter = NumberFormat("#,###.000", "en_US");
     // Validate and preprocess the lastPurchasedAmount
     String formattedLastPurchasedAmount = '';
-    if (widget.lastPurchasedAmount != null &&
-        widget.lastPurchasedAmount.isNotEmpty) {
+    if (widget.lastPurchasedAmount.isNotEmpty) {
       String cleanedAmount =
           widget.lastPurchasedAmount.replaceAll(RegExp(r'[^0-9.]'), '');
       if (cleanedAmount.isNotEmpty) {
@@ -320,7 +318,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     }
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Create Task',
           style: TextStyle(color: Colors.white),
@@ -344,7 +342,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xff0069BA).withOpacity(0.1),
+                    color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -365,7 +363,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xff0069BA),
+                              color: const Color(0xff0175FF),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -383,7 +381,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          const Icon(Icons.person, color: Color(0xff0069BA)),
+                          const Icon(Icons.person,
+                              color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.customerName,
@@ -394,7 +393,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.phone, color: Color(0xff0069BA)),
+                          const Icon(Icons.phone,
+                              color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.contactNumber,
@@ -405,7 +405,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.email, color: Color(0xff0069BA)),
+                          const Icon(Icons.email,
+                              color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.emailAddress,
@@ -418,7 +419,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.location_on,
-                              color: Color(0xff0069BA)),
+                              color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -546,18 +547,16 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                           // },
                         ),
                       ),
-                      Spacer(),
+                      const Spacer(),
                       const SizedBox(width: 20),
                       Row(
                         children: [
                           GestureDetector(
                             onTap: _navigateToSelectOrderIDPage,
-                            child: Container(
-                              child: Text(
-                                'View Orders Details',
-                                // style: TextStyle(
-                                //     color: Color.fromARGB(255, 127, 127, 127)),
-                              ),
+                            child: const Text(
+                              'View Orders Details',
+                              // style: TextStyle(
+                              //     color: Color.fromARGB(255, 127, 127, 127)),
                             ),
                           ),
                           const Icon(
@@ -650,7 +649,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff0069BA)),
+                                  color: Color(0xff0175FF)),
                             ),
                             Text(quantity != null ? '$quantity items' : ''),
                           ],
@@ -662,7 +661,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff0069BA)),
+                                  color: Color(0xff0175FF)),
                             ),
                             Text(total != null ? 'RM$total' : ''),
                           ],
@@ -703,7 +702,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: const Color(0xff0175FF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -724,17 +723,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     );
   }
 
-  void _showSalesOrderDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return SalesOrderDialog(
-          salesOrderId: selectedSalesOrderId,
-          cartItems: cartItemList,
-        );
-      },
-    );
-  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -793,14 +781,14 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
         [salesOrderId.isEmpty ? null : salesOrderId, quantityInt, widget.id],
       );
 
-      print('Data saved successfully.');
+      developer.log('Data saved successfully.');
       return {
         'salesOrderId': salesOrderId.isEmpty ? null : salesOrderId,
         'quantity': quantityInt,
         'hasTaskDetails': hasTaskDetails,
       };
     } catch (e) {
-      print('Failed to save data: $e');
+      developer.log('Failed to save data: $e');
       return {'error': 'Failed to save data'};
     } finally {
       await conn.close();

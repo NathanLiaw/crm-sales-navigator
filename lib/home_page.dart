@@ -1,7 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
-import 'package:sales_navigator/api/firebase_api.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
@@ -23,6 +22,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
+import 'package:google_fonts/google_fonts.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -38,7 +38,7 @@ class SalesmanPerformanceUpdater {
 
   void startPeriodicUpdate(int salesmanId) {
     // Update every hour
-    _timer = Timer.periodic(Duration(hours: 1), (timer) {
+    _timer = Timer.periodic(const Duration(hours: 1), (timer) {
       _updateSalesmanPerformance(salesmanId);
     });
   }
@@ -64,7 +64,7 @@ class SalesmanPerformanceUpdater {
 class HomePage extends StatefulWidget {
   final int initialIndex;
 
-  const HomePage({Key? key, this.initialIndex = 0}) : super(key: key);
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -85,6 +85,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late SalesmanPerformanceUpdater _performanceUpdater;
 
   late TabController _tabController;
+  String _sortBy = 'created_date';
+  bool _sortAscending = true;
 
   @override
   void initState() {
@@ -113,10 +115,88 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _performanceUpdater.startPeriodicUpdate(salesmanId);
   }
 
+  void _sortLeads(List<LeadItem> leads) {
+    setState(() {
+      leads.sort((a, b) {
+        switch (_sortBy) {
+          case 'created_date':
+            return _sortAscending
+                ? a.createdDate.compareTo(b.createdDate)
+                : b.createdDate.compareTo(a.createdDate);
+          case 'predicted_sales':
+            double aAmount = double.parse(a.amount.substring(2));
+            double bAmount = double.parse(b.amount.substring(2));
+            return _sortAscending
+                ? aAmount.compareTo(bAmount)
+                : bAmount.compareTo(aAmount);
+          case 'customer_name':
+            return _sortAscending
+                ? a.customerName.compareTo(b.customerName)
+                : b.customerName.compareTo(a.customerName);
+          default:
+            return 0;
+        }
+      });
+    });
+  }
+
+  void _showSortOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sort by'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: const Text('Created Date'),
+                onTap: () {
+                  _updateSortCriteria('created_date');
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Predicted Sales'),
+                onTap: () {
+                  _updateSortCriteria('predicted_sales');
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Customer Name'),
+                onTap: () {
+                  _updateSortCriteria('customer_name');
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _updateSortCriteria(String newSortBy) {
+    setState(() {
+      if (_sortBy == newSortBy) {
+        _sortAscending = !_sortAscending;
+      } else {
+        _sortBy = newSortBy;
+        _sortAscending = true;
+      }
+      _sortLeads(leadItems);
+      _sortLeads(engagementLeads);
+      _sortLeads(negotiationLeads);
+      _sortLeads(orderProcessingLeads);
+      _sortLeads(closedLeads);
+    });
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
-    _performanceUpdater?.stopPeriodicUpdate();
+    _performanceUpdater.stopPeriodicUpdate();
     super.dispose();
   }
 
@@ -169,7 +249,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _cleanAndValidateLeadData() async {
-    final url = Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
+    final url = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
 
     try {
       final response = await http.get(url);
@@ -182,7 +263,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           developer.log('Error: ${data['message']}');
         }
       } else {
-        developer.log('Failed to load data. Status code: ${response.statusCode}');
+        developer
+            .log('Failed to load data. Status code: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error making API call: $e');
@@ -192,6 +274,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
+    // developer.log("Starting _fetchLeadItems");
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results =
@@ -215,8 +298,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var customerId = entry.key;
         var modifiedDate = entry.value;
         var difference = currentDate.difference(modifiedDate).inDays;
+        // developer.log("Customer $customerId last purchase: $difference days ago");
         if (difference >= 30) {
           var customerName = await _fetchCustomerName(conn, customerId);
+          // developer.log("Checking lead for customer: $customerName");
           var total = latestTotals[customerId]!;
           var description = "Hasn't purchased since 30 days ago";
           var createdDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -239,15 +324,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Check if the customer already exists in the sales_lead table
           Results existingLeadResults = await conn.query(
-            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
-            [customerName],
+            // 'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
+            // [customerName],
+            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = ? AND stage != ?',
+            [customerName, salesmanId, 'Closed'],
           );
 
           // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
           // save it to the sales_lead table and add it to the list of leadItems.
-          if (existingLeadResults.isEmpty ||
-              (existingLeadResults.isNotEmpty &&
-                  existingLeadResults.first['stage'] == 'Closed')) {
+          if (existingLeadResults.isEmpty) {
+            developer.log("Creating new lead for customer: $customerName");
             try {
               // Save the lead item to the sales_lead table
               var insertResult = await conn.query(
@@ -301,6 +387,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               developer.log('addressLine1: $addressLine1');
               developer.log('stage: Opportunities');
             }
+          } else {
+            developer.log("Lead already exists for customer: $customerName");
           }
         }
       }
@@ -309,21 +397,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } finally {
       await conn.close();
     }
+    _sortLeads(leadItems);
+    _sortLeads(engagementLeads);
+    _sortLeads(negotiationLeads);
+    _sortLeads(orderProcessingLeads);
+    _sortLeads(closedLeads);
+    developer.log("Finished _fetchLeadItems");
   }
 
   Future<void> _fetchCreateLeadItems() async {
     final apiUrl = dotenv.env['API_URL'];
     const offset = 0;
-    const limit = 50;
+    const limit = 100;
 
     try {
       // Make the HTTP request to the API
-      final response = await http.get(Uri.parse('$apiUrl/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
+      final response = await http.get(Uri.parse(
+          '$apiUrl/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
 
       if (response.statusCode == 200) {
         // Parse the JSON response
         final data = jsonDecode(response.body);
-        
+
         if (data['status'] == 'success') {
           final salesLeads = data['salesLeads'] as List;
 
@@ -337,7 +432,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           for (var item in salesLeads) {
             // Ensure the created date is formatted correctly
             String createdDate = item['created_date'] != null
-                ? DateFormat('MM/dd/yyyy').format(DateTime.parse(item['created_date']))
+                ? DateFormat('MM/dd/yyyy')
+                    .format(DateTime.parse(item['created_date']))
                 : DateFormat('MM/dd/yyyy').format(DateTime.now());
 
             // Map the lead item data
@@ -388,7 +484,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       developer.log('Error fetching sales_lead items: $e');
     }
   }
-  
+
   // Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
   //   try {
   //     Results results = await conn
@@ -988,9 +1084,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //     });
 
   //     await _updateSalesmanPerformance(salesmanId);
-  //     print('Lead created and event logged successfully');
+  //     developer.log('Lead created and event logged successfully');
   //   } catch (e) {
-  //     print('Error creating lead: $e');
+  //     developer.log('Error creating lead: $e');
   //   } finally {
   //     await conn.close();
   //   }
@@ -1096,7 +1192,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             await _updateSalesmanPerformance(salesmanId);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lead successfully deleted')),
+              const SnackBar(content: Text('Lead successfully deleted')),
             );
           } else {
             throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
@@ -1125,12 +1221,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             return Scaffold(
               appBar: AppBar(
                 automaticallyImplyLeading: false,
-                backgroundColor: const Color(0xff004c87),
+                backgroundColor: const Color(0xff0175FF),
                 title: Text(
                   'Welcome, $salesmanName',
                   style: const TextStyle(color: Colors.white),
                 ),
                 actions: [
+                  // PopupMenuButton<String>(
+                  //   icon: Icon(
+                  //     Icons.sort,
+                  //     color: Colors.white,
+                  //   ),
+                  //   onSelected: (String result) {
+                  //     setState(() {
+                  //       if (result == _sortBy) {
+                  //         _sortAscending = !_sortAscending;
+                  //       } else {
+                  //         _sortBy = result;
+                  //         _sortAscending = true;
+                  //       }
+                  //       _sortLeads();
+                  //     });
+                  //   },
+                  //   itemBuilder: (BuildContext context) =>
+                  //       <PopupMenuEntry<String>>[
+                  //     PopupMenuItem<String>(
+                  //       value: 'created_date',
+                  //       child: Text(
+                  //           'Sort by Date ${_sortBy == 'created_date' ? (_sortAscending ? '↑' : '↓') : ''}'),
+                  //     ),
+                  //     PopupMenuItem<String>(
+                  //       value: 'predicted_sales',
+                  //       child: Text(
+                  //           'Sort by Predicted Sales ${_sortBy == 'predicted_sales' ? (_sortAscending ? '↑' : '↓') : ''}'),
+                  //     ),
+                  //   ],
+                  // ),
+                  IconButton(
+                    icon: const Icon(Icons.sort, color: Colors.white),
+                    onPressed: _showSortOptions,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.notifications, color: Colors.white),
                     onPressed: () {
@@ -1155,8 +1285,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       );
 
                       // Trigger notification check
-                      await checkOrderStatusAndNotify();
-                      // await checkTaskDueDatesAndNotify();
+                      // await checkOrderStatusAndNotify();
+                      await checkTaskDueDatesAndNotify();
                       // await checkNewSalesLeadsAndNotify();
 
                       // Close the loading indicator
@@ -1174,16 +1304,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'Sales Lead Pipeline',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
+                  Stack(
+                    children: [
+                      Container(
+                          padding: EdgeInsets.zero,
+                          color: Colors.white,
+                          child: Image.asset(
+                            'asset/SalesPipeline_Head2.png',
+                            width: 700,
+                            height: 78,
+                            fit: BoxFit.cover,
+                          )),
+                      Container(
+                        height: 78,
+                        padding: const EdgeInsets.only(left: 12, bottom: 2),
+                        child: Column(
+                          children: [
+                            const Spacer(),
+                            Text(
+                              'Sales Lead Pipeline',
+                              style: GoogleFonts.inter(
+                                textStyle: const TextStyle(letterSpacing: -0.8),
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: const Color.fromARGB(255, 255, 255, 255),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   TabBar(
                     controller: _tabController,
+                    labelColor: const Color(0xff0175FF),
+                    indicatorColor: const Color(0xff0175FF),
                     isScrollable: true,
                     indicatorSize: TabBarIndicatorSize.label,
                     tabs: [
@@ -1305,9 +1460,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8))),
                 label: const Text('Create Lead',
                     style: TextStyle(color: Colors.white)),
-                backgroundColor: const Color(0xff0069BA),
+                backgroundColor: const Color(0xff0175FF),
               )
             : Container();
       },
@@ -1348,9 +1505,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         );
       },
-      child: Card(
-        color: const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
+      child: Container(
+        height: 220,
+        decoration: BoxDecoration(
+            image: const DecorationImage(
+              image: ResizeImage(AssetImage('asset/bttm_start.png'),
+                  width: 128, height: 98),
+              alignment: Alignment.bottomLeft,
+            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ]),
         margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -1373,27 +1546,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     width: 200,
                     child: Text(
                       leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
+                      style: GoogleFonts.inter(
+                        textStyle: const TextStyle(letterSpacing: -0.8),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Spacer(),
                   Container(
-                    margin: const EdgeInsets.only(left: 20),
+                    margin: const EdgeInsets.only(left: 18),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: const Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       leadItem.formattedAmount,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xff008A64),
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -1441,17 +1618,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(leadItem.description),
-              const SizedBox(height: 10),
+              Text(
+                leadItem.description,
+                style: GoogleFonts.inter(
+                  textStyle: const TextStyle(letterSpacing: -0.5),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color.fromARGB(255, 25, 23, 49),
+                ),
+              ),
+              const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
+                      iconStyleData: const IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconDisabledColor: Colors.white,
+                          iconEnabledColor: Colors.white),
                       isExpanded: true,
                       hint: const Text(
                         'Opportunities',
-                        style: TextStyle(fontSize: 12, color: Colors.black),
+                        style: TextStyle(fontSize: 12, color: Colors.white),
                       ),
                       items: tabbarNames
                           .skip(1)
@@ -1459,7 +1648,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 value: item,
                                 child: Text(
                                   item,
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ))
                           .toList(),
@@ -1476,10 +1668,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         }
                       },
                       buttonStyleData: const ButtonStyleData(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        height: 32,
-                        width: 140,
-                        decoration: BoxDecoration(color: Colors.white),
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        height: 24,
+                        width: 136,
+                        decoration:
+                            BoxDecoration(color: Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -1488,81 +1681,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              // const SizedBox(height: 8),
+              const SizedBox(height: 10),
               // Text(leadItem.description),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: Text(
-                      leadItem.createdDate,
-                      style: const TextStyle(color: Colors.grey),
+                  Text(
+                    leadItem.createdDate,
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // ElevatedButton(
-                        //   onPressed: () {
-                        //     _handleIgnore(leadItem);
-                        //   },
-                        //   style: ElevatedButton.styleFrom(
-                        //     backgroundColor: Colors.white,
-                        //     shape: RoundedRectangleBorder(
-                        //       borderRadius: BorderRadius.circular(5),
-                        //       side:
-                        //           const BorderSide(color: Colors.red, width: 2),
-                        //     ),
-                        //     minimumSize: const Size(50, 35),
-                        //   ),
-                        //   child: const Text('Ignore',
-                        //       style: TextStyle(color: Colors.red)),
-                        // ),
-                        IconButton(
-                          iconSize: 32,
-                          icon: const Icon(
-                            Icons.delete, // Changed to the delete icon
-                            color: Colors.red,
-                          ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 40, // Match the height with the "Accept" button
+                        width: 40,  // Square width for the icon button
+                        child: IconButton(
+                          icon: const Icon(Icons.delete, size: 24), // Adjust the icon size
+                          color: Colors.red, // Icon color
                           onPressed: () {
                             _handleIgnore(leadItem);
                           },
                         ),
-                        // const SizedBox(width: 8),
-                        // ElevatedButton(
-                        //   onPressed: () {
-                        //     _moveToEngagement(leadItem);
-                        //   },
-                        //   style: ElevatedButton.styleFrom(
-                        //     backgroundColor: const Color(0xff0069BA),
-                        //     shape: RoundedRectangleBorder(
-                        //       borderRadius: BorderRadius.circular(5),
-                        //     ),
-                        //     minimumSize: const Size(50, 35),
-                        //   ),
-                        //   child: const Text('Accept',
-                        //       style: TextStyle(color: Colors.white)),
-                        // ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff3796DF), // Set the background color
-                            foregroundColor: Colors.white, // Set the text color to white
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                            textStyle: const TextStyle(fontSize: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0), // Decrease the radius
-                            ),
+                      ),
+                      const SizedBox(width: 12), // Add spacing between buttons
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff33b249), // Set background color
+                          foregroundColor: Colors.white, // Set text color to white
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 10.0), // Match padding
+                          textStyle: const TextStyle(fontSize: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0), // Decrease the radius
                           ),
-                          onPressed: () {
-                            _moveToEngagement(leadItem);
-                          },
-                          child: const Text('Accept'), // The button text
                         ),
-                      ],
-                    ),
+                        onPressed: () {
+                          _moveToEngagement(leadItem);
+                        },
+                        child: const Text('Accept'), // The button text
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1877,7 +2039,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //       'Order for ${leadItem.customerName} has changed from Pending to Confirm.',
   //     );
   //   } catch (e) {
-  //     print('Error generating notification: $e');
+  //     developer.log('Error generating notification: $e');
   //   } finally {
   //     await conn.close();
   //   }

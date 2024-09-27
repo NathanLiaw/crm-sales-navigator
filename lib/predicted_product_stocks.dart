@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -87,7 +88,7 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
         predictSalesAndStock();
       });
     } catch (e) {
-      print('Error fetching top products: $e');
+      developer.log('Error fetching top products: $e');
     }
   }
 

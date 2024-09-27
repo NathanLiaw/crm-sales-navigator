@@ -1,8 +1,8 @@
 import "package:flutter/material.dart";
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/item_variations_screen.dart';
-import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -36,6 +36,7 @@ class _ItemScreenState extends State<ItemScreen> {
   late Map<int, Map<String, double>> _priceData;
   late String _priceDataByArea;
   int _selectedImageIndex = 0;
+  int cartCount = 0;
 
   Future<void> getAreaId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -86,6 +87,19 @@ class _ItemScreenState extends State<ItemScreen> {
     }
   }
 
+  // Function to fetch the cart count from the database
+  Future<void> fetchCartCount() async {
+    final count = await DatabaseHelper.getCartItemCount(); // Replace with your logic
+    setState(() {
+      cartCount = count; // Update the state variable
+    });
+  }
+
+  // Function to update cart count when called from ItemVariationsScreen
+  void updateCartCount() {
+    fetchCartCount(); // Re-fetch the cart count
+  }
+
   Future<void> initializeData() async {
     await getAreaId();
     await getPriceData();
@@ -95,7 +109,7 @@ class _ItemScreenState extends State<ItemScreen> {
   void initState() {
     super.initState();
     initializeData();
-    developer.log(widget.itemAssetNames.toString());
+    fetchCartCount();
   }
 
   @override
@@ -112,7 +126,7 @@ class _ItemScreenState extends State<ItemScreen> {
           },
         ),
         foregroundColor: Colors.white,
-        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color(0xff0175FF),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
@@ -149,8 +163,10 @@ class _ItemScreenState extends State<ItemScreen> {
                 final assetName = widget.itemAssetNames[index];
 
                 // Check if the assetName is empty or 'null' placeholder
-                if (assetName.isEmpty || assetName == 'https://haluansama.com/crm-sales/null') {
-                  return const SizedBox.shrink(); // Shrinks if the assetName is empty
+                if (assetName.isEmpty ||
+                    assetName == 'https://haluansama.com/crm-sales/null') {
+                  return const SizedBox
+                      .shrink(); // Shrinks if the assetName is empty
                 }
 
                 return GestureDetector(
@@ -247,6 +263,7 @@ class _ItemScreenState extends State<ItemScreen> {
                         productName: widget.productName,
                         itemAssetName: widget.itemAssetNames[0],
                         priceByUom: _priceDataByArea,
+                        onCartUpdate: updateCartCount,
                       );
                     }),
                   );
@@ -294,6 +311,7 @@ class _ItemScreenState extends State<ItemScreen> {
                                 productName: widget.productName,
                                 itemAssetName: widget.itemAssetNames[0],
                                 priceByUom: _priceDataByArea,
+                                onCartUpdate: updateCartCount,
                               );
                             }),
                           );

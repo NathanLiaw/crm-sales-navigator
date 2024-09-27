@@ -173,4 +173,16 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
   }
+
+  static Future<int> getCartItemCount() async {
+    final db = await _database; // Your database initialization
+    final List<Map<String, Object?>>? result = await db?.query(
+        'SELECT COUNT(*) as count FROM cart_item WHERE status = "in progress"'
+    );
+
+    // Ensure the count is returned as an int
+    return result != null && result.isNotEmpty
+        ? result.first['count'] as int // Cast to int
+        : 0;
+  }
 }

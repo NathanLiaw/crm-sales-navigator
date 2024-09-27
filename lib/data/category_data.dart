@@ -11,7 +11,7 @@ class CategoryData {
 
 Future<List<CategoryData>> fetchCategories(MySqlConnection conn) async {
   final results =
-      await conn.query('SELECT * FROM category WHERE id NOT IN(18)');
+      await conn.query('SELECT * FROM category WHERE id NOT IN(18) ORDER BY category ASC');
   return results.map<CategoryData>((row) {
     return CategoryData(
       id: row['id'] as int,

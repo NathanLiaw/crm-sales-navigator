@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/order_details_page.dart';
+import 'dart:developer' as developer;
 
 class SelectOrderIDPage extends StatefulWidget {
   final String customerName;
@@ -29,7 +30,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
           "customer_company_name = '${widget.customerName}' AND status = 'Pending' AND CURDATE() <= expiration_date";
       return await readData(conn, 'cart', condition, '', '*');
     } catch (e) {
-      print('Error fetching sales orders: $e');
+      developer.log('Error fetching sales orders: $e');
       return [];
     } finally {
       await conn.close();
@@ -126,7 +127,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                         children: [
                           Row(
                             children: [
-                              Container(
+                              SizedBox(
                                 width: 250,
                                 child: Text(
                                   customer,
@@ -137,7 +138,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              Spacer(),
+                              const Spacer(),
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(
@@ -152,7 +153,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                                     }
                                   });
                                 },
-                                child: Text(
+                                child: const Text(
                                   'View Details',
                                   style: TextStyle(
                                       color: Colors.purple,
@@ -181,13 +182,13 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                                 ),
                               ),
                               const SizedBox(height: 8.0),
-                              Spacer(),
+                              const Spacer(),
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context, cartID);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xff0069BA),
+                                  backgroundColor: const Color(0xff0069BA),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(5),
                                   ),

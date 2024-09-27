@@ -19,9 +19,9 @@ class ClosedLeadItem extends StatelessWidget {
     required this.quantity,
   });
 
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<void> _launchURL(Uri url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
       throw 'Could not launch $url';
     }
@@ -39,9 +39,20 @@ class ClosedLeadItem extends StatelessWidget {
         : '';
     double formattedTotal = double.parse(total);
 
-    return Card(
-      color: const Color.fromARGB(255, 205, 229, 242),
-      elevation: 2,
+    return Container(
+      height: 278,
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: const [
+            BoxShadow(
+              blurStyle: BlurStyle.normal,
+              color: Color.fromARGB(75, 117, 117, 117),
+              spreadRadius: 0.1,
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ]),
       margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -61,12 +72,12 @@ class ClosedLeadItem extends StatelessWidget {
                 //   ),
                 //   overflow: TextOverflow.ellipsis,
                 // ),
-                Container(
+                SizedBox(
                   width: 170,
                   child: Text(
                     leadItem.customerName,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18),
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -94,7 +105,7 @@ class ClosedLeadItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 10,
                     ),
                     PopupMenuButton<String>(
@@ -121,16 +132,16 @@ class ClosedLeadItem extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: leadItem.contactNumber.isNotEmpty
-                      ? () => _launchURL('tel:${leadItem.contactNumber}')
+                      ? () => _launchURL('tel:${leadItem.contactNumber}' as Uri)
                       : null,
                   child: Row(
                     children: [
                       const Icon(
                         Icons.phone,
-                        color: Color(0xff0069BA),
+                        color: Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
-                      Container(
+                      SizedBox(
                         width: 100,
                         child: Text(
                           leadItem.contactNumber.isNotEmpty
@@ -151,16 +162,16 @@ class ClosedLeadItem extends StatelessWidget {
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: leadItem.emailAddress.isNotEmpty
-                      ? () => _launchURL('mailto:${leadItem.emailAddress}')
+                      ? () => _launchURL('mailto:${leadItem.emailAddress}' as Uri)
                       : null,
                   child: Row(
                     children: [
                       const Icon(
                         Icons.email,
-                        color: Color(0xff0069BA),
+                        color: Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
-                      Container(
+                      SizedBox(
                         width: 150,
                         child: Text(
                           leadItem.emailAddress.isNotEmpty
@@ -183,7 +194,10 @@ class ClosedLeadItem extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               formattedSalesOrderId,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xff0175FF)),
             ),
             const SizedBox(
               height: 8,
@@ -197,7 +211,7 @@ class ClosedLeadItem extends StatelessWidget {
                   : 'Quantity: Unknown      Total: RM${_formatCurrency(formattedTotal)}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
