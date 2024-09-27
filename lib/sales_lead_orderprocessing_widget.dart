@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -61,6 +60,9 @@ class OrderProcessingLeadItem extends StatelessWidget {
               offset: Offset(0, 1),
             ),
           ]),
+      /* color: orderStatus == 'Pending'
+          ? const Color.fromARGB(255, 255, 237, 188)
+          : const Color.fromARGB(255, 205, 229, 242), */
       margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -166,6 +168,8 @@ class OrderProcessingLeadItem extends StatelessWidget {
                             fontSize: 14,
                             decoration: TextDecoration.underline,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -208,70 +212,23 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       ),
                       minimumSize: const Size(50, 35),
                     ),
+                    child: const Text('Confirm',
+                        style: TextStyle(color: Colors.white)),
                   ),
-                  const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: leadItem.emailAddress.isNotEmpty
-                        ? () => _launchURL('mailto:${leadItem.emailAddress}')
-                        : null,
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.email,
-                          color: Color(0xff0069BA),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderDetailsPage(
+                          cartID: int.parse(leadItem.salesOrderId!),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 150,
-                          child: Text(
-                            leadItem.emailAddress.isNotEmpty
-                                ? leadItem.emailAddress
-                                : 'Unavailable',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              decoration: TextDecoration.underline,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                formattedSalesOrderId,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              Text('Created date: $formattedCreatedDate'),
-              Text('Expiry date: $expirationDate'),
-              const SizedBox(height: 8),
-              Text(
-                leadItem.quantity != null
-                    ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
-                    : 'Quantity: Unknown      Total: RM$formattedTotal',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Visibility(
-                    visible: orderStatus == 'Confirm',
-                    child: ElevatedButton(
-                      onPressed: () => onMoveToClosed(leadItem),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        minimumSize: const Size(50, 35),
                       ),
                     );
                   },
@@ -284,10 +241,17 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                Text(
+                  'Created on: ${leadItem.createdDate}',
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 0, 0, 0),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
