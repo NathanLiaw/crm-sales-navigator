@@ -86,6 +86,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late SalesmanPerformanceUpdater _performanceUpdater;
 
   late TabController _tabController;
+  String _sortBy = 'created_date';
+  bool _sortAscending = true;
 
   @override
   void initState() {
@@ -112,6 +114,84 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       salesmanId = id;
     });
     _performanceUpdater.startPeriodicUpdate(salesmanId);
+  }
+
+  void _sortLeads(List<LeadItem> leads) {
+    setState(() {
+      leads.sort((a, b) {
+        switch (_sortBy) {
+          case 'created_date':
+            return _sortAscending
+                ? a.createdDate.compareTo(b.createdDate)
+                : b.createdDate.compareTo(a.createdDate);
+          case 'predicted_sales':
+            double aAmount = double.parse(a.amount.substring(2));
+            double bAmount = double.parse(b.amount.substring(2));
+            return _sortAscending
+                ? aAmount.compareTo(bAmount)
+                : bAmount.compareTo(aAmount);
+          case 'customer_name':
+            return _sortAscending
+                ? a.customerName.compareTo(b.customerName)
+                : b.customerName.compareTo(a.customerName);
+          default:
+            return 0;
+        }
+      });
+    });
+  }
+
+  void _showSortOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sort by'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: const Text('Created Date'),
+                onTap: () {
+                  _updateSortCriteria('created_date');
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Predicted Sales'),
+                onTap: () {
+                  _updateSortCriteria('predicted_sales');
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('Customer Name'),
+                onTap: () {
+                  _updateSortCriteria('customer_name');
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _updateSortCriteria(String newSortBy) {
+    setState(() {
+      if (_sortBy == newSortBy) {
+        _sortAscending = !_sortAscending;
+      } else {
+        _sortBy = newSortBy;
+        _sortAscending = true;
+      }
+      _sortLeads(leadItems);
+      _sortLeads(engagementLeads);
+      _sortLeads(negotiationLeads);
+      _sortLeads(orderProcessingLeads);
+      _sortLeads(closedLeads);
+    });
   }
 
   @override
@@ -195,6 +275,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
+    // print("Starting _fetchLeadItems");
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results =
@@ -218,8 +299,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var customerId = entry.key;
         var modifiedDate = entry.value;
         var difference = currentDate.difference(modifiedDate).inDays;
+        // print("Customer $customerId last purchase: $difference days ago");
         if (difference >= 30) {
           var customerName = await _fetchCustomerName(conn, customerId);
+          // print("Checking lead for customer: $customerName");
           var total = latestTotals[customerId]!;
           var description = "Hasn't purchased since 30 days ago";
           var createdDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -242,15 +325,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Check if the customer already exists in the sales_lead table
           Results existingLeadResults = await conn.query(
-            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
-            [customerName],
+            // 'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
+            // [customerName],
+            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = ? AND stage != ?',
+            [customerName, salesmanId, 'Closed'],
           );
 
           // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
           // save it to the sales_lead table and add it to the list of leadItems.
-          if (existingLeadResults.isEmpty ||
-              (existingLeadResults.isNotEmpty &&
-                  existingLeadResults.first['stage'] == 'Closed')) {
+          if (existingLeadResults.isEmpty) {
+            print("Creating new lead for customer: $customerName");
             try {
               // Save the lead item to the sales_lead table
               var insertResult = await conn.query(
@@ -304,6 +388,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               developer.log('addressLine1: $addressLine1');
               developer.log('stage: Opportunities');
             }
+          } else {
+            print("Lead already exists for customer: $customerName");
           }
         }
       }
@@ -312,6 +398,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } finally {
       await conn.close();
     }
+    _sortLeads(leadItems);
+    _sortLeads(engagementLeads);
+    _sortLeads(negotiationLeads);
+    _sortLeads(orderProcessingLeads);
+    _sortLeads(closedLeads);
+    print("Finished _fetchLeadItems");
   }
 
   Future<void> _fetchCreateLeadItems() async {
@@ -1136,6 +1228,40 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   style: const TextStyle(color: Colors.white),
                 ),
                 actions: [
+                  // PopupMenuButton<String>(
+                  //   icon: Icon(
+                  //     Icons.sort,
+                  //     color: Colors.white,
+                  //   ),
+                  //   onSelected: (String result) {
+                  //     setState(() {
+                  //       if (result == _sortBy) {
+                  //         _sortAscending = !_sortAscending;
+                  //       } else {
+                  //         _sortBy = result;
+                  //         _sortAscending = true;
+                  //       }
+                  //       _sortLeads();
+                  //     });
+                  //   },
+                  //   itemBuilder: (BuildContext context) =>
+                  //       <PopupMenuEntry<String>>[
+                  //     PopupMenuItem<String>(
+                  //       value: 'created_date',
+                  //       child: Text(
+                  //           'Sort by Date ${_sortBy == 'created_date' ? (_sortAscending ? '↑' : '↓') : ''}'),
+                  //     ),
+                  //     PopupMenuItem<String>(
+                  //       value: 'predicted_sales',
+                  //       child: Text(
+                  //           'Sort by Predicted Sales ${_sortBy == 'predicted_sales' ? (_sortAscending ? '↑' : '↓') : ''}'),
+                  //     ),
+                  //   ],
+                  // ),
+                  IconButton(
+                    icon: Icon(Icons.sort, color: Colors.white),
+                    onPressed: _showSortOptions,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.notifications, color: Colors.white),
                     onPressed: () {
@@ -1160,8 +1286,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       );
 
                       // Trigger notification check
-                      await checkOrderStatusAndNotify();
-                      // await checkTaskDueDatesAndNotify();
+                      // await checkOrderStatusAndNotify();
+                      await checkTaskDueDatesAndNotify();
                       // await checkNewSalesLeadsAndNotify();
 
                       // Close the loading indicator
@@ -1634,34 +1760,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         //   child: const Text('Accept',
                         //       style: TextStyle(color: Colors.white)),
                         // ),
-
-                        SizedBox(
-                          height: 22,
-                          width: 80,
-                          child: TextButton(
-                            style: ButtonStyle(
-                              padding:
-                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
-                              shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4.0),
-                                      side: BorderSide(
-                                          color: const Color(0xff4566DD)))),
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  const Color(0xff4566DD)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
-                                  const Color.fromARGB(255, 255, 255, 255)),
-                            ),
-                            onPressed: () {
-                              _moveToEngagement(leadItem);
-                            },
-                            child: Text(
-                              'Accept',
-                              style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w300),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(
+                                0xff3796DF), // Set the background color
+                            foregroundColor:
+                                Colors.white, // Set the text color to white
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20.0, vertical: 10.0),
+                            textStyle: const TextStyle(fontSize: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  10.0), // Decrease the radius
                             ),
                           ),
+                          onPressed: () {
+                            _moveToEngagement(leadItem);
+                          },
+                          child: const Text('Accept'), // The button text
                         ),
                       ],
                     ),

@@ -23,6 +23,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initNotifications();
   // // Initialize the SQLite database
@@ -36,7 +37,7 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   // Initialize Workmanager
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
   // Register periodic task
   await Workmanager().registerPeriodicTask(
