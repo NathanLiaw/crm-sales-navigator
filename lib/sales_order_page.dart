@@ -15,7 +15,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -537,9 +536,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               if (checkedItems[i]) {
                                 final item = items[i];
                                 final oriUnitPrice =
-                                    item['ori_unit_price'] ?? 0.0;
-                                final qty = item['qty'] ?? 0;
-
+                                    (item['ori_unit_price'] ?? 0.0).toDouble();
+                                final qty = (item['qty'] ?? 0).toInt();
+                                final total = oriUnitPrice * qty;
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
                                   productId: item['product_id'],
@@ -549,7 +548,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                   discount: 0,
                                   originalUnitPrice: oriUnitPrice,
                                   unitPrice: oriUnitPrice,
-                                  total: oriUnitPrice * qty,
+                                  total: total,
                                   cancel: null,
                                   remark: null,
                                   status: 'in progress',
@@ -726,7 +725,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     developer.log('Total quantity for order ${order['id']}: $totalQuantity');
     return totalQuantity;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -946,8 +944,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         });
       },
       style: TextButton.styleFrom(
-        backgroundColor:
-            isSelected ? const Color(0xff0175FF) : const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: isSelected
+            ? const Color(0xff0175FF)
+            : const Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
           side: const BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
@@ -1025,7 +1024,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         return _buildSalesOrderItem(
           index: index,
           orderNumber: orderId,
-          companyName: firstItem['customer_company_name'] ?? 'Unknown Company',
+          companyName: firstItem['company_name'] ?? 'Unknown Company',
           creationDate: firstItem['created_date'] != null
               ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
               : DateTime.now(),
@@ -1148,8 +1147,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         Text(
                                           companyName,
                                           style: GoogleFonts.inter(
-                                            textStyle:
-                                                const TextStyle(letterSpacing: -0.8),
+                                            textStyle: const TextStyle(
+                                                letterSpacing: -0.8),
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.black,

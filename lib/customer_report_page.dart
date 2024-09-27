@@ -88,17 +88,16 @@ class _CustomerReportState extends State<CustomerReport> {
     if (loggedInUsername.isEmpty) {
       return [];
     }
-
-    String startDate =
-        DateFormat('yyyy-MM-dd').format(dateRange?.start ?? DateTime(2019));
-    String endDate =
-        DateFormat('yyyy-MM-dd').format(dateRange?.end ?? DateTime.now());
-    String sortOrder = isAscending ? 'ASC' : 'DESC';
+    String formattedStartDate = dateRange != null
+        ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start)
+        : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(2019));
+    String formattedEndDate = dateRange != null
+        ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end)
+        : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
     String orderByField = _getOrderByField();
-
-    // Build the API URL
+    String sortOrder = _getSortOrder();
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/customer_report_page/get_customer_sales_report.php?username=$loggedInUsername&startDate=$startDate&endDate=$endDate&sortOrder=$sortOrder&orderByField=$orderByField');
+        'https://haluansama.com/crm-sales/api/customer_report_page/get_customer_sales_report.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate&sortOrder=$sortOrder&orderByField=$orderByField');
 
     try {
       final response = await http.get(apiUrl);
@@ -109,6 +108,7 @@ class _CustomerReportState extends State<CustomerReport> {
         if (jsonData['status'] == 'success') {
           final List<dynamic> customerData = jsonData['data'];
 
+          int serialNumber = 1;
           return customerData.map((data) {
             return Customer(
               id: data['Customer_ID'],
@@ -119,7 +119,7 @@ class _CustomerReportState extends State<CustomerReport> {
               totalSales: (data['Total_Sales'] as num).toDouble(),
               totalQuantity: (data['Total_Quantity'] as num).toDouble(),
               lastPurchase: DateTime.parse(data['Last_Purchase']).toLocal(),
-              serialNumber: customerData.indexOf(data) + 1,
+              serialNumber: serialNumber++,
             );
           }).toList();
         } else {
@@ -129,27 +129,48 @@ class _CustomerReportState extends State<CustomerReport> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching sales data: $e');
+      developer.log('Error fetching sales data: $e');
       return [];
     }
   }
 
   String _getOrderByField() {
     switch (_selectedMethod) {
-      case 'By Name (A to Z)':
-      case 'By Name (Z to A)':
-        return 'ProductName';
+      case 'By Company Name (A-Z)':
+        return 'Company_Name';
+      case 'By Company Name (Z-A)':
+        return 'Company_Name';
       case 'By Total Sales (Low to High)':
+        return 'Total_Sales';
       case 'By Total Sales (High to Low)':
-        return 'TotalSalesValue';
-      case 'By Total Quantity Sold (Low to High)':
-      case 'By Total Quantity Sold (High to Low)':
-        return 'TotalQuantitySold';
-      case 'By Last Sold (Oldest to Newest)':
-      case 'By Last Sold (Newest to Oldest)':
-        return 'SaleDate';
+        return 'Total_Sales';
+      case 'By Total Quantity (Low to High)':
+        return 'Total_Quantity';
+      case 'By Total Quantity (High to Low)':
+        return 'Total_Quantity';
+      case 'By Last Purchase (Ascending)':
+        return 'Last_Purchase';
+      case 'By Last Purchase (Descending)':
+        return 'Last_Purchase';
       default:
-        return 'ProductName';
+        return 'Company_Name';
+    }
+  }
+
+  String _getSortOrder() {
+    switch (_selectedMethod) {
+      case 'By Company Name (A-Z)':
+      case 'By Total Sales (Low to High)':
+      case 'By Total Quantity (Low to High)':
+      case 'By Last Purchase (Ascending)':
+        return 'ASC';
+      case 'By Company Name (Z-A)':
+      case 'By Total Sales (High to Low)':
+      case 'By Total Quantity (High to Low)':
+      case 'By Last Purchase (Descending)':
+        return 'DESC';
+      default:
+        return 'ASC';
     }
   }
 
@@ -188,7 +209,6 @@ class _CustomerReportState extends State<CustomerReport> {
 
     return data;
   }
-
 
   void toggleSortOrder() {
     setState(() {
@@ -523,7 +543,8 @@ class _CustomerReportState extends State<CustomerReport> {
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: const Color.fromARGB(255, 239, 245, 248),
+                                    color: const Color.fromARGB(
+                                        255, 239, 245, 248),
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: Column(

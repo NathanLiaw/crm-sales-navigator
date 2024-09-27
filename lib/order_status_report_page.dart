@@ -304,7 +304,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE1F5FE),
                   borderRadius: BorderRadius.circular(15),
@@ -368,7 +368,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Padding(
-                          padding: const EdgeInsets.only(left: 0),
+                          padding: EdgeInsets.only(left: 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -534,9 +534,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                               if (checkedItems[i]) {
                                 final item = items[i];
                                 final oriUnitPrice =
-                                    item['ori_unit_price'] ?? 0.0;
-                                final qty = item['qty'] ?? 0;
-
+                                    (item['ori_unit_price'] ?? 0.0)
+                                        .toDouble();
+                                final qty = (item['qty'] ?? 0).toInt();
+                                final total = oriUnitPrice * qty;
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
                                   productId: item['product_id'],
@@ -546,7 +547,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                   discount: 0,
                                   originalUnitPrice: oriUnitPrice,
                                   unitPrice: oriUnitPrice,
-                                  total: oriUnitPrice * qty,
+                                  total: total,
                                   cancel: null,
                                   remark: null,
                                   status: 'in progress',
@@ -723,7 +724,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     developer.log('Total quantity for order ${order['id']}: $totalQuantity');
     return totalQuantity;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -945,8 +945,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         });
       },
       style: TextButton.styleFrom(
-        backgroundColor:
-            isSelected ? const Color(0xff0175FF) : const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: isSelected
+            ? const Color(0xff0175FF)
+            : const Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
           side: const BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
@@ -1024,7 +1025,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         return _buildSalesOrderItem(
           index: index,
           orderNumber: orderId,
-          companyName: firstItem['customer_company_name'] ?? 'Unknown Company',
+          companyName: firstItem['company_name'] ?? 'Unknown Company',
           creationDate: firstItem['created_date'] != null
               ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
               : DateTime.now(),
@@ -1147,8 +1148,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                         Text(
                                           companyName,
                                           style: GoogleFonts.inter(
-                                            textStyle:
-                                                const TextStyle(letterSpacing: -0.8),
+                                            textStyle: const TextStyle(
+                                                letterSpacing: -0.8),
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.black,

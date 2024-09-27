@@ -7,7 +7,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -103,7 +102,6 @@ class _ProductReportState extends State<ProductReport> {
         if (jsonData['status'] == 'success') {
           final List<dynamic> productData = jsonData['data'];
 
-          int serialNumber = 1;
           return productData.map((data) {
             return Product(
               id: data['ProductID'],
@@ -114,7 +112,6 @@ class _ProductReportState extends State<ProductReport> {
               totalSales: (data['TotalSalesValue'] as num).toDouble(),
               totalQuantitySold: (data['TotalQuantitySold'] as num).toInt(),
               lastSold: DateTime.parse(data['SaleDate']).toLocal(),
-              serialNumber: serialNumber++,
             );
           }).toList();
         } else {
@@ -394,8 +391,11 @@ class _ProductReportState extends State<ProductReport> {
                   return const Center(child: Text('No data available'));
                 } else {
                   List<Product> sortedData = _getSortedData(snapshot.data!);
-                  return ListView(
-                    children: sortedData.map((product) {
+                  return ListView.builder(
+                    itemCount: sortedData.length,
+                    itemBuilder: (context, index) {
+                      final product = sortedData[index];
+                      final serialNumber = index + 1; // Assign serial number here
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 5),
@@ -420,7 +420,7 @@ class _ProductReportState extends State<ProductReport> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${product.serialNumber}. ',
+                                    '$serialNumber. ', // Display the serial number here
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16),
@@ -531,7 +531,7 @@ class _ProductReportState extends State<ProductReport> {
                           ),
                         ),
                       );
-                    }).toList(),
+                    },
                   );
                 }
               },
@@ -582,7 +582,6 @@ class Product {
   final double totalSales;
   final int totalQuantitySold;
   final DateTime lastSold;
-  final int serialNumber;
 
   Product({
     required this.id,
@@ -593,7 +592,6 @@ class Product {
     required this.totalSales,
     required this.totalQuantitySold,
     required this.lastSold,
-    required this.serialNumber,
   });
 
   String get totalSalesDisplay =>

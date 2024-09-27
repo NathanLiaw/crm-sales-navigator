@@ -51,10 +51,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                       colors: [Color(0xff0175FF), Color(0xffA5DBE7)])),
               child: Column(
                 crossAxisAlignment:
-                    CrossAxisAlignment.start, // Align children to the start
+                    CrossAxisAlignment.start,
                 children: [
                   Container(
-                    // Row 1 Insigts, Powered by AI
                     margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     child: Row(
                       children: [
@@ -77,14 +76,12 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     ),
                   ),
                   Container(
-                    // Row 2 Customer Name and value,
                     margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          // Wrap with Expanded to prevent overflow
                           child: Text(
                             'KKB Construction Supplies',
                             style: GoogleFonts.inter(
@@ -118,7 +115,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     ),
                   ),
                   Container(
-                    // Row 3 Total Spent
                     margin: const EdgeInsets.only(
                       top: 22,
                       left: 4,
@@ -146,7 +142,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     ),
                   ),
                   Container(
-                    // Row 3 Total Spent
                     margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                     child: Text(
                       'RM 80,000,000',
@@ -164,7 +159,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             Container(
               alignment: Alignment.centerLeft,
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-              // Customer Details Block
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -184,7 +178,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                       padding: const EdgeInsets.symmetric(
                           vertical: 14, horizontal: 14),
                       width: MediaQuery.of(context).size.width -
-                          20, // Subtract horizontal margin
+                          20,
                       decoration: const BoxDecoration(
                         borderRadius: BorderRadius.all(Radius.circular(8)),
                         color: Colors.white,
@@ -215,7 +209,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                               ),
                               SizedBox(
                                 width: MediaQuery.of(context).size.width -
-                                    48, // Adjust width
+                                    48,
                                 child: Text(
                                   '10, Block C, Old Slipway, P.O Box 409, 90704, Sandakan Sabah',
                                   style: GoogleFonts.inter(
@@ -237,7 +231,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           Row(
                             children: [
                               Expanded(
-                                // Wrap with Expanded
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.start,
@@ -269,7 +262,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 ),
                               ),
                               Expanded(
-                                // Wrap with Expanded
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.start,
@@ -310,7 +302,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             Container(
               alignment: Alignment.centerLeft,
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-              // Statistics Block
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -329,7 +320,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     Row(
                       children: [
                         Expanded(
-                          // Wrap with Expanded
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 10),
@@ -378,7 +368,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           width: 12,
                         ),
                         Expanded(
-                          // Wrap with Expanded
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 10),
@@ -444,7 +433,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     Row(
                       children: [
                         Expanded(
-                          // Wrap with Expanded
                           child: Container(
                             height: 246,
                             decoration: const BoxDecoration(
@@ -541,7 +529,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           width: 12,
                         ),
                         Expanded(
-                          // Wrap with Expanded
                           child: Container(
                             height: 246,
                             decoration: const BoxDecoration(

@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CustomerSalesReport extends StatefulWidget {
-  final String username;
+  final int customerId;
 
-  const CustomerSalesReport({super.key, required this.username}); // Updated constructor
+  const CustomerSalesReport({super.key, required this.customerId});
 
   @override
   _CustomerSalesReportState createState() => _CustomerSalesReportState();
@@ -35,26 +33,35 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
   }
 
   Future<void> _fetchData(String interval) async {
+    if (widget.customerId == 0) {
+      return;
+    }
+
     List<SalesData> fetchedData;
     switch (interval) {
       case '3D':
-        fetchedData = await fetchCustomerSalesData('ThreeDays', widget.username); // Pass username
+        fetchedData =
+            await fetchCustomerSalesData('ThreeDays', widget.customerId);
         break;
       case '5D':
-        fetchedData = await fetchCustomerSalesData('FiveDays', widget.username); // Pass username
+        fetchedData =
+            await fetchCustomerSalesData('FiveDays', widget.customerId);
         break;
       case '1M':
-        fetchedData = await fetchCustomerSalesData('FourMonths', widget.username); // Pass username
+        fetchedData =
+            await fetchCustomerSalesData('FourMonths', widget.customerId);
         break;
       case '1Y':
-        fetchedData = await fetchCustomerSalesData('Year', widget.username); // Pass username
+        fetchedData = await fetchCustomerSalesData('Year', widget.customerId);
         break;
       case '5Y':
-        fetchedData = await fetchCustomerSalesData('FiveYears', widget.username); // Pass username
+        fetchedData =
+            await fetchCustomerSalesData('FiveYears', widget.customerId);
         break;
       default:
         fetchedData = [];
     }
+
     if (mounted) {
       setState(() {
         _salesDataMap[interval] = fetchedData;
@@ -62,45 +69,48 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
     }
   }
 
+  Future<List<SalesData>> fetchCustomerSalesData(
+      String reportType, int customerId) async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/customer_insight_graph/get_customer_graph.php?reportType=$reportType&customerId=$customerId');
 
+    try {
+      final response = await http.get(apiUrl);
 
-Future<List<SalesData>> fetchCustomerSalesData(String reportType, String username) async {
-  final Uri apiUrl = Uri.parse('https://haluansama.com/crm-sales/api/customer_insight_graph/get_customer_graph.php?username=$username&report_type=$reportType');
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
 
-  final response = await http.get(apiUrl);
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-
-    if (data['status'] == 'success') {
-      final List<dynamic> jsonData = data['data'];
-
-      return jsonData.map((row) {
-        DateTime? date;
-        try {
-          if (reportType == 'FiveYears') {
-            date = DateTime.utc(int.parse(row['Year']));
-          } else if (reportType == 'FourMonths' || reportType == 'Year') {
-            date = DateFormat('yyyy-MM').parse(row['Date']);
-          } else {
-            date = DateFormat('yyyy-MM-dd').parse(row['FormattedDate']);
-          }
-        } catch (e) {
-          date = null;
+        if (jsonData['status'] == 'success') {
+          return jsonData['data'].map<SalesData>((row) {
+            DateTime? date;
+            try {
+              if (reportType == 'FiveYears') {
+                date = DateTime.utc(row['Year']);
+              } else if (reportType == 'FourMonths' || reportType == 'Year') {
+                date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
+              } else {
+                date = DateFormat('yyyy-MM-dd')
+                    .parseUtc(row['FormattedDate'] ?? '');
+              }
+            } catch (e) {
+              date = null;
+            }
+            return SalesData(
+              date: date?.toLocal() ?? DateTime.now(),
+              totalSales: (row['TotalSales'] as num).toDouble(),
+            );
+          }).toList();
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
         }
-
-        return SalesData(
-          date: date?.toLocal() ?? DateTime.now(),
-          totalSales: row['TotalSales'] != null ? (row['TotalSales'] as num).toDouble() : 0,
-        );
-      }).toList();
-    } else {
-      throw Exception('Failed to fetch sales data: ${data['message']}');
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      print('Error fetching customer sales data: $e');
+      return [];
     }
-  } else {
-    throw Exception('Failed to load data from server');
   }
-}
 
   void _refreshData() async {
     await _fetchData(_selectedInterval);
@@ -116,24 +126,24 @@ Future<List<SalesData>> fetchCustomerSalesData(String reportType, String usernam
         });
       },
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith<Color>(
-          (Set<WidgetState> states) {
+        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
             return isSelected
                 ? const Color(0xFF047CBD)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>(
-          (Set<WidgetState> states) {
+        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),
@@ -180,8 +190,7 @@ Future<List<SalesData>> fetchCustomerSalesData(String reportType, String usernam
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 24, horizontal: 18),
-                            height:
-                                MediaQuery.of(context).size.height * 0.52,
+                            height: MediaQuery.of(context).size.height * 0.52,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(5),
