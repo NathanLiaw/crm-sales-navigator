@@ -4,10 +4,8 @@ import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
-
-void main() {
-  runApp(const MyApp());
-}
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -94,177 +92,45 @@ class _SalesReportState extends State<SalesReport> {
   }
 
   Future<List<SalesData>> fetchSalesData(String reportType) async {
-    var db = await connectToDatabase();
-    late String query;
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_report_graph/get_sales_report.php?username=$loggedInUsername&reportType=$reportType');
 
-    switch (reportType) {
-      case 'ThreeDays':
-        query = '''
-        SELECT 
-            Dates.Date,
-            DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS FormattedDate,
-            IFNULL(DailySales.TotalSales, 0) AS TotalSales
-        FROM (
-            SELECT CURDATE() - INTERVAL 2 DAY AS Date
-            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-            UNION ALL SELECT CURDATE()
-        ) AS Dates
-        LEFT JOIN (
-            SELECT 
-                DATE(c.created) AS Date,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-            WHERE c.created >= CURDATE() - INTERVAL 2 DAY
-              AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
-            GROUP BY DATE(c.created)
-        ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
-        ORDER BY Dates.Date ASC;
-      ''';
-        break;
-      case 'FiveDays':
-        query = '''
-        SELECT 
-          Dates.Date,
-          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS FormattedDate,
-          IFNULL(DailySales.TotalSales, 0) AS TotalSales
-      FROM (
-          SELECT CURDATE() - INTERVAL 4 DAY AS Date
-          UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-          UNION ALL SELECT CURDATE()
-      ) AS Dates
-      LEFT JOIN (
-          SELECT 
-              DATE(c.created) AS Date,
-              ROUND(SUM(c.final_total), 0) AS TotalSales
-          FROM cart c
-          JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-          WHERE c.created >= CURDATE() - INTERVAL 4 DAY
-            AND c.status != 'void'
-            AND s.username = '$loggedInUsername'
-          GROUP BY DATE(c.created)
-      ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
-      ORDER BY Dates.Date ASC;
-      ''';
-        break;
-      case 'FourMonths':
-        query = '''
-        SELECT
-            GeneratedMonths.Month AS Date,
-            IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
-        FROM (
-            SELECT 
-                DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
-            FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) a
-        ) AS GeneratedMonths
-        LEFT JOIN (
-            SELECT 
-                DATE_FORMAT(c.created, '%Y-%m') AS Month,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-            WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)
-              AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
-            GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-        ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
-        GROUP BY GeneratedMonths.Month
-        ORDER BY GeneratedMonths.Month ASC;
-      ''';
-        break;
-      case 'Year':
-        query = '''
-        SELECT
-            GeneratedMonths.Month AS Date,
-            IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
-        FROM (
-            SELECT 
-                DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
-            FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11) a
-        ) AS GeneratedMonths
-        LEFT JOIN (
-            SELECT 
-                DATE_FORMAT(c.created, '%Y-%m') AS Month,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-            WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-              AND c.status != 'void'
-              AND s.username = '$loggedInUsername'
-            GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-        ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
-        GROUP BY GeneratedMonths.Month
-        ORDER BY GeneratedMonths.Month ASC;
-      ''';
-        break;
-      case 'FiveYears':
-        query = '''
-        SELECT
-            GeneratedYears.Year AS Year,
-            IFNULL(SUM(YearlySales.TotalSales), 0) AS TotalSales
-        FROM (
-            SELECT 
-                YEAR(CURDATE()) AS Year
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 1
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 2
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 3
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 4
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 5
-        ) AS GeneratedYears
-        LEFT JOIN (
-            SELECT 
-                YEAR(c.created) AS Year,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM 
-                cart c
-            JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group = 'salesman'
-            WHERE 
-                c.created >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
-              AND 
-                c.status != 'void' AND s.username = '$loggedInUsername'
-            GROUP BY 
-                YEAR(c.created)
-        ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
-        GROUP BY 
-            GeneratedYears.Year
-        ORDER BY 
-            GeneratedYears.Year ASC;
-      ''';
-        break;
-    }
-
-  var results = await db.query(query);
-
-  return results.map((row) {
-    DateTime? date;
     try {
-      if (reportType == 'FiveYears') {
-        date = DateTime.utc(row['Year']);
-      } else if (reportType == 'FourMonths' || reportType == 'Year') {
-        date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          final List<dynamic> salesData = jsonData['data'];
+
+          return salesData.map((row) {
+            DateTime date;
+            if (reportType == 'FiveYears') {
+              date = DateTime.utc(row['Year']);
+            } else if (reportType == 'FourMonths' || reportType == 'Year') {
+              date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
+            } else {
+              date = DateFormat('yyyy-MM-dd').parseUtc(row['Date'] ?? '');
+            }
+
+            return SalesData(
+              date: date.toLocal(),
+              totalSales: (row['TotalSales'] as num).toDouble(),
+            );
+          }).toList();
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
       } else {
-        date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
+        throw Exception('Failed to load data');
       }
     } catch (e) {
-      date = null;
+      print('Error fetching sales data: $e');
+      return [];
     }
-    return SalesData(
-      date: date?.toLocal() ?? DateTime.now(),
-      totalSales: row['TotalSales'] != null
-          ? (row['TotalSales'] as num).toDouble()
-          : 0,
-    );
-  }).toList();
-}
-
+  }
+  
   void _refreshData() async {
     await _fetchData(_selectedInterval);
   }
@@ -279,24 +145,24 @@ class _SalesReportState extends State<SalesReport> {
         });
       },
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
-                ? const Color(0xFF047CBD)
+                ? const Color(0xff0175FF)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),

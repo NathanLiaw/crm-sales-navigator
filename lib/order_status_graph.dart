@@ -4,6 +4,8 @@ import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'order_status_report_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -144,8 +146,6 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
   }
 
   Future<void> fetchDataForDateRange(DateTimeRange selectedDateRange) async {
-    var db = await connectToDatabase();
-
     if (loggedInUsername.isEmpty) {
       return;
     }
@@ -173,52 +173,49 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     String formattedEndDate =
         DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedEndDate);
 
-    var results = await db.query(
-      '''SELECT 
-      COUNT(*) AS Total,
-      CASE 
-          WHEN c.status = 'confirm' THEN 'Complete'
-          WHEN c.status = 'Pending' THEN 'Pending'
-          ELSE 'Void'
-      END AS status,
-      s.username
-    FROM 
-      cart AS c
-    JOIN 
-      salesman AS s ON c.buyer_id = s.id
-    WHERE 
-      c.created BETWEEN ? AND ? AND 
-      c.buyer_user_group = 'salesman' AND 
-      s.username = ?
-    GROUP BY 
-      status, s.username;
-    ''',
-      [formattedStartDate, formattedEndDate, loggedInUsername],
-    );
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/order_status_graph/get_order_status_graph.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate');
 
-    int completeOrders = 0;
-    int pendingOrders = 0;
-    int voidedOrders = 0;
+    try {
+      final response = await http.get(apiUrl);
 
-    for (var row in results) {
-      String status = row['status'] as String;
-      int count = row['Total'] as int;
-      if (status == 'Complete') {
-        completeOrders += count;
-      } else if (status == 'Pending') {
-        pendingOrders += count;
-      } else if (status == 'Void') {
-        voidedOrders += count;
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          int completeOrders = 0;
+          int pendingOrders = 0;
+          int voidedOrders = 0;
+
+          final List<dynamic> statuses = jsonData['data'];
+
+          for (var row in statuses) {
+            String status = row['status'] as String;
+            int count = row['Total'] as int;
+
+            if (status == 'Complete') {
+              completeOrders += count;
+            } else if (status == 'Pending') {
+              pendingOrders += count;
+            } else if (status == 'Void') {
+              voidedOrders += count;
+            }
+          }
+
+          setState(() {
+            complete = completeOrders;
+            pending = pendingOrders;
+            voided = voidedOrders;
+          });
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load data');
       }
+    } catch (e) {
+      print('Error fetching order status data: $e');
     }
-
-    setState(() {
-      complete = completeOrders;
-      pending = pendingOrders;
-      voided = voidedOrders;
-    });
-
-    await db.close();
   }
 
   Future<void> _selectDateRange(BuildContext context) async {
@@ -320,7 +317,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStatusIndicator('Complete', Color(0xFF487C08), complete),
+            _buildStatusIndicator('Complete', const Color(0xFF487C08), complete),
             _buildStatusIndicator('Pending', Colors.blue, pending),
             _buildStatusIndicator('Void', Colors.red, voided),
           ],
@@ -365,7 +362,7 @@ class OrderStatusPainter extends CustomPainter {
     const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
 
     Paint paintComplete = Paint()
-      ..color = Color(0xFF487C08)
+      ..color = const Color(0xFF487C08)
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;

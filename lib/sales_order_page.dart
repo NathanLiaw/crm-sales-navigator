@@ -5,12 +5,16 @@ import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'db_connection.dart';
 import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -20,8 +24,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sales Order',
       theme: ThemeData(
-        primaryColor: const Color(0xFF004C87),
-        hintColor: const Color(0xFF004C87),
+        primaryColor: const Color(0xff0175FF),
+        hintColor: const Color(0xff0175FF),
         visualDensity: VisualDensity.adaptivePlatformDensity,
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.white),
@@ -49,6 +53,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   bool isSortedAscending = false; // Ensure this is set to false
   String loggedInUsername = '';
   Customer? selectedCustomer;
+  int currentPageIndex = 1;
 
   final List<String> _sortingMethods = [
     'By Creation Date (Ascending)',
@@ -178,111 +183,89 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     if (!mounted) return;
     setState(() => isLoading = true);
 
-    String orderByClause =
-        'ORDER BY ${_getOrderByField()} ${isSortedAscending ? 'ASC' : 'DESC'}';
-    String usernameFilter = "AND salesman.username = '$loggedInUsername'";
-    String customerFilter = selectedCustomer != null
-        ? "AND cart.customer_id = '${selectedCustomer!.id}'"
-        : "";
-    String statusFilter = _statusFilters.entries
-        .where((entry) => entry.value)
-        .map((entry) => "cart.status = '${entry.key.toLowerCase()}'")
-        .join(' OR ');
-
-    if (statusFilter.isNotEmpty) {
-      statusFilter = 'AND ($statusFilter)';
-    }
-
-    String query;
-
-    if (dateRange != null) {
-      String startDate =
-      DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
-      String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
-      query = '''
-    SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    WHERE 
-    cart.created BETWEEN '$startDate' AND '$endDate'
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
-    } else if (days != null) {
-      query = '''
-      SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    WHERE 
-    cart.created >= DATE_SUB(NOW(), INTERVAL $days DAY)
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
-    } else {
-      query = '''
-      SELECT 
-    cart.*, 
-    cart_item.product_id,
-    cart_item.product_name, 
-    cart_item.qty,
-    cart_item.uom,
-    cart_item.ori_unit_price,
-    salesman.salesman_name,
-    DATE_FORMAT(cart.created, '%d/%m/%Y %H:%i:%s') AS created_date
-    FROM 
-        cart
-    JOIN 
-        cart_item ON cart.session = cart_item.session OR cart.id = cart_item.cart_id
-    JOIN 
-        salesman ON cart.buyer_id = salesman.id
-    $usernameFilter
-    $customerFilter
-    $statusFilter
-    $orderByClause;
-    ''';
-    }
-
-    developer.log('Executing query: $query');
-
     try {
-      orders = await executeQuery(query);
-      developer
-          .log('Query executed successfully, loaded orders: ${orders.length}');
+      Uri apiUrl = Uri.parse(
+          'https://haluansama.com/crm-sales/api/sales_order/get_sales_orders.php');
+
+      // Add query parameters for username
+      Map<String, String> queryParams = {
+        'username': loggedInUsername,
+      };
+
+      // Add filters for date range or days
+      if (dateRange != null) {
+        String startDate =
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+        String endDate =
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
+        queryParams.addAll({
+          'start_date': startDate,
+          'end_date': endDate,
+        });
+      } else if (days != null) {
+        queryParams['days'] = days.toString();
+      }
+
+      // Add customer filter if selected
+      if (selectedCustomer != null) {
+        queryParams['customer_id'] = selectedCustomer!.id.toString();
+      }
+
+      // Add status filters
+      String statusFilters = _statusFilters.entries
+          .where((entry) => entry.value)
+          .map((entry) => entry.key)
+          .join(',');
+      if (statusFilters.isNotEmpty) {
+        queryParams['status_filters'] = statusFilters;
+      }
+
+      // Add sorting method (creation date or price) and direction (ascending/descending)
+      String sortField = _getOrderByField();
+      String sortMethod = isSortedAscending ? 'ASC' : 'DESC';
+      queryParams['sort_field'] = sortField;
+      queryParams['sort_method'] = sortMethod;
+
+      // Append query parameters to the URL
+      apiUrl = apiUrl.replace(queryParameters: queryParams);
+
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          List<Map<String, dynamic>> fetchedOrders =
+              List<Map<String, dynamic>>.from(jsonData['data']);
+
+          setState(() {
+            orders = fetchedOrders;
+            developer.log('Loaded ${orders.length} orders');
+          });
+        } else {
+          throw Exception(
+              'Failed to load sales orders: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load data from server');
+      }
     } catch (e, stackTrace) {
-      developer.log('Failed to load orders: $e',
+      developer.log('Error loading sales orders: $e',
           error: e, stackTrace: stackTrace);
     } finally {
       if (mounted) {
         setState(() => isLoading = false);
       }
+    }
+  }
+
+  String _getOrderByField() {
+    switch (_selectedMethod) {
+      case 'By Amount (Low to High)':
+      case 'By Amount (High to Low)':
+        return 'final_total';
+      default:
+        return 'created';
     }
   }
 
@@ -744,18 +727,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     return totalQuantity;
   }
 
-  String _getOrderByField() {
-    switch (_selectedMethod) {
-      case 'By Creation Date (Ascending)':
-      case 'By Creation Date (Descending)':
-        return 'cart.created';
-      case 'By Amount (Low to High)':
-      case 'By Amount (High to Low)':
-        return 'final_total';
-      default:
-        return 'cart.created';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -765,7 +736,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           'Sales Order',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         automaticallyImplyLeading: false,
       ),
       body: Column(
@@ -780,15 +751,27 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Widget _buildFilterSection() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: _buildCustomerPicker(),
         ),
         Padding(
+          padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+          child: Text(
+            'Filter by',
+            style: GoogleFonts.inter(
+              textStyle: const TextStyle(letterSpacing: -0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: const Color.fromARGB(255, 25, 23, 49),
+            ),
+          ),
+        ),
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildDateRangePicker(),
               IconButton(
@@ -806,46 +789,77 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
   Widget _buildCustomerPicker() {
-    return InkWell(
-      onTap: selectedCustomer == null ? _selectCustomer : null,
-      child: Container(
-        height: 50.0,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey),
+    return Row(
+      children: [
+        // Search bar on the left
+        Expanded(
+          child: _buildSearchBar(),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                selectedCustomer?.companyName ?? 'Select Customer',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
+        const SizedBox(width: 16.0),
+        // Select customer icon only on the right, with highlight when selected
+        InkWell(
+          onTap: _selectCustomer, // Allow user to select customer when tapped
+          child: Container(
+            height: 50.0,
+            width: 50.0,
+            decoration: BoxDecoration(
+              color: selectedCustomer == null
+                  ? Colors.white
+                  : const Color(0xFF047CBD), // Highlight if selected
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: Colors.grey),
             ),
-            if (selectedCustomer != null)
-              IconButton(
-                icon: const Icon(Icons.cancel, color: Colors.grey),
-                onPressed: _cancelSelectedCustomer,
-                constraints: const BoxConstraints(maxHeight: 24.0),
-                padding: EdgeInsets.zero,
-              )
-            else
-              const Icon(Icons.arrow_drop_down, color: Colors.grey),
-          ],
+            child: Icon(
+              Icons.person,
+              color: selectedCustomer == null
+                  ? Colors.grey
+                  : Colors.white, // Change icon color when selected
+            ),
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 50.0,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: Colors.grey),
+      ),
+      child: TextField(
+        decoration: const InputDecoration(
+          hintText: 'Search Sales Order',
+          border: InputBorder.none,
+          icon: Icon(Icons.search, color: Colors.grey), // Search icon
+        ),
+        onChanged: (value) {
+          _filterSalesOrders(
+              value); // Call a function to filter orders based on search
+        },
       ),
     );
   }
 
-  void _cancelSelectedCustomer() {
+  void _filterSalesOrders(String query) {
     setState(() {
-      selectedCustomer = null;
-      _loadSalesOrders(days: selectedDays, dateRange: dateRange);
+      if (query.isEmpty) {
+        _loadSalesOrders(); // Reload all orders if the query is empty
+      } else {
+        orders = orders.where((order) {
+          String orderId = order['id'].toString();
+          String formattedOrderId =
+              'S${orderId.padLeft(7, '0')}'; // Format as S0000001
+
+          // Convert both query and formattedOrderId to lowercase for case-insensitive matching
+          return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
+              orderId.contains(
+                  query); // Allow partial number search (e.g., "1" for "S0000001")
+        }).toList();
+      }
     });
   }
 
@@ -857,11 +871,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         children: [
           _buildDateButton('All', null, 3),
           const SizedBox(width: 10),
-          _buildDateButton('Last 7d', 7, 0),
+          _buildDateButton('Last 7 days', 7, 0),
           const SizedBox(width: 10),
-          _buildDateButton('Last 30d', 30, 1),
+          _buildDateButton('Last 30 days', 30, 1),
           const SizedBox(width: 10),
-          _buildDateButton('Last 90d', 90, 2),
+          _buildDateButton('Last 90 days', 90, 2),
         ],
       ),
     );
@@ -872,30 +886,37 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        TextButton.icon(
-          onPressed: () => _selectDateRange(context),
-          icon: Icon(
-            Icons.calendar_today,
-            color: isCustomRangeSelected
-                ? Colors.white
-                : Theme.of(context).iconTheme.color,
+        Container(
+          margin: const EdgeInsets.only(right: 12),
+          alignment: Alignment.centerLeft,
+          width: 300,
+          height: 43,
+          decoration: BoxDecoration(
+            color: const Color(0x503290E7),
+            borderRadius: BorderRadius.circular(6),
           ),
-          label: Text(
-            isCustomRangeSelected
-                ? '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}'
-                : 'Filter Date',
-            style: TextStyle(
+          child: TextButton.icon(
+            onPressed: () => _selectDateRange(context),
+            icon: Icon(
+              Icons.calendar_today,
               color: isCustomRangeSelected
-                  ? Colors.white
-                  : Theme.of(context).textTheme.bodyMedium!.color,
+                  ? Colors.black
+                  : Theme.of(context).iconTheme.color,
             ),
-          ),
-          style: TextButton.styleFrom(
-            backgroundColor: isCustomRangeSelected
-                ? const Color(0xFF047CBD)
-                : const Color(0xFFD9D9D9),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+            label: Text(
+              isCustomRangeSelected
+                  ? '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}'
+                  : 'Filter Date',
+              style: TextStyle(
+                color: isCustomRangeSelected
+                    ? Colors.black
+                    : Theme.of(context).textTheme.bodyMedium!.color,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ),
@@ -926,8 +947,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       },
       style: TextButton.styleFrom(
         backgroundColor:
-            isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9),
+            isSelected ? const Color(0xff0175FF) : const Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
+          side: const BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1034,11 +1056,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     Color getStatusColor(String displayStatus) {
       switch (displayStatus) {
         case 'Confirm':
-          return const Color(0xFF487C08);
+          return const Color(0xFF33B44F);
         case 'Pending':
-          return const Color.fromARGB(255, 213, 155, 8);
+          return const Color.fromARGB(255, 255, 194, 82);
         case 'Void':
-          return Colors.red;
+          return const Color(0xFFE81717);
         default:
           return Colors.grey;
       }
@@ -1048,6 +1070,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       String displayStatus = getDisplayStatus(status);
 
       return Container(
+        alignment: Alignment.center,
+        height: 32,
+        width: 98,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         decoration: BoxDecoration(
           color: getStatusColor(displayStatus),
@@ -1058,7 +1083,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 16,
           ),
         ),
       );
@@ -1086,8 +1111,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         elevation: 4,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color.fromRGBO(111, 188, 249, 0.35),
-            borderRadius: BorderRadius.circular(10.0),
+            color: const Color.fromARGB(255, 255, 255, 255),
+            borderRadius: BorderRadius.circular(4.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1122,16 +1147,20 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         const SizedBox(height: 8),
                                         Text(
                                           companyName,
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600),
+                                          style: GoogleFonts.inter(
+                                            textStyle:
+                                                const TextStyle(letterSpacing: -0.8),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
                                           'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                                           style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w500),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400),
                                         ),
                                         Row(
                                           mainAxisAlignment:
@@ -1140,17 +1169,33 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             Text(
                                               'RM $amount',
                                               style: const TextStyle(
-                                                color: Color(0xFF487C08),
+                                                color: Color(0xFF0175FF),
                                                 fontSize: 24,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                            IconButton(
-                                              icon: const Icon(Icons.copy),
-                                              onPressed: () async {
-                                                await _showItemSelectionDialog(
-                                                    items);
-                                              },
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(Icons.copy),
+                                                  onPressed: () async {
+                                                    await _showItemSelectionDialog(
+                                                        items);
+                                                  },
+                                                ),
+                                                Text(
+                                                  'Copy',
+                                                  style: GoogleFonts.inter(
+                                                    textStyle: const TextStyle(
+                                                        letterSpacing: -0.8),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
@@ -1177,7 +1222,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                 ),
                 title: const Text(
                   'Items',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 children: [
                   Container(
@@ -1198,6 +1243,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              const SizedBox(
+                                                height: 2,
+                                              ),
                                               Text(
                                                 item['product_name'],
                                                 style: const TextStyle(

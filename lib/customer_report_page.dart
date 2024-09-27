@@ -4,6 +4,8 @@ import 'package:sales_navigator/db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -83,67 +85,72 @@ class _CustomerReportState extends State<CustomerReport> {
 
   Future<List<Customer>> fetchSalesData(
       bool isAscending, DateTimeRange? dateRange) async {
-    var db = await connectToDatabase();
-    var sortOrder = isAscending ? 'ASC' : 'DESC';
-    String dateCondition = dateRange != null
-        ? "AND cart.created BETWEEN '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
-            dateRange.start.year,
-            dateRange.start.month,
-            dateRange.start.day,
-            0,
-            0,
-            0,
-          ))}' AND '${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(
-            dateRange.end.year,
-            dateRange.end.month,
-            dateRange.end.day,
-            23,
-            59,
-            59,
-          ))}'"
-        : '';
-    var results = await db.query('''
-        SELECT 
-            cart.customer_company_name AS Company_Name,
-            customer.id AS Customer_ID,
-            customer.username AS customer_username,
-            customer.contact_number AS Contact_Number,
-            customer.email AS Email,
-            salesman.id AS Salesman_ID,
-            salesman.username AS Salesman_Username,
-            salesman.salesman_name,
-            SUM(ci.total) AS Total_Sales,
-            MAX(DATE_FORMAT(cart.created, '%Y-%m-%d')) AS Last_Purchase,
-            SUM(ci.qty) AS Total_Quantity
-        FROM cart
-        JOIN customer ON cart.customer_id = customer.id
-        JOIN salesman ON cart.buyer_id = salesman.id
-        LEFT JOIN cart_item ci ON ci.cart_id = cart.id
-        WHERE cart.buyer_user_group != 'customer'
-        AND cart.status != 'void'
-        AND salesman.username = '$loggedInUsername'
-        $dateCondition
-        GROUP BY cart.customer_company_name, customer.id, salesman.id
-        ORDER BY Total_Sales $sortOrder;
-        ''');
-    int serialNumber = 1;
-    List<Customer> customersList = [];
-    for (var row in results) {
-      customersList.add(Customer(
-        id: row['Customer_ID'],
-        companyName: row['Company_Name'],
-        customerUsername: row['customer_username'],
-        email: row['Email'],
-        contactNumber: row['Contact_Number'],
-        totalSales: row['Total_Sales'],
-        totalQuantity: row['Total_Quantity'],
-        lastPurchase: DateTime.parse(row['Last_Purchase']),
-        serialNumber: serialNumber,
-      ));
-      serialNumber++;
+    if (loggedInUsername.isEmpty) {
+      return [];
     }
-    await db.close();
-    return _getSortedData(customersList);
+
+    String startDate =
+        DateFormat('yyyy-MM-dd').format(dateRange?.start ?? DateTime(2019));
+    String endDate =
+        DateFormat('yyyy-MM-dd').format(dateRange?.end ?? DateTime.now());
+    String sortOrder = isAscending ? 'ASC' : 'DESC';
+    String orderByField = _getOrderByField();
+
+    // Build the API URL
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/customer_report_page/get_customer_sales_report.php?username=$loggedInUsername&startDate=$startDate&endDate=$endDate&sortOrder=$sortOrder&orderByField=$orderByField');
+
+    try {
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          final List<dynamic> customerData = jsonData['data'];
+
+          return customerData.map((data) {
+            return Customer(
+              id: data['Customer_ID'],
+              companyName: data['Company_Name'],
+              customerUsername: data['customer_username'],
+              email: data['Email'],
+              contactNumber: data['Contact_Number'],
+              totalSales: (data['Total_Sales'] as num).toDouble(),
+              totalQuantity: (data['Total_Quantity'] as num).toDouble(),
+              lastPurchase: DateTime.parse(data['Last_Purchase']).toLocal(),
+              serialNumber: customerData.indexOf(data) + 1,
+            );
+          }).toList();
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      print('Error fetching sales data: $e');
+      return [];
+    }
+  }
+
+  String _getOrderByField() {
+    switch (_selectedMethod) {
+      case 'By Name (A to Z)':
+      case 'By Name (Z to A)':
+        return 'ProductName';
+      case 'By Total Sales (Low to High)':
+      case 'By Total Sales (High to Low)':
+        return 'TotalSalesValue';
+      case 'By Total Quantity Sold (Low to High)':
+      case 'By Total Quantity Sold (High to Low)':
+        return 'TotalQuantitySold';
+      case 'By Last Sold (Oldest to Newest)':
+      case 'By Last Sold (Newest to Oldest)':
+        return 'SaleDate';
+      default:
+        return 'ProductName';
+    }
   }
 
   List<Customer> _getSortedData(List<Customer> data) {
@@ -181,6 +188,7 @@ class _CustomerReportState extends State<CustomerReport> {
 
     return data;
   }
+
 
   void toggleSortOrder() {
     setState(() {
@@ -235,7 +243,7 @@ class _CustomerReportState extends State<CustomerReport> {
                     ),
                   ),
                   trailing: _selectedMethod == _sortingMethods[index]
-                      ? Icon(Icons.check, color: Colors.blue)
+                      ? const Icon(Icons.check, color: Colors.blue)
                       : null,
                   onTap: () {
                     setState(() {
@@ -328,23 +336,23 @@ class _CustomerReportState extends State<CustomerReport> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
                       }
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -354,7 +362,7 @@ class _CustomerReportState extends State<CustomerReport> {
             ),
             IconButton(
               onPressed: () => _showSortingOptions(context),
-              icon: Icon(Icons.sort, color: Colors.black),
+              icon: const Icon(Icons.sort, color: Colors.black),
             ),
           ],
         ),
@@ -366,13 +374,13 @@ class _CustomerReportState extends State<CustomerReport> {
               _buildTimeFilterButton(
                   'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+              _buildTimeFilterButton('Last 7 days', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+              _buildTimeFilterButton('Last 30 days', () => setDateRange(30, 1),
                   selectedButtonIndex == 1),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+              _buildTimeFilterButton('Last 90 days', () => setDateRange(90, 2),
                   selectedButtonIndex == 2),
             ],
           ),
@@ -387,24 +395,25 @@ class _CustomerReportState extends State<CustomerReport> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
-                ? const Color(0xFF047CBD)
-                : const Color(0xFFD9D9D9);
+                ? const Color(0xff0175FF)
+                : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF999999)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
@@ -416,7 +425,7 @@ class _CustomerReportState extends State<CustomerReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -453,9 +462,17 @@ class _CustomerReportState extends State<CustomerReport> {
                             horizontal: 20, vertical: 5),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(111, 188, 249, 0.35),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              borderRadius: BorderRadius.circular(4.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  blurStyle: BlurStyle.normal,
+                                  color: Color.fromARGB(75, 117, 117, 117),
+                                  spreadRadius: 0.1,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: ExpansionTile(
@@ -488,17 +505,17 @@ class _CustomerReportState extends State<CustomerReport> {
                                     Text(
                                       '     Total Sales: ${customer.totalSalesDisplay}',
                                       style: const TextStyle(
-                                          color: Color.fromARGB(255, 0, 100, 0),
-                                          fontSize: 17,
+                                          color: Color(0xFF0175FF),
+                                          fontSize: 18,
                                           fontWeight: FontWeight.w500),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '     Total Quantity: ${customer.totalQuantityDisplay}',
+                                      '      Total Quantity: ${customer.totalQuantityDisplay}',
                                       style: const TextStyle(
-                                          color: Color(0xFF004072),
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w500),
+                                          color: Colors.black,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400),
                                     ),
                                   ],
                                 ),
@@ -506,8 +523,8 @@ class _CustomerReportState extends State<CustomerReport> {
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE1F5FE),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: const Color.fromARGB(255, 239, 245, 248),
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -523,35 +540,35 @@ class _CustomerReportState extends State<CustomerReport> {
                                               '      ID: ${customer.id}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 14),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '      Username: ${customer.customerUsername}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 14),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '      Email: ${customer.email}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 14),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '      Contact Number: ${customer.contactNumber}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 14),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '      Last Purchase: ${DateFormat('dd-MM-yyyy').format(customer.lastPurchase)}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 14),
                                             ),
                                           ],
                                         ),

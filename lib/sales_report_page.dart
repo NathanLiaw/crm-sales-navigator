@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'db_connection.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -76,61 +79,52 @@ class _SalesReportPageState extends State<SalesReportPage> {
   }
 
   Future<List<SalesData>> fetchSalesData(DateTimeRange? dateRange) async {
-    var db = await connectToDatabase();
-    String dateRangeQuery = '';
-    if (dateRange != null) {
-      String startDate = DateFormat('yyyy/MM/dd').format(dateRange.start);
-      String endDate = DateFormat('yyyy/MM/dd').format(dateRange.end);
-      dateRangeQuery =
-          "AND DATE_FORMAT(c.created, '%Y/%m/%d') BETWEEN '$startDate' AND '$endDate'";
+    if (_loggedInUsername.isEmpty) {
+      return [];
     }
 
-    String usernameCondition = _loggedInUsername.isNotEmpty
-        ? "AND s.username = '$_loggedInUsername'"
-        : "";
+    // Format date range
+    String startDate =
+        DateFormat('yyyy-MM-dd').format(dateRange?.start ?? DateTime(2019));
+    String endDate =
+        DateFormat('yyyy-MM-dd').format(dateRange?.end ?? DateTime.now());
 
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
 
-    var query = '''
-        SELECT 
-            DATE(c.created) AS `Date`,
-            ROUND(SUM(c.final_total), 3) AS `Total Sales`,
-            SUM(ci.TotalQty) AS `Total Qty`,
-            COUNT(DISTINCT c.id) AS `Total Orders`
-        FROM cart c
-        JOIN salesman s ON c.buyer_id = s.id AND c.buyer_user_group != 'customer'
-        JOIN (
-            SELECT 
-                cart_id,
-                session,
-                SUM(qty) AS TotalQty
-            FROM cart_item
-            GROUP BY cart_id, session
-        ) ci ON c.id = ci.cart_id OR c.session = ci.session
-        WHERE c.status != 'Void'
-          $usernameCondition 
-          $dateRangeQuery
-        GROUP BY DATE(c.created)
-        ORDER BY DATE(c.created) $sortOrder;
-    ''';
+    // Prepare the API URL with the appropriate query parameters
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_report_page/get_sales_report_page.php?username=$_loggedInUsername&startDate=$startDate&endDate=$endDate&sortOrder=$sortOrder');
 
-    var results = await db.query(query);
-    return results.map((row) {
-      return SalesData(
-        day: DateFormat('EEEE').format(row['Date']),
-        date: row['Date'],
-        totalSales: row['Total Sales'] != null
-            ? (row['Total Sales'] as num).toDouble()
-            : 0,
-        totalQuantity:
-            row['Total Qty'] != null ? (row['Total Qty'] as num).toDouble() : 0,
-        totalOrders: row['Total Orders'] != null
-            ? (row['Total Orders'] as num).toInt()
-            : 0,
-      );
-    }).toList();
+    try {
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          final List<dynamic> salesData = jsonData['data'];
+
+          // Map the API data to the SalesData model
+          return salesData.map((data) {
+            return SalesData(
+              day: DateFormat('EEEE').format(DateTime.parse(data['Date'])),
+              date: DateTime.parse(data['Date']),
+              totalSales: (data['TotalSales'] as num).toDouble(),
+              totalQuantity: (data['TotalQty'] as num).toDouble(),
+              totalOrders: (data['TotalOrders'] as num).toInt(),
+            );
+          }).toList();
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      print('Error fetching sales data: $e');
+      return [];
+    }
   }
-
   void queryAllData() {
     setState(() {
       _selectedDateRange = DateTimeRange(
@@ -183,7 +177,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ),
                 ),
                 trailing: _selectedMethod == _sortingMethods[index]
-                    ? Icon(Icons.check, color: Colors.blue)
+                    ? const Icon(Icons.check, color: Colors.blue)
                     : null,
                 onTap: () {
                   setState(() {
@@ -255,23 +249,23 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
                       }
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -281,7 +275,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
             ),
             IconButton(
               onPressed: () => _showSortingOptions(context),
-              icon: Icon(Icons.sort, color: Colors.black),
+              icon: const Icon(Icons.sort, color: Colors.black),
             ),
           ],
         ),
@@ -293,13 +287,13 @@ class _SalesReportPageState extends State<SalesReportPage> {
               _buildTimeFilterButton(
                   'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+              _buildTimeFilterButton('Last 7 days', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+              _buildTimeFilterButton('Last 30 days', () => setDateRange(30, 1),
                   selectedButtonIndex == 1),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+              _buildTimeFilterButton('Last 90 days', () => setDateRange(90, 2),
                   selectedButtonIndex == 2),
             ],
           ),
@@ -314,24 +308,25 @@ class _SalesReportPageState extends State<SalesReportPage> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
-                ? const Color(0xFF047CBD)
-                : const Color(0xFFD9D9D9);
+                ? const Color(0xff0175FF)
+                : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF999999)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
@@ -344,7 +339,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -386,15 +381,23 @@ class _SalesReportPageState extends State<SalesReportPage> {
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(111, 188, 249, 0.35),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              borderRadius: BorderRadius.circular(4.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  blurStyle: BlurStyle.normal,
+                                  color: Color.fromARGB(75, 117, 117, 117),
+                                  spreadRadius: 0.1,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]),
                           child: ListTile(
                             title: Text(
                               DateFormat('dd-MM-yyyy').format(item.date!),
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             subtitle: Column(
@@ -404,17 +407,17 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                   'Total Sales: ${_formatCurrency(item.totalSales!)}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: Color.fromARGB(255, 0, 100, 0),
+                                    fontSize: 20,
+                                    color: Color(0xFF0175FF),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Total Quantity: ${item.totalQuantity!.toStringAsFixed(0)}',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w400,
                                     fontSize: 16,
-                                    color: Color(0xFF004072),
+                                    color: Colors.black, //33B44F
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -423,7 +426,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: Color.fromARGB(255, 100, 0, 0),
+                                    color: Colors.black,
                                   ),
                                 ),
                               ],

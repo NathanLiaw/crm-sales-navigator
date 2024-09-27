@@ -3,6 +3,8 @@ import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -46,42 +48,47 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
   }
 
   Future<void> _loadTopProducts() async {
-    String query = '''
-SELECT 
-    ci.product_name, 
-    SUM(ci.qty) AS total_qty_sold,
-    SUM(ci.qty * ci.unit_price) AS total_sales,
-    s.salesman_name
-FROM 
-    cart_item ci
-LEFT JOIN 
-    cart c ON ci.session = c.session OR ci.cart_id = c.id
-JOIN 
-    salesman s ON c.buyer_id = s.id
-WHERE 
-    c.status != 'void' AND
-    s.username = '$loggedInUsername'
-GROUP BY 
-    ci.product_name, 
-    s.salesman_name
-ORDER BY 
-    total_qty_sold DESC
-LIMIT 5;
-  ''';
+    // Ensure username is loaded before making the request
+    if (loggedInUsername.isEmpty) {
+      return;
+    }
+
+    // Prepare API endpoint
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/top_selling_product_graph/get_top_selling_products.php?username=$loggedInUsername');
 
     try {
-      final results = await executeQuery(query);
-      final List<Product> fetchedProducts = results.map((row) => Product(
-        row['product_name'] as String,
-        (row['total_qty_sold'] as num).toInt(),
-        (row['total_sales'] as num).toDouble(),
-      )).toList();
+      // Call the API to fetch top-selling products
+      final response = await http.get(apiUrl);
 
-      setState(() {
-        products = fetchedProducts;
-      });
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          final List<dynamic> productData = jsonData['data'];
+
+          // Map the API data to the Product model
+          final List<Product> fetchedProducts = productData.map((data) {
+            return Product(
+              data['product_name'] as String,
+              (data['total_qty_sold'] as num).toInt(),
+              (data['total_sales'] as num).toDouble(),
+            );
+          }).toList();
+
+          // Update the UI
+          setState(() {
+            products = fetchedProducts;
+          });
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load data');
+      }
     } catch (e, stackTrace) {
-      developer.log('Error fetching top products: $e', error: e, stackTrace: stackTrace);
+      developer.log('Error fetching top products: $e',
+          error: e, stackTrace: stackTrace);
     }
   }
 

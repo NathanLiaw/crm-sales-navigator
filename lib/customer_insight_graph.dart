@@ -4,7 +4,8 @@ import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 class CustomerSalesReport extends StatefulWidget {
   final String username;
 
@@ -60,177 +61,45 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
     }
   }
 
-  Future<List<SalesData>> fetchCustomerSalesData(String reportType, String username) async {
-    var db = await connectToDatabase();
-    late String query;
 
-    switch (reportType) {
-      case 'ThreeDays':
-        query = '''
-        SELECT 
-            Dates.Date,
-            DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS FormattedDate,
-            IFNULL(DailySales.TotalSales, 0) AS TotalSales
-        FROM (
-            SELECT CURDATE() - INTERVAL 2 DAY AS Date
-            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-            UNION ALL SELECT CURDATE()
-        ) AS Dates
-        LEFT JOIN (
-            SELECT 
-                DATE(c.created) AS Date,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM cart c
-            JOIN customer cust ON c.customer_id = cust.id
-            WHERE c.created >= CURDATE() - INTERVAL 2 DAY
-              AND c.status != 'void'
-              AND cust.username = '$username'
-            GROUP BY DATE(c.created)
-        ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
-        ORDER BY Dates.Date ASC;
-      ''';
-        break;
-      case 'FiveDays':
-        query = '''
-        SELECT 
-          Dates.Date,
-          DATE_FORMAT(Dates.Date, '%Y-%m-%d') AS FormattedDate,
-          IFNULL(DailySales.TotalSales, 0) AS TotalSales
-      FROM (
-          SELECT CURDATE() - INTERVAL 4 DAY AS Date
-          UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
-          UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
-          UNION ALL SELECT CURDATE()
-      ) AS Dates
-      LEFT JOIN (
-          SELECT 
-              DATE(c.created) AS Date,
-              ROUND(SUM(c.final_total), 0) AS TotalSales
-          FROM cart c
-          JOIN customer cust ON c.customer_id = cust.id
-          WHERE c.created >= CURDATE() - INTERVAL 4 DAY
-            AND c.status != 'void'
-            AND cust.username = '$username'
-          GROUP BY DATE(c.created)
-      ) AS DailySales ON DATE_FORMAT(Dates.Date, '%Y-%m-%d') = DailySales.Date
-      ORDER BY Dates.Date ASC;
-      ''';
-        break;
-      case 'FourMonths':
-        query = '''
-        SELECT
-            GeneratedMonths.Month AS Date,
-            IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
-        FROM (
-            SELECT 
-                DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
-            FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) a
-        ) AS GeneratedMonths
-        LEFT JOIN (
-            SELECT 
-                DATE_FORMAT(c.created, '%Y-%m') AS Month,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM cart c
-            JOIN customer cust ON c.customer_id = cust.id
-            WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)
-              AND c.status != 'void'
-              AND cust.username = '$username'
-            GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-        ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
-        GROUP BY GeneratedMonths.Month
-        ORDER BY GeneratedMonths.Month ASC;
-      ''';
-        break;
-      case 'Year':
-        query = '''
-        SELECT
-            GeneratedMonths.Month AS Date,
-            IFNULL(SUM(MonthlySales.TotalSales), 0) AS TotalSales
-        FROM (
-            SELECT 
-                DATE_FORMAT(CURDATE() - INTERVAL a.a MONTH, '%Y-%m') AS Month
-            FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11) a
-        ) AS GeneratedMonths
-        LEFT JOIN (
-            SELECT 
-                DATE_FORMAT(c.created, '%Y-%m') AS Month,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM cart c
-            JOIN customer cust ON c.customer_id = cust.id
-            WHERE c.created >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-              AND c.status != 'void'
-              AND cust.username = '$username'
-            GROUP BY DATE_FORMAT(c.created, '%Y-%m')
-        ) AS MonthlySales ON GeneratedMonths.Month = MonthlySales.Month
-        GROUP BY GeneratedMonths.Month
-        ORDER BY GeneratedMonths.Month ASC;
-      ''';
-        break;
-      case 'FiveYears':
-        query = '''
-        SELECT
-            GeneratedYears.Year AS Year,
-            IFNULL(SUM(YearlySales.TotalSales), 0) AS TotalSales
-        FROM (
-            SELECT 
-                YEAR(CURDATE()) AS Year
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 1
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 2
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 3
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 4
-            UNION ALL SELECT 
-                YEAR(CURDATE()) - 5
-        ) AS GeneratedYears
-        LEFT JOIN (
-            SELECT 
-                YEAR(c.created) AS Year,
-                ROUND(SUM(c.final_total), 0) AS TotalSales
-            FROM 
-                cart c
-            JOIN customer cust ON c.customer_id = cust.id
-            WHERE 
-                c.created >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
-              AND 
-                c.status != 'void' AND cust.username = '$username'
-            GROUP BY 
-                YEAR(c.created)
-        ) AS YearlySales ON GeneratedYears.Year = YearlySales.Year
-        GROUP BY 
-            GeneratedYears.Year
-        ORDER BY 
-            GeneratedYears.Year ASC;
-      ''';
-        break;
-    }
 
-    var results = await db.query(query);
+Future<List<SalesData>> fetchCustomerSalesData(String reportType, String username) async {
+  final Uri apiUrl = Uri.parse('https://haluansama.com/crm-sales/api/customer_insight_graph/get_customer_graph.php?username=$username&report_type=$reportType');
 
-    return results.map((row) {
-      DateTime? date;
-      try {
-        if (reportType == 'FiveYears') {
-          date = DateTime.utc(row['Year']);
-        } else if (reportType == 'FourMonths' || reportType == 'Year') {
-          date = DateFormat('yyyy-MM').parseUtc(row['Date'] ?? '');
-        } else {
-          date = DateFormat('yyyy-MM-dd').parseUtc(row['FormattedDate'] ?? '');
+  final response = await http.get(apiUrl);
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+
+    if (data['status'] == 'success') {
+      final List<dynamic> jsonData = data['data'];
+
+      return jsonData.map((row) {
+        DateTime? date;
+        try {
+          if (reportType == 'FiveYears') {
+            date = DateTime.utc(int.parse(row['Year']));
+          } else if (reportType == 'FourMonths' || reportType == 'Year') {
+            date = DateFormat('yyyy-MM').parse(row['Date']);
+          } else {
+            date = DateFormat('yyyy-MM-dd').parse(row['FormattedDate']);
+          }
+        } catch (e) {
+          date = null;
         }
-      } catch (e) {
-        date = null;
-      }
-      return SalesData(
-        date: date?.toLocal() ?? DateTime.now(),
-        totalSales: row['TotalSales'] != null
-            ? (row['TotalSales'] as num).toDouble()
-            : 0,
-      );
-    }).toList();
+
+        return SalesData(
+          date: date?.toLocal() ?? DateTime.now(),
+          totalSales: row['TotalSales'] != null ? (row['TotalSales'] as num).toDouble() : 0,
+        );
+      }).toList();
+    } else {
+      throw Exception('Failed to fetch sales data: ${data['message']}');
+    }
+  } else {
+    throw Exception('Failed to load data from server');
   }
+}
 
   void _refreshData() async {
     await _fetchData(_selectedInterval);

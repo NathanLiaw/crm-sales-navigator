@@ -4,6 +4,9 @@ import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -73,63 +76,55 @@ class _ProductReportState extends State<ProductReport> {
   }
 
   Future<List<Product>> fetchProducts(DateTimeRange? dateRange) async {
-    var db = await connectToDatabase();
-    String dateRangeQuery = '';
-    if (dateRange != null) {
-      String formattedStartDate =
-          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start.toUtc());
-      String formattedEndDate =
-          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end.toUtc());
-
-      dateRangeQuery =
-          "AND ci.created BETWEEN '$formattedStartDate' AND '$formattedEndDate'";
+    if (loggedInUsername.isEmpty) {
+      return [];
     }
+
+    String formattedStartDate = dateRange != null
+        ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start)
+        : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime(2019));
+
+    String formattedEndDate = dateRange != null
+        ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end)
+        : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
-    String usernameCondition = loggedInUsername.isNotEmpty
-        ? "AND salesman.username = '${loggedInUsername.replaceAll("'", "''")}'"
-        : "";
+    String orderByField = _getOrderByField();
+
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/top_selling_product_page/get_top_selling_products_report.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate&sortOrder=$sortOrder&orderByField=$orderByField');
+
     try {
-      var results = await db.query('''
-      SELECT 
-          b.id AS BrandID, 
-          b.brand AS BrandName, 
-          p.id AS ProductID, 
-          p.product_name AS ProductName, 
-          ci.uom AS UnitOfMeasure,
-          SUM(ci.qty) AS TotalQuantitySold, 
-          SUM(ci.total) AS TotalSalesValue, 
-          MAX(DATE_FORMAT(cart.created, '%Y-%m-%d %H:%i:%s')) AS SaleDate
-      FROM cart_item ci 
-      JOIN product p ON ci.product_id = p.id 
-      JOIN brand b ON p.brand = b.id 
-      JOIN cart ON ci.session = cart.session OR ci.cart_id = cart.id
-      JOIN salesman ON cart.buyer_id = salesman.id
-      WHERE cart.status != 'void' $usernameCondition $dateRangeQuery
-      GROUP BY p.id, ci.uom
-      ORDER BY ${_getOrderByField()} $sortOrder;
-    ''');
+      final response = await http.get(apiUrl);
 
-      if (results.isEmpty) {
-        developer.log('No data found', level: 1);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          final List<dynamic> productData = jsonData['data'];
+
+          int serialNumber = 1;
+          return productData.map((data) {
+            return Product(
+              id: data['ProductID'],
+              brandId: data['BrandID'],
+              productName: data['ProductName'],
+              brandName: data['BrandName'],
+              unitOfMeasure: data['UnitOfMeasure'],
+              totalSales: (data['TotalSalesValue'] as num).toDouble(),
+              totalQuantitySold: (data['TotalQuantitySold'] as num).toInt(),
+              lastSold: DateTime.parse(data['SaleDate']).toLocal(),
+              serialNumber: serialNumber++,
+            );
+          }).toList();
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load data');
       }
-
-      int serialNumber = 1;
-      return results.map((row) {
-        return Product(
-          id: row['ProductID'],
-          brandId: row['BrandID'],
-          productName: row['ProductName'],
-          brandName: row['BrandName'],
-          unitOfMeasure: row['UnitOfMeasure'],
-          totalSales: row['TotalSalesValue'].toDouble(),
-          totalQuantitySold: row['TotalQuantitySold'].toInt(),
-          lastSold: DateTime.parse(row['SaleDate']).toLocal(),
-          serialNumber: serialNumber++,
-        );
-      }).toList();
-    } catch (e, stackTrace) {
-      developer.log('Error fetching data: $e',
-          error: e, stackTrace: stackTrace);
+    } catch (e) {
+      developer.log('Error fetching products: $e');
       return [];
     }
   }
@@ -185,7 +180,7 @@ class _ProductReportState extends State<ProductReport> {
                   ),
                 ),
                 trailing: _selectedMethod == _sortingMethods[index]
-                    ? Icon(Icons.check, color: Colors.blue)
+                    ? const Icon(Icons.check, color: Colors.blue)
                     : null,
                 onTap: () {
                   setState(() {
@@ -282,23 +277,23 @@ class _ProductReportState extends State<ProductReport> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
                       }
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -308,7 +303,7 @@ class _ProductReportState extends State<ProductReport> {
             ),
             IconButton(
               onPressed: () => _showSortingOptions(context),
-              icon: Icon(Icons.sort, color: Colors.black),
+              icon: const Icon(Icons.sort, color: Colors.black),
             ),
           ],
         ),
@@ -320,13 +315,13 @@ class _ProductReportState extends State<ProductReport> {
               _buildTimeFilterButton(
                   'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+              _buildTimeFilterButton('Last 7 days', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+              _buildTimeFilterButton('Last 30 days', () => setDateRange(30, 1),
                   selectedButtonIndex == 1),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+              _buildTimeFilterButton('Last 90 days', () => setDateRange(90, 2),
                   selectedButtonIndex == 2),
             ],
           ),
@@ -341,24 +336,25 @@ class _ProductReportState extends State<ProductReport> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
-                ? const Color(0xFF047CBD)
-                : const Color(0xFFD9D9D9);
+                ? const Color(0xff0175FF)
+                : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF999999)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
@@ -370,7 +366,7 @@ class _ProductReportState extends State<ProductReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -405,9 +401,17 @@ class _ProductReportState extends State<ProductReport> {
                             horizontal: 20, vertical: 5),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(111, 188, 249, 0.35),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              borderRadius: BorderRadius.circular(4.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  blurStyle: BlurStyle.normal,
+                                  color: Color.fromARGB(75, 117, 117, 117),
+                                  spreadRadius: 0.1,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: ExpansionTile(
@@ -442,18 +446,18 @@ class _ProductReportState extends State<ProductReport> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          '     UOM: ',
+                                          '      UOM: ',
                                           style: TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w400,
                                           ),
                                         ),
                                         Expanded(
                                           child: Text(
                                             product.unitOfMeasure,
                                             style: const TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400,
                                             ),
                                           ),
                                         ),
@@ -463,9 +467,9 @@ class _ProductReportState extends State<ProductReport> {
                                     Text(
                                       '     Total Sales: ${product.totalSalesDisplay}',
                                       style: const TextStyle(
-                                        color: Color.fromARGB(255, 0, 100, 0),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF0175FF),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -473,8 +477,8 @@ class _ProductReportState extends State<ProductReport> {
                                       '     Total Quantity Sold: ${product.totalQuantitySold}',
                                       style: const TextStyle(
                                         color: Color(0xFF004072),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ],
@@ -483,8 +487,8 @@ class _ProductReportState extends State<ProductReport> {
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE1F5FE),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: const Color.fromARGB(255, 239, 245, 248),
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -500,20 +504,20 @@ class _ProductReportState extends State<ProductReport> {
                                               '      Product ID: ${product.id}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 16),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '      Brand Name: ${product.brandName}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 16),
                                             ),
                                             Text(
                                               '      Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 16),
                                             ),
                                           ],
                                         ),
