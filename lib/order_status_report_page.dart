@@ -737,7 +737,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
           'Sales Order Report',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
       ),
       body: Column(
         children: <Widget>[

@@ -257,7 +257,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   @override
   Widget build(BuildContext context) {
     final formatter =
-        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 2);
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     final formattedTotal = formatter.format(widget.total);
     final formattedSubtotal = formatter.format(widget.subtotal);
     final formattedDiscount = formatter.format(totalDiscount);
@@ -266,7 +266,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text('Order Confirmation',
             style: TextStyle(color: Colors.white)),
@@ -349,7 +349,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                   70), // Width for original price
                               3: FixedColumnWidth(
                                   70), // Width for discounted price
-                              4: FixedColumnWidth(70), // Width for total price
+                              4: FixedColumnWidth(80), // Width for total price
                             },
                             children: [
                               // Header Row
@@ -585,18 +585,19 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           const SizedBox(height: 16.0),
           ElevatedButton(
             style: ButtonStyle(
-              backgroundColor:
-                  WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
               ),
-              minimumSize: WidgetStateProperty.all<Size>(
+              minimumSize: MaterialStateProperty.all<Size>(
                 const Size(120, 40),
               ),
             ),
-            onPressed: () async {
+            onPressed: isProcessing
+                ? null // Disable the button when processing
+                : () async {
               if (!agreedToTerms) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -607,14 +608,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
               }
 
               setState(() {
-                isProcessing = true;
+                isProcessing = true; // Set to true when processing starts
               });
 
               await createCart();
               await completeCart();
 
               setState(() {
-                isProcessing = false;
+                isProcessing = false; // Set to false when processing completes
               });
 
               Navigator.pushReplacement(
@@ -626,17 +627,17 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             },
             child: isProcessing
                 ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(color: Colors.white),
-                  )
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(color: Colors.white),
+            )
                 : const Text(
-                    'Submit Order',
-                    style: TextStyle(
-                      color: Colors.white, // Set text color
-                      fontSize: 20, // Set text size
-                    ),
-                  ),
+              'Submit Order',
+              style: TextStyle(
+                color: Colors.white, // Set text color
+                fontSize: 20, // Set text size
+              ),
+            ),
           ),
         ],
       ),

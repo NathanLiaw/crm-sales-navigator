@@ -1,8 +1,10 @@
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/edit_item_page.dart';
 import 'package:sales_navigator/event_logger.dart';
 import 'package:sales_navigator/item_screen.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/order_confirmation_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/utility_function.dart';
@@ -38,8 +40,8 @@ class _CartPage extends State<CartPage> {
   late List<List<String>> productPhotos = [];
   double total = 0;
   double subtotal = 0;
-  String formattedTotal = 'RM0.00';
-  String formattedSubtotal = 'RM0.00';
+  String formattedTotal = 'RM0.000';
+  String formattedSubtotal = 'RM0.000';
 
   late int salesmanId;
 
@@ -245,6 +247,9 @@ class _CartPage extends State<CartPage> {
           backgroundColor: Colors.green,
         ),
       );
+
+      final cartModel = Provider.of<CartModel>(context, listen: false);
+      cartModel.initializeCartCount();
     } catch (e) {
       developer.log('Error deleting selected cart items: $e', error: e);
       // Show an error message if deletion fails
@@ -566,7 +571,7 @@ class _CartPage extends State<CartPage> {
                     child: Row(
                       children: [
                         Text(
-                          'No products have been selected yet',
+                          'No products are in the cart yet',
                           style: TextStyle(
                             fontSize: 16,
                           ),

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart'; // Import provider package
-import 'package:sales_navigator/db_sqlite.dart';
-import 'package:sales_navigator/utility_function.dart';
-import 'dart:developer' as developer;
 import 'package:sales_navigator/model/cart_model.dart'; // Import the CartModel
 
 class CustomNavigationBar extends StatefulWidget {
