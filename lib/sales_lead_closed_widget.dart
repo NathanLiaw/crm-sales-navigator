@@ -52,40 +52,34 @@ class ClosedLeadItem extends StatelessWidget {
               blurRadius: 4,
               offset: Offset(0, 1),
             ),
-          ),
-        );
-      },
-      child: Card(
-        color: const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
-        margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Text(
-                  //   leadItem.customerName.length > 15
-                  //       ? '${leadItem.customerName.substring(0, 15)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 20,
-                  //   ),
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
-                  SizedBox(
-                    width: 170,
-                    child: Text(
-                      leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+          ]),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Text(
+                //   leadItem.customerName.length > 15
+                //       ? '${leadItem.customerName.substring(0, 15)}...'
+                //       : leadItem.customerName,
+                //   style: const TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 20,
+                //   ),
+                //   overflow: TextOverflow.ellipsis,
+                // ),
+                SizedBox(
+                  width: 170,
+                  child: Text(
+                    leadItem.customerName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -107,26 +101,11 @@ class ClosedLeadItem extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          // Perform an action based on the selected value
-                        },
-                        itemBuilder: (BuildContext context) =>
-                            <PopupMenuEntry<String>>[
-                          const PopupMenuItem<String>(
-                            value: 'view details',
-                            child: Text('View details'),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 10,
                     ),
                     PopupMenuButton<String>(
@@ -153,16 +132,16 @@ class ClosedLeadItem extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: leadItem.contactNumber.isNotEmpty
-                      ? () => _launchURL('tel:${leadItem.contactNumber}')
+                      ? () => _launchURL('tel:${leadItem.contactNumber}' as Uri)
                       : null,
                   child: Row(
                     children: [
                       const Icon(
                         Icons.phone,
-                        color: const Color(0xff0175FF),
+                        color: Color(0xff0175FF),
                       ),
                       const SizedBox(width: 8),
-                      Container(
+                      SizedBox(
                         width: 100,
                         child: Text(
                           leadItem.contactNumber.isNotEmpty
@@ -179,36 +158,29 @@ class ClosedLeadItem extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${leadItem.contactNumber}' as Uri)
-                        : null,
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.phone,
-                          color: Color(0xff0069BA),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 100,
-                          child: Text(
-                            leadItem.contactNumber.isNotEmpty
-                                ? leadItem.contactNumber
-                                : 'Unavailable',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              decoration: TextDecoration.underline,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: leadItem.emailAddress.isNotEmpty
+                      ? () => _launchURL('mailto:${leadItem.emailAddress}' as Uri)
+                      : null,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.email,
+                        color: Color(0xff0175FF),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 150,
+                        child: Text(
+                          leadItem.emailAddress.isNotEmpty
+                              ? leadItem.emailAddress
+                              : 'Unavailable',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -225,7 +197,7 @@ class ClosedLeadItem extends StatelessWidget {
               style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
-                  color: const Color(0xff0175FF)),
+                  color: Color(0xff0175FF)),
             ),
             const SizedBox(
               height: 8,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +13,7 @@ import 'db_connection.dart';
 import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
+import 'package:provider/provider.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -526,25 +528,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 24,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
                             backgroundColor: Colors.green,
                           ),
                           child: const Text(
@@ -552,11 +535,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
                           onPressed: () async {
+                            int itemsCopied = 0; // Track the number of items copied
                             for (int i = 0; i < items.length; i++) {
                               if (checkedItems[i]) {
                                 final item = items[i];
-                                final oriUnitPrice =
-                                    item['ori_unit_price'] ?? 0.0;
+                                final oriUnitPrice = item['ori_unit_price'] ?? 0.0;
                                 final qty = item['qty'] ?? 0;
 
                                 final cartItem = CartItem(
@@ -576,8 +559,13 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                   modified: DateTime.now(),
                                 );
                                 await insertItemIntoCart(cartItem);
+                                itemsCopied++; // Increment the copied items count
                               }
                             }
+
+                            // Update the cart count
+                            Provider.of<CartModel>(context, listen: false).initializeCartCount();
+
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -1058,7 +1046,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         case 'Confirm':
           return const Color(0xFF33B44F);
         case 'Pending':
-          return const Color.fromARGB(255, 255, 194, 82);
+          return const Color(0xFFFFC300);
         case 'Void':
           return const Color(0xFFE81717);
         default:
@@ -1163,8 +1151,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                               fontWeight: FontWeight.w400),
                                         ),
                                         Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
                                               'RM $amount',
@@ -1179,21 +1166,27 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                                 IconButton(
                                                   icon: const Icon(Icons.copy),
                                                   onPressed: () async {
-                                                    await _showItemSelectionDialog(
-                                                        items);
+                                                    await _showItemSelectionDialog(items);
                                                   },
                                                 ),
-                                                Text(
-                                                  'Copy',
-                                                  style: GoogleFonts.inter(
-                                                    textStyle: const TextStyle(
-                                                        letterSpacing: -0.8),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.black,
+                                                const SizedBox(width: 4), // Decreased width between icon and text
+                                                GestureDetector(
+                                                  onTap: () async {
+                                                    await _showItemSelectionDialog(items); // Make the text clickable
+                                                  },
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(right: 8.0), // Added padding to the right
+                                                    child: Text(
+                                                      'Copy',
+                                                      style: GoogleFonts.inter(
+                                                        textStyle: const TextStyle(letterSpacing: -0.8),
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: Colors.black,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
                                                   ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
                                                 ),
                                               ],
                                             ),

@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
+import 'package:provider/provider.dart';
 
 class ItemVariationsScreen extends StatefulWidget {
   const ItemVariationsScreen({
@@ -13,16 +15,19 @@ class ItemVariationsScreen extends StatefulWidget {
     required this.productName,
     required this.itemAssetName,
     required this.priceByUom,
+    required this.onCartUpdate, // Add this line
   });
 
   final int productId;
   final String productName;
   final String itemAssetName;
   final String priceByUom;
+  final VoidCallback onCartUpdate; // Add this line
 
   @override
   State<ItemVariationsScreen> createState() => _ItemVariationsScreenState();
 }
+
 
 class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   late Map<String, dynamic> priceData;
@@ -368,31 +373,31 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
         field,
       );
 
-      // Check if the result contains any existing items
       if (result.isNotEmpty) {
-        // Item already exists, update the quantity
         final existingItem = result.first;
         final updatedQuantity = existingItem['qty'] + cartItem.quantity;
 
-        // Prepare the data map for update
         final data = {
           'id': existingItem['id'],
           'qty': updatedQuantity,
           'modified': UtilityFunction.getCurrentDateTime(),
         };
 
-        // Call the updateData function to perform the update operation
         await DatabaseHelper.updateData(data, tableName);
-
         developer.log('Cart item quantity updated successfully');
       } else {
-        // Item does not exist, insert it as a new item
         final cartItemMap = cartItem.toMap(excludeId: true);
         await DatabaseHelper.insertData(cartItemMap, tableName);
         developer.log('New cart item inserted successfully');
       }
+
+      // Update the cart count in the navigation bar
+      // Use the CartModel to update the cart count
+      Provider.of<CartModel>(context, listen: false).initializeCartCount();
+
     } catch (e) {
       developer.log('Error inserting or updating cart item: $e', error: e);
     }
   }
+
 }

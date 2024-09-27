@@ -17,6 +17,8 @@ import 'db_sqlite.dart';
 import 'products_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:developer' as developer;
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -95,7 +97,15 @@ void main() async {
   // Initialize the SQLite database
   await DatabaseHelper.database;
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartModel()),
+        // Add other providers here
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -103,6 +113,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cartModel = Provider.of<CartModel>(context, listen: false);
+    cartModel.initializeCartCount();
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
