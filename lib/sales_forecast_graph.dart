@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'db_connection.dart';
+import 'dart:developer' as developer;
 
 class SalesForecastGraph extends StatefulWidget {
   const SalesForecastGraph({super.key});
@@ -87,7 +88,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
       ));
     }
 
-    print('Forecasts fetched: ${forecasts.length}');
+    developer.log('Forecasts fetched: ${forecasts.length}');
 
     double predictedTarget = 0.0;
     int stockNeeded = 0;
@@ -269,7 +270,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Center(
-          child: Container(
+          child: SizedBox(
             height: 220,
             width: MediaQuery.of(context).size.width * 0.95,
             child: Container(
@@ -292,7 +293,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                       offset: Offset(0, 1),
                     ),
                   ],
-                  gradient: LinearGradient(colors: [
+                  gradient: const LinearGradient(colors: [
                     Color.fromRGBO(150, 218, 255, 0.882),
                     Colors.white
                   ], begin: Alignment.topRight, end: Alignment.bottomLeft)),
@@ -307,17 +308,17 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                         Row(
                           children: [
                             Container(
-                              margin: EdgeInsets.only(left: 8),
+                              margin: const EdgeInsets.only(left: 8),
                               child: Text(
                                 'Sales Target',
                                 style: GoogleFonts.inter(
-                                    textStyle: TextStyle(letterSpacing: -0.8),
+                                    textStyle: const TextStyle(letterSpacing: -0.8),
                                     fontSize: 20.0,
-                                    color: Color(0xff085ABE),
+                                    color: const Color(0xff085ABE),
                                     fontWeight: FontWeight.w700),
                               ),
                             ),
-                            SizedBox(width: 8.0),
+                            const SizedBox(width: 8.0),
                           ],
                         ),
                         Align(
@@ -332,9 +333,9 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Spacer(),
+                        const Spacer(),
                         Container(
-                          margin: EdgeInsets.only(right: 10),
+                          margin: const EdgeInsets.only(right: 10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -344,7 +345,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                                 style: GoogleFonts.inter(
                                     fontSize: 24.0,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xff085ABE)),
+                                    color: const Color(0xff085ABE)),
                               ),
                               const SizedBox(height: 4.0),
                               Text(
@@ -352,7 +353,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                                 style: GoogleFonts.inter(
                                     fontSize: 14.0,
                                     fontWeight: FontWeight.w400,
-                                    color: Color.fromARGB(255, 0, 0, 0)),
+                                    color: const Color.fromARGB(255, 0, 0, 0)),
                               ),
                               const SizedBox(height: 4.0),
                               SizedBox(
@@ -373,7 +374,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                                 style: GoogleFonts.inter(
                                     fontSize: 16.0,
                                     fontWeight: FontWeight.w400,
-                                    color: Color.fromRGBO(0, 0, 0, 1)),
+                                    color: const Color.fromRGBO(0, 0, 0, 1)),
                               ),
                               const SizedBox(height: 8.0),
                             ],
@@ -408,7 +409,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   previousValue: widget.previousMonthSales,
                   isUp: widget.currentSales >= widget.previousMonthSales,
                   isDown: widget.currentSales < widget.previousMonthSales,
-                  backgroundColor1: Color.fromARGB(52, 33, 72, 212),
+                  backgroundColor1: const Color.fromARGB(52, 33, 72, 212),
                   backgroundColor2: const Color(0xFFFFFFFF),
                   borderColor: const Color(0xFF4566DD),
                   textColor: const Color(0xFF4566DD),
@@ -421,9 +422,9 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   previousValue: widget.previousMonthSales,
                   isUp: widget.predictedTarget >= widget.previousMonthSales,
                   isDown: widget.predictedTarget < widget.previousMonthSales,
-                  backgroundColor1: Color.fromARGB(186, 255, 237, 211),
+                  backgroundColor1: const Color.fromARGB(186, 255, 237, 211),
                   backgroundColor2: const Color(0xFFFFFFFF),
-                  borderColor: Color.fromARGB(248, 255, 166, 0),
+                  borderColor: const Color.fromARGB(248, 255, 166, 0),
                   textColor: const Color(0xFFFEAF20),
                   fromLastMonthTextColor: Colors.black87,
                 ),
@@ -437,7 +438,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   backgroundColor1: const Color(0x3029C194),
                   backgroundColor2: const Color(0xFFFFFFFF),
                   borderColor: const Color(0xFF29C194),
-                  textColor: Color(0xFF29C194),
+                  textColor: const Color(0xFF29C194),
                   fromLastMonthTextColor: Colors.black,
                 ),
                 InfoBox(
@@ -450,7 +451,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   backgroundColor1: const Color(0x30D563E3),
                   backgroundColor2: const Color(0xFFFFFFFF),
                   borderColor: const Color(0xFFD563E3),
-                  textColor: Color(0xFFD563E3),
+                  textColor: const Color(0xFFD563E3),
                   fromLastMonthTextColor: Colors.black,
                 ),
               ],
@@ -596,7 +597,7 @@ class InfoBox extends StatelessWidget {
         ),
         gradient: LinearGradient(
             colors: [backgroundColor1, backgroundColor2],
-            stops: [0.05, 0.80],
+            stops: const [0.05, 0.80],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter),
         borderRadius: BorderRadius.circular(4),
@@ -616,11 +617,11 @@ class InfoBox extends StatelessWidget {
           Row(
             children: [
               icon,
-              SizedBox(
+              const SizedBox(
                 width: 8,
               ),
               Text(label,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold, color: Colors.black)),
             ],
           ),

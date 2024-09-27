@@ -2,7 +2,6 @@ import "package:flutter/material.dart";
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/item_variations_screen.dart';
-import 'components/item_app_bar.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';

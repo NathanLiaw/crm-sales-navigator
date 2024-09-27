@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -39,7 +38,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
               height: 262,
               width: MediaQuery.of(context).size.width,
               decoration: const BoxDecoration(
@@ -56,7 +55,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                 children: [
                   Container(
                     // Row 1 Insigts, Powered by AI
-                    margin: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     child: Row(
                       children: [
                         SvgPicture.asset(
@@ -68,7 +67,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                         Text(
                           'Insights',
                           style: GoogleFonts.inter(
-                            textStyle: TextStyle(letterSpacing: -0.8),
+                            textStyle: const TextStyle(letterSpacing: -0.8),
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: const Color.fromARGB(255, 255, 255, 255),
@@ -79,7 +78,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                   ),
                   Container(
                     // Row 2 Customer Name and value,
-                    margin: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +88,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           child: Text(
                             'KKB Construction Supplies',
                             style: GoogleFonts.inter(
-                              textStyle: TextStyle(letterSpacing: -0.8),
+                              textStyle: const TextStyle(letterSpacing: -0.8),
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                               color: const Color.fromARGB(255, 255, 255, 255),
@@ -99,11 +98,11 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           ),
                         ),
                         Container(
-                          margin: EdgeInsets.only(top: 4),
+                          margin: const EdgeInsets.only(top: 4),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Color(0xff94FFDF),
+                            color: const Color(0xff94FFDF),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
@@ -137,7 +136,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                         Text(
                           'Total spent',
                           style: GoogleFonts.inter(
-                            textStyle: TextStyle(letterSpacing: -0.8),
+                            textStyle: const TextStyle(letterSpacing: -0.8),
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color.fromARGB(255, 255, 255, 255),
@@ -148,11 +147,11 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                   ),
                   Container(
                     // Row 3 Total Spent
-                    margin: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                    margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                     child: Text(
                       'RM 80,000,000',
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(letterSpacing: -0.8),
+                        textStyle: const TextStyle(letterSpacing: -0.8),
                         fontSize: 32,
                         fontWeight: FontWeight.w700,
                         color: const Color.fromARGB(255, 255, 255, 255),
@@ -164,7 +163,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             ),
             Container(
               alignment: Alignment.centerLeft,
-              margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
               // Customer Details Block
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,10 +171,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     Text(
                       'Customer Details',
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(letterSpacing: -0.8),
+                        textStyle: const TextStyle(letterSpacing: -0.8),
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: Color.fromARGB(255, 0, 0, 0),
+                        color: const Color.fromARGB(255, 0, 0, 0),
                       ),
                     ),
                     const SizedBox(
@@ -202,38 +201,35 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            //Container for Address
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Address:',
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Address:',
+                                style: GoogleFonts.inter(
+                                  textStyle: const TextStyle(letterSpacing: -0.8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xff0175FF),
+                                ),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width -
+                                    48, // Adjust width
+                                child: Text(
+                                  '10, Block C, Old Slipway, P.O Box 409, 90704, Sandakan Sabah',
                                   style: GoogleFonts.inter(
-                                    textStyle: TextStyle(letterSpacing: -0.8),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xff0175FF),
+                                    textStyle: const TextStyle(letterSpacing: -0.8),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        const Color.fromARGB(255, 25, 23, 49),
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width -
-                                      48, // Adjust width
-                                  child: Text(
-                                    '10, Block C, Old Slipway, P.O Box 409, 90704, Sandakan Sabah',
-                                    style: GoogleFonts.inter(
-                                      textStyle: TextStyle(letterSpacing: -0.8),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          const Color.fromARGB(255, 25, 23, 49),
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                           const SizedBox(
                             height: 20,
@@ -242,72 +238,66 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                             children: [
                               Expanded(
                                 // Wrap with Expanded
-                                child: Container(
-                                  //Container for Contact
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Contact:',
-                                        style: GoogleFonts.inter(
-                                          textStyle:
-                                              TextStyle(letterSpacing: -0.8),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xff0175FF),
-                                        ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Contact:',
+                                      style: GoogleFonts.inter(
+                                        textStyle:
+                                            const TextStyle(letterSpacing: -0.8),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xff0175FF),
                                       ),
-                                      Text(
-                                        '016-4567890',
-                                        style: GoogleFonts.inter(
-                                          textStyle:
-                                              TextStyle(letterSpacing: -0.8),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: const Color.fromARGB(
-                                              255, 25, 23, 49),
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      '016-4567890',
+                                      style: GoogleFonts.inter(
+                                        textStyle:
+                                            const TextStyle(letterSpacing: -0.8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color.fromARGB(
+                                            255, 25, 23, 49),
                                       ),
-                                    ],
-                                  ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
                               Expanded(
                                 // Wrap with Expanded
-                                child: Container(
-                                  //Container for Email Addresses
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Email address:',
-                                        style: GoogleFonts.inter(
-                                          textStyle:
-                                              TextStyle(letterSpacing: -0.8),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xff0175FF),
-                                        ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Email address:',
+                                      style: GoogleFonts.inter(
+                                        textStyle:
+                                            const TextStyle(letterSpacing: -0.8),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xff0175FF),
                                       ),
-                                      Text(
-                                        'contact@kkbindustrialstools.com',
-                                        style: GoogleFonts.inter(
-                                          textStyle:
-                                              TextStyle(letterSpacing: -0.8),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: const Color.fromARGB(
-                                              255, 25, 23, 49),
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      'contact@kkbindustrialstools.com',
+                                      style: GoogleFonts.inter(
+                                        textStyle:
+                                            const TextStyle(letterSpacing: -0.8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color.fromARGB(
+                                            255, 25, 23, 49),
                                       ),
-                                    ],
-                                  ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -327,10 +317,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                     Text(
                       'Statistics',
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(letterSpacing: -0.8),
+                        textStyle: const TextStyle(letterSpacing: -0.8),
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: Color.fromARGB(255, 0, 0, 0),
+                        color: const Color.fromARGB(255, 0, 0, 0),
                       ),
                     ),
                     const SizedBox(
@@ -365,16 +355,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 Text(
                                   '6 Days',
                                   style: GoogleFonts.inter(
-                                    textStyle: TextStyle(letterSpacing: -0.8),
+                                    textStyle: const TextStyle(letterSpacing: -0.8),
                                     fontSize: 40,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xff0066FF),
+                                    color: const Color(0xff0066FF),
                                   ),
                                 ),
                                 Text(
                                   'Predicted Next Visit',
                                   style: GoogleFonts.inter(
-                                    textStyle: TextStyle(letterSpacing: -0.6),
+                                    textStyle: const TextStyle(letterSpacing: -0.6),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.black,
@@ -417,10 +407,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                       'Low',
                                       style: GoogleFonts.inter(
                                         textStyle:
-                                            TextStyle(letterSpacing: -0.8),
+                                            const TextStyle(letterSpacing: -0.8),
                                         fontSize: 40,
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xffFF5454),
+                                        color: const Color(0xffFF5454),
                                       ),
                                     ),
                                     const SizedBox(
@@ -436,7 +426,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 Text(
                                   'Total Spend Group',
                                   style: GoogleFonts.inter(
-                                    textStyle: TextStyle(letterSpacing: -0.6),
+                                    textStyle: const TextStyle(letterSpacing: -0.6),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.black,
@@ -448,7 +438,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                         ),
                       ],
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 18,
                     ),
                     Row(
@@ -499,16 +489,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         'RM100,000',
                                         style: GoogleFonts.inter(
                                           textStyle:
-                                              TextStyle(letterSpacing: -0.8),
+                                              const TextStyle(letterSpacing: -0.8),
                                           fontSize: 28,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xff0066FF),
+                                          color: const Color(0xff0066FF),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Container(
+                                SizedBox(
                                   height: 156,
                                   child: LineChart(
                                     LineChartData(
@@ -521,17 +511,17 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         maxY: 10,
                                         lineBarsData: [
                                           LineChartBarData(
-                                              colors: [Color(0xff0066FF)],
+                                              colors: [const Color(0xff0066FF)],
                                               isCurved: true,
                                               dotData: FlDotData(show: false),
                                               belowBarData: BarAreaData(
                                                   show: true,
                                                   colors: [
-                                                    Color(0xff001AFF),
-                                                    Color(0xffFFFFFF)
+                                                    const Color(0xff001AFF),
+                                                    const Color(0xffFFFFFF)
                                                   ],
-                                                  gradientFrom: Offset(0.5, 0),
-                                                  gradientTo: Offset(0.5, 1)),
+                                                  gradientFrom: const Offset(0.5, 0),
+                                                  gradientTo: const Offset(0.5, 1)),
                                               spots: [
                                                 FlSpot(0, 3),
                                                 FlSpot(3, 4),
@@ -605,12 +595,12 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         height: 4,
                                       ),
                                       Container(
                                         alignment: Alignment.centerLeft,
-                                        child: Icon(
+                                        child: const Icon(
                                           Icons.arrow_upward,
                                           weight: 0.2,
                                           size: 74,
@@ -625,7 +615,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                               letterSpacing: -0.8),
                                           fontSize: 32,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xff29C194),
+                                          color: const Color(0xff29C194),
                                         ),
                                       ),
                                     ],

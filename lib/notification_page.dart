@@ -5,11 +5,12 @@ import 'package:sales_navigator/db_connection.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'dart:developer' as developer;
 
 class NotificationsPage extends StatefulWidget {
   final RemoteMessage? message;
 
-  const NotificationsPage({Key? key, this.message}) : super(key: key);
+  const NotificationsPage({super.key, this.message});
   static const route = '/notification-page';
 
   @override
@@ -25,7 +26,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void initState() {
     super.initState();
-    print("NotificationsPage initialized with message: ${widget.message}");
+    developer.log("NotificationsPage initialized with message: ${widget.message}");
     _initializeSalesmanId().then((_) => _fetchNotifications());
   }
 
@@ -46,7 +47,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         'WHERE n.salesman_id = ? ORDER BY n.created_at DESC LIMIT 20',
         [salesmanId],
       );
-      print('Fetched ${results.length} notifications');
+      developer.log('Fetched ${results.length} notifications');
       setState(() {
         notifications = results.map((row) {
           return {
@@ -63,7 +64,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         isLoading = false;
       });
     } catch (e, stackTrace) {
-      print('Error fetching notifications: $e\n$stackTrace');
+      developer.log('Error fetching notifications: $e\n$stackTrace');
       setState(() {
         errorMessage = 'Failed to load notifications: ${e.toString()}';
         isLoading = false;
@@ -73,7 +74,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         try {
           await conn.close();
         } catch (e) {
-          print('Error closing database connection: $e');
+          developer.log('Error closing database connection: $e');
         }
       }
     }
@@ -90,7 +91,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             (notification) => notification['id'] == notificationId);
       });
     } catch (e) {
-      print('Error deleting notification: $e');
+      developer.log('Error deleting notification: $e');
     } finally {
       if (conn != null) {
         await conn.close();
@@ -110,7 +111,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         notification['read_status'] = 1;
       });
     } catch (e) {
-      print('Error marking notification as read: $e');
+      developer.log('Error marking notification as read: $e');
     } finally {
       if (conn != null) {
         await conn.close();
@@ -124,7 +125,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ModalRoute.of(context)!.settings.arguments as RemoteMessage?;
 
     if (message != null) {
-      print(
+      developer.log(
           "Building NotificationsPage with message: ${message.notification?.title}");
     }
 
@@ -147,11 +148,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : errorMessage.isNotEmpty
                 ? Center(child: Text(errorMessage))
                 : notifications.isEmpty
-                    ? Center(child: Text('No notifications'))
+                    ? const Center(child: Text('No notifications'))
                     : ListView.builder(
                         itemCount: notifications.length,
                         itemBuilder: (context, index) =>
@@ -171,7 +172,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomePage(initialIndex: 3),
+            builder: (context) => const HomePage(initialIndex: 3),
           ),
         );
         break;
@@ -180,7 +181,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => HomePage(initialIndex: 2),
+            builder: (context) => const HomePage(initialIndex: 2),
           ),
         );
         break;
@@ -189,7 +190,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => HomePage(initialIndex: 0),
+            builder: (context) => const HomePage(initialIndex: 0),
           ),
         );
         break;
@@ -204,8 +205,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
       background: Container(
         color: Colors.red,
         alignment: Alignment.centerRight,
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        child: Icon(Icons.delete, color: Colors.white),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
@@ -243,7 +244,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Icons.notifications_on_outlined,
                     color: notification['read_status'] == 0
                         ? Colors.blue
-                        : Color(0xff0069BA),
+                        : const Color(0xff0069BA),
                   ),
                   const SizedBox(width: 8),
                   Expanded(

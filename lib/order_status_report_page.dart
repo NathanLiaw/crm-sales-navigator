@@ -189,7 +189,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         .join(' OR ');
 
     if (statusFilter.isNotEmpty) {
-      statusFilter = 'AND (' + statusFilter + ')';
+      statusFilter = 'AND ($statusFilter)';
     }
 
     String query;
@@ -306,7 +306,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE1F5FE),
                   borderRadius: BorderRadius.circular(15),
@@ -370,7 +370,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Padding(
-                          padding: EdgeInsets.only(left: 0),
+                          padding: const EdgeInsets.only(left: 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -618,7 +618,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             ),
                           ),
                           trailing: _selectedMethod == _sortingMethods[index]
-                              ? Icon(Icons.check, color: Colors.blue)
+                              ? const Icon(Icons.check, color: Colors.blue)
                               : null,
                           onTap: () {
                             setState(() {
@@ -774,7 +774,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
               _buildDateRangePicker(),
               IconButton(
                 onPressed: () => _showSortingOptions(context),
-                icon: Icon(Icons.sort, color: Colors.black),
+                icon: const Icon(Icons.sort, color: Colors.black),
               ),
             ],
           ),
@@ -812,7 +812,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
               IconButton(
                 icon: const Icon(Icons.cancel, color: Colors.grey),
                 onPressed: _cancelSelectedCustomer,
-                constraints: BoxConstraints(maxHeight: 24.0),
+                constraints: const BoxConstraints(maxHeight: 24.0),
                 padding: EdgeInsets.zero,
               )
             else
@@ -1015,7 +1015,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     Color getStatusColor(String displayStatus) {
       switch (displayStatus) {
         case 'Confirm':
-          return Color(0xFF487C08);
+          return const Color(0xFF487C08);
         case 'Pending':
           return const Color.fromARGB(255, 213, 155, 8);
         case 'Void':

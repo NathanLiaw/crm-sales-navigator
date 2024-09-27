@@ -1,7 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
-import 'package:sales_navigator/api/firebase_api.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
@@ -39,7 +38,7 @@ class SalesmanPerformanceUpdater {
 
   void startPeriodicUpdate(int salesmanId) {
     // Update every hour
-    _timer = Timer.periodic(Duration(hours: 1), (timer) {
+    _timer = Timer.periodic(const Duration(hours: 1), (timer) {
       _updateSalesmanPerformance(salesmanId);
     });
   }
@@ -65,7 +64,7 @@ class SalesmanPerformanceUpdater {
 class HomePage extends StatefulWidget {
   final int initialIndex;
 
-  const HomePage({Key? key, this.initialIndex = 0}) : super(key: key);
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -197,7 +196,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _tabController.dispose();
-    _performanceUpdater?.stopPeriodicUpdate();
+    _performanceUpdater.stopPeriodicUpdate();
     super.dispose();
   }
 
@@ -275,7 +274,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
-    // print("Starting _fetchLeadItems");
+    // developer.log("Starting _fetchLeadItems");
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results =
@@ -299,10 +298,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var customerId = entry.key;
         var modifiedDate = entry.value;
         var difference = currentDate.difference(modifiedDate).inDays;
-        // print("Customer $customerId last purchase: $difference days ago");
+        // developer.log("Customer $customerId last purchase: $difference days ago");
         if (difference >= 30) {
           var customerName = await _fetchCustomerName(conn, customerId);
-          // print("Checking lead for customer: $customerName");
+          // developer.log("Checking lead for customer: $customerName");
           var total = latestTotals[customerId]!;
           var description = "Hasn't purchased since 30 days ago";
           var createdDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -334,7 +333,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
           // save it to the sales_lead table and add it to the list of leadItems.
           if (existingLeadResults.isEmpty) {
-            print("Creating new lead for customer: $customerName");
+            developer.log("Creating new lead for customer: $customerName");
             try {
               // Save the lead item to the sales_lead table
               var insertResult = await conn.query(
@@ -389,7 +388,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               developer.log('stage: Opportunities');
             }
           } else {
-            print("Lead already exists for customer: $customerName");
+            developer.log("Lead already exists for customer: $customerName");
           }
         }
       }
@@ -403,7 +402,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _sortLeads(negotiationLeads);
     _sortLeads(orderProcessingLeads);
     _sortLeads(closedLeads);
-    print("Finished _fetchLeadItems");
+    developer.log("Finished _fetchLeadItems");
   }
 
   Future<void> _fetchCreateLeadItems() async {
@@ -1085,9 +1084,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //     });
 
   //     await _updateSalesmanPerformance(salesmanId);
-  //     print('Lead created and event logged successfully');
+  //     developer.log('Lead created and event logged successfully');
   //   } catch (e) {
-  //     print('Error creating lead: $e');
+  //     developer.log('Error creating lead: $e');
   //   } finally {
   //     await conn.close();
   //   }
@@ -1193,7 +1192,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             await _updateSalesmanPerformance(salesmanId);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lead successfully deleted')),
+              const SnackBar(content: Text('Lead successfully deleted')),
             );
           } else {
             throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
@@ -1259,7 +1258,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //   ],
                   // ),
                   IconButton(
-                    icon: Icon(Icons.sort, color: Colors.white),
+                    icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: _showSortOptions,
                   ),
                   IconButton(
@@ -1318,14 +1317,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           )),
                       Container(
                         height: 78,
-                        padding: EdgeInsets.only(left: 12, bottom: 2),
+                        padding: const EdgeInsets.only(left: 12, bottom: 2),
                         child: Column(
                           children: [
-                            Spacer(),
+                            const Spacer(),
                             Text(
                               'Sales Lead Pipeline',
                               style: GoogleFonts.inter(
-                                textStyle: TextStyle(letterSpacing: -0.8),
+                                textStyle: const TextStyle(letterSpacing: -0.8),
                                 fontSize: 26,
                                 fontWeight: FontWeight.w700,
                                 color: const Color.fromARGB(255, 255, 255, 255),
@@ -1461,7 +1460,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(8))),
                 label: const Text('Create Lead',
                     style: TextStyle(color: Colors.white)),
@@ -1507,9 +1506,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
       },
       child: Container(
-        height: 200,
+        height: 220,
         decoration: BoxDecoration(
-            image: DecorationImage(
+            image: const DecorationImage(
               image: ResizeImage(AssetImage('asset/bttm_start.png'),
                   width: 128, height: 98),
               alignment: Alignment.bottomLeft,
@@ -1543,12 +1542,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //   maxLines: 2,
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 200,
                     child: Text(
                       leadItem.customerName,
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(letterSpacing: -0.8),
+                        textStyle: const TextStyle(letterSpacing: -0.8),
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: const Color.fromARGB(255, 25, 23, 49),
@@ -1563,7 +1562,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(71, 148, 255, 223),
+                      color: const Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -1622,19 +1621,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Text(
                 leadItem.description,
                 style: GoogleFonts.inter(
-                  textStyle: TextStyle(letterSpacing: -0.5),
+                  textStyle: const TextStyle(letterSpacing: -0.5),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: const Color.fromARGB(255, 25, 23, 49),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      iconStyleData: IconStyleData(
+                      iconStyleData: const IconStyleData(
                           icon: Icon(Icons.arrow_drop_down),
                           iconDisabledColor: Colors.white,
                           iconEnabledColor: Colors.white),
@@ -1673,7 +1672,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         height: 24,
                         width: 136,
                         decoration:
-                            BoxDecoration(color: const Color(0xff0175FF)),
+                            BoxDecoration(color: Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -1682,7 +1681,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              // const SizedBox(height: 8),
+              const SizedBox(height: 10),
               // Text(leadItem.description),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1690,97 +1689,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Text(
                     leadItem.createdDate,
                     style: const TextStyle(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        fontWeight: FontWeight.w600),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // ElevatedButton(
-                        //   onPressed: () {
-                        //     _handleIgnore(leadItem);
-                        //   },
-                        //   style: ElevatedButton.styleFrom(
-                        //     backgroundColor: Colors.white,
-                        //     shape: RoundedRectangleBorder(
-                        //       borderRadius: BorderRadius.circular(5),
-                        //       side:
-                        //           const BorderSide(color: Colors.red, width: 2),
-                        //     ),
-                        //     minimumSize: const Size(50, 35),
-                        //   ),
-                        //   child: const Text('Ignore',
-                        //       style: TextStyle(color: Colors.red)),
-                        // ),
-                        SizedBox(
-                          height: 22,
-                          width: 80,
-                          child: TextButton(
-                            style: ButtonStyle(
-                              padding:
-                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
-                              shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4.0),
-                                      side: BorderSide(color: Colors.red))),
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  const Color(0xffF01C54)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
-                                  const Color.fromARGB(255, 255, 255, 255)),
-                            ),
-                            onPressed: () {
-                              _handleIgnore(leadItem);
-                            },
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w300),
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(
-                          width: 12,
-                        ),
-                        // const SizedBox(width: 8),
-                        // ElevatedButton(
-                        //   onPressed: () {
-                        //     _moveToEngagement(leadItem);
-                        //   },
-                        //   style: ElevatedButton.styleFrom(
-                        //     backgroundColor: const Color(0xff0069BA),
-                        //     shape: RoundedRectangleBorder(
-                        //       borderRadius: BorderRadius.circular(5),
-                        //     ),
-                        //     minimumSize: const Size(50, 35),
-                        //   ),
-                        //   child: const Text('Accept',
-                        //       style: TextStyle(color: Colors.white)),
-                        // ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(
-                                0xff3796DF), // Set the background color
-                            foregroundColor:
-                                Colors.white, // Set the text color to white
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20.0, vertical: 10.0),
-                            textStyle: const TextStyle(fontSize: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  10.0), // Decrease the radius
-                            ),
-                          ),
-                          onPressed: () {
-                            _moveToEngagement(leadItem);
-                          },
-                          child: const Text('Accept'), // The button text
-                        ),
-                      ],
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 40, // Match the height with the "Accept" button
+                        width: 40,  // Square width for the icon button
+                        child: IconButton(
+                          icon: const Icon(Icons.delete, size: 24), // Adjust the icon size
+                          color: Colors.red, // Icon color
+                          onPressed: () {
+                            _handleIgnore(leadItem);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12), // Add spacing between buttons
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff33b249), // Set background color
+                          foregroundColor: Colors.white, // Set text color to white
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 10.0), // Match padding
+                          textStyle: const TextStyle(fontSize: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0), // Decrease the radius
+                          ),
+                        ),
+                        onPressed: () {
+                          _moveToEngagement(leadItem);
+                        },
+                        child: const Text('Accept'), // The button text
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -2095,7 +2039,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //       'Order for ${leadItem.customerName} has changed from Pending to Confirm.',
   //     );
   //   } catch (e) {
-  //     print('Error generating notification: $e');
+  //     developer.log('Error generating notification: $e');
   //   } finally {
   //     await conn.close();
   //   }

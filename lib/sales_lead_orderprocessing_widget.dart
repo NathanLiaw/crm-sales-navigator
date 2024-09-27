@@ -17,9 +17,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
     required this.onMoveToClosed,
   });
 
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
       throw 'Could not launch $url';
     }
@@ -82,7 +83,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   //   ),
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 250,
                     child: Text(
                       leadItem.customerName,
@@ -129,7 +130,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                           color: Color(0xff0069BA),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 100,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
@@ -159,7 +160,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                           color: Color(0xff0069BA),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 150,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty

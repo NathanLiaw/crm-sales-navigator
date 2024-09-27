@@ -162,40 +162,43 @@ class _ProductsScreenState extends State<ProductsScreen>
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor: const Color(0xff0175FF),
-          leading: IconButton(
-            icon: const Icon(
-              Icons.location_on,
-              size: 34,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (BuildContext context) {
-                  return SizedBox(
-                    height: 380,
-                    width: double.infinity,
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
-                          child: Text(
-                            'Select Area',
-                            style: GoogleFonts.inter(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: IconButton(
+              icon: const Icon(
+                Icons.location_on,
+                size: 34,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return SizedBox(
+                      height: 380,
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                            child: Text(
+                              'Select Area',
+                              style: GoogleFonts.inter(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                        const AreaSelectPopUp(),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
+                          const AreaSelectPopUp(),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
           title: GestureDetector(
             onTap: () {
@@ -250,7 +253,7 @@ class _ProductsScreenState extends State<ProductsScreen>
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(4),
+              padding: const EdgeInsets.all(4),
               alignment: Alignment.center,
               color: const Color(0xff0175FF),
               height: 42,
@@ -276,7 +279,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                                       'Sort',
                                       style: GoogleFonts.inter(
                                         fontSize: 24,
-                                        color: Colors.white,
+                                        color: Colors.black,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),

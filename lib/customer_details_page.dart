@@ -165,7 +165,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                 ),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 8,
             ),
             Expanded(
@@ -203,14 +203,14 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                             left: 6.0, right: 6.0, bottom: 4.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            border: BorderDirectional(
+                            border: const BorderDirectional(
                                 top: BorderSide(
-                                    color: const Color.fromARGB(
+                                    color: Color.fromARGB(
                                         255, 231, 231, 231),
                                     width: 2)),
                             color: isSelected
                                 ? const Color(0xfff8f9fa)
-                                : Color.fromARGB(255, 255, 255, 255),
+                                : const Color.fromARGB(255, 255, 255, 255),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
@@ -222,7 +222,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                                   style: const TextStyle(
                                     fontSize: 16.0,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xff0175FF),
+                                    color: Color(0xff0175FF),
                                   ),
                                 ),
                                 const SizedBox(height: 2.0),

@@ -144,7 +144,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   Future<void> _navigateToEditTaskPage(
       BuildContext context, Map<String, dynamic> task) async {
     final taskId = task['id']; // fetch taskId
-    print('taskId: $taskId');
 
     final result = await Navigator.push(
       context,
@@ -334,7 +333,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
+                  SizedBox(
                     width: 170,
                     child: Text(
                       widget.leadItem.customerName,
@@ -351,7 +350,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Color.fromARGB(71, 148, 255, 223),
+                          color: const Color.fromARGB(71, 148, 255, 223),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -363,7 +362,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       PopupMenuButton<String>(
                         onSelected: (String value) async {
                           if (value == 'delete') {
@@ -488,10 +487,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       children: [
                         const Icon(
                           Icons.phone,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 100,
                           child: Text(
                             widget.leadItem.contactNumber.isNotEmpty
@@ -519,10 +518,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       children: [
                         const Icon(
                           Icons.email,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 160,
                           child: Text(
                             widget.leadItem.emailAddress.isNotEmpty
@@ -559,7 +558,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                             fontSize: 16,
                           ),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         TextButton(
                           onPressed: _showSortOptions,
                           child: Row(
@@ -567,7 +566,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               const Icon(Icons.sort, color: Color(0xff0069BA)),
                               const SizedBox(width: 4),
                               Text(_getSortButtonText(),
-                                  style: TextStyle(color: Color(0xff0069BA))),
+                                  style: const TextStyle(color: Color(0xff0069BA))),
                             ],
                           ),
                         ),
@@ -603,7 +602,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                           'Due Date: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}'),
                                     ],
                                   ),
-                                  Spacer(),
+                                  const Spacer(),
                                   Column(
                                     children: [
                                       IconButton(
@@ -676,7 +675,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               //       fontSize: 14,
               //     ),
               //   ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -688,10 +687,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      iconStyleData: IconStyleData(
+                      iconStyleData: const IconStyleData(
                           icon: Icon(Icons.arrow_drop_down),
                           iconDisabledColor: Colors.white,
                           iconEnabledColor: Colors.white),
@@ -729,26 +728,26 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   ),
                 ],
               ),
-              SizedBox(
+              const SizedBox(
                 height: 14,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
+                  SizedBox(
                     width: 342,
                     height: 34,
                     child: ElevatedButton(
                       onPressed: () => _navigateToCreateTaskPage(context, true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromARGB(255, 62, 147, 252),
+                        backgroundColor: const Color.fromARGB(255, 62, 147, 252),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
                         padding:
-                            EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Create Task / Select Order ID',
                         style: TextStyle(
                           color: Colors.white,

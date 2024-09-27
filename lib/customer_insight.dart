@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/customer.dart' as Customer;
-import 'package:sales_navigator/customer_graph.dart';
 import 'package:sales_navigator/customer_insight_graph.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
@@ -200,48 +199,6 @@ class _CustomerInsightPageState extends State<CustomerInsightPage> {
           } else {
             Customer.Customer customer = snapshot.data![0] as Customer.Customer;
             List<Map<String, dynamic>> products = snapshot.data![2] as List<Map<String, dynamic>>;
-            if (customer.id == null) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Customer Details',
-                      style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8.0),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Center(
-                          child: Text(
-                            'No customer data found',
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),

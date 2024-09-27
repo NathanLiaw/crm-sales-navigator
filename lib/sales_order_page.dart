@@ -12,15 +12,6 @@ import 'db_connection.dart';
 import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
-import 'package:sales_navigator/cart_page.dart';
-import 'package:sales_navigator/home_page.dart';
-import 'package:sales_navigator/notification_page.dart';
-import 'package:sales_navigator/starting_page.dart';
-import 'package:sales_navigator/login_page.dart';
-import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_order_page.dart';
-import 'package:sales_navigator/sales_order.dart';
-import 'package:sales_navigator/products_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -802,7 +793,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           child: Text(
             'Filter by',
             style: GoogleFonts.inter(
-              textStyle: TextStyle(letterSpacing: -0.8),
+              textStyle: const TextStyle(letterSpacing: -0.8),
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: const Color.fromARGB(255, 25, 23, 49),
@@ -816,7 +807,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
               _buildDateRangePicker(),
               IconButton(
                 onPressed: () => _showSortingOptions(context),
-                icon: Icon(Icons.sort, color: Colors.black),
+                icon: const Icon(Icons.sort, color: Colors.black),
               ),
             ],
           ),
@@ -854,7 +845,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
               IconButton(
                 icon: const Icon(Icons.cancel, color: Colors.grey),
                 onPressed: _cancelSelectedCustomer,
-                constraints: BoxConstraints(maxHeight: 24.0),
+                constraints: const BoxConstraints(maxHeight: 24.0),
                 padding: EdgeInsets.zero,
               )
             else
@@ -896,12 +887,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         Container(
-          margin: EdgeInsets.only(right: 12),
+          margin: const EdgeInsets.only(right: 12),
           alignment: Alignment.centerLeft,
           width: 300,
           height: 43,
           decoration: BoxDecoration(
-            color: Color(0x503290E7),
+            color: const Color(0x503290E7),
             borderRadius: BorderRadius.circular(6),
           ),
           child: TextButton.icon(
@@ -956,9 +947,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       },
       style: TextButton.styleFrom(
         backgroundColor:
-            isSelected ? Color(0xff0175FF) : Color.fromARGB(255, 255, 255, 255),
+            isSelected ? const Color(0xff0175FF) : const Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: Color(0xFF999999)),
+          side: const BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1065,11 +1056,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     Color getStatusColor(String displayStatus) {
       switch (displayStatus) {
         case 'Confirm':
-          return Color(0xFF33B44F);
+          return const Color(0xFF33B44F);
         case 'Pending':
-          return Color.fromARGB(255, 255, 194, 82);
+          return const Color.fromARGB(255, 255, 194, 82);
         case 'Void':
-          return Color(0xFFE81717);
+          return const Color(0xFFE81717);
         default:
           return Colors.grey;
       }
@@ -1120,7 +1111,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         elevation: 4,
         child: Container(
           decoration: BoxDecoration(
-            color: Color.fromARGB(255, 255, 255, 255),
+            color: const Color.fromARGB(255, 255, 255, 255),
             borderRadius: BorderRadius.circular(4.0),
           ),
           child: Column(
@@ -1158,7 +1149,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                           companyName,
                                           style: GoogleFonts.inter(
                                             textStyle:
-                                                TextStyle(letterSpacing: -0.8),
+                                                const TextStyle(letterSpacing: -0.8),
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.black,
@@ -1195,7 +1186,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                                 Text(
                                                   'Copy',
                                                   style: GoogleFonts.inter(
-                                                    textStyle: TextStyle(
+                                                    textStyle: const TextStyle(
                                                         letterSpacing: -0.8),
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w700,
@@ -1252,7 +1243,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              SizedBox(
+                                              const SizedBox(
                                                 height: 2,
                                               ),
                                               Text(

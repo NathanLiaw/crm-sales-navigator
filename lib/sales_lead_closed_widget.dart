@@ -20,9 +20,9 @@ class ClosedLeadItem extends StatelessWidget {
     required this.quantity,
   });
 
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<void> _launchURL(Uri url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
       throw 'Could not launch $url';
     }
@@ -73,7 +73,7 @@ class ClosedLeadItem extends StatelessWidget {
                   //   ),
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 170,
                     child: Text(
                       leadItem.customerName,
@@ -106,7 +106,7 @@ class ClosedLeadItem extends StatelessWidget {
                           ],
                         ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         width: 10,
                       ),
                       PopupMenuButton<String>(
@@ -133,7 +133,7 @@ class ClosedLeadItem extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${leadItem.contactNumber}')
+                        ? () => _launchURL('tel:${leadItem.contactNumber}' as Uri)
                         : null,
                     child: Row(
                       children: [
@@ -142,7 +142,7 @@ class ClosedLeadItem extends StatelessWidget {
                           color: Color(0xff0069BA),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 100,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
@@ -163,7 +163,7 @@ class ClosedLeadItem extends StatelessWidget {
                   const SizedBox(width: 16),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
-                        ? () => _launchURL('mailto:${leadItem.emailAddress}')
+                        ? () => _launchURL('mailto:${leadItem.emailAddress}' as Uri)
                         : null,
                     child: Row(
                       children: [
@@ -172,7 +172,7 @@ class ClosedLeadItem extends StatelessWidget {
                           color: Color(0xff0069BA),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 150,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty

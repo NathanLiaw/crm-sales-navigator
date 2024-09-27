@@ -183,7 +183,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ),
                 ),
                 trailing: _selectedMethod == _sortingMethods[index]
-                    ? Icon(Icons.check, color: Colors.blue)
+                    ? const Icon(Icons.check, color: Colors.blue)
                     : null,
                 onTap: () {
                   setState(() {
@@ -255,23 +255,23 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
                       }
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -281,7 +281,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
             ),
             IconButton(
               onPressed: () => _showSortingOptions(context),
-              icon: Icon(Icons.sort, color: Colors.black),
+              icon: const Icon(Icons.sort, color: Colors.black),
             ),
           ],
         ),
@@ -314,25 +314,25 @@ class _SalesReportPageState extends State<SalesReportPage> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
-                ? Color(0xff0175FF)
-                : Color.fromARGB(255, 255, 255, 255);
+                ? const Color(0xff0175FF)
+                : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
-            side: BorderSide(color: Color(0xFF999999)),
+            side: const BorderSide(color: Color(0xFF999999)),
             borderRadius: BorderRadius.circular(50),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
@@ -387,7 +387,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                              color: Color.fromARGB(255, 255, 255, 255),
+                              color: const Color.fromARGB(255, 255, 255, 255),
                               borderRadius: BorderRadius.circular(4.0),
                               boxShadow: const [
                                 BoxShadow(

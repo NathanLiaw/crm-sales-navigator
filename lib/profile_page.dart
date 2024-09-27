@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
-import 'package:sales_navigator/cart_page.dart';
-import 'package:sales_navigator/home_page.dart';
-import 'package:sales_navigator/notification_page.dart';
-import 'package:sales_navigator/starting_page.dart';
-import 'package:sales_navigator/login_page.dart';
-import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_order_page.dart';
-import 'package:sales_navigator/sales_order.dart';
 import 'about_us_page.dart';
 import 'account_setting_page.dart';
 import 'contact_us_page.dart';
@@ -169,11 +161,11 @@ class _ProfilePageState extends State<ProfilePage> {
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),
-        decoration: BoxDecoration(),
+        decoration: const BoxDecoration(),
         child: ListTile(
           leading: Icon(
             icon,
-            color: Color(0xff0175FF),
+            color: const Color(0xff0175FF),
           ),
           title: Text(title),
         ),

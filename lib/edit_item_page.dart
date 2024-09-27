@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
@@ -327,15 +326,15 @@ class _EditItemPageState extends State<EditItemPage> {
                     });
                   },
                   style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsets>(
+                    padding: WidgetStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        WidgetStateProperty.all<Color>(Colors.white),
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                         side: const BorderSide(color: Colors.red),
@@ -356,16 +355,16 @@ class _EditItemPageState extends State<EditItemPage> {
                     updatePriceAndAuthority();
                   },
                   style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsets>(
+                    padding: WidgetStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
-                    backgroundColor: MaterialStateProperty.all<Color>(
+                    backgroundColor: WidgetStateProperty.all<Color>(
                       const Color(0xff0069ba),
                     ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       ),

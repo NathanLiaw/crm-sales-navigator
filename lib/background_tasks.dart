@@ -1,9 +1,9 @@
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
-import 'package:sales_navigator/api/firebase_api.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:developer' as developer;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -28,10 +28,9 @@ void callbackDispatcher() {
 
 Future<void> checkOrderStatusAndNotify() async {
   MySqlConnection? conn;
-  print('Starting checkOrderStatusAndNotify');
+  developer.log('Starting checkOrderStatusAndNotify');
   try {
     conn = await connectToDatabase();
-    print('Connected to database');
     var results = await conn.query('''
   SELECT id, customer_company_name, buyer_id, status, last_checked_status 
   FROM cart 
@@ -40,34 +39,34 @@ Future<void> checkOrderStatusAndNotify() async {
     AND status IS NOT NULL 
     AND last_checked_status IS NOT NULL
 ''');
-    print('Found ${results.length} cart items');
+    developer.log('Found ${results.length} cart items');
 
     for (var row in results) {
-      // print('Raw row data: $row');
+      // developer.log('Raw row data: $row');
       var orderId = row['id'];
       var customerName = row['customer_company_name'] as String?;
       var salesmanId = row['buyer_id'] as int?;
       var currentStatus = row['status'];
       var lastCheckedStatus = row['last_checked_status'];
 
-      // print(
+      // developer.log(
       //     'Processing order: $orderId, Current status: $currentStatus, Last checked status: $lastCheckedStatus');
-      // print('orderId: $orderId, type: ${orderId.runtimeType}');
-      // print('salesmanId: $salesmanId, type: ${salesmanId.runtimeType}');
+      // developer.log('orderId: $orderId, type: ${orderId.runtimeType}');
+      // developer.log('salesmanId: $salesmanId, type: ${salesmanId.runtimeType}');
 
       if (orderId == null ||
           customerName == null ||
           currentStatus == null ||
           lastCheckedStatus == null) {
-        print('Skipping row due to null values');
+        developer.log('Skipping row due to null values');
         continue;
       }
 
-      print(
+      developer.log(
           'Processing order: $orderId, Current status: $currentStatus, Last checked status: $lastCheckedStatus');
 
       if (currentStatus != lastCheckedStatus) {
-        print(
+        developer.log(
             'Status changed from $lastCheckedStatus to $currentStatus for order $orderId');
         await _generateNotification(
             conn,
@@ -90,27 +89,27 @@ Future<void> checkOrderStatusAndNotify() async {
         // Update last_checked_status
         await conn.query('UPDATE cart SET last_checked_status = ? WHERE id = ?',
             [currentStatus, orderId]);
-        print('Updated last_checked_status in database for order $orderId');
+        developer.log('Updated last_checked_status in database for order $orderId');
       } else {
-        print('No status change for order $orderId');
+        developer.log('No status change for order $orderId');
       }
     }
   } catch (e) {
-    print('Error in checkOrderStatusAndNotify: $e');
+    developer.log('Error in checkOrderStatusAndNotify: $e');
   } finally {
     if (conn != null) {
       await conn.close();
     }
   }
-  print('Finished checkOrderStatusAndNotify');
+  developer.log('Finished checkOrderStatusAndNotify');
 }
 
 Future<void> checkTaskDueDatesAndNotify() async {
   MySqlConnection? conn;
-  print('Starting checkTaskDueDatesAndNotify');
+  developer.log('Starting checkTaskDueDatesAndNotify');
   try {
     conn = await connectToDatabase();
-    print('Connected to database');
+    developer.log('Connected to database');
 
     var results = await conn.query('''
       SELECT t.id, t.title, t.due_date, t.lead_id, sl.salesman_id, sl.customer_name
@@ -121,10 +120,9 @@ Future<void> checkTaskDueDatesAndNotify() async {
         AND t.due_date > NOW()
     ''');
 
-    print('Found ${results.length} tasks with upcoming due dates');
+    developer.log('Found ${results.length} tasks with upcoming due dates');
 
     for (var row in results) {
-      var taskId = row['id'] as int;
       var taskTitle = row['title'] as String;
       var dueDate = row['due_date'] as DateTime;
       var leadId = row['lead_id'] as int;
@@ -139,21 +137,21 @@ Future<void> checkTaskDueDatesAndNotify() async {
           notificationTitle, notificationBody, leadId, 'TASK_DUE_SOON');
     }
   } catch (e) {
-    print('Error in checkTaskDueDatesAndNotify: $e');
+    developer.log('Error in checkTaskDueDatesAndNotify: $e');
   } finally {
     if (conn != null) {
       await conn.close();
     }
   }
-  print('Finished checkTaskDueDatesAndNotify');
+  developer.log('Finished checkTaskDueDatesAndNotify');
 }
 
 Future<void> checkNewSalesLeadsAndNotify() async {
   MySqlConnection? conn;
-  print('Starting checkNewSalesLeadsAndNotify');
+  developer.log('Starting checkNewSalesLeadsAndNotify');
   try {
     conn = await connectToDatabase();
-    print('Connected to database');
+    developer.log('Connected to database');
 
     var results = await conn.query('''
       SELECT id, customer_name, salesman_id
@@ -161,7 +159,7 @@ Future<void> checkNewSalesLeadsAndNotify() async {
       WHERE DATE(created_date) = CURDATE()
     ''');
 
-    print('Found ${results.length} new sales leads today');
+    developer.log('Found ${results.length} new sales leads today');
 
     for (var row in results) {
       var leadId = row['id'] as int;
@@ -176,13 +174,13 @@ Future<void> checkNewSalesLeadsAndNotify() async {
           notificationTitle, notificationBody, leadId, 'NEW_SALES_LEAD');
     }
   } catch (e) {
-    print('Error in checkNewSalesLeadsAndNotify: $e');
+    developer.log('Error in checkNewSalesLeadsAndNotify: $e');
   } finally {
     if (conn != null) {
       await conn.close();
     }
   }
-  print('Finished checkNewSalesLeadsAndNotify');
+  developer.log('Finished checkNewSalesLeadsAndNotify');
 }
 
 // Generate status change notification
@@ -214,16 +212,16 @@ Future<void> _generateNotification(MySqlConnection conn, LeadItem leadItem,
         'ORDER_STATUS_CHANGED',
       ],
     );
-    print(
+    developer.log(
         'Inserted notification into database. Affected rows: ${result.affectedRows}');
 
     await showLocalNotification(
       'Order Status Changed',
       'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.',
     );
-    print('Local notification sent');
+    developer.log('Local notification sent');
   } catch (e) {
-    print('Error generating notification: $e');
+    developer.log('Error generating notification: $e');
   }
 }
 
@@ -241,30 +239,16 @@ Future<void> _generateTaskandSalesLeadNotification(
       'INSERT INTO notifications (salesman_id, title, description, related_lead_id, type) VALUES (?, ?, ?, ?, ?)',
       [salesmanId, title, description, leadId, type],
     );
-    print(
+    developer.log(
         'Inserted notification into database. Affected rows: ${result.affectedRows}');
 
     await showLocalNotification(title, description);
-    print('Local notification sent');
+    developer.log('Local notification sent');
   } catch (e) {
-    print('Error generating task notification: $e');
+    developer.log('Error generating task notification: $e');
   }
 }
 
-Future<String> _fetchSalesOrderStatus(
-    MySqlConnection conn, String salesOrderId) async {
-  try {
-    var results = await conn.query(
-        'SELECT status FROM cart WHERE id = ?', [int.parse(salesOrderId)]);
-    if (results.isNotEmpty) {
-      return results.first['status'] as String;
-    }
-    return 'Unknown';
-  } catch (e) {
-    print('Error fetching sales order status: $e');
-    return 'Error';
-  }
-}
 
 Future<void> showLocalNotification(String title, String body) async {
   const AndroidNotificationDetails androidPlatformChannelSpecifics =

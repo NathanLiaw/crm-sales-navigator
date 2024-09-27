@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/login_page.dart';
 
 class StartingPage extends StatelessWidget {
+  const StartingPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,12 +40,12 @@ class StartingPage extends StatelessWidget {
                   width: 300,
                   height: 100,
                 ),
-                SizedBox(height: 50),
-                Text(
+                const SizedBox(height: 50),
+                const Text(
                   "Let's get started.",
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
                     // Navigate to LoginPage
@@ -52,13 +54,13 @@ class StartingPage extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => LoginPage()),
                     );
                   },
-                  child: Text(
-                    'Login',
-                    style: TextStyle(color: Colors.white),
-                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ],

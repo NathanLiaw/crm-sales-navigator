@@ -52,14 +52,14 @@ class DataAnalyticsPage extends StatelessWidget {
                     )),
                 Container(
                   height: 78,
-                  padding: EdgeInsets.only(left: 12, bottom: 2),
+                  padding: const EdgeInsets.only(left: 12, bottom: 2),
                   child: Column(
                     children: [
-                      Spacer(),
+                      const Spacer(),
                       Text(
                         'Sales Forecast',
                         style: GoogleFonts.inter(
-                          textStyle: TextStyle(letterSpacing: -0.8),
+                          textStyle: const TextStyle(letterSpacing: -0.8),
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
                           color: const Color.fromARGB(255, 255, 255, 255),

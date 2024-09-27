@@ -59,7 +59,7 @@ class EngagementLeadItem extends StatelessWidget {
       child: Container(
         height: 210,
         decoration: BoxDecoration(
-            image: DecorationImage(
+            image: const DecorationImage(
               image: ResizeImage(AssetImage('asset/bttm_start.png'),
                   width: 108, height: 78),
               alignment: Alignment.bottomLeft,
@@ -94,7 +94,7 @@ class EngagementLeadItem extends StatelessWidget {
                   //   ),
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 170,
                     child: Text(
                       leadItem.customerName,
@@ -104,7 +104,7 @@ class EngagementLeadItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Row(
                     children: [
                       Container(
@@ -112,7 +112,7 @@ class EngagementLeadItem extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Color.fromARGB(71, 148, 255, 223),
+                          color: const Color.fromARGB(71, 148, 255, 223),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -124,7 +124,7 @@ class EngagementLeadItem extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       PopupMenuButton<String>(
                         onSelected: (String value) async {
                           if (value == 'delete') {
@@ -248,10 +248,10 @@ class EngagementLeadItem extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.phone,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 100,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
@@ -278,10 +278,10 @@ class EngagementLeadItem extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.email,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 160,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty
@@ -309,12 +309,12 @@ class EngagementLeadItem extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${leadItem.createdDate}',
+                    leadItem.createdDate,
                     style: const TextStyle(
                         color: Color.fromARGB(255, 255, 255, 255),
                         fontSize: 14,
@@ -322,7 +322,7 @@ class EngagementLeadItem extends StatelessWidget {
                   ),
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      iconStyleData: IconStyleData(
+                      iconStyleData: const IconStyleData(
                           icon: Icon(Icons.arrow_drop_down),
                           iconDisabledColor: Colors.white,
                           iconEnabledColor: Colors.white),

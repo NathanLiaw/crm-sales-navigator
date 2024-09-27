@@ -10,7 +10,6 @@ import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'customer.dart';
-import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -100,7 +99,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       String areaName = await UtilityFunction.getAreaNameById(areaId);
 
       // Calculate final total using fetched tax values
-      double finalTotal = widget.subtotal * (1 + gst + sst);
+      // double total = widget.subtotal * (1 + gst + sst);
       double gstAmount = widget.subtotal * gst;
       double sstAmount = widget.subtotal * sst;
 
@@ -587,13 +586,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           ElevatedButton(
             style: ButtonStyle(
               backgroundColor:
-                  MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
               ),
-              minimumSize: MaterialStateProperty.all<Size>(
+              minimumSize: WidgetStateProperty.all<Size>(
                 const Size(120, 40),
               ),
             ),

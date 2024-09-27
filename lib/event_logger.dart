@@ -1,5 +1,6 @@
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
+import 'dart:developer' as developer;
 
 class EventLogger {
   static Future<void> logEvent(
@@ -10,14 +11,14 @@ class EventLogger {
       var result = await conn.query(
           'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), ?)',
           [salesmanId, activityDescription, activityType, leadId]);
-      print('Event logged successfully. Inserted ID: ${result.insertId}');
+      // developer.log('Event logged successfully. Inserted ID: ${result.insertId}');
     } catch (e) {
-      print('Error logging event: $e');
-      print('Attempted to log event with:');
-      print('Salesman ID: $salesmanId');
-      print('Activity Description: $activityDescription');
-      print('Activity Type: $activityType');
-      print('Lead ID: $leadId');
+      developer.log('Error logging event: $e');
+      developer.log('Attempted to log event with:');
+      developer.log('Salesman ID: $salesmanId');
+      developer.log('Activity Description: $activityDescription');
+      developer.log('Activity Type: $activityType');
+      developer.log('Lead ID: $leadId');
     } finally {
       await conn.close();
     }

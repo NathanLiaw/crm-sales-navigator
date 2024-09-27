@@ -320,7 +320,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStatusIndicator('Complete', Color(0xFF487C08), complete),
+            _buildStatusIndicator('Complete', const Color(0xFF487C08), complete),
             _buildStatusIndicator('Pending', Colors.blue, pending),
             _buildStatusIndicator('Void', Colors.red, voided),
           ],
@@ -365,7 +365,7 @@ class OrderStatusPainter extends CustomPainter {
     const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
 
     Paint paintComplete = Paint()
-      ..color = Color(0xFF487C08)
+      ..color = const Color(0xFF487C08)
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;

@@ -3,7 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerSalesReport extends StatefulWidget {
   final String username;
@@ -246,24 +245,24 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
         });
       },
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xFF047CBD)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),

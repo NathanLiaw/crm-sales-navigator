@@ -9,7 +9,7 @@ class FilterCategoriesScreen extends StatefulWidget {
   final List<int> initialSelectedSubCategoryIds;
   final List<int> initialSelectedBrandIds;
 
-  FilterCategoriesScreen({
+  const FilterCategoriesScreen({super.key,
     required this.initialSelectedSubCategoryIds,
     required this.initialSelectedBrandIds,
   });
@@ -46,7 +46,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           'Filter Categories',
           style: GoogleFonts.inter(
@@ -58,57 +58,12 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
         backgroundColor: const Color(0xff0175FF),
       ),
       body: _categories.isEmpty
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
-                // Display categories with expandable subcategories
-                ExpansionTile(
-                  title: Text(
-                    'Categories',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  children: _categories.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final category = entry.value;
-                    return ExpansionTile(
-                      title: Text(
-                        category.category,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      children: _subCategories[index].map((subCategoryData) {
-                        return CheckboxListTile(
-                          title: Text(
-                            subCategoryData.subCategory,
-                            style: TextStyle(
-                              color: Colors.black,
-                            ),
-                          ),
-                          value: selectedSubCategoryIds
-                              .contains(subCategoryData.id),
-                          onChanged: (selected) {
-                            setState(() {
-                              if (selected!) {
-                                selectedSubCategoryIds.add(subCategoryData.id);
-                              } else {
-                                selectedSubCategoryIds
-                                    .remove(subCategoryData.id);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    );
-                  }).toList(),
-                ),
                 // Display brands
                 ExpansionTile(
-                  title: Text(
+                  title: const Text(
                     'Brands',
                     style: TextStyle(
                       fontSize: 18,
@@ -131,11 +86,56 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                     );
                   }).toList(),
                 ),
+                // Display categories with expandable subcategories
+                ExpansionTile(
+                  title: const Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  children: _categories.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final category = entry.value;
+                    return ExpansionTile(
+                      title: Text(
+                        category.category,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      children: _subCategories[index].map((subCategoryData) {
+                        return CheckboxListTile(
+                          title: Text(
+                            subCategoryData.subCategory,
+                            style: const TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
+                          value: selectedSubCategoryIds
+                              .contains(subCategoryData.id),
+                          onChanged: (selected) {
+                            setState(() {
+                              if (selected!) {
+                                selectedSubCategoryIds.add(subCategoryData.id);
+                              } else {
+                                selectedSubCategoryIds
+                                    .remove(subCategoryData.id);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
-        color: Color.fromARGB(255, 255, 255, 255),
+        color: const Color.fromARGB(255, 255, 255, 255),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -146,18 +146,18 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                   _selectedBrandIds.clear();
                 });
               },
-              child: Text(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
+                backgroundColor: const Color.fromARGB(255, 184, 10, 39),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+              child: const Text(
                 'Clear',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                 ),
-              ),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 38),
-                backgroundColor: Color.fromARGB(255, 184, 10, 39),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
             TextButton(
@@ -169,18 +169,18 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                   });
                 });
               },
-              child: Text(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
+                backgroundColor: const Color(0xff0175FF),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+              child: const Text(
                 'Apply',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                 ),
-              ),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 38),
-                backgroundColor: const Color(0xff0175FF),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
           ],

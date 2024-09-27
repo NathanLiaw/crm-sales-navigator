@@ -252,8 +252,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Void Order'),
-          content: SingleChildScrollView(
+          title: const Text('Confirm Void Order'),
+          content: const SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 Text('Are you sure you want to void this order?'),
@@ -262,22 +262,22 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text(
-                'Confirm',
-                style: TextStyle(color: Colors.white),
-              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 voidOrder();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
+              ),
+              child: const Text(
+                'Confirm',
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -290,7 +290,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff0175FF),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Order Details',
           style: TextStyle(color: Colors.white),
@@ -348,7 +348,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Widget _buildExpandableOrderInfo() {
     return Card(
       child: ExpansionTile(
-        title: Text('Order Information',
+        title: const Text('Order Information',
             style: TextStyle(fontWeight: FontWeight.bold)),
         children: [
           Padding(
@@ -385,7 +385,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             width: 100,
             child: Text(
               label,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -445,13 +445,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ? null
                       : RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
-                          side: BorderSide(color: Colors.red, width: 2),
+                          side: const BorderSide(color: Colors.red, width: 2),
                         ),
-                  minimumSize: Size(120, 40),
+                  minimumSize: const Size(120, 40),
                 ),
                 child: shouldHideVoidButton()
-                    ? SizedBox.shrink()
-                    : Text(
+                    ? const SizedBox.shrink()
+                    : const Text(
                         'Void',
                         style: TextStyle(
                             color: Colors.red, fontWeight: FontWeight.bold),

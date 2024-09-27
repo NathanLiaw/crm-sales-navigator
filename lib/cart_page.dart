@@ -492,7 +492,7 @@ class _CartPage extends State<CartPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Text(
                   'Customer Details',
                   style: GoogleFonts.inter(
@@ -556,7 +556,7 @@ class _CartPage extends State<CartPage> {
               if (cartItems.isEmpty)
                 Container(
                   color: Colors.white,
-                  child: Padding(
+                  child: const Padding(
                     padding: EdgeInsets.only(
                       top: 16.0,
                       bottom: 16.0,
@@ -1142,7 +1142,7 @@ class _CartPage extends State<CartPage> {
                               children: [
                                 Text('Total: $formattedTotal',
                                     style: GoogleFonts.inter(
-                                      color: Color(0xff0175FF),
+                                      color: const Color(0xff0175FF),
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
                                     )),
@@ -1262,8 +1262,8 @@ class _CartPage extends State<CartPage> {
                             },
                             style: ButtonStyle(
                               backgroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.red),
-                              shape: MaterialStateProperty.all<
+                                  WidgetStateProperty.all<Color>(Colors.red),
+                              shape: WidgetStateProperty.all<
                                   RoundedRectangleBorder>(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -1349,15 +1349,15 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Color(0xff0175FF)),
+                          backgroundColor: WidgetStateProperty.all<Color>(
+                              const Color(0xff0175FF)),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(120,
                                 40), // Adjust the minimum width and height of the button
                           ),
@@ -1413,7 +1413,7 @@ class _CartPage extends State<CartPage> {
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Color.fromARGB(255, 196, 196, 196)),
+            border: Border.all(color: const Color.fromARGB(255, 196, 196, 196)),
             boxShadow: const [
               BoxShadow(
                 blurStyle: BlurStyle.normal,
@@ -1428,7 +1428,7 @@ class _CartPage extends State<CartPage> {
           title: Text(
             'Select Customer',
             style: GoogleFonts.inter(
-              color: Color(0xff0175FF),
+              color: const Color(0xff0175FF),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),

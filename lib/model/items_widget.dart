@@ -282,7 +282,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                         child: Column(
                           children: [
                             Container(
-                              margin: EdgeInsets.only(left: 12),
+                              margin: const EdgeInsets.only(left: 12),
                               child: Text(
                                 productName,
                                 overflow: TextOverflow.ellipsis,
