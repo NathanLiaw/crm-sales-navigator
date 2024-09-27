@@ -35,7 +35,7 @@ class OrderSubmittedPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'Order Submitted',
@@ -125,7 +125,7 @@ class OrderSubmittedPage extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff004c87)),
+                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0175FF)),
                           shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
@@ -160,7 +160,7 @@ class OrderSubmittedPage extends StatelessWidget {
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                               side: const BorderSide(
-                                color: Color(0xff004c87),
+                                color: Color(0xff0175FF),
                                 width: 1.0,
                               ),
                             ),
@@ -175,7 +175,7 @@ class OrderSubmittedPage extends StatelessWidget {
                         child: const Text(
                           'View Order',
                           style: TextStyle(
-                            color: Color(0xff004c87),
+                            color: Color(0xff0175FF),
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),

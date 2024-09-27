@@ -7,6 +7,7 @@ import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/customer_insight.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_navigator/customer_insights.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/notification_page.dart';
@@ -1499,7 +1500,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerInsightPage(
+            builder: (context) => CustomerInsightsPage(
               customerName: leadItem.customerName,
             ),
           ),

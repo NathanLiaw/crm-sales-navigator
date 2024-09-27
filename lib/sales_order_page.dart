@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
+import 'package:sales_navigator/customer_list.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
-import 'db_connection.dart';
-import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
@@ -157,9 +156,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     final Customer? result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CustomerDetails(
-          onSelectionChanged: _updateSelectedCustomer,
-        ),
+        builder: (context) => const CustomerList(),
       ),
     );
 
@@ -227,6 +224,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
       // Append query parameters to the URL
       apiUrl = apiUrl.replace(queryParameters: queryParams);
+      developer.log(apiUrl.toString());
 
       final response = await http.get(apiUrl);
 
@@ -770,6 +768,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildDateRangePicker(),
               IconButton(
@@ -794,24 +793,20 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           child: _buildSearchBar(),
         ),
         const SizedBox(width: 16.0),
-        // Select customer icon only on the right, with highlight when selected
+        // Select customer icon only on the right, always blue
         InkWell(
           onTap: _selectCustomer, // Allow user to select customer when tapped
           child: Container(
             height: 50.0,
             width: 50.0,
             decoration: BoxDecoration(
-              color: selectedCustomer == null
-                  ? Colors.white
-                  : const Color(0xFF047CBD), // Highlight if selected
+              color: const Color(0xff0175FF), // Always blue
               borderRadius: BorderRadius.circular(8.0),
               border: Border.all(color: Colors.grey),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.person,
-              color: selectedCustomer == null
-                  ? Colors.grey
-                  : Colors.white, // Change icon color when selected
+              color: Colors.white, // Always white icon
             ),
           ),
         ),
@@ -887,7 +882,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         Container(
           margin: const EdgeInsets.only(right: 12),
           alignment: Alignment.centerLeft,
-          width: 300,
           height: 43,
           decoration: BoxDecoration(
             color: const Color(0x503290E7),
@@ -1088,8 +1082,15 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       );
     }
 
-    String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
-    int orderId = int.parse(orderNumber);
+    // Safely attempt to parse orderNumber
+    String formattedOrderNumber = 'S${orderNumber.padLeft(7, '0')}';
+    int? orderId = int.tryParse(orderNumber);
+
+    if (orderId == null) {
+      // Handle invalid number, log an error or show a fallback UI
+      print('Invalid order number: $orderNumber');
+      return Container(); // Fallback widget to avoid crashes
+    }
 
     return GestureDetector(
       onTap: () async {
@@ -1105,23 +1106,22 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         elevation: 4,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 255, 255, 255),
-            borderRadius: BorderRadius.circular(4.0),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.0),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Stack(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Column(
@@ -1206,110 +1206,142 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          companyName,
+                          style: GoogleFonts.inter(
+                            textStyle: const TextStyle(letterSpacing: -0.8),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        // Creation date
+                        Text(
+                          'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Amount and copy button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'RM $amount',
+                              style: const TextStyle(
+                                color: Color(0xFF0175FF),
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy),
+                              onPressed: () async {
+                                await _showItemSelectionDialog(items);
+                              },
+                            ),
+                          ],
+                        ),
                       ],
                     ),
+                    // Status label
                     Positioned(
                       right: 6,
                       child: getStatusLabel(status),
                     ),
                   ],
                 ),
-              ),
-              ExpansionTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                title: const Text(
-                  'Items',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                children: [
-                  Container(
-                    color: const Color(0xFFE1F5FE),
+                const SizedBox(height: 8),
+                // Expansion tile for items
+                ExpansionTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  title: const Text(
+                    'Items',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  children: items
+                      .map((item) => Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
                     child: Column(
-                      children: items
-                          .map((item) => Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(
-                                                height: 2,
-                                              ),
-                                              Text(
-                                                item['product_name'],
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 16,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text(
-                                                    'UOM: ',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: Text(
-                                                      item['uom'],
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  const Text(
-                                                    'Qty: ',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    item['qty'].toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 2),
+                                  // Product name
+                                  Text(
+                                    item['product_name'],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // UOM and Quantity
+                                  Row(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'UOM: ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          item['uom'],
+                                          style: const TextStyle(
+                                            fontSize: 14,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    const Divider(color: Colors.grey),
-                                  ],
-                                ),
-                              ))
-                          .toList(),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Qty: ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        item['qty'].toString(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(color: Colors.grey),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ))
+                      .toList(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
