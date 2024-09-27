@@ -6,6 +6,7 @@ import 'package:sales_navigator/item_screen.dart';
 import 'package:sales_navigator/order_confirmation_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'customer.dart';
@@ -109,14 +110,15 @@ class _CartPage extends State<CartPage> {
     // Calculate final total using fetched tax values
     double finalTotal = 0.000;
     if (customerSelected) {
-      finalTotal = (calculatedSubtotal * (1 + gst + sst)) - (calculatedSubtotal * customer!.discountRate / 100);
-    }
-    else {
+      finalTotal = (calculatedSubtotal * (1 + gst + sst)) -
+          (calculatedSubtotal * customer!.discountRate / 100);
+    } else {
       finalTotal = calculatedSubtotal * (1 + gst + sst);
     }
 
     // Format the total and subtotal
-    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formatter =
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     String formattedTotal = formatter.format(finalTotal);
     String formattedSubtotal = formatter.format(calculatedSubtotal);
 
@@ -136,11 +138,14 @@ class _CartPage extends State<CartPage> {
 
       // Fetch product photos concurrently
       final List<Future<List<String>>> photoFutures = items.map((item) async {
-        final List<Map<String, dynamic>> photos = await getProductPhoto(item.productId);
+        final List<Map<String, dynamic>> photos =
+            await getProductPhoto(item.productId);
 
         // Convert the dynamic map entries to List<String>, ensuring type safety
-        return photos.map<String>((photo) => photo['photo1']?.toString() ?? '').toList();
-            }).toList();
+        return photos
+            .map<String>((photo) => photo['photo1']?.toString() ?? '')
+            .toList();
+      }).toList();
 
       // Wait for all photo fetch requests to complete
       final List<List<String>> photosList = await Future.wait(photoFutures);
@@ -152,7 +157,6 @@ class _CartPage extends State<CartPage> {
         productPhotos = photosList;
         calculateTotalAndSubTotal();
       });
-
     } catch (e) {
       developer.log('Error loading cart items and photos: $e', error: e);
     }
@@ -168,12 +172,15 @@ class _CartPage extends State<CartPage> {
     String order = 'created DESC';
     String field = '*';
 
-    List<Map<String, dynamic>> queryResults = await DatabaseHelper.readData(database, cartItemTableName, condition, order, field);
+    List<Map<String, dynamic>> queryResults = await DatabaseHelper.readData(
+        database, cartItemTableName, condition, order, field);
 
     // Initialize text controllers after fetching items
-    textControllers = List.generate(queryResults.length, (index) => TextEditingController());
+    textControllers =
+        List.generate(queryResults.length, (index) => TextEditingController());
 
-    List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+    List<CartItem> cartItems =
+        queryResults.map((map) => CartItem.fromMap(map)).toList();
 
     return cartItems;
   }
@@ -181,7 +188,8 @@ class _CartPage extends State<CartPage> {
   Future<List<Map<String, dynamic>>> getProductPhoto(int productId) async {
     try {
       final response = await http.get(
-        Uri.parse('https://haluansama.com/crm-sales/api/product/get_product_photo.php?productId=$productId'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/product/get_product_photo.php?productId=$productId'),
       );
 
       if (response.statusCode == 200) {
@@ -257,7 +265,9 @@ class _CartPage extends State<CartPage> {
       Map<String, dynamic> updateData = {
         'id': itemId,
         'qty': quantity,
-        'total': cartItems.firstWhere((element) => element.id == itemId).unitPrice * quantity,
+        'total':
+            cartItems.firstWhere((element) => element.id == itemId).unitPrice *
+                quantity,
       };
 
       int rowsAffected =
@@ -273,7 +283,8 @@ class _CartPage extends State<CartPage> {
   }
 
   void navigateToItemScreen(int selectedProductId) async {
-    final apiUrl = 'https://haluansama.com/crm-sales/api/product/get_product_by_id.php?id=$selectedProductId';
+    final apiUrl =
+        'https://haluansama.com/crm-sales/api/product/get_product_by_id.php?id=$selectedProductId';
 
     try {
       // Make an HTTP GET request to fetch the product details
@@ -283,7 +294,8 @@ class _CartPage extends State<CartPage> {
         final jsonResponse = json.decode(response.body);
 
         // Check if the status is success and product data is present
-        if (jsonResponse['status'] == 'success' && jsonResponse['product'] != null) {
+        if (jsonResponse['status'] == 'success' &&
+            jsonResponse['product'] != null) {
           Map<String, dynamic> product = jsonResponse['product'];
 
           // Extract the product details from the JSON response
@@ -311,10 +323,12 @@ class _CartPage extends State<CartPage> {
             ),
           );
         } else {
-          developer.log('Product not found or API returned error: ${jsonResponse['message']}');
+          developer.log(
+              'Product not found or API returned error: ${jsonResponse['message']}');
         }
       } else {
-        developer.log('Failed to fetch product details: ${response.statusCode}');
+        developer
+            .log('Failed to fetch product details: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching product details: $e', error: e);
@@ -330,7 +344,8 @@ class _CartPage extends State<CartPage> {
 
   Future<Map<int, double>> retrieveLatestPrices(List<int> productIds) async {
     // API URL
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/sales_order/get_product_prices.php';
+    const String apiUrl =
+        'https://haluansama.com/crm-sales/api/sales_order/get_product_prices.php';
 
     // Prepare the JSON body
     final Map<String, dynamic> body = {
@@ -360,7 +375,9 @@ class _CartPage extends State<CartPage> {
         // Populate the latest prices map
         pricesData.forEach((key, value) {
           // Ensure the value is a number and convert to double
-          latestPrices[int.parse(key)] = (value is String) ? double.tryParse(value) ?? 0.0 : value.toDouble();
+          latestPrices[int.parse(key)] = (value is String)
+              ? double.tryParse(value) ?? 0.0
+              : value.toDouble();
         });
 
         return latestPrices;
@@ -368,7 +385,8 @@ class _CartPage extends State<CartPage> {
         throw Exception(data['message']);
       }
     } else {
-      throw Exception('Failed to load product prices: ${response.reasonPhrase}');
+      throw Exception(
+          'Failed to load product prices: ${response.reasonPhrase}');
     }
   }
 
@@ -393,7 +411,8 @@ class _CartPage extends State<CartPage> {
         if (latestPrices.containsKey(item.productId)) {
           item.previousPrice = latestPrices[item.productId]!;
         } else {
-          developer.log('No previous price found for product ID ${item.productId}');
+          developer
+              .log('No previous price found for product ID ${item.productId}');
         }
       }
     });
@@ -410,7 +429,8 @@ class _CartPage extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formatter =
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -441,7 +461,7 @@ class _CartPage extends State<CartPage> {
                 ),
               ],
             ),
-            backgroundColor: const Color(0xff004c87),
+            backgroundColor: const Color(0xff0175FF),
             centerTitle: true,
             actions: [
               TextButton(
@@ -471,11 +491,11 @@ class _CartPage extends State<CartPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Text(
                   'Customer Details',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -484,10 +504,14 @@ class _CartPage extends State<CartPage> {
               const SizedBox(height: 2),
               customerSelected
                   ? CustomerInfo(
-                initialCustomer: customer!,
-                onCustomerUpdated: updateCustomer, // Pass callback to update customer
-                )
-                  : _buildSelectCustomerCard(context),
+                      initialCustomer: customer!,
+                      onCustomerUpdated:
+                          updateCustomer, // Pass callback to update customer
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: _buildSelectCustomerCard(context),
+                    ),
               const SizedBox(height: 32),
               Padding(
                 padding: const EdgeInsets.only(
@@ -503,7 +527,8 @@ class _CartPage extends State<CartPage> {
                           value: selectAll,
                           onChanged: (bool? value) {
                             setState(() {
-                              selectAll = value ?? false; // Toggle "Select All" state
+                              selectAll =
+                                  value ?? false; // Toggle "Select All" state
 
                               if (selectAll) {
                                 // Select all cart items
@@ -529,8 +554,7 @@ class _CartPage extends State<CartPage> {
               const SizedBox(height: 8),
               // Display cart items dynamically
               if (cartItems.isEmpty)
-                const Card(
-                  elevation: 6,
+                Container(
                   color: Colors.white,
                   child: Padding(
                     padding: EdgeInsets.only(
@@ -582,17 +606,20 @@ class _CartPage extends State<CartPage> {
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text("Confirm Removal"),
-                                content: Text("Are you sure you want to remove ${item.productName} from the cart?"),
+                                content: Text(
+                                    "Are you sure you want to remove ${item.productName} from the cart?"),
                                 actions: [
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(false); // User canceled the action
+                                      Navigator.of(context).pop(
+                                          false); // User canceled the action
                                     },
                                     child: const Text("Cancel"),
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(true); // User confirmed the action
+                                      Navigator.of(context).pop(
+                                          true); // User confirmed the action
                                     },
                                     child: const Text("Remove"),
                                   ),
@@ -631,9 +658,19 @@ class _CartPage extends State<CartPage> {
                           onTap: () {
                             navigateToItemScreen(item.productId);
                           },
-                          child: Card(
-                            elevation: 2,
-                            color: Colors.white,
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    blurStyle: BlurStyle.normal,
+                                    color: Color.fromARGB(75, 117, 117, 117),
+                                    spreadRadius: 0.1,
+                                    blurRadius: 2,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ]),
                             child: Padding(
                               padding: const EdgeInsets.only(
                                 top: 8.0,
@@ -687,7 +724,7 @@ class _CartPage extends State<CartPage> {
                                           children: [
                                             Flexible(
                                               child: SizedBox(
-                                                width: 200,
+                                                width: 180,
                                                 child: Text(
                                                   item.productName,
                                                   style: const TextStyle(
@@ -1103,13 +1140,12 @@ class _CartPage extends State<CartPage> {
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Total: $formattedTotal',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                Text('Total: $formattedTotal',
+                                    style: GoogleFonts.inter(
+                                      color: Color(0xff0175FF),
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    )),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Subtotal: $formattedSubtotal',
@@ -1135,39 +1171,58 @@ class _CartPage extends State<CartPage> {
                                       title: const Text('Confirm Delete'),
                                       content: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          const Text('Are you sure you want to delete the following items?'),
+                                          const Text(
+                                              'Are you sure you want to delete the following items?'),
                                           const SizedBox(height: 10),
                                           ConstrainedBox(
                                             constraints: const BoxConstraints(
-                                              maxHeight: 200.0, // Limit height to 200px for scrollable content
+                                              maxHeight:
+                                                  200.0, // Limit height to 200px for scrollable content
                                             ),
                                             child: Scrollbar(
                                               thumbVisibility: true,
                                               child: SingleChildScrollView(
                                                 child: Padding(
-                                                  padding: const EdgeInsets.only(right: 8.0),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
                                                   child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: selectedCartItems.asMap().entries.map((entry) {
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: selectedCartItems
+                                                        .asMap()
+                                                        .entries
+                                                        .map((entry) {
                                                       int index = entry.key;
                                                       var item = entry.value;
                                                       return Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
                                                         children: [
                                                           Text(
                                                             item.productName,
-                                                            textAlign: TextAlign.start,
-                                                            style: const TextStyle(
+                                                            textAlign:
+                                                                TextAlign.start,
+                                                            style:
+                                                                const TextStyle(
                                                               fontSize: 16,
                                                             ),
                                                           ),
-                                                          if (index < selectedCartItems.length - 1)
+                                                          if (index <
+                                                              selectedCartItems
+                                                                      .length -
+                                                                  1)
                                                             const Divider(
                                                               thickness: 1.0,
-                                                              color: Colors.grey,
+                                                              color:
+                                                                  Colors.grey,
                                                             ),
                                                         ],
                                                       );
@@ -1179,11 +1234,11 @@ class _CartPage extends State<CartPage> {
                                           ),
                                         ],
                                       ),
-
                                       actions: [
                                         TextButton(
                                           onPressed: () {
-                                            Navigator.pop(context); // Close the dialog
+                                            Navigator.pop(
+                                                context); // Close the dialog
                                           },
                                           child: const Text('Cancel'),
                                         ),
@@ -1191,7 +1246,8 @@ class _CartPage extends State<CartPage> {
                                           onPressed: () {
                                             // Perform the delete action
                                             deleteSelectedCartItems();
-                                            Navigator.pop(context); // Close the dialog
+                                            Navigator.pop(
+                                                context); // Close the dialog
                                             setState(() {
                                               editCart = false;
                                             });
@@ -1205,8 +1261,10 @@ class _CartPage extends State<CartPage> {
                               }
                             },
                             style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
-                              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                              backgroundColor:
+                                  MaterialStateProperty.all<Color>(Colors.red),
+                              shape: MaterialStateProperty.all<
+                                  RoundedRectangleBorder>(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
                                 ),
@@ -1291,14 +1349,17 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
-                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              Color(0xff0175FF)),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: WidgetStateProperty.all<Size>(
-                            const Size(120, 40), // Adjust the minimum width and height of the button
+                          minimumSize: MaterialStateProperty.all<Size>(
+                            const Size(120,
+                                40), // Adjust the minimum width and height of the button
                           ),
                         ),
                         child: const Text(
@@ -1347,11 +1408,31 @@ class _CartPage extends State<CartPage> {
           });
         }
       },
-      child: const Card(
-        color: Colors.white,
-        elevation: 4,
+      child: Container(
+        width: 368,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Color.fromARGB(255, 196, 196, 196)),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 2,
+                offset: Offset(0, 1),
+              ),
+            ]),
         child: ListTile(
-          title: Text('Select Customer'),
+          titleAlignment: ListTileTitleAlignment.center,
+          title: Text(
+            'Select Customer',
+            style: GoogleFonts.inter(
+              color: Color(0xff0175FF),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ),
     );
@@ -1415,8 +1496,7 @@ class _CustomerInfoState extends State<CustomerInfo> {
                   Text(
                     _customer.companyName,
                     style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${_customer.customerRate}: ${_customer.discountRate.toString()}% Discount',
@@ -1481,4 +1561,3 @@ class _CustomerInfoState extends State<CustomerInfo> {
     );
   }
 }
-

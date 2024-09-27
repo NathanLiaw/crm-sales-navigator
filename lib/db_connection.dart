@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mysql1/mysql1.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -5,14 +6,35 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<MySqlConnection> connectToDatabase() async {
   final settings = ConnectionSettings(
-    // Database
-    host: dotenv.env['LOCAL_DB_HOST']!,
-    port: dotenv.env['LOCAL_DB_PORT'] == null
+    // Aiven Database
+    // host: 'fyh-crm-sm.h.aivencloud.com',
+    // port: 19991,
+    // user: 'avnadmin',
+    // password: 'AVNS_Iqrl_2qmZTRxm7WrA30',
+    // db: 'fyh',
+
+    // Localhost Database
+    // host: '10.0.2.2',
+    // port: 3306,
+    // user: 'root',
+    // password: '901022',
+    // db: 'fyh',
+
+    // // Localhost Database
+    // host: '10.0.2.2',
+    // port: 3306,
+    // user: 'root',
+    // password: '1234',
+    // db: 'fyh',
+
+    // cPanel Database
+    host: dotenv.env['CPANEL_DB_HOST']!,
+    port: dotenv.env['CPANEL_DB_PORT'] == null
         ? 3306
-        : int.parse(dotenv.env['LOCAL_DB_PORT']!),
-    user: dotenv.env['LOCAL_DB_USER']!,
-    password: dotenv.env['LOCAL_DB_PASSWORD']!,
-    db: dotenv.env['LOCAL_DB_NAME']!,
+        : int.parse(dotenv.env['CPANEL_DB_PORT']!),
+    user: dotenv.env['CPANEL_DB_USER']!,
+    password: dotenv.env['CPANEL_DB_PASSWORD']!,
+    db: dotenv.env['CPANEL_DB_NAME']!,
   );
 
   try {
@@ -26,12 +48,12 @@ Future<MySqlConnection> connectToDatabase() async {
 }
 
 Future<List<Map<String, dynamic>>> readData(
-    MySqlConnection connection,
-    String tableName,
-    String condition,
-    String order,
-    String field,
-    ) async {
+  MySqlConnection connection,
+  String tableName,
+  String condition,
+  String order,
+  String field,
+) async {
   String sqlQuery = '';
   String sqlOrder = '';
 
@@ -63,8 +85,7 @@ Future<List<Map<String, dynamic>>> readData(
 
       // Convert DateTime to String
       if (value is DateTime) {
-        final dateString =
-        value.toString();
+        final dateString = value.toString();
         rowMap[key] = dateString;
       }
     });
@@ -95,36 +116,36 @@ Future<int> countData(
 
 Future<Map<String, dynamic>> readFirst(MySqlConnection connection,
     String tableName, String condition, String order) async {
-    String sqlQuery = '';
-    String sqlOrder = '';
+  String sqlQuery = '';
+  String sqlOrder = '';
 
-    if (condition.isNotEmpty) {
-      sqlQuery = 'WHERE $condition';
-    }
+  if (condition.isNotEmpty) {
+    sqlQuery = 'WHERE $condition';
+  }
 
-    if (order.isNotEmpty) {
-      sqlOrder = 'ORDER BY $order';
-    }
+  if (order.isNotEmpty) {
+    sqlOrder = 'ORDER BY $order';
+  }
 
-    try {
-      final queryResult = await connection
-          .query("SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1");
-      if (queryResult.isNotEmpty) {
-        return Map<String, dynamic>.from(queryResult.first.fields);
-      } else {
-        return {};
-      }
-    } catch (e) {
-      developer.log('Error reading first row: $e', error: e);
+  try {
+    final queryResult = await connection
+        .query("SELECT * FROM $tableName $sqlQuery $sqlOrder LIMIT 1");
+    if (queryResult.isNotEmpty) {
+      return Map<String, dynamic>.from(queryResult.first.fields);
+    } else {
       return {};
     }
+  } catch (e) {
+    developer.log('Error reading first row: $e', error: e);
+    return {};
+  }
 }
 
 Future<bool> saveData(MySqlConnection connection, String tableName,
     Map<String, dynamic> data) async {
   try {
     final columnsResult =
-    await connection.query('SHOW COLUMNS FROM $tableName');
+        await connection.query('SHOW COLUMNS FROM $tableName');
     final columns = columnsResult.map((row) => row['Field'] as String).toList();
 
     final List<String> filteredColumns = [];
@@ -139,14 +160,14 @@ Future<bool> saveData(MySqlConnection connection, String tableName,
 
     final String strColumns = filteredColumns.join(', ');
     final String placeholders =
-    List.filled(filteredColumns.length, '?').join(', ');
+        List.filled(filteredColumns.length, '?').join(', ');
 
     String sql;
     List<dynamic> params;
     if (data.containsKey('id')) {
       final id = data['id'];
       final List<String> updates =
-      filteredColumns.map((column) => '$column = ?').toList();
+          filteredColumns.map((column) => '$column = ?').toList();
       final String strUpdates = updates.join(', ');
       sql = 'UPDATE $tableName SET $strUpdates WHERE id = ?';
       params = [...filteredValues, id];

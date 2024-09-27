@@ -311,9 +311,20 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
           ),
         );
       },
-      child: Card(
-        color: const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
+      child: Container(
+        height: 248,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ]),
         margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -340,13 +351,13 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: Color.fromARGB(71, 148, 255, 223),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           'RM$formattedAmount',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Color(0xff008A64),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -477,7 +488,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       children: [
                         const Icon(
                           Icons.phone,
-                          color: Color(0xff0069BA),
+                          color: const Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
                         Container(
@@ -488,7 +499,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontSize: 12,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -498,7 +509,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: widget.leadItem.emailAddress.isNotEmpty
                         ? () =>
@@ -508,18 +519,18 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       children: [
                         const Icon(
                           Icons.email,
-                          color: Color(0xff0069BA),
+                          color: const Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          width: 150,
+                          width: 160,
                           child: Text(
                             widget.leadItem.emailAddress.isNotEmpty
                                 ? widget.leadItem.emailAddress
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontSize: 12,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -669,11 +680,25 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  Text(
+                    'Created on: ${widget.leadItem.createdDate}',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 0, 0, 0),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Spacer(),
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
+                      iconStyleData: IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconDisabledColor: Colors.white,
+                          iconEnabledColor: Colors.white),
                       isExpanded: true,
                       hint: const Text(
                         'Negotiation',
+                        style: TextStyle(fontSize: 12, color: Colors.white),
                       ),
                       items: ['Negotiation', 'Order Processing', 'Closed']
                           .map((item) => DropdownMenuItem<String>(
@@ -684,7 +709,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                 ),
                               ))
                           .toList(),
-                      value: 'Negotiation',
+                      value: widget.leadItem.selectedValue,
                       onChanged: (value) {
                         if (value == 'Closed') {
                           widget.onComplete(widget.leadItem);
@@ -694,9 +719,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       },
                       buttonStyleData: const ButtonStyleData(
                           padding: EdgeInsets.symmetric(horizontal: 16),
-                          height: 32,
+                          height: 24,
                           width: 130,
-                          decoration: BoxDecoration(color: Colors.white)),
+                          decoration: BoxDecoration(color: Color(0xff0175FF))),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
                       ),
@@ -704,33 +729,36 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   ),
                 ],
               ),
+              SizedBox(
+                height: 14,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(
-                    onPressed: () => _navigateToCreateTaskPage(context, true),
-                    child: Container(
-                      width: 100,
+                  Container(
+                    width: 342,
+                    height: 34,
+                    child: ElevatedButton(
+                      onPressed: () => _navigateToCreateTaskPage(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(255, 62, 147, 252),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      ),
                       child: Text(
                         'Create Task / Select Order ID',
-                        style: const TextStyle(
-                          decoration: TextDecoration.underline,
-                          decorationColor: Color(0xff0069BA),
-                          color: Color(0xff0069BA),
+                        style: TextStyle(
+                          color: Colors.white,
                           fontSize: 14,
                         ),
-                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ),
-                  Text(
-                    'Created on: ${widget.leadItem.createdDate}',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
+                  )
                 ],
               ),
             ],

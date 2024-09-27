@@ -6,6 +6,7 @@ import 'package:sales_navigator/top_selling_product_graph.dart';
 import 'package:sales_navigator/top_selling_product_report_page.dart';
 import 'package:sales_navigator/predicted_product_stocks.dart';
 import 'package:sales_navigator/customer_sales_prediction.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/sales_forecast_graph.dart';
 import 'customer_graph.dart';
 import 'customer_report_page.dart';
@@ -22,7 +23,7 @@ class DataAnalyticsPage extends StatelessWidget {
           'Data Analytics',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: Theme(
           data: Theme.of(context).copyWith(
             iconTheme: const IconThemeData(color: Colors.white),
@@ -38,6 +39,37 @@ class DataAnalyticsPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
+            Stack(
+              children: [
+                Container(
+                    padding: EdgeInsets.zero,
+                    color: Colors.white,
+                    child: Image.asset(
+                      'asset/SALEFORECASE_LABEL.png',
+                      width: 700,
+                      height: 78,
+                      fit: BoxFit.cover,
+                    )),
+                Container(
+                  height: 78,
+                  padding: EdgeInsets.only(left: 12, bottom: 2),
+                  child: Column(
+                    children: [
+                      Spacer(),
+                      Text(
+                        'Sales Forecast',
+                        style: GoogleFonts.inter(
+                          textStyle: TextStyle(letterSpacing: -0.8),
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: const Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
@@ -50,7 +82,7 @@ class DataAnalyticsPage extends StatelessWidget {
                   );
                 },
                 child: const SizedBox(
-                  height: 480,
+                  height: 538,
                   child: SalesForecastGraph(),
                 ),
               ),

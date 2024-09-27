@@ -35,6 +35,7 @@ dependencies:
   firebase_messaging: ^15.1.0
   flutter_local_notifications: ^9.8.0+1
   workmanager: ^0.5.1
+  flutter_dotenv: ^5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -44,6 +45,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - asset/logo/
     - asset/
     - asset/icon/

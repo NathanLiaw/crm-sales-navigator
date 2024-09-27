@@ -112,7 +112,7 @@ class _ItemScreenState extends State<ItemScreen> {
           },
         ),
         foregroundColor: Colors.white,
-        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color(0xff0175FF),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: ListView(
@@ -149,8 +149,10 @@ class _ItemScreenState extends State<ItemScreen> {
                 final assetName = widget.itemAssetNames[index];
 
                 // Check if the assetName is empty or 'null' placeholder
-                if (assetName.isEmpty || assetName == 'https://haluansama.com/crm-sales/null') {
-                  return const SizedBox.shrink(); // Shrinks if the assetName is empty
+                if (assetName.isEmpty ||
+                    assetName == 'https://haluansama.com/crm-sales/null') {
+                  return const SizedBox
+                      .shrink(); // Shrinks if the assetName is empty
                 }
 
                 return GestureDetector(

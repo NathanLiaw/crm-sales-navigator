@@ -320,7 +320,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     }
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Create Task',
           style: TextStyle(color: Colors.white),
@@ -344,7 +344,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xff0069BA).withOpacity(0.1),
+                    color: Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -365,7 +365,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xff0069BA),
+                              color: const Color(0xff0175FF),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -383,7 +383,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          const Icon(Icons.person, color: Color(0xff0069BA)),
+                          const Icon(Icons.person,
+                              color: const Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.customerName,
@@ -394,7 +395,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.phone, color: Color(0xff0069BA)),
+                          const Icon(Icons.phone,
+                              color: const Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.contactNumber,
@@ -405,7 +407,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.email, color: Color(0xff0069BA)),
+                          const Icon(Icons.email,
+                              color: const Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.emailAddress,
@@ -418,7 +421,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.location_on,
-                              color: Color(0xff0069BA)),
+                              color: const Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -650,7 +653,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff0069BA)),
+                                  color: const Color(0xff0175FF)),
                             ),
                             Text(quantity != null ? '$quantity items' : ''),
                           ],
@@ -662,7 +665,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff0069BA)),
+                                  color: const Color(0xff0175FF)),
                             ),
                             Text(total != null ? 'RM$total' : ''),
                           ],
@@ -703,7 +706,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: const Color(0xff0175FF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),

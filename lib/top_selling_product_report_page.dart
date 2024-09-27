@@ -320,13 +320,13 @@ class _ProductReportState extends State<ProductReport> {
               _buildTimeFilterButton(
                   'All', () => queryAllData(), selectedButtonIndex == 3),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 7d', () => setDateRange(7, 0),
+              _buildTimeFilterButton('Last 7 days', () => setDateRange(7, 0),
                   selectedButtonIndex == 0),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 30d', () => setDateRange(30, 1),
+              _buildTimeFilterButton('Last 30 days', () => setDateRange(30, 1),
                   selectedButtonIndex == 1),
               const SizedBox(width: 10),
-              _buildTimeFilterButton('Last 90d', () => setDateRange(90, 2),
+              _buildTimeFilterButton('Last 90 days', () => setDateRange(90, 2),
                   selectedButtonIndex == 2),
             ],
           ),
@@ -344,8 +344,8 @@ class _ProductReportState extends State<ProductReport> {
         backgroundColor: MaterialStateProperty.resolveWith<Color>(
           (Set<MaterialState> states) {
             return isSelected
-                ? const Color(0xFF047CBD)
-                : const Color(0xFFD9D9D9);
+                ? Color(0xff0175FF)
+                : Color.fromARGB(255, 255, 255, 255);
           },
         ),
         foregroundColor: MaterialStateProperty.resolveWith<Color>(
@@ -355,7 +355,8 @@ class _ProductReportState extends State<ProductReport> {
         ),
         shape: MaterialStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: Color(0xFF999999)),
+            borderRadius: BorderRadius.circular(50),
           ),
         ),
         padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
@@ -370,7 +371,7 @@ class _ProductReportState extends State<ProductReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -405,9 +406,17 @@ class _ProductReportState extends State<ProductReport> {
                             horizontal: 20, vertical: 5),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(111, 188, 249, 0.35),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                              color: Color.fromARGB(255, 255, 255, 255),
+                              borderRadius: BorderRadius.circular(4.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  blurStyle: BlurStyle.normal,
+                                  color: Color.fromARGB(75, 117, 117, 117),
+                                  spreadRadius: 0.1,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: ExpansionTile(
@@ -442,18 +451,18 @@ class _ProductReportState extends State<ProductReport> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          '     UOM: ',
+                                          '      UOM: ',
                                           style: TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w400,
                                           ),
                                         ),
                                         Expanded(
                                           child: Text(
                                             product.unitOfMeasure,
                                             style: const TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400,
                                             ),
                                           ),
                                         ),
@@ -463,9 +472,9 @@ class _ProductReportState extends State<ProductReport> {
                                     Text(
                                       '     Total Sales: ${product.totalSalesDisplay}',
                                       style: const TextStyle(
-                                        color: Color.fromARGB(255, 0, 100, 0),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF0175FF),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -473,8 +482,8 @@ class _ProductReportState extends State<ProductReport> {
                                       '     Total Quantity Sold: ${product.totalQuantitySold}',
                                       style: const TextStyle(
                                         color: Color(0xFF004072),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ],
@@ -483,8 +492,8 @@ class _ProductReportState extends State<ProductReport> {
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE1F5FE),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: Color.fromARGB(255, 239, 245, 248),
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -500,20 +509,20 @@ class _ProductReportState extends State<ProductReport> {
                                               '      Product ID: ${product.id}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 16),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               '      Brand Name: ${product.brandName}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 16),
                                             ),
                                             Text(
                                               '      Last Sold: ${DateFormat('dd-MM-yyyy').format(product.lastSold)}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 17),
+                                                  fontSize: 16),
                                             ),
                                           ],
                                         ),
