@@ -314,11 +314,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _fetchCreateLeadItems() async {
     final apiUrl = dotenv.env['API_URL'];
     const offset = 0;
-    const limit = 50;
+    const limit = 100;
 
     try {
       // Make the HTTP request to the API
-      final response = await http.get(Uri.parse('$apiUrl/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
+      final response = await http.get(Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
 
       if (response.statusCode == 200) {
         // Parse the JSON response
