@@ -44,6 +44,11 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
     }
   }
 
+  void updateCartCountInNavBar() {
+    // Trigger navigation bar to refresh cart item count
+    setState(() {});
+  }
+
   void initializeTextControllers() {
     textControllers = List.generate(priceData.length, (index) {
       final uom = priceData.keys.elementAt(index);
@@ -289,7 +294,10 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       Future.delayed(const Duration(seconds: 1),
                                           () {
                                         Navigator.pop(context);
+                                        updateCartCountInNavBar();
                                       });
+
+                                      // Update cart count in the navigation bar
                                     },
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(

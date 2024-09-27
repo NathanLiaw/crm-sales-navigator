@@ -220,7 +220,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         tableName,
         condition,
       );
-
+      setState(() {}); // Add this to update the count reactively
       return itemCount;
     } catch (e) {
       developer.log('Error fetching count of cart items: $e', error: e);

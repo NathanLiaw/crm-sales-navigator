@@ -1760,24 +1760,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         //   child: const Text('Accept',
                         //       style: TextStyle(color: Colors.white)),
                         // ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(
-                                0xff3796DF), // Set the background color
-                            foregroundColor:
-                                Colors.white, // Set the text color to white
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20.0, vertical: 10.0),
-                            textStyle: const TextStyle(fontSize: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  10.0), // Decrease the radius
+                        SizedBox(
+                          height: 22,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding:
+                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side: BorderSide(
+                                          color: const Color(0xff4566DD)))),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xff4566DD)),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _moveToEngagement(leadItem);
+                            },
+                            child: Text(
+                              'Accept',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
                             ),
                           ),
-                          onPressed: () {
-                            _moveToEngagement(leadItem);
-                          },
-                          child: const Text('Accept'), // The button text
                         ),
                       ],
                     ),
