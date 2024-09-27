@@ -53,6 +53,102 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
       duration: const Duration(milliseconds: 300),
       child: Scaffold(
         bottomNavigationBar: Container(
+          color: Colors.white,
+          child: NavigationBar(
+            elevation: 2,
+            backgroundColor: Colors.white,
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+              switch (index) {
+                case 0:
+                  if (ModalRoute.of(context)!.settings.name != '/home') {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                  break;
+                case 1:
+                  if (ModalRoute.of(context)!.settings.name != '/sales') {
+                    Navigator.pushReplacementNamed(context, '/sales');
+                  }
+                  break;
+                case 2:
+                  if (ModalRoute.of(context)!.settings.name != '/product') {
+                    Navigator.pushReplacementNamed(context, '/product');
+                  }
+                  break;
+                case 3:
+                  if (ModalRoute.of(context)!.settings.name != '/cart') {
+                    Navigator.pushNamed(context, '/cart');
+                  }
+                  break;
+                case 4:
+                  if (ModalRoute.of(context)!.settings.name != '/profile') {
+                    Navigator.pushReplacementNamed(context, '/profile');
+                  }
+                  break;
+                default:
+                  if (ModalRoute.of(context)!.settings.name != '/home') {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                  break;
+              }
+              // Add navigation for other icons if needed
+            },
+            indicatorColor: const Color(0xff0175FF),
+            selectedIndex: _selectedIndex,
+            destinations: const <Widget>[
+              NavigationDestination(
+                selectedIcon: Icon(
+                  Icons.home,
+                  color: Colors.white,
+                ),
+                icon: Icon(Icons.home_outlined),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                selectedIcon: Icon(Icons.sell, color: Colors.white),
+                icon: Icon(Icons.sell_outlined),
+                label: 'Sales',
+              ),
+              NavigationDestination(
+                selectedIcon: Icon(
+                  Icons.shopping_bag,
+                  color: Colors.white,
+                ),
+                icon: Icon(Icons.shopping_bag_outlined),
+                label: 'Product',
+              ),
+              NavigationDestination(
+                selectedIcon: Badge(
+                  label: Text('2'),
+                  child: Icon(
+                    Icons.shopping_cart,
+                    color: Colors.white,
+                  ),
+                ),
+                icon: Badge(
+                  label: Text('2'),
+                  child: Icon(
+                    Icons.shopping_cart_outlined,
+                  ),
+                ),
+                label: 'Cart',
+              ),
+              NavigationDestination(
+                selectedIcon: Icon(
+                  Icons.person,
+                  color: Colors.white,
+                ),
+                icon: Icon(Icons.person_outline),
+                label: 'Profile',
+              ),
+            ],
+          ),
+        ),
+        /*
+        
+        Container(
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -158,10 +254,12 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
             ),
           ),
         ),
+
+*/
       ),
     );
   }
-
+/*
   Widget buildCartIcon() {
     bool isSelected = _selectedIndex == 3;
 
@@ -174,37 +272,13 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
           return Text('Error: ${snapshot.error}');
         } else {
           int? countCartItem = snapshot.data;
-          return Stack(
-            children: [
-              Icon(
-                Icons.shopping_cart,
-                color: isSelected ? Colors.white : Colors.grey,
-              ),
-              if (countCartItem != null)
-                Positioned(
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.red,
-                    ),
-                    child: Text(
-                      '$countCartItem',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
+          return Text();
         }
       },
     );
   }
+
+  */
 
   Future<int> getNumberOfItemsInCart() async {
     final userId = await UtilityFunction.getUserId();
@@ -220,7 +294,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         tableName,
         condition,
       );
-
+      setState(() {}); // Add this to update the count reactively
       return itemCount;
     } catch (e) {
       developer.log('Error fetching count of cart items: $e', error: e);

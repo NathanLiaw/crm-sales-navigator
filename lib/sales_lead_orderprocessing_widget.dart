@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -48,211 +47,212 @@ class OrderProcessingLeadItem extends StatelessWidget {
     String formattedCreatedDate = _formatDate(createdDate);
     String formattedTotal = _formatCurrency(total);
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CustomerInsightPage(
-              customerName: leadItem.customerName,
+    return Container(
+      height: 278,
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: const [
+            BoxShadow(
+              blurStyle: BlurStyle.normal,
+              color: Color.fromARGB(75, 117, 117, 117),
+              spreadRadius: 0.1,
+              blurRadius: 4,
+              offset: Offset(0, 1),
             ),
-          ),
-        );
-      },
-      child: Card(
-        color: orderStatus == 'Pending'
-            ? const Color.fromARGB(255, 255, 237, 188)
-            : const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
-        margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Text(
-                  //   leadItem.customerName.length > 24
-                  //       ? '${leadItem.customerName.substring(0, 24)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 20,
-                  //   ),
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
-                  SizedBox(
-                    width: 250,
-                    child: Text(
-                      leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: orderStatus == 'Pending'
-                          ? const Color.fromARGB(255, 255, 195, 31)
-                          : Colors.green,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      orderStatus,
-                      style: TextStyle(
-                        color: orderStatus == 'Pending'
-                            ? Colors.black
-                            : Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${leadItem.contactNumber}')
-                        : null,
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.phone,
-                          color: Color(0xff0069BA),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 100,
-                          child: Text(
-                            leadItem.contactNumber.isNotEmpty
-                                ? leadItem.contactNumber
-                                : 'Unavailable',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              decoration: TextDecoration.underline,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: leadItem.emailAddress.isNotEmpty
-                        ? () => _launchURL('mailto:${leadItem.emailAddress}')
-                        : null,
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.email,
-                          color: Color(0xff0069BA),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 150,
-                          child: Text(
-                            leadItem.emailAddress.isNotEmpty
-                                ? leadItem.emailAddress
-                                : 'Unavailable',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 14,
-                              decoration: TextDecoration.underline,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                formattedSalesOrderId,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              Text('Created date: $formattedCreatedDate'),
-              Text('Expiry date: $expirationDate'),
-              const SizedBox(height: 8),
-              Text(
-                leadItem.quantity != null
-                    ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
-                    : 'Quantity: Unknown      Total: RM$formattedTotal',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Visibility(
-                    visible: orderStatus == 'Confirm',
-                    child: ElevatedButton(
-                      onPressed: () => onMoveToClosed(leadItem),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        minimumSize: const Size(50, 35),
-                      ),
-                      child: const Text('Confirm',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OrderDetailsPage(
-                            cartID: int.parse(leadItem.salesOrderId!),
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'View Order',
-                      style: TextStyle(
-                        decoration: TextDecoration.underline,
-                        decorationColor: Color(0xff0069BA),
-                        color: Color(0xff0069BA),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Created on: ${leadItem.createdDate}',
+          ]),
+      /* color: orderStatus == 'Pending'
+          ? const Color.fromARGB(255, 255, 237, 188)
+          : const Color.fromARGB(255, 205, 229, 242), */
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Text(
+                //   leadItem.customerName.length > 24
+                //       ? '${leadItem.customerName.substring(0, 24)}...'
+                //       : leadItem.customerName,
+                //   style: const TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 20,
+                //   ),
+                //   overflow: TextOverflow.ellipsis,
+                // ),
+                Container(
+                  width: 250,
+                  child: Text(
+                    leadItem.customerName,
                     style: const TextStyle(
-                      color: Colors.grey,
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: orderStatus == 'Pending'
+                        ? const Color.fromARGB(255, 255, 195, 31)
+                        : Colors.green,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    orderStatus,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: leadItem.contactNumber.isNotEmpty
+                      ? () => _launchURL('tel:${leadItem.contactNumber}')
+                      : null,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.phone,
+                        color: const Color(0xff0175FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 100,
+                        child: Text(
+                          leadItem.contactNumber.isNotEmpty
+                              ? leadItem.contactNumber
+                              : 'Unavailable',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: leadItem.emailAddress.isNotEmpty
+                      ? () => _launchURL('mailto:${leadItem.emailAddress}')
+                      : null,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.email,
+                        color: const Color(0xff0175FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 150,
+                        child: Text(
+                          leadItem.emailAddress.isNotEmpty
+                              ? leadItem.emailAddress
+                              : 'Unavailable',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              formattedSalesOrderId,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: const Color(0xff0175FF)),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Text('Created date: $formattedCreatedDate'),
+            Text('Expiry date: $expirationDate'),
+            const SizedBox(height: 8),
+            Text(
+              leadItem.quantity != null
+                  ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
+                  : 'Quantity: Unknown      Total: RM$formattedTotal',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Visibility(
+                  visible: orderStatus == 'Confirm',
+                  child: ElevatedButton(
+                    onPressed: () => onMoveToClosed(leadItem),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff0069BA),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      minimumSize: const Size(50, 35),
+                    ),
+                    child: const Text('Confirm',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderDetailsPage(
+                          cartID: int.parse(leadItem.salesOrderId!),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'View Order',
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      decorationColor: const Color(0xff0175FF),
+                      color: const Color(0xff0175FF),
                       fontSize: 14,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                Text(
+                  'Created on: ${leadItem.createdDate}',
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 0, 0, 0),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
