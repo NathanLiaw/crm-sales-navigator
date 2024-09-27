@@ -58,7 +58,7 @@ class _RecentOrderState extends State<RecentOrder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Recent Order',
           style: TextStyle(color: Colors.white),
@@ -185,7 +185,6 @@ class _RecentOrderState extends State<RecentOrder> {
     );
   }
 
-
   Widget _buildListItem(Map<String, dynamic> item) {
     return FutureBuilder<String>(
       future: _fetchProductPhoto(item['product_name']),
@@ -256,17 +255,18 @@ class _RecentOrderState extends State<RecentOrder> {
                   children: [
                     Container(
                       margin: const EdgeInsets.only(right: 16),
-                      child: (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute)
+                      child: (snapshot.data != null &&
+                              Uri.parse(snapshot.data!).isAbsolute)
                           ? Image.network(
-                        snapshot.data!,
-                        height: 100,
-                        width: 100,
-                      )
+                              snapshot.data!,
+                              height: 100,
+                              width: 100,
+                            )
                           : Image.asset(
-                        'asset/no_image.jpg',
-                        height: 100,
-                        width: 100,
-                      ),
+                              'asset/no_image.jpg',
+                              height: 100,
+                              width: 100,
+                            ),
                     ),
                     Expanded(
                       child: Column(
@@ -295,7 +295,7 @@ class _RecentOrderState extends State<RecentOrder> {
                       _navigateToItemScreen(item['product_name']);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff0069BA),
+                      backgroundColor: const Color(0xff0175FF),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
@@ -325,7 +325,8 @@ class _RecentOrderState extends State<RecentOrder> {
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
             child: Container(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 20, bottom: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -371,7 +372,8 @@ class _RecentOrderState extends State<RecentOrder> {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           return Container(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
+            padding:
+                const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -388,15 +390,15 @@ class _RecentOrderState extends State<RecentOrder> {
               children: [
                 (snapshot.data != null && Uri.parse(snapshot.data!).isAbsolute)
                     ? Image.network(
-                  snapshot.data!,
-                  height: 70,
-                  width: 70,
-                )
+                        snapshot.data!,
+                        height: 70,
+                        width: 70,
+                      )
                     : Image.asset(
-                  'asset/no_image.jpg',
-                  height: 70,
-                  width: 70,
-                ),
+                        'asset/no_image.jpg',
+                        height: 70,
+                        width: 70,
+                      ),
                 const SizedBox(height: 8),
                 Expanded(
                   child: Column(
@@ -418,12 +420,13 @@ class _RecentOrderState extends State<RecentOrder> {
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(20, 30),
-                    backgroundColor: const Color(0xff0069BA),
+                    backgroundColor: const Color(0xff0175FF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  child: const Text('View Item', style: TextStyle(color: Colors.white)),
+                  child: const Text('View Item',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -474,7 +477,8 @@ class _RecentOrderState extends State<RecentOrder> {
           ),
         );
       } else {
-        developer.log('Product not found for name: $selectedProductName', level: 1);
+        developer.log('Product not found for name: $selectedProductName',
+            level: 1);
       }
     } catch (e) {
       developer.log('Error fetching product details: $e', error: e);
@@ -498,10 +502,12 @@ class _RecentOrderState extends State<RecentOrder> {
 
     try {
       MySqlConnection conn = await connectToDatabase();
-      String condition = "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' GROUP BY "
+      String condition =
+          "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' GROUP BY "
           "ci.product_name, ci.product_id";
       if (widget.customerId > 0) {
-        condition = "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' "
+        condition =
+            "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' "
             "AND ci.customer_id = ${widget.customerId} GROUP BY ci.product_name, ci.product_id";
       }
       final results = await readData(
@@ -602,7 +608,8 @@ class _RecentOrderState extends State<RecentOrder> {
         String photoPath = results[0]['photo1'];
         // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
         if (photoPath.startsWith('photo/')) {
-          photoPath = 'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
+          photoPath =
+              'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
         }
         return photoPath;
       } else {

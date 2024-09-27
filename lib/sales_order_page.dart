@@ -5,12 +5,22 @@ import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'db_connection.dart';
 import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
+import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/notification_page.dart';
+import 'package:sales_navigator/starting_page.dart';
+import 'package:sales_navigator/login_page.dart';
+import 'package:sales_navigator/profile_page.dart';
+import 'package:sales_navigator/sales_order_page.dart';
+import 'package:sales_navigator/sales_order.dart';
+import 'package:sales_navigator/products_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -20,8 +30,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sales Order',
       theme: ThemeData(
-        primaryColor: const Color(0xFF004C87),
-        hintColor: const Color(0xFF004C87),
+        primaryColor: const Color(0xff0175FF),
+        hintColor: const Color(0xff0175FF),
         visualDensity: VisualDensity.adaptivePlatformDensity,
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.white),
@@ -49,6 +59,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   bool isSortedAscending = false; // Ensure this is set to false
   String loggedInUsername = '';
   Customer? selectedCustomer;
+  int currentPageIndex = 1;
 
   final List<String> _sortingMethods = [
     'By Creation Date (Ascending)',
@@ -197,7 +208,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
     if (dateRange != null) {
       String startDate =
-      DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+          DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
       String endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
       query = '''
     SELECT 
@@ -765,7 +776,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           'Sales Order',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF004C87),
+        backgroundColor: const Color(0xff0175FF),
         automaticallyImplyLeading: false,
       ),
       body: Column(
@@ -780,20 +791,32 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Widget _buildFilterSection() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: _buildCustomerPicker(),
         ),
         Padding(
+          padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+          child: Text(
+            'Filter by',
+            style: GoogleFonts.inter(
+              textStyle: TextStyle(letterSpacing: -0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: const Color.fromARGB(255, 25, 23, 49),
+            ),
+          ),
+        ),
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildDateRangePicker(),
               IconButton(
                 onPressed: () => _showSortingOptions(context),
-                icon: const Icon(Icons.sort, color: Colors.black),
+                icon: Icon(Icons.sort, color: Colors.black),
               ),
             ],
           ),
@@ -809,11 +832,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     return InkWell(
       onTap: selectedCustomer == null ? _selectCustomer : null,
       child: Container(
-        height: 50.0,
+        height: 42.0,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey),
+          border: Border.all(color: const Color.fromARGB(255, 212, 212, 212)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
         child: Row(
@@ -831,7 +854,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
               IconButton(
                 icon: const Icon(Icons.cancel, color: Colors.grey),
                 onPressed: _cancelSelectedCustomer,
-                constraints: const BoxConstraints(maxHeight: 24.0),
+                constraints: BoxConstraints(maxHeight: 24.0),
                 padding: EdgeInsets.zero,
               )
             else
@@ -857,11 +880,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         children: [
           _buildDateButton('All', null, 3),
           const SizedBox(width: 10),
-          _buildDateButton('Last 7d', 7, 0),
+          _buildDateButton('Last 7 days', 7, 0),
           const SizedBox(width: 10),
-          _buildDateButton('Last 30d', 30, 1),
+          _buildDateButton('Last 30 days', 30, 1),
           const SizedBox(width: 10),
-          _buildDateButton('Last 90d', 90, 2),
+          _buildDateButton('Last 90 days', 90, 2),
         ],
       ),
     );
@@ -872,30 +895,37 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        TextButton.icon(
-          onPressed: () => _selectDateRange(context),
-          icon: Icon(
-            Icons.calendar_today,
-            color: isCustomRangeSelected
-                ? Colors.white
-                : Theme.of(context).iconTheme.color,
+        Container(
+          margin: EdgeInsets.only(right: 12),
+          alignment: Alignment.centerLeft,
+          width: 300,
+          height: 43,
+          decoration: BoxDecoration(
+            color: Color(0x503290E7),
+            borderRadius: BorderRadius.circular(6),
           ),
-          label: Text(
-            isCustomRangeSelected
-                ? '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}'
-                : 'Filter Date',
-            style: TextStyle(
+          child: TextButton.icon(
+            onPressed: () => _selectDateRange(context),
+            icon: Icon(
+              Icons.calendar_today,
               color: isCustomRangeSelected
-                  ? Colors.white
-                  : Theme.of(context).textTheme.bodyMedium!.color,
+                  ? Colors.black
+                  : Theme.of(context).iconTheme.color,
             ),
-          ),
-          style: TextButton.styleFrom(
-            backgroundColor: isCustomRangeSelected
-                ? const Color(0xFF047CBD)
-                : const Color(0xFFD9D9D9),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+            label: Text(
+              isCustomRangeSelected
+                  ? '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}'
+                  : 'Filter Date',
+              style: TextStyle(
+                color: isCustomRangeSelected
+                    ? Colors.black
+                    : Theme.of(context).textTheme.bodyMedium!.color,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ),
@@ -926,8 +956,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       },
       style: TextButton.styleFrom(
         backgroundColor:
-            isSelected ? const Color(0xFF047CBD) : const Color(0xFFD9D9D9),
+            isSelected ? Color(0xff0175FF) : Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
+          side: BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1034,11 +1065,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     Color getStatusColor(String displayStatus) {
       switch (displayStatus) {
         case 'Confirm':
-          return const Color(0xFF487C08);
+          return Color(0xFF33B44F);
         case 'Pending':
-          return const Color.fromARGB(255, 213, 155, 8);
+          return Color.fromARGB(255, 255, 194, 82);
         case 'Void':
-          return Colors.red;
+          return Color(0xFFE81717);
         default:
           return Colors.grey;
       }
@@ -1048,6 +1079,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       String displayStatus = getDisplayStatus(status);
 
       return Container(
+        alignment: Alignment.center,
+        height: 32,
+        width: 98,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         decoration: BoxDecoration(
           color: getStatusColor(displayStatus),
@@ -1058,7 +1092,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 16,
           ),
         ),
       );
@@ -1086,8 +1120,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         elevation: 4,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color.fromRGBO(111, 188, 249, 0.35),
-            borderRadius: BorderRadius.circular(10.0),
+            color: Color.fromARGB(255, 255, 255, 255),
+            borderRadius: BorderRadius.circular(4.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1122,16 +1156,20 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         const SizedBox(height: 8),
                                         Text(
                                           companyName,
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600),
+                                          style: GoogleFonts.inter(
+                                            textStyle:
+                                                TextStyle(letterSpacing: -0.8),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
                                           'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                                           style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w500),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400),
                                         ),
                                         Row(
                                           mainAxisAlignment:
@@ -1140,17 +1178,33 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             Text(
                                               'RM $amount',
                                               style: const TextStyle(
-                                                color: Color(0xFF487C08),
+                                                color: Color(0xFF0175FF),
                                                 fontSize: 24,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                            IconButton(
-                                              icon: const Icon(Icons.copy),
-                                              onPressed: () async {
-                                                await _showItemSelectionDialog(
-                                                    items);
-                                              },
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(Icons.copy),
+                                                  onPressed: () async {
+                                                    await _showItemSelectionDialog(
+                                                        items);
+                                                  },
+                                                ),
+                                                Text(
+                                                  'Copy',
+                                                  style: GoogleFonts.inter(
+                                                    textStyle: TextStyle(
+                                                        letterSpacing: -0.8),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
@@ -1177,7 +1231,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                 ),
                 title: const Text(
                   'Items',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 children: [
                   Container(
@@ -1198,6 +1252,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              SizedBox(
+                                                height: 2,
+                                              ),
                                               Text(
                                                 item['product_name'],
                                                 style: const TextStyle(

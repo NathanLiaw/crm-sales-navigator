@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/notification_page.dart';
+import 'package:sales_navigator/starting_page.dart';
+import 'package:sales_navigator/login_page.dart';
+import 'package:sales_navigator/profile_page.dart';
+import 'package:sales_navigator/sales_order_page.dart';
+import 'package:sales_navigator/sales_order.dart';
 import 'about_us_page.dart';
 import 'account_setting_page.dart';
 import 'contact_us_page.dart';
@@ -18,7 +26,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   String? salesmanName;
-
+  int currentPageIndex = 4;
   @override
   void initState() {
     super.initState();
@@ -44,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -161,12 +169,12 @@ class _ProfilePageState extends State<ProfilePage> {
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black),
-          borderRadius: BorderRadius.circular(5),
-        ),
+        decoration: BoxDecoration(),
         child: ListTile(
-          leading: Icon(icon),
+          leading: Icon(
+            icon,
+            color: Color(0xff0175FF),
+          ),
           title: Text(title),
         ),
       ),

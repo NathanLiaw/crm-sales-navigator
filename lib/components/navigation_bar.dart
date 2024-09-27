@@ -32,12 +32,14 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   }
 
   void _scrollListener() {
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       setState(() {
         _isVisible = false;
       });
     }
-    if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       setState(() {
         _isVisible = true;
       });
@@ -67,7 +69,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
               iconSize: 24,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               duration: const Duration(milliseconds: 500),
-              tabBackgroundColor: const Color(0xff0069BA),
+              tabBackgroundColor: const Color(0xff0175FF),
               tabs: [
                 const GButton(
                   icon: Icons.home,
@@ -180,10 +182,9 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
               ),
               if (countCartItem != null)
                 Positioned(
-                  bottom: 4,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(2),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.red,
@@ -192,7 +193,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                       '$countCartItem',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 8,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

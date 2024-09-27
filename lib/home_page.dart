@@ -23,6 +23,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
+import 'package:google_fonts/google_fonts.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -169,7 +170,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _cleanAndValidateLeadData() async {
-    final url = Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
+    final url = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
 
     try {
       final response = await http.get(url);
@@ -182,7 +184,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           developer.log('Error: ${data['message']}');
         }
       } else {
-        developer.log('Failed to load data. Status code: ${response.statusCode}');
+        developer
+            .log('Failed to load data. Status code: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error making API call: $e');
@@ -318,12 +321,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     try {
       // Make the HTTP request to the API
-      final response = await http.get(Uri.parse('$apiUrl/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
+      final response = await http.get(Uri.parse(
+          '$apiUrl/sales_lead/get_sales_leads.php?salesman_id=$salesmanId&offset=$offset&limit=$limit'));
 
       if (response.statusCode == 200) {
         // Parse the JSON response
         final data = jsonDecode(response.body);
-        
+
         if (data['status'] == 'success') {
           final salesLeads = data['salesLeads'] as List;
 
@@ -337,7 +341,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           for (var item in salesLeads) {
             // Ensure the created date is formatted correctly
             String createdDate = item['created_date'] != null
-                ? DateFormat('MM/dd/yyyy').format(DateTime.parse(item['created_date']))
+                ? DateFormat('MM/dd/yyyy')
+                    .format(DateTime.parse(item['created_date']))
                 : DateFormat('MM/dd/yyyy').format(DateTime.now());
 
             // Map the lead item data
@@ -388,7 +393,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       developer.log('Error fetching sales_lead items: $e');
     }
   }
-  
+
   // Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
   //   try {
   //     Results results = await conn
@@ -1125,7 +1130,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             return Scaffold(
               appBar: AppBar(
                 automaticallyImplyLeading: false,
-                backgroundColor: const Color(0xff004c87),
+                backgroundColor: const Color(0xff0175FF),
                 title: Text(
                   'Welcome, $salesmanName',
                   style: const TextStyle(color: Colors.white),
@@ -1174,16 +1179,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'Sales Lead Pipeline',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
+                  Stack(
+                    children: [
+                      Container(
+                          padding: EdgeInsets.zero,
+                          color: Colors.white,
+                          child: Image.asset(
+                            'asset/SalesPipeline_Head2.png',
+                            width: 700,
+                            height: 78,
+                            fit: BoxFit.cover,
+                          )),
+                      Container(
+                        height: 78,
+                        padding: EdgeInsets.only(left: 12, bottom: 2),
+                        child: Column(
+                          children: [
+                            Spacer(),
+                            Text(
+                              'Sales Lead Pipeline',
+                              style: GoogleFonts.inter(
+                                textStyle: TextStyle(letterSpacing: -0.8),
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: const Color.fromARGB(255, 255, 255, 255),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   TabBar(
                     controller: _tabController,
+                    labelColor: const Color(0xff0175FF),
+                    indicatorColor: const Color(0xff0175FF),
                     isScrollable: true,
                     indicatorSize: TabBarIndicatorSize.label,
                     tabs: [
@@ -1305,9 +1335,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8))),
                 label: const Text('Create Lead',
                     style: TextStyle(color: Colors.white)),
-                backgroundColor: const Color(0xff0069BA),
+                backgroundColor: const Color(0xff0175FF),
               )
             : Container();
       },
@@ -1348,9 +1380,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         );
       },
-      child: Card(
-        color: const Color.fromARGB(255, 205, 229, 242),
-        elevation: 2,
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+            image: DecorationImage(
+              image: ResizeImage(AssetImage('asset/bttm_start.png'),
+                  width: 128, height: 98),
+              alignment: Alignment.bottomLeft,
+            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: const [
+              BoxShadow(
+                blurStyle: BlurStyle.normal,
+                color: Color.fromARGB(75, 117, 117, 117),
+                spreadRadius: 0.1,
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ]),
         margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -1369,31 +1417,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //   maxLines: 2,
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  SizedBox(
+                  Container(
                     width: 200,
                     child: Text(
                       leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
+                      style: GoogleFonts.inter(
+                        textStyle: TextStyle(letterSpacing: -0.8),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Spacer(),
                   Container(
-                    margin: const EdgeInsets.only(left: 20),
+                    margin: const EdgeInsets.only(left: 18),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       leadItem.formattedAmount,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xff008A64),
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -1441,17 +1493,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(leadItem.description),
-              const SizedBox(height: 10),
+              Text(
+                leadItem.description,
+                style: GoogleFonts.inter(
+                  textStyle: TextStyle(letterSpacing: -0.5),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color.fromARGB(255, 25, 23, 49),
+                ),
+              ),
+              Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
+                      iconStyleData: IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconDisabledColor: Colors.white,
+                          iconEnabledColor: Colors.white),
                       isExpanded: true,
                       hint: const Text(
                         'Opportunities',
-                        style: TextStyle(fontSize: 12, color: Colors.black),
+                        style: TextStyle(fontSize: 12, color: Colors.white),
                       ),
                       items: tabbarNames
                           .skip(1)
@@ -1459,7 +1523,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 value: item,
                                 child: Text(
                                   item,
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ))
                           .toList(),
@@ -1476,10 +1543,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         }
                       },
                       buttonStyleData: const ButtonStyleData(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        height: 32,
-                        width: 140,
-                        decoration: BoxDecoration(color: Colors.white),
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        height: 24,
+                        width: 136,
+                        decoration:
+                            BoxDecoration(color: const Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -1493,12 +1561,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30),
-                    child: Text(
-                      leadItem.createdDate,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
+                  Text(
+                    leadItem.createdDate,
+                    style: const TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontWeight: FontWeight.w600),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
@@ -1521,15 +1588,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         //   child: const Text('Ignore',
                         //       style: TextStyle(color: Colors.red)),
                         // ),
-                        IconButton(
-                          iconSize: 32,
-                          icon: const Icon(
-                            Icons.delete, // Changed to the delete icon
-                            color: Colors.red,
+                        SizedBox(
+                          height: 22,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding:
+                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side: BorderSide(color: Colors.red))),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xffF01C54)),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _handleIgnore(leadItem);
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
+                            ),
                           ),
-                          onPressed: () {
-                            _handleIgnore(leadItem);
-                          },
+                        ),
+
+                        SizedBox(
+                          width: 12,
                         ),
                         // const SizedBox(width: 8),
                         // ElevatedButton(
@@ -1546,20 +1634,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         //   child: const Text('Accept',
                         //       style: TextStyle(color: Colors.white)),
                         // ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff3796DF), // Set the background color
-                            foregroundColor: Colors.white, // Set the text color to white
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                            textStyle: const TextStyle(fontSize: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0), // Decrease the radius
+
+                        SizedBox(
+                          height: 22,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding:
+                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side: BorderSide(
+                                          color: const Color(0xff4566DD)))),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xff4566DD)),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _moveToEngagement(leadItem);
+                            },
+                            child: Text(
+                              'Accept',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
                             ),
                           ),
-                          onPressed: () {
-                            _moveToEngagement(leadItem);
-                          },
-                          child: const Text('Accept'), // The button text
                         ),
                       ],
                     ),

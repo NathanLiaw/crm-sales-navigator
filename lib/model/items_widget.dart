@@ -93,18 +93,22 @@ class _ItemsWidgetState extends State<ItemsWidget> {
 
         return products.map((product) {
           return {
-            'id': product['id'] is int ? product['id'] : int.tryParse(product['id'].toString()) ?? 0,
+            'id': product['id'] is int
+                ? product['id']
+                : int.tryParse(product['id'].toString()) ?? 0,
             'product_name': product['product_name'] as String? ?? '',
             'photo1': product['photo1'] as String? ?? '',
             'photo2': product['photo2'] as String?,
             'photo3': product['photo3'] as String?,
-            'description': _sanitizeHtml(product['description'] as String? ?? ''),
+            'description':
+                _sanitizeHtml(product['description'] as String? ?? ''),
             'price_by_uom': product['price_by_uom'] as String? ?? '',
             'featured': product['featured'] as String? ?? '',
           };
         }).toList();
       } else {
-        developer.log('Error fetching product data: Server responded with status ${response.statusCode}');
+        developer.log(
+            'Error fetching product data: Server responded with status ${response.statusCode}');
         return [];
       }
     } catch (e) {
@@ -124,7 +128,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
   }
 
   void _scrollListener() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
       _loadProducts();
     }
   }
@@ -135,7 +140,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       controller: _scrollController,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: MediaQuery.of(context).size.width < 2000 ? 0.65 : 0.70,
+        childAspectRatio:
+            MediaQuery.of(context).size.width < 2000 ? 0.65 : 0.70,
       ),
       itemCount: _products.length + (_hasMore ? 1 : 0),
       itemBuilder: (context, index) {
@@ -174,11 +180,16 @@ class _ItemsWidgetState extends State<ItemsWidget> {
         final localPath = product['photo1'] as String;
         final localPath2 = product['photo2'] as String?;
         final localPath3 = product['photo3'] as String?;
-        Blob itemDescription = UtilityFunction.stringToBlob(product['description']);
+        Blob itemDescription =
+            UtilityFunction.stringToBlob(product['description']);
 
         final photoUrl1 = "https://haluansama.com/crm-sales/$localPath";
-        final photoUrl2 = localPath2 != null ? "https://haluansama.com/crm-sales/$localPath2" : '';
-        final photoUrl3 = localPath3 != null ? "https://haluansama.com/crm-sales/$localPath3" : '';
+        final photoUrl2 = localPath2 != null
+            ? "https://haluansama.com/crm-sales/$localPath2"
+            : '';
+        final photoUrl3 = localPath3 != null
+            ? "https://haluansama.com/crm-sales/$localPath3"
+            : '';
 
         final containerSize = (MediaQuery.of(context).size.width - 40) / 2;
 
@@ -202,7 +213,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
             }
           },
           child: Container(
-            padding: const EdgeInsets.only(left: 6, right: 6, top: 8, bottom: 2),
+            padding:
+                const EdgeInsets.only(left: 6, right: 6, top: 8, bottom: 2),
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -263,7 +275,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                         ),
                       ),
                       errorWidget: (context, url, error) =>
-                      const Icon(Icons.error_outline),
+                          const Icon(Icons.error_outline),
                     ),
                   ),
                 ),
@@ -278,14 +290,17 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                       Flexible(
                         child: Column(
                           children: [
-                            Text(
-                              productName,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: const Color.fromARGB(255, 25, 23, 49),
+                            Container(
+                              margin: EdgeInsets.only(left: 12),
+                              child: Text(
+                                productName,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color.fromARGB(255, 25, 23, 49),
+                                ),
                               ),
                             ),
                           ],

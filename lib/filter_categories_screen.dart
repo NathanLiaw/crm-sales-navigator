@@ -55,84 +55,84 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color(0xff0175FF),
       ),
       body: _categories.isEmpty
           ? Center(child: CircularProgressIndicator())
           : ListView(
-        children: [
-          // Display categories with expandable subcategories
-          ExpansionTile(
-            title: Text(
-              'Categories',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            children: _categories.asMap().entries.map((entry) {
-              final index = entry.key;
-              final category = entry.value;
-              return ExpansionTile(
-                title: Text(
-                  category.category,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                children: _subCategories[index].map((subCategoryData) {
-                  return CheckboxListTile(
-                    title: Text(
-                      subCategoryData.subCategory,
-                      style: TextStyle(
-                        color: Colors.black,
-                      ),
+              children: [
+                // Display categories with expandable subcategories
+                ExpansionTile(
+                  title: Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    value: selectedSubCategoryIds
-                        .contains(subCategoryData.id),
-                    onChanged: (selected) {
-                      setState(() {
-                        if (selected!) {
-                          selectedSubCategoryIds.add(subCategoryData.id);
-                        } else {
-                          selectedSubCategoryIds
-                              .remove(subCategoryData.id);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              );
-            }).toList(),
-          ),
-          // Display brands
-          ExpansionTile(
-            title: Text(
-              'Brands',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+                  ),
+                  children: _categories.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final category = entry.value;
+                    return ExpansionTile(
+                      title: Text(
+                        category.category,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      children: _subCategories[index].map((subCategoryData) {
+                        return CheckboxListTile(
+                          title: Text(
+                            subCategoryData.subCategory,
+                            style: TextStyle(
+                              color: Colors.black,
+                            ),
+                          ),
+                          value: selectedSubCategoryIds
+                              .contains(subCategoryData.id),
+                          onChanged: (selected) {
+                            setState(() {
+                              if (selected!) {
+                                selectedSubCategoryIds.add(subCategoryData.id);
+                              } else {
+                                selectedSubCategoryIds
+                                    .remove(subCategoryData.id);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }).toList(),
+                ),
+                // Display brands
+                ExpansionTile(
+                  title: Text(
+                    'Brands',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  children: _brands.map((brand) {
+                    return CheckboxListTile(
+                      title: Text(brand.brand),
+                      value: _selectedBrandIds.contains(brand.id),
+                      onChanged: (selected) {
+                        setState(() {
+                          if (selected!) {
+                            _selectedBrandIds.add(brand.id);
+                          } else {
+                            _selectedBrandIds.remove(brand.id);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
-            children: _brands.map((brand) {
-              return CheckboxListTile(
-                title: Text(brand.brand),
-                value: _selectedBrandIds.contains(brand.id),
-                onChanged: (selected) {
-                  setState(() {
-                    if (selected!) {
-                      _selectedBrandIds.add(brand.id);
-                    } else {
-                      _selectedBrandIds.remove(brand.id);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        ],
-      ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
         color: Color.fromARGB(255, 255, 255, 255),
@@ -178,7 +178,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
               ),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 12, horizontal: 38),
-                backgroundColor: const Color.fromARGB(255, 4, 108, 169),
+                backgroundColor: const Color(0xff0175FF),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(2)),
               ),

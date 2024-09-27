@@ -63,7 +63,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 0, 76, 135),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(
           color: Colors.white,
         ),
@@ -81,7 +81,8 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 10),
-                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                margin:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
@@ -158,28 +159,30 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       onPressed: isUnavailable
                                           ? null
                                           : () {
-                                        // Decrement quantity when minus button is pressed
-                                        if (currentQuantity > 1) {
-                                          setState(() {
-                                            quantityMap[uom] =
-                                                currentQuantity - 1;
-                                            textController.text =
-                                                quantityMap[uom]
-                                                    .toString();
-                                          });
-                                        }
-                                      },
+                                              // Decrement quantity when minus button is pressed
+                                              if (currentQuantity > 1) {
+                                                setState(() {
+                                                  quantityMap[uom] =
+                                                      currentQuantity - 1;
+                                                  textController.text =
+                                                      quantityMap[uom]
+                                                          .toString();
+                                                });
+                                              }
+                                            },
                                       icon: const Icon(Icons.remove),
                                     ),
                                     SizedBox(
-                                      width: 60, // Adjust the width of the TextField container
+                                      width:
+                                          60, // Adjust the width of the TextField container
                                       child: TextField(
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.number,
                                         controller: textController,
                                         onChanged: (value) {
                                           final newValue = int.tryParse(value);
-                                          if (newValue != null && newValue > 0) {
+                                          if (newValue != null &&
+                                              newValue > 0) {
                                             setState(() {
                                               quantityMap[uom] = newValue;
                                             });
@@ -198,15 +201,14 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       onPressed: isUnavailable
                                           ? null
                                           : () {
-                                        // Increment quantity when plus button is pressed
-                                        setState(() {
-                                          quantityMap[uom] =
-                                              currentQuantity + 1;
-                                          textController.text =
-                                              quantityMap[uom]
-                                                  .toString();
-                                        });
-                                      },
+                                              // Increment quantity when plus button is pressed
+                                              setState(() {
+                                                quantityMap[uom] =
+                                                    currentQuantity + 1;
+                                                textController.text =
+                                                    quantityMap[uom].toString();
+                                              });
+                                            },
                                       icon: const Icon(Icons.add),
                                     ),
                                   ],
@@ -235,64 +237,64 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                               onPressed: isUnavailable
                                   ? null
                                   : () async {
-                                // Create CartItem with current quantity and uom
-                                final cartItem = CartItem(
-                                  buyerId: await UtilityFunction.getUserId(),
-                                  productId: widget.productId,
-                                  productName: widget.productName,
-                                  uom: uom,
-                                  quantity: currentQuantity,
-                                  discount: 0,
-                                  originalUnitPrice: price,
-                                  unitPrice: price,
-                                  total: price * currentQuantity,
-                                  cancel: null,
-                                  remark: null,
-                                  status: 'in progress',
-                                  created: DateTime.now(),
-                                  modified: DateTime.now(),
-                                );
+                                      // Create CartItem with current quantity and uom
+                                      final cartItem = CartItem(
+                                        buyerId:
+                                            await UtilityFunction.getUserId(),
+                                        productId: widget.productId,
+                                        productName: widget.productName,
+                                        uom: uom,
+                                        quantity: currentQuantity,
+                                        discount: 0,
+                                        originalUnitPrice: price,
+                                        unitPrice: price,
+                                        total: price * currentQuantity,
+                                        cancel: null,
+                                        remark: null,
+                                        status: 'in progress',
+                                        created: DateTime.now(),
+                                        modified: DateTime.now(),
+                                      );
 
-                                // Insert CartItem into database
-                                await insertItemIntoCart(cartItem);
+                                      // Insert CartItem into database
+                                      await insertItemIntoCart(cartItem);
 
-                                // Show success dialog
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => const AlertDialog(
-                                    backgroundColor: Colors.green,
-                                    title: Row(
-                                      children: [
-                                        SizedBox(width: 20),
-                                        Icon(
-                                          Icons.check_circle,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Item added to cart',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
+                                      // Show success dialog
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => const AlertDialog(
+                                          backgroundColor: Colors.green,
+                                          title: Row(
+                                            children: [
+                                              SizedBox(width: 20),
+                                              Icon(
+                                                Icons.check_circle,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Item added to cart',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                );
+                                      );
 
-                                // Automatically close dialog after 1 second
-                                Future.delayed(
-                                    const Duration(seconds: 1), () {
-                                  Navigator.pop(context);
-                                });
-                              },
+                                      // Automatically close dialog after 1 second
+                                      Future.delayed(const Duration(seconds: 1),
+                                          () {
+                                        Navigator.pop(context);
+                                      });
+                                    },
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 12, horizontal: 20),
-                                backgroundColor:
-                                const Color.fromARGB(255, 4, 124, 189),
+                                backgroundColor: const Color(0xff0175FF),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
                                 ),
