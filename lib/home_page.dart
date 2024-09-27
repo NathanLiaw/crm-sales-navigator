@@ -274,7 +274,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
-    print("Starting _fetchLeadItems"); // 添加日志
+    // print("Starting _fetchLeadItems");
     MySqlConnection conn = await connectToDatabase();
     try {
       Results results =
@@ -298,10 +298,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         var customerId = entry.key;
         var modifiedDate = entry.value;
         var difference = currentDate.difference(modifiedDate).inDays;
-        print("Customer $customerId last purchase: $difference days ago");
+        // print("Customer $customerId last purchase: $difference days ago");
         if (difference >= 30) {
           var customerName = await _fetchCustomerName(conn, customerId);
-          print("Checking lead for customer: $customerName");
+          // print("Checking lead for customer: $customerName");
           var total = latestTotals[customerId]!;
           var description = "Hasn't purchased since 30 days ago";
           var createdDate = DateFormat('yyyy-MM-dd').format(currentDate);
@@ -324,15 +324,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Check if the customer already exists in the sales_lead table
           Results existingLeadResults = await conn.query(
-            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
-            [customerName],
+            // 'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
+            // [customerName],
+            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = ? AND stage != ?',
+            [customerName, salesmanId, 'Closed'],
           );
 
           // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
           // save it to the sales_lead table and add it to the list of leadItems.
-          if (existingLeadResults.isEmpty ||
-              (existingLeadResults.isNotEmpty &&
-                  existingLeadResults.first['stage'] == 'Closed')) {
+          if (existingLeadResults.isEmpty) {
             print("Creating new lead for customer: $customerName");
             try {
               // Save the lead item to the sales_lead table
