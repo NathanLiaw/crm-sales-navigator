@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/customer_details_page.dart';
-import 'package:sales_navigator/customer_insight.dart';
+import 'package:sales_navigator/customer_insights.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
-import 'customer_insights.dart';
 
 class CustomerList extends StatefulWidget {
   const CustomerList({super.key});

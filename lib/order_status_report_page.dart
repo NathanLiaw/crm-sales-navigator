@@ -13,6 +13,7 @@ import 'customer.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:sales_navigator/customer_list.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -155,9 +156,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     final Customer? result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CustomerDetails(
-          onSelectionChanged: _updateSelectedCustomer,
-        ),
+        builder: (context) => CustomerList(),
       ),
     );
 
@@ -771,6 +770,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildDateRangePicker(),
               IconButton(
@@ -795,24 +795,20 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
           child: _buildSearchBar(),
         ),
         const SizedBox(width: 16.0),
-        // Select customer icon only on the right, with highlight when selected
+        // Select customer icon only on the right, always blue
         InkWell(
           onTap: _selectCustomer, // Allow user to select customer when tapped
           child: Container(
             height: 50.0,
             width: 50.0,
             decoration: BoxDecoration(
-              color: selectedCustomer == null
-                  ? Colors.white
-                  : const Color(0xFF047CBD), // Highlight if selected
+              color: const Color(0xff0175FF), // Always blue
               borderRadius: BorderRadius.circular(8.0),
               border: Border.all(color: Colors.grey),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.person,
-              color: selectedCustomer == null
-                  ? Colors.grey
-                  : Colors.white, // Change icon color when selected
+              color: Colors.white, // Always white icon
             ),
           ),
         ),
@@ -888,7 +884,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         Container(
           margin: const EdgeInsets.only(right: 12),
           alignment: Alignment.centerLeft,
-          width: 300,
           height: 43,
           decoration: BoxDecoration(
             color: const Color(0x503290E7),

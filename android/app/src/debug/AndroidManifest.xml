@@ -2,7 +2,7 @@
     <application
         android:label="Sales Navigator"
         android:name="${applicationName}"
-        android:icon="@mipmap/sales_navigator">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -45,7 +45,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      height: _isVisible ? 60 : 0,
+      height: _isVisible ? 80 : 0,
       duration: const Duration(milliseconds: 300),
       child: Scaffold(
         bottomNavigationBar: Container(

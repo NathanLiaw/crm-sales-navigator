@@ -4,7 +4,6 @@ import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
-import 'package:sales_navigator/customer_insight.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_insights.dart';

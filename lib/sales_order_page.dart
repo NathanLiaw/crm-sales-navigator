@@ -14,6 +14,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -191,9 +192,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       // Add filters for date range or days
       if (dateRange != null) {
         String startDate =
-            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
         String endDate =
-            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
         queryParams.addAll({
           'start_date': startDate,
           'end_date': endDate,
@@ -224,8 +225,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
       // Append query parameters to the URL
       apiUrl = apiUrl.replace(queryParameters: queryParams);
-      developer.log(apiUrl.toString());
-
+      print(apiUrl);
       final response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -233,7 +233,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
         if (jsonData['status'] == 'success') {
           List<Map<String, dynamic>> fetchedOrders =
-              List<Map<String, dynamic>>.from(jsonData['data']);
+          List<Map<String, dynamic>>.from(jsonData['data']);
 
           setState(() {
             orders = fetchedOrders;
@@ -419,7 +419,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             child: SingleChildScrollView(
                               child: Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Column(
                                   children: items.asMap().entries.map((entry) {
                                     int index = entry.key;
@@ -429,41 +429,41 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         CheckboxListTile(
                                           contentPadding: EdgeInsets.zero,
                                           controlAffinity:
-                                              ListTileControlAffinity.leading,
+                                          ListTileControlAffinity.leading,
                                           title: Padding(
                                             padding:
-                                                const EdgeInsets.only(left: 0),
+                                            const EdgeInsets.only(left: 0),
                                             child: Column(
                                               crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   item['product_name'],
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize:
-                                                        screenWidth * 0.045,
+                                                    screenWidth * 0.045,
                                                   ),
                                                 ),
                                                 SizedBox(
                                                     height:
-                                                        screenHeight * 0.005),
+                                                    screenHeight * 0.005),
                                                 Text(
                                                   'UOM: ${item['uom']}',
                                                   style: TextStyle(
                                                     fontSize:
-                                                        screenWidth * 0.04,
+                                                    screenWidth * 0.04,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
                                                 SizedBox(
                                                     height:
-                                                        screenHeight * 0.005),
+                                                    screenHeight * 0.005),
                                                 Text(
                                                   'Qty: ${item['qty']}',
                                                   style: TextStyle(
                                                     fontSize:
-                                                        screenWidth * 0.04,
+                                                    screenWidth * 0.04,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -534,9 +534,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               if (checkedItems[i]) {
                                 final item = items[i];
                                 final oriUnitPrice =
-                                    (item['ori_unit_price'] ?? 0.0).toDouble();
+                                (item['ori_unit_price'] ?? 0.0)
+                                    .toDouble();
                                 final qty = (item['qty'] ?? 0).toInt();
                                 final total = oriUnitPrice * qty;
+
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
                                   productId: item['product_id'],
@@ -609,9 +611,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               _sortingMethods[index],
                               style: TextStyle(
                                 fontWeight:
-                                    _selectedMethod == _sortingMethods[index]
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                                _selectedMethod == _sortingMethods[index]
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                                 color: _selectedMethod == _sortingMethods[index]
                                     ? Colors.blue
                                     : Colors.black,
@@ -691,12 +693,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             return DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse(a['created_date'])
                 .compareTo(
-                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
+                DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
           case 'By Creation Date (Descending)':
             return DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse(b['created_date'])
                 .compareTo(
-                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(a['created_date']));
+                DateFormat('dd/MM/yyyy HH:mm:ss').parse(a['created_date']));
           case 'By Amount (Low to High)':
             return a['final_total'].compareTo(b['final_total']);
           case 'By Amount (High to Low)':
@@ -705,7 +707,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             return DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse(a['created_date'])
                 .compareTo(
-                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
+                DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
         }
       });
     });
@@ -723,6 +725,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     developer.log('Total quantity for order ${order['id']}: $totalQuantity');
     return totalQuantity;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -927,7 +930,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             DateTime startDate = now.subtract(Duration(days: days));
             DateTime endDate = now;
             DateTimeRange newRange =
-                DateTimeRange(start: startDate, end: endDate);
+            DateTimeRange(start: startDate, end: endDate);
 
             dateRange = newRange;
             _loadSalesOrders(days: days, dateRange: newRange);
@@ -938,9 +941,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         });
       },
       style: TextButton.styleFrom(
-        backgroundColor: isSelected
-            ? const Color(0xff0175FF)
-            : const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor:
+        isSelected ? const Color(0xff0175FF) : const Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
           side: const BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
@@ -1123,87 +1125,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${index + 1}. $formattedOrderNumber',
-                                          style: const TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          companyName,
-                                          style: GoogleFonts.inter(
-                                            textStyle: const TextStyle(
-                                                letterSpacing: -0.8),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.black,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              'RM $amount',
-                                              style: const TextStyle(
-                                                color: Color(0xFF0175FF),
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(Icons.copy),
-                                                  onPressed: () async {
-                                                    await _showItemSelectionDialog(
-                                                        items);
-                                                  },
-                                                ),
-                                                Text(
-                                                  'Copy',
-                                                  style: GoogleFonts.inter(
-                                                    textStyle: const TextStyle(
-                                                        letterSpacing: -0.8),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.black,
-                                                  ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                        // Order number and company name
+                        Text(
+                          '${index + 1}. $formattedOrderNumber',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1257,89 +1184,111 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                 ),
                 const SizedBox(height: 8),
                 // Expansion tile for items
-                ExpansionTile(
+                Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                  elevation: 4, // Adds a shadow effect for depth
+                  color: Color(0xFFFFFFFF),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  title: const Text(
-                    'Items',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                  children: items
-                      .map((item) => Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                    child: Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ExpansionTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    iconColor: Colors.blueAccent, // Icon color when expanded
+                    collapsedIconColor: Colors.grey, // Icon color when collapsed
+                    title: const Text(
+                      'Items',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black, // Darker title color
+                      ),
+                    ),
+                    children: items.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 2),
-                                  // Product name
-                                  Text(
-                                    item['product_name'],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // UOM and Quantity
-                                  Row(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'UOM: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          item['uom'],
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'Qty: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16,
-                                        ),
-                                      ),
+                                      const SizedBox(height: 2),
+                                      // Product name
                                       Text(
-                                        item['qty'].toString(),
+                                        item['product_name'] ?? 'Unknown',
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                          color: Colors.black87, // Darker product name color
                                         ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // UOM and Quantity
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'UOM: ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Colors.black54, // Softer text color
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              item['uom'] ?? 'N/A',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.black54, // Softer text color
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            'Qty: ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Colors.black54, // Softer text color
+                                            ),
+                                          ),
+                                          Text(
+                                            item['qty']?.toString() ?? '0',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: Colors.black87, // Darker quantity color
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
+                            ),
+                            const Divider(
+                              color: Colors.grey,
+                              thickness: 1, // Thicker divider
                             ),
                           ],
                         ),
-                        const Divider(color: Colors.grey),
-                      ],
-                    ),
-                  ))
-                      .toList(),
-                ),
+                      );
+                    }).toList(),
+                  ),
+                )
+
               ],
             ),
           ),
