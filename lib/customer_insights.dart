@@ -43,34 +43,37 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<Customer.Customer> fetchCustomer() async {
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readFirst(
-        conn,
-        'customer',
-        "company_name = '${widget.customerName}' AND status = 1",
-        '',
-      );
-      await conn.close();
+      // Replace with your API endpoint
+      const String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_customer_data.php';
+      final response = await http.get(Uri.parse('$apiUrl?company_name=${widget.customerName}'));
 
-      if (results.isNotEmpty) {
-        var row = results;
-        setState(() {
-          customerId = row['id'];
-        });
-        return Customer.Customer(
-          id: row['id'] as int? ?? 0,
-          companyName: row['company_name'] as String? ?? '',
-          addressLine1: row['address_line_1'] as String? ?? '',
-          addressLine2: row['address_line_2'] as String? ?? '',
-          contactNumber: row['contact_number'] as String? ?? '',
-          email: row['email'] as String? ?? '',
-          customerRate: row['customer_rate'] != null
-              ? row['customer_rate'].toString() // Convert int to String if necessary
-              : '',
-          discountRate: row['discount_rate'] as int? ?? 0,
-        );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        if (jsonResponse['status'] == 'success') {
+          final data = jsonResponse['data'];
+
+          setState(() {
+            customerId = data['id'];
+          });
+
+          return Customer.Customer(
+            id: data['id'] as int? ?? 0,
+            companyName: data['company_name'] as String? ?? '',
+            addressLine1: data['address_line_1'] as String? ?? '',
+            addressLine2: data['address_line_2'] as String? ?? '',
+            contactNumber: data['contact_number'] as String? ?? '',
+            email: data['email'] as String? ?? '',
+            customerRate: data['customer_rate'] != null
+                ? data['customer_rate'].toString() // Convert int to String if necessary
+                : '',
+            discountRate: data['discount_rate'] as int? ?? 0,
+          );
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Customer not found');
+        }
       } else {
-        throw Exception('Customer not found with company name: ${widget.customerName}');
+        throw Exception('Failed to load customer data: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching customer: $e', error: e);
@@ -245,7 +248,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           child: Row(
                             children: [
                               SvgPicture.asset(
-                                "icons/predictive_analytics.svg",
+                                "asset/icons/predictive_analytics.svg",
                               ),
                               const SizedBox(
                                 width: 8,
@@ -532,7 +535,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           Image.asset(
-                                            "icons/Ai_star.png",
+                                            "asset/icons/ai_star.png",
                                             width: 16,
                                             height: 16,
                                           ),
@@ -581,7 +584,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           Image.asset(
-                                            "icons/Ai_star.png",
+                                            "asset/icons/ai_star.png",
                                             width: 16,
                                             height: 16,
                                           ),
@@ -775,7 +778,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                   ),
                                                 ),
                                                 Image.asset(
-                                                  "icons/Ai_star.png",
+                                                  "asset/icons/ai_star.png",
                                                   width: 16,
                                                   height: 16,
                                                 ),

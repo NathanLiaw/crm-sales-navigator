@@ -48,7 +48,6 @@ class OrderProcessingLeadItem extends StatelessWidget {
     String formattedTotal = _formatCurrency(total);
 
     return Container(
-      height: 278,
       decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(2),

@@ -127,14 +127,16 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                   ),
                   NavigationDestination(
                     selectedIcon: Badge(
-                      label: Text(cartModel.cartItemCount.toString()), // Use cart count from model
+                      label: Text(cartModel.cartItemCount.toString(), style: const TextStyle(fontSize: 16),), // Use cart count from model
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       child: const Icon(
                         Icons.shopping_cart,
                         color: Colors.white,
                       ),
                     ),
                     icon: Badge(
-                      label: Text(cartModel.cartItemCount.toString()), // Use cart count from model
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      label: Text(cartModel.cartItemCount.toString(), style: const TextStyle(fontSize: 12)), // Use cart count from model
                       child: const Icon(
                         Icons.shopping_cart_outlined,
                       ),

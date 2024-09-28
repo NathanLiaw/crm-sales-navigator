@@ -50,7 +50,7 @@ flutter:
     - asset/logo/
     - asset/
     - asset/icon/
-    - icons/
+    - asset/icons/
     - .env
 
 

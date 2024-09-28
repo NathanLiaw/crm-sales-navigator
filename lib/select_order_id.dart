@@ -41,7 +41,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Sales Order ID',
           style: TextStyle(color: Colors.white),
