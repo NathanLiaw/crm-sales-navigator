@@ -130,7 +130,7 @@ class _SalesReportState extends State<SalesReport> {
       return [];
     }
   }
-  
+
   void _refreshData() async {
     await _fetchData(_selectedInterval);
   }
@@ -145,24 +145,24 @@ class _SalesReportState extends State<SalesReport> {
         });
       },
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith<Color>(
-          (Set<WidgetState> states) {
+        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>(
-          (Set<WidgetState> states) {
+        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),

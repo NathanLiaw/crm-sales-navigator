@@ -92,6 +92,29 @@ class _ItemsWidgetState extends State<ItemsWidget> {
         final products = data['products'] as List<dynamic>;
 
         return products.map((product) {
+          // Parse the price_by_uom JSON string
+          Map<String, dynamic> priceByUom =
+              jsonDecode(product['price_by_uom'] as String? ?? '{}');
+
+          // Get the first price from the first area
+          String firstPrice = '0.000';
+          if (priceByUom.isNotEmpty) {
+            var firstArea = priceByUom.values.first;
+            if (firstArea is Map && firstArea.isNotEmpty) {
+              firstPrice = firstArea.values.first.toString();
+            }
+          }
+
+          // Count unique variants
+          Set<String> uniquePrices = {};
+          priceByUom.forEach((areaId, prices) {
+            if (prices is Map) {
+              uniquePrices
+                  .addAll(prices.values.map((price) => price.toString()));
+            }
+          });
+          int variantCount = uniquePrices.length;
+
           return {
             'id': product['id'] is int
                 ? product['id']
@@ -104,6 +127,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                 _sanitizeHtml(product['description'] as String? ?? ''),
             'price_by_uom': product['price_by_uom'] as String? ?? '',
             'featured': product['featured'] as String? ?? '',
+            'first_price': firstPrice,
+            'variant_count': variantCount,
           };
         }).toList();
       } else {
@@ -140,9 +165,11 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       controller: _scrollController,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2, // Two items per row
-        childAspectRatio: MediaQuery.of(context).size.width < 2000 ? 0.65 : 0.70,
+        childAspectRatio:
+            MediaQuery.of(context).size.width < 2000 ? 0.60 : 0.70,
       ),
-      itemCount: _products.length + (_hasMore ? 4 : 0), // Add four shimmer placeholders
+      itemCount: _products.length +
+          (_hasMore ? 4 : 0), // Add four shimmer placeholders
       itemBuilder: (context, index) {
         if (index >= _products.length) {
           // Display four shimmer effects in a 2x2 grid
@@ -271,27 +298,77 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                   ),
                 ),
                 Container(
-                  width: containerSize,
-                  padding: const EdgeInsets.only(top: 8),
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  margin: EdgeInsets.only(left: 12),
+                  child: Column(
                     children: [
-                      Flexible(
-                        child: Column(
+                      Container(
+                        width: containerSize,
+                        padding: const EdgeInsets.only(top: 8),
+                        alignment: Alignment.centerLeft,
+                        child: Row(
                           children: [
-                            Container(
-                              margin: const EdgeInsets.only(left: 12),
-                              child: Text(
-                                productName,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color.fromARGB(255, 25, 23, 49),
-                                ),
+                            Flexible(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    child: Text(
+                                      productName,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color.fromARGB(
+                                            255, 25, 23, 49),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: containerSize,
+                        padding: const EdgeInsets.only(top: 8),
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    child: Text(
+                                      textAlign: TextAlign.left,
+                                      'RM ${product['first_price']}',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xff0175FF),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Container(
+                                    child: Text(
+                                      textAlign: TextAlign.left,
+                                      '${product['variant_count']} Variants',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

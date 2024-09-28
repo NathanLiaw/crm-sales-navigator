@@ -305,7 +305,8 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                               child: Text(
                                 'Sales Target',
                                 style: GoogleFonts.inter(
-                                    textStyle: const TextStyle(letterSpacing: -0.8),
+                                    textStyle:
+                                        const TextStyle(letterSpacing: -0.8),
                                     fontSize: 20.0,
                                     color: const Color(0xff085ABE),
                                     fontWeight: FontWeight.w700),
@@ -391,7 +392,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
               mainAxisSpacing: 8,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.22,
+              childAspectRatio: 1.10,
               children: [
                 InfoBox(
                   label: 'Monthly Revenue',

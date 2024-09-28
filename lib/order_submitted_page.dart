@@ -20,7 +20,9 @@ class OrderSubmittedPage extends StatelessWidget {
         // Extract the 'id' field from the first row of the result
         salesOrderId = result['id'] as int;
       } else {
-        developer.log('No sales order ID found in the cart table: $salesOrderId', level: 1);
+        developer.log(
+            'No sales order ID found in the cart table: $salesOrderId',
+            level: 1);
       }
 
       await conn.close();
@@ -125,13 +127,15 @@ class OrderSubmittedPage extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0175FF)),
-                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              const Color(0xff0175FF)),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: WidgetStateProperty.all<Size>(
+                          minimumSize: MaterialStateProperty.all<Size>(
                             const Size(130.0, 40.0),
                           ),
                         ),
@@ -150,13 +154,16 @@ class OrderSubmittedPage extends StatelessWidget {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => OrderDetailsPage(cartID: salesOrderId),
+                              builder: (context) =>
+                                  OrderDetailsPage(cartID: salesOrderId),
                             ),
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(const Color(0xffffffff)),
-                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              const Color(0xffffffff)),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                               side: const BorderSide(
@@ -165,10 +172,10 @@ class OrderSubmittedPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          minimumSize: WidgetStateProperty.all<Size>(
+                          minimumSize: MaterialStateProperty.all<Size>(
                             const Size(120.0, 40.0),
                           ),
-                          maximumSize: WidgetStateProperty.all<Size>(
+                          maximumSize: MaterialStateProperty.all<Size>(
                             const Size(150.0, 40.0),
                           ),
                         ),
