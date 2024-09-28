@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/customer_list.dart';
@@ -13,7 +14,8 @@ import 'customer.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:path_provider/path_provider.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -225,7 +227,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
       // Append query parameters to the URL
       apiUrl = apiUrl.replace(queryParameters: queryParams);
-      print(apiUrl);
+
       final response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -558,6 +560,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                 await insertItemIntoCart(cartItem);
                               }
                             }
+
+                            Provider.of<CartModel>(context, listen: false).initializeCartCount();
+
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -1090,7 +1095,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
     if (orderId == null) {
       // Handle invalid number, log an error or show a fallback UI
-      print('Invalid order number: $orderNumber');
+      developer.log('Invalid order number: $orderNumber');
       return Container(); // Fallback widget to avoid crashes
     }
 

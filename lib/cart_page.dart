@@ -164,7 +164,32 @@ class _CartPage extends State<CartPage> {
     }
   }
 
+  Future<void> cacheCartItems(List<CartItem> cartItems) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> cartItemsJson = cartItems.map((item) => jsonEncode(item.toMap())).toList();
+    await prefs.setStringList('cachedCartItems', cartItemsJson);
+  }
+
+  Future<List<CartItem>> getCachedCartItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? cartItemsJson = prefs.getStringList('cachedCartItems');
+
+    if (cartItemsJson != null) {
+      return cartItemsJson.map((json) => CartItem.fromMap(jsonDecode(json))).toList();
+    }
+    developer.log(cartItemsJson.toString());
+    return []; // Return an empty list if there are no cached items
+  }
+
   Future<List<CartItem>> readCartItems() async {
+    // Load cached items first
+    List<CartItem> cachedCartItems = await getCachedCartItems();
+
+    // if (cachedCartItems.isNotEmpty) {
+    //   return cachedCartItems; // Return cached items if available
+    // }
+
+    // Proceed to load items from the database if no cached items are found
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int id = prefs.getInt('id') ?? 0;
 
@@ -178,11 +203,13 @@ class _CartPage extends State<CartPage> {
         database, cartItemTableName, condition, order, field);
 
     // Initialize text controllers after fetching items
-    textControllers =
-        List.generate(queryResults.length, (index) => TextEditingController());
+    textControllers = List.generate(queryResults.length, (index) => TextEditingController());
 
-    List<CartItem> cartItems =
-        queryResults.map((map) => CartItem.fromMap(map)).toList();
+    // Convert the results to CartItem objects
+    List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+
+    // Cache the fetched cart items for future access
+    await cacheCartItems(cartItems);
 
     return cartItems;
   }
@@ -191,7 +218,7 @@ class _CartPage extends State<CartPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/product/get_product_photo.php?productId=$productId'),
+            'https://haluansama.com/crm-sales/api/product/get_prod_photo_by_prod_id.php?productId=$productId'),
       );
 
       if (response.statusCode == 200) {
@@ -435,7 +462,7 @@ class _CartPage extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     final formatter =
-        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -451,42 +478,109 @@ class _CartPage extends State<CartPage> {
               ),
             ],
           ),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            title: const Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(width: 2),
-                Text(
-                  'Shopping Cart',
-                  style: TextStyle(
-                    color: Color(0xffF8F9FA),
-                    fontSize: 24,
+          child: FutureBuilder<List<CartItem>>(
+            future: readCartItems(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return AppBar(
+                  automaticallyImplyLeading: false,
+                  title: const Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 2),
+                      Text(
+                        'Loading...',
+                        style: TextStyle(
+                          color: Color(0xffF8F9FA),
+                          fontSize: 24,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xff0175FF),
-            centerTitle: true,
-            actions: [
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    editCart = !editCart; // Toggle editCart state
-                  });
-                },
-                child: Text(
-                  editCart
-                      ? 'Done'
-                      : 'Edit', // Display 'Done' or 'Edit' based on editCart state
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+                  backgroundColor: const Color(0xff0175FF),
+                  centerTitle: true,
+                  actions: const [],
+                );
+              } else if (snapshot.hasError) {
+                return AppBar(
+                  automaticallyImplyLeading: false,
+                  title: const Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 2),
+                      Text(
+                        'Error loading cart',
+                        style: TextStyle(
+                          color: Color(0xffF8F9FA),
+                          fontSize: 24,
+                        ),
+                      ),
+                    ],
                   ),
+                  backgroundColor: const Color(0xff0175FF),
+                  centerTitle: true,
+                  actions: const [],
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return AppBar(
+                  automaticallyImplyLeading: false,
+                  title: const Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 2),
+                      Text(
+                        'Shopping Cart',
+                        style: TextStyle(
+                          color: Color(0xffF8F9FA),
+                          fontSize: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: const Color(0xff0175FF),
+                  centerTitle: true,
+                  actions: const [],
+                );
+              }
+
+              // If we have data, build the AppBar with cart items information
+              List<CartItem> cartItems = snapshot.data!;
+              return AppBar(
+                automaticallyImplyLeading: false,
+                title: const Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 2),
+                    Text(
+                      'Shopping Cart',
+                      style: TextStyle(
+                        color: Color(0xffF8F9FA),
+                        fontSize: 24,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 4),
-            ],
+                backgroundColor: const Color(0xff0175FF),
+                centerTitle: true,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        editCart = !editCart; // Toggle editCart state
+                      });
+                    },
+                    child: Text(
+                      editCart ? 'Done' : 'Edit', // Toggle button text
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -1267,8 +1361,8 @@ class _CartPage extends State<CartPage> {
                             },
                             style: ButtonStyle(
                               backgroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.red),
-                              shape: MaterialStateProperty.all<
+                                  WidgetStateProperty.all<Color>(Colors.red),
+                              shape: WidgetStateProperty.all<
                                   RoundedRectangleBorder>(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -1354,15 +1448,15 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
+                          backgroundColor: WidgetStateProperty.all<Color>(
                               const Color(0xff0175FF)),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(120,
                                 40), // Adjust the minimum width and height of the button
                           ),

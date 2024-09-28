@@ -173,7 +173,7 @@ class _EditItemPageState extends State<EditItemPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
           'Edit Item',
@@ -326,15 +326,15 @@ class _EditItemPageState extends State<EditItemPage> {
                     });
                   },
                   style: ButtonStyle(
-                    padding:MaterialStateProperty.all<EdgeInsets>(
+                    padding:WidgetStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        WidgetStateProperty.all<Color>(Colors.white),
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                         side: const BorderSide(color: Colors.red),
@@ -355,16 +355,16 @@ class _EditItemPageState extends State<EditItemPage> {
                     updatePriceAndAuthority();
                   },
                   style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsets>(
+                    padding: WidgetStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      const Color(0xff0069ba),
+                    backgroundColor: WidgetStateProperty.all<Color>(
+                      const Color(0xff0175FF),
                     ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       ),

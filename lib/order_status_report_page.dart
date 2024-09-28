@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -556,6 +558,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 await insertItemIntoCart(cartItem);
                               }
                             }
+                            Provider.of<CartModel>(context, listen: false).initializeCartCount();
+
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

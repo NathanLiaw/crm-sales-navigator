@@ -5,6 +5,8 @@ import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class OrderDetailsPage extends StatefulWidget {
   final int cartID;
@@ -50,137 +52,85 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Future<void> fetchOrderDetails() async {
-    final conn = await connectToDatabase();
+    final cartId = widget.cartID;
 
     try {
-      final cartId = widget.cartID;
-
-      final customerResults = await readData(
-        conn,
-        'cart',
-        'id = $cartId',
-        '',
-        'customer_id',
+      final response = await http.get(
+        Uri.parse('https://haluansama.com/crm-sales/api/cart/get_order_details.php?cartId=$cartId'),
       );
 
-      final customerID = customerResults.first['customer_id'] as int;
-      final customerDetails = await readData(
-        conn,
-        'customer',
-        'id = $customerID',
-        '',
-        'company_name, address_line_1',
-      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      final salesmanResults = await readData(
-        conn,
-        'cart',
-        'id = $cartId',
-        '',
-        'buyer_name',
-      );
+        if (data['status'] == 'success') {
+          final orderDetails = data['orderDetails'];
+          final cartItems = List<Map<String, dynamic>>.from(data['cartItems']);
 
-      final createdDateResults = await readData(
-        conn,
-        'cart',
-        'id = $cartId',
-        '',
-        'created',
-      );
+          setState(() {
+            companyName = orderDetails['company_name'];
+            address = orderDetails['address_line_1'];
+            salesmanName = orderDetails['salesman_name'];
+            createdDate = orderDetails['created_date'];
+            salesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
 
-      final sessionResults = await readData(
-        conn,
-        'cart',
-        'id = $cartId',
-        '',
-        'session',
-      );
+            orderItems = [];
 
-      String session = '';
-      if (sessionResults.isNotEmpty) {
-        session = sessionResults.first['session'].toString();
-      }
+            // Loop through each cart item to fetch its photo
+            cartItems.forEach((item) async {
+              final productId = item['product_id'];
+              final productName = item['product_name'];
 
-      final cartItemResults = await readData(
-        conn,
-        'cart_item',
-        "session = '$session' OR cart_id = '$cartId'",
-        '',
-        'product_name, unit_price, qty, total, status',
-      );
+              // Fetch the product photo for each item
+              final photoPath = await fetchProductPhoto(productId);
 
-      final createdDateTime =
-          DateTime.parse(createdDateResults.first['created'] as String);
-      final formattedCreatedDate =
-          DateFormat('yyyy-MM-dd').format(createdDateTime);
+              orderItems.add(OrderItem(
+                productId: productId,
+                productName: productName,
+                unitPrice: item['unit_price'] ?? '0.00',
+                qty: item['qty']?.toString() ?? '0',
+                status: item['status'] ?? '',
+                total: item['total'] ?? '0.00',
+                photoPath: photoPath,
+              ));
 
-      final formattedSalesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
+              // Calculate subtotal
+              subtotal = orderItems.fold(0.0, (sum, item) => sum + double.parse(item.total));
 
-      final items = <OrderItem>[];
-      double total = 0.0;
-      for (var result in cartItemResults) {
-        final productName = result['product_name'] as String?;
-        final unitPrice = result['unit_price']?.toString() ?? '0.00';
-        final qty = result['qty']?.toString() ?? '0';
-        final status = result['status'] as String?;
-        final itemTotal = result['total']?.toString() ?? '0.00';
-
-        String photoPath = 'asset/no_image.jpg';
-        if (productName != null) {
-          photoPath = await fetchProductPhoto(productName);
+              calculateTotalAndSubTotal();
+            });
+          });
+        } else {
+          developer.log('Failed to fetch order details: ${data['message']}');
         }
-
-        if (productName != null && status != null) {
-          items.add(OrderItem(
-            productName: productName,
-            unitPrice: unitPrice,
-            qty: qty,
-            status: status,
-            total: itemTotal,
-            photoPath: photoPath,
-          ));
-          total += double.parse(itemTotal);
-        }
+      } else {
+        developer.log('Failed to fetch order details: ${response.statusCode}');
       }
-
-      setState(() {
-        companyName = customerDetails.first['company_name'] as String;
-        address = customerDetails.first['address_line_1'] as String;
-        salesmanName = salesmanResults.first['buyer_name'] as String;
-        salesOrderId = formattedSalesOrderId;
-        createdDate = formattedCreatedDate;
-        orderItems = items;
-        subtotal = total;
-        calculateTotalAndSubTotal();
-      });
     } catch (e) {
-      developer.log('Failed to fetch order details: $e', error: e);
-    } finally {
-      await conn.close();
+      developer.log('Error fetching order details: $e', error: e);
     }
   }
 
-  Future<String> fetchProductPhoto(String productName) async {
+  Future<String> fetchProductPhoto(int productId) async {
     try {
-      final conn = await connectToDatabase();
-      final results = await readData(
-        conn,
-        'product',
-        "product_name = '$productName'",
-        '',
-        'photo1',
+      final response = await http.get(
+        Uri.parse('https://haluansama.com/crm-sales/api/product/get_prod_photo_by_prod_id.php?productId=$productId'),
       );
-      await conn.close();
-      if (results.isNotEmpty && results[0]['photo1'] != null) {
-        String photoPath = results[0]['photo1'];
-        if (photoPath.startsWith('photo/')) {
-          photoPath =
-              'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          // Extract photo1 from the response
+          final photos = List<Map<String, dynamic>>.from(data['photos']);
+          if (photos.isNotEmpty && photos[0]['photo1'] != null) {
+            String photoPath = photos[0]['photo1'];
+            if (photoPath.startsWith('photo/')) {
+              photoPath = 'https://haluansama.com/crm-sales/$photoPath';
+            }
+            return photoPath;
+          }
         }
-        return photoPath;
-      } else {
-        return 'asset/no_image.jpg';
       }
+      return 'asset/no_image.jpg';  // Default image if no photo found
     } catch (e) {
       developer.log('Error fetching product photo: $e', error: e);
       return 'asset/no_image.jpg';
@@ -546,6 +496,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 }
 
 class OrderItem {
+  final int productId;
   final String productName;
   final String unitPrice;
   final String qty;
@@ -554,6 +505,7 @@ class OrderItem {
   final String photoPath;
 
   OrderItem({
+    required this.productId,
     required this.productName,
     required this.unitPrice,
     required this.qty,
