@@ -96,24 +96,16 @@ class _ItemsWidgetState extends State<ItemsWidget> {
           Map<String, dynamic> priceByUom =
               jsonDecode(product['price_by_uom'] as String? ?? '{}');
 
-          // Get the first price from the first area
+          // Get the first price and variant count from the first area (ID "1")
           String firstPrice = '0.000';
-          if (priceByUom.isNotEmpty) {
-            var firstArea = priceByUom.values.first;
+          int variantCount = 0;
+          if (priceByUom.containsKey('1')) {
+            var firstArea = priceByUom['1'];
             if (firstArea is Map && firstArea.isNotEmpty) {
               firstPrice = firstArea.values.first.toString();
+              variantCount = firstArea.length;
             }
           }
-
-          // Count unique variants
-          Set<String> uniquePrices = {};
-          priceByUom.forEach((areaId, prices) {
-            if (prices is Map) {
-              uniquePrices
-                  .addAll(prices.values.map((price) => price.toString()));
-            }
-          });
-          int variantCount = uniquePrices.length;
 
           return {
             'id': product['id'] is int
