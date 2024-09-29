@@ -1501,48 +1501,101 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _createLead(
       String customerName, String description, String amount) async {
-    LeadItem leadItem = LeadItem(
-      id: 0,
-      salesmanId: salesmanId,
-      customerName: customerName,
-      description: description,
-      createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
-      amount: 'RM$amount',
-      contactNumber: '',
-      emailAddress: '',
-      stage: 'Opportunities',
-      addressLine1: '',
-      salesOrderId: '',
-    );
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead.php';
 
-    MySqlConnection conn = await connectToDatabase();
+    final Map<String, String> queryParameters = {
+      'customer_name': customerName,
+      'description': description,
+      'amount': amount,
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      Results customerResults = await conn.query(
-        'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
-        [customerName],
-      );
-      if (customerResults.isNotEmpty) {
-        var customerRow = customerResults.first;
-        leadItem.contactNumber = customerRow['contact_number'].toString();
-        leadItem.emailAddress = customerRow['email'].toString();
-        leadItem.addressLine1 = customerRow['address_line_1'].toString();
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          LeadItem leadItem = LeadItem(
+            id: responseData['lead_id'],
+            salesmanId: salesmanId,
+            customerName: customerName,
+            description: description,
+            createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+            amount: 'RM$amount',
+            contactNumber: responseData['contact_number'],
+            emailAddress: responseData['email_address'],
+            stage: 'Opportunities',
+            addressLine1: responseData['address_line_1'],
+            salesOrderId: '',
+          );
+
+          setState(() {
+            leadItems.add(leadItem);
+          });
+
+          await _updateSalesmanPerformance(salesmanId);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to create lead: ${response.statusCode}');
       }
     } catch (e) {
-      developer.log('Error fetching customer details: $e');
-    } finally {
-      await conn.close();
+      print('Error creating lead: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create lead: $e')),
+      );
     }
-
-    // // Log the event
-    // await EventLogger.logEvent(salesmanId,
-    //     'Created new lead for customer: $customerName', 'Lead Accepted',
-    //     leadId: leadItem.id);
-
-    setState(() {
-      leadItems.add(leadItem);
-    });
-    await _updateSalesmanPerformance(salesmanId);
   }
+
+  // Future<void> _createLead(
+  //     String customerName, String description, String amount) async {
+  //   LeadItem leadItem = LeadItem(
+  //     id: 0,
+  //     salesmanId: salesmanId,
+  //     customerName: customerName,
+  //     description: description,
+  //     createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+  //     amount: 'RM$amount',
+  //     contactNumber: '',
+  //     emailAddress: '',
+  //     stage: 'Opportunities',
+  //     addressLine1: '',
+  //     salesOrderId: '',
+  //   );
+
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     Results customerResults = await conn.query(
+  //       'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
+  //       [customerName],
+  //     );
+  //     if (customerResults.isNotEmpty) {
+  //       var customerRow = customerResults.first;
+  //       leadItem.contactNumber = customerRow['contact_number'].toString();
+  //       leadItem.emailAddress = customerRow['email'].toString();
+  //       leadItem.addressLine1 = customerRow['address_line_1'].toString();
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching customer details: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+
+  //   setState(() {
+  //     leadItems.add(leadItem);
+  //   });
+  //   await _updateSalesmanPerformance(salesmanId);
+  // }
 
   Future<void> _handleIgnore(LeadItem leadItem) async {
     bool confirmDelete = await showDialog(
@@ -1571,50 +1624,118 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     if (confirmDelete == true) {
-      MySqlConnection conn = await connectToDatabase();
+      final String baseUrl =
+          'https://haluansama.com/crm-sales/api/sales_lead/delete_opportunities_lead.php';
+
+      final Map<String, String> queryParameters = {
+        'lead_id': leadItem.id.toString(),
+        'salesman_id': salesmanId.toString(),
+      };
+
+      final Uri uri =
+          Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
       try {
-        await conn.transaction((ctx) async {
-          // Delete the related event_log records
-          await ctx.query(
-            'DELETE FROM event_log WHERE lead_id = ?',
-            [leadItem.id],
-          );
+        final response = await http.get(uri);
 
-          // Delete the sales_lead record
-          var result = await ctx.query(
-            'DELETE FROM sales_lead WHERE id = ?',
-            [leadItem.id],
-          );
-
-          if (result.affectedRows! > 0) {
-            // If the deletion is successful, a new event log is inserted
-            await ctx.query(
-              'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
-              [salesmanId, 'Ignored lead', 'Lead Ignored'],
-            );
-
+        if (response.statusCode == 200) {
+          final responseData = json.decode(response.body);
+          if (responseData['status'] == 'success') {
             setState(() {
               leadItems.remove(leadItem);
             });
+
             await _updateSalesmanPerformance(salesmanId);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lead successfully deleted')),
+              SnackBar(content: Text(responseData['message'])),
             );
           } else {
-            throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
+            throw Exception(responseData['message']);
           }
-        });
+        } else {
+          throw Exception('Failed to delete lead: ${response.statusCode}');
+        }
       } catch (e) {
-        developer.log('Error during transaction: $e');
+        print('Error deleting lead: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete lead: $e')),
         );
-      } finally {
-        await conn.close();
       }
     }
   }
+
+  // Future<void> _handleIgnore(LeadItem leadItem) async {
+  //   bool confirmDelete = await showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text('Confirm Delete'),
+  //         content:
+  //             const Text('Are you sure you want to delete this sales lead?'),
+  //         actions: [
+  //           TextButton(
+  //             child: const Text('Cancel'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop(false);
+  //             },
+  //           ),
+  //           TextButton(
+  //             child: const Text('Confirm'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop(true);
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+
+  //   if (confirmDelete == true) {
+  //     MySqlConnection conn = await connectToDatabase();
+  //     try {
+  //       await conn.transaction((ctx) async {
+  //         // Delete the related event_log records
+  //         await ctx.query(
+  //           'DELETE FROM event_log WHERE lead_id = ?',
+  //           [leadItem.id],
+  //         );
+
+  //         // Delete the sales_lead record
+  //         var result = await ctx.query(
+  //           'DELETE FROM sales_lead WHERE id = ?',
+  //           [leadItem.id],
+  //         );
+
+  //         if (result.affectedRows! > 0) {
+  //           // If the deletion is successful, a new event log is inserted
+  //           await ctx.query(
+  //             'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+  //             [salesmanId, 'Ignored lead', 'Lead Ignored'],
+  //           );
+
+  //           setState(() {
+  //             leadItems.remove(leadItem);
+  //           });
+  //           await _updateSalesmanPerformance(salesmanId);
+
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text('Lead successfully deleted')),
+  //           );
+  //         } else {
+  //           throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
+  //         }
+  //       });
+  //     } catch (e) {
+  //       developer.log('Error during transaction: $e');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Failed to delete lead: $e')),
+  //       );
+  //     } finally {
+  //       await conn.close();
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
