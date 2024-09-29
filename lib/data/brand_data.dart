@@ -1,35 +1,38 @@
-import 'package:mysql1/mysql1.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class BrandData {
   final int id;
   final String brand;
-  final int position;
-  final String status;
-  final DateTime created;
-  final DateTime modified;
 
   BrandData({
     required this.id,
     required this.brand,
-    required this.position,
-    required this.status,
-    required this.created,
-    required this.modified,
   });
 
-  factory BrandData.fromRow(ResultRow row) {
+  factory BrandData.fromJson(Map<String, dynamic> json) {
     return BrandData(
-      id: row['id'] as int,
-      brand: row['brand'] as String,
-      position: row['position'] as int,
-      status: row['status'] as String,
-      created: row['created'] as DateTime,
-      modified: row['modified'] as DateTime,
+      id: json['id'] as int,
+      brand: json['brand'] as String,
     );
   }
 }
 
-Future<List<BrandData>> fetchBrands(MySqlConnection conn) async {
-  final results = await conn.query('SELECT * FROM brand WHERE status = 1 ORDER BY brand ASC');
-  return results.map<BrandData>((row) => BrandData.fromRow(row)).toList();
+Future<List<BrandData>> fetchBrands() async {
+  final response = await http.get(
+    Uri.parse('https://haluansama.com/crm-sales/api/brand/get_brands.php'),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['status'] == 'success') {
+      List<dynamic> brandList = data['data'];
+
+      return brandList.map((json) => BrandData.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load brands: ${data['message']}');
+    }
+  } else {
+    throw Exception('Failed to load brands');
+  }
 }

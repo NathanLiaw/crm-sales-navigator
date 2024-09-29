@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, unused_element, use_build_context_synchronously, library_private_types_in_public_api, depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -51,7 +53,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   DateTimeRange? dateRange;
   int? selectedDays;
   int selectedButtonIndex = 3;
-  bool isSortedAscending = false; // Ensure this is set to false
+  bool isSortedAscending = false;
   String loggedInUsername = '';
   Customer? selectedCustomer;
   int currentPageIndex = 1;
@@ -194,9 +196,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       // Add filters for date range or days
       if (dateRange != null) {
         String startDate =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
         String endDate =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.end);
         queryParams.addAll({
           'start_date': startDate,
           'end_date': endDate,
@@ -219,13 +221,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         queryParams['status_filters'] = statusFilters;
       }
 
-      // Add sorting method (creation date or price) and direction (ascending/descending)
       String sortField = _getOrderByField();
       String sortMethod = isSortedAscending ? 'ASC' : 'DESC';
       queryParams['sort_field'] = sortField;
       queryParams['sort_method'] = sortMethod;
 
-      // Append query parameters to the URL
+
       apiUrl = apiUrl.replace(queryParameters: queryParams);
 
       final response = await http.get(apiUrl);
@@ -235,7 +236,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
         if (jsonData['status'] == 'success') {
           List<Map<String, dynamic>> fetchedOrders =
-          List<Map<String, dynamic>>.from(jsonData['data']);
+              List<Map<String, dynamic>>.from(jsonData['data']);
 
           setState(() {
             orders = fetchedOrders;
@@ -308,7 +309,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1F5FE),
+                  color: const Color.fromARGB(255, 255, 255, 255),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 width: screenWidth * 0.95,
@@ -323,7 +324,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
-                        color: Color(0xFF004072),
+                        color: Color.fromARGB(255, 0, 0, 0),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -421,7 +422,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             child: SingleChildScrollView(
                               child: Padding(
                                 padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Column(
                                   children: items.asMap().entries.map((entry) {
                                     int index = entry.key;
@@ -431,41 +432,41 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         CheckboxListTile(
                                           contentPadding: EdgeInsets.zero,
                                           controlAffinity:
-                                          ListTileControlAffinity.leading,
+                                              ListTileControlAffinity.leading,
                                           title: Padding(
                                             padding:
-                                            const EdgeInsets.only(left: 0),
+                                                const EdgeInsets.only(left: 0),
                                             child: Column(
                                               crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   item['product_name'],
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize:
-                                                    screenWidth * 0.045,
+                                                        screenWidth * 0.045,
                                                   ),
                                                 ),
                                                 SizedBox(
                                                     height:
-                                                    screenHeight * 0.005),
+                                                        screenHeight * 0.005),
                                                 Text(
                                                   'UOM: ${item['uom']}',
                                                   style: TextStyle(
                                                     fontSize:
-                                                    screenWidth * 0.04,
+                                                        screenWidth * 0.04,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
                                                 SizedBox(
                                                     height:
-                                                    screenHeight * 0.005),
+                                                        screenHeight * 0.005),
                                                 Text(
                                                   'Qty: ${item['qty']}',
                                                   style: TextStyle(
                                                     fontSize:
-                                                    screenWidth * 0.04,
+                                                        screenWidth * 0.04,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -525,7 +526,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            backgroundColor: Colors.green,
+                            backgroundColor: const Color(0xFF33B44F),
                           ),
                           child: const Text(
                             'Copy to cart',
@@ -536,8 +537,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               if (checkedItems[i]) {
                                 final item = items[i];
                                 final oriUnitPrice =
-                                (item['ori_unit_price'] ?? 0.0)
-                                    .toDouble();
+                                    (item['ori_unit_price'] ?? 0.0).toDouble();
                                 final qty = (item['qty'] ?? 0).toInt();
                                 final total = oriUnitPrice * qty;
 
@@ -561,7 +561,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               }
                             }
 
-                            Provider.of<CartModel>(context, listen: false).initializeCartCount();
+                            Provider.of<CartModel>(context, listen: false)
+                                .initializeCartCount();
 
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -616,9 +617,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               _sortingMethods[index],
                               style: TextStyle(
                                 fontWeight:
-                                _selectedMethod == _sortingMethods[index]
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                                    _selectedMethod == _sortingMethods[index]
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                 color: _selectedMethod == _sortingMethods[index]
                                     ? Colors.blue
                                     : Colors.black,
@@ -698,12 +699,12 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             return DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse(a['created_date'])
                 .compareTo(
-                DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
+                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
           case 'By Creation Date (Descending)':
             return DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse(b['created_date'])
                 .compareTo(
-                DateFormat('dd/MM/yyyy HH:mm:ss').parse(a['created_date']));
+                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(a['created_date']));
           case 'By Amount (Low to High)':
             return a['final_total'].compareTo(b['final_total']);
           case 'By Amount (High to Low)':
@@ -712,7 +713,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             return DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse(a['created_date'])
                 .compareTo(
-                DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
+                    DateFormat('dd/MM/yyyy HH:mm:ss').parse(b['created_date']));
         }
       });
     });
@@ -730,7 +731,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     developer.log('Total quantity for order ${order['id']}: $totalQuantity');
     return totalQuantity;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -848,17 +848,22 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   void _filterSalesOrders(String query) {
     setState(() {
       if (query.isEmpty) {
-        _loadSalesOrders(); // Reload all orders if the query is empty
+        _loadSalesOrders();
       } else {
         orders = orders.where((order) {
           String orderId = order['id'].toString();
-          String formattedOrderId =
-              'S${orderId.padLeft(7, '0')}'; // Format as S0000001
-
-          // Convert both query and formattedOrderId to lowercase for case-insensitive matching
+          String formattedOrderId = 'S${orderId.padLeft(7, '0')}';
+          String creationDate = '';
+          if (order['created_date'] != null) {
+            DateTime dateTime =
+                DateFormat('dd/MM/yyyy').parse(order['created_date']);
+            creationDate = DateFormat('dd-MM-yyyy').format(dateTime);
+          }
+          String companyName = order['company_name']?.toString() ?? '';
           return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
-              orderId.contains(
-                  query); // Allow partial number search (e.g., "1" for "S0000001")
+              orderId.contains(query) ||
+              companyName.toLowerCase().contains(query.toLowerCase()) ||
+              creationDate.contains(query);
         }).toList();
       }
     });
@@ -935,7 +940,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             DateTime startDate = now.subtract(Duration(days: days));
             DateTime endDate = now;
             DateTimeRange newRange =
-            DateTimeRange(start: startDate, end: endDate);
+                DateTimeRange(start: startDate, end: endDate);
 
             dateRange = newRange;
             _loadSalesOrders(days: days, dateRange: newRange);
@@ -946,8 +951,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         });
       },
       style: TextButton.styleFrom(
-        backgroundColor:
-        isSelected ? const Color(0xff0175FF) : const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: isSelected
+            ? const Color(0xff0175FF)
+            : const Color.fromARGB(255, 255, 255, 255),
         shape: RoundedRectangleBorder(
           side: const BorderSide(color: Color(0xFF999999)),
           borderRadius: BorderRadius.circular(50),
@@ -1104,7 +1110,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         bool? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: orderId),
+            builder: (context) => OrderDetailsPage(cartID: orderId, fromOrderConfirmation: false, fromSalesOrder: true,),
           ),
         );
         if (result == true) {
@@ -1113,7 +1119,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         elevation: 4,
         child: Container(
           decoration: BoxDecoration(
@@ -1190,9 +1197,10 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                 const SizedBox(height: 8),
                 // Expansion tile for items
                 Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                   elevation: 4, // Adds a shadow effect for depth
-                  color: Color(0xFFFFFFFF),
+                  color: const Color(0xFFFFFFFF),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -1200,9 +1208,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    tilePadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                     iconColor: Colors.blueAccent, // Icon color when expanded
-                    collapsedIconColor: Colors.grey, // Icon color when collapsed
+                    collapsedIconColor:
+                        Colors.grey, // Icon color when collapsed
                     title: const Text(
                       'Items',
                       style: TextStyle(
@@ -1221,7 +1231,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 2),
                                       // Product name
@@ -1230,21 +1241,24 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 16,
-                                          color: Colors.black87, // Darker product name color
+                                          color: Colors
+                                              .black87, // Darker product name color
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 4),
                                       // UOM and Quantity
                                       Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'UOM: ',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 16,
-                                              color: Colors.black54, // Softer text color
+                                              color: Colors
+                                                  .black54, // Softer text color
                                             ),
                                           ),
                                           Expanded(
@@ -1252,7 +1266,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                               item['uom'] ?? 'N/A',
                                               style: const TextStyle(
                                                 fontSize: 14,
-                                                color: Colors.black54, // Softer text color
+                                                color: Colors
+                                                    .black54, // Softer text color
                                               ),
                                             ),
                                           ),
@@ -1265,7 +1280,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 16,
-                                              color: Colors.black54, // Softer text color
+                                              color: Colors
+                                                  .black54, // Softer text color
                                             ),
                                           ),
                                           Text(
@@ -1273,7 +1289,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 14,
-                                              color: Colors.black87, // Darker quantity color
+                                              color: Colors
+                                                  .black87, // Darker quantity color
                                             ),
                                           ),
                                         ],
@@ -1293,7 +1310,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     }).toList(),
                   ),
                 )
-
               ],
             ),
           ),

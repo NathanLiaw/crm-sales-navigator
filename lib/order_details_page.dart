@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:sales_navigator/db_connection.dart';
+import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:sales_navigator/event_logger.dart';
@@ -10,8 +9,10 @@ import 'dart:convert';
 
 class OrderDetailsPage extends StatefulWidget {
   final int cartID;
+  final bool fromOrderConfirmation;
+  final bool fromSalesOrder;
 
-  const OrderDetailsPage({super.key, required this.cartID});
+  const OrderDetailsPage({super.key, required this.cartID, required this.fromOrderConfirmation, required this.fromSalesOrder});
 
   @override
   _OrderDetailsPageState createState() => _OrderDetailsPageState();
@@ -138,29 +139,25 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Future<void> voidOrder() async {
-    final conn = await connectToDatabase();
-    try {
-      final success = await saveData(conn, 'cart', {
-        'status': 'Void',
-        'id': widget.cartID,
-      });
-      if (!success) {
-        developer.log('Failed to void order in cart');
-        return;
-      }
+    const url = 'https://haluansama.com/crm-sales/api/order_details/void_order.php';
 
-      final cartItemResults = await readData(
-        conn,
-        'cart_item',
-        'cart_id = ${widget.cartID}',
-        '',
-        'id',
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'cart_id': widget.cartID}),
       );
-      for (var result in cartItemResults) {
-        await saveData(conn, 'cart_item', {
-          'status': 'Void',
-          'id': result['id'],
-        });
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status'] == 'success') {
+          // Successfully voided the order
+          developer.log('Order voided successfully');
+        } else {
+          developer.log('Error voiding order: ${responseData['message']}');
+        }
+      } else {
+        developer.log('Failed to void order. Status code: ${response.statusCode}');
       }
 
       setState(() {
@@ -178,8 +175,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       );
     } catch (e) {
       developer.log('Error voiding order: $e');
-    } finally {
-      await conn.close();
     }
   }
 
@@ -248,12 +243,26 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SalesOrderPage(),
-              ),
-            );
+            if (widget.fromOrderConfirmation) {
+              // Navigate to Sales Order Page if from OrderConfirmationPage
+              Navigator.pushReplacement(context,
+                MaterialPageRoute(
+                  builder: (context) => const CartPage(),
+                ),
+              );
+            }
+            else if (widget.fromSalesOrder) {
+              // Navigate to Sales Order Page if from SalesOrderPage
+              Navigator.pushReplacement(context,
+                MaterialPageRoute(
+                  builder: (context) => const SalesOrderPage(),
+                ),
+              );
+            }
+            else {
+              // Otherwise, pop to previous page
+              Navigator.pop(context);
+            }
           },
         ),
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:sales_navigator/order_details_page.dart';
-// ignore: depend_on_referenced_packages
 import 'package:cached_network_image/cached_network_image.dart';
 import 'db_connection.dart';
 
@@ -190,7 +189,7 @@ class SalesOrderCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: order['order_id']),
+            builder: (context) => OrderDetailsPage(cartID: order['order_id'], fromOrderConfirmation: false, fromSalesOrder: false,),
           ),
         );
       },

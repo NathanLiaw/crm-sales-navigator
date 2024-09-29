@@ -1,9 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/order_submitted_page.dart';
 import 'package:sales_navigator/terms_and_conditions_page.dart';
@@ -91,24 +89,17 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     }
 
     try {
-      MySqlConnection conn = await connectToDatabase();
-
       // Retrieve tax values asynchronously
       double gst = await UtilityFunction.retrieveTax('GST');
       double sst = await UtilityFunction.retrieveTax('SST');
       String areaName = await UtilityFunction.getAreaNameById(areaId);
 
-      // Calculate final total using fetched tax values
-      // double total = widget.subtotal * (1 + gst + sst);
-      double gstAmount = widget.subtotal * gst;
-      double sstAmount = widget.subtotal * sst;
-
       // Prepare cart data
       Map<String, dynamic> cartData = {
         'order_type': 'SO',
         'expiration_date': UtilityFunction.calculateExpirationDate(),
-        'gst': gstAmount,
-        'sst': sstAmount,
+        'gst': widget.subtotal * gst,
+        'sst': widget.subtotal * sst,
         'final_total': widget.total,
         'total': widget.subtotal,
         'remark': remark,
@@ -127,27 +118,35 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'modified': UtilityFunction.getCurrentDateTime(),
       };
 
-      // Save cart data
-      bool saved = await saveData(conn, 'cart', cartData);
+      // Make a POST request to the API
+      final response = await http.post(
+        Uri.parse('https://haluansama.com/crm-sales/api/cart/create_cart.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(cartData),
+      );
 
-      if (saved) {
-        developer.log('Cart created successfully');
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        if (result['status'] == 'success') {
+          developer.log('Cart created successfully');
+        } else {
+          developer.log('Failed to create cart: ${result['message']}');
+        }
       } else {
-        developer.log('Failed to create cart');
+        developer.log('Failed to create cart: ${response.statusCode}');
       }
-
-      await conn.close();
     } catch (e) {
-      developer.log('Error creating cart: $e', error: e);
+      developer.log('Error creating cart: $e');
     }
   }
 
   Future<void> completeCart() async {
     try {
-      MySqlConnection conn = await connectToDatabase();
       int cartId = await fetchSalesOrderId();
+      List<Map<String, dynamic>> cartItemsData = [];
+
+      // Prepare data for each cart item
       for (CartItem item in widget.cartItems) {
-        // Prepare data to insert into the cart_item table
         Map<String, dynamic> data = {
           'cart_id': cartId,
           'buyer_id': item.buyerId,
@@ -163,30 +162,59 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           'cancel': item.cancel,
           'remark': item.remark,
           'status': 'in progress',
-          'created': item.created.toUtc(),
-          'modified': item.modified.toUtc(),
+          'created': item.created.toUtc().toIso8601String(),
+          'modified': item.modified.toUtc().toIso8601String(),
         };
-
-        // Save the data into the database
-        bool saved = await saveData(conn, 'cart_item', data);
-
-        Map<String, dynamic> updateData = {
-          'id': item.id,
-          'status': 'Confirm',
-        };
-
-        int rowsAffected =
-            await DatabaseHelper.updateData(updateData, 'cart_item');
-        if (rowsAffected > 0) {
-          developer.log('Item status updated successfully');
-        }
-
-        if (saved) {
-          developer.log('Item inserted successfully');
-        } else {
-          developer.log('Failed to insert item');
-        }
+        cartItemsData.add(data);
       }
+
+      // Send the data to the API
+      final response = await http.post(
+        Uri.parse('https://haluansama.com/crm-sales/api/cart/complete_cart.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(cartItemsData),
+      );
+
+      // Handle the API response
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+
+        // Check if responseBody is an array or a single object
+        if (responseBody is List) {
+          // Iterate over each item in responseBody
+          for (int i = 0; i < responseBody.length; i++) {
+            var itemResponse = responseBody[i];
+            CartItem item = widget.cartItems[i]; // Get the corresponding item
+
+            if (itemResponse['status'] == 'success') {
+              developer.log('Item inserted successfully: ${itemResponse['message']}');
+
+              // Update item status locally using the existing item.id
+              Map<String, dynamic> updateData = {
+                'id': item.id, // Use the existing item ID
+                'status': 'Confirm',
+              };
+
+              int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+              if (rowsAffected > 0) {
+                developer.log('Item status updated successfully for ID: ${item.id}');
+              }
+            } else {
+              developer.log('Failed to insert item: ${itemResponse['message']}');
+            }
+          }
+        } else {
+          // If it's a single object, handle accordingly
+          if (responseBody['status'] == 'success') {
+            developer.log('All items inserted successfully: ${responseBody['message']}');
+          } else {
+            developer.log('Failed to insert items: ${responseBody['message']}');
+          }
+        }
+      } else {
+        developer.log('Failed to complete cart. Status code: ${response.statusCode}');
+      }
+
     } catch (e) {
       developer.log('Error inserting item: $e', error: e);
     }
@@ -196,18 +224,24 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     int salesOrderId = 0;
 
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final result = await readFirst(conn, 'cart', '', 'id DESC');
+      final response = await http.post(
+        Uri.parse('https://haluansama.com/crm-sales/api/cart/get_sales_order_id.php?salesman_id=$salesmanId'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-      if (result.isNotEmpty) {
-        salesOrderId = result['id'] as int;
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status'] == 'success') {
+          salesOrderId = responseData['sales_order_id'] as int;
+        } else {
+          // Handle error
+          developer.log('Error: ${responseData['message']}');
+        }
       } else {
-        developer.log('No sales order ID found in the cart table');
+        developer.log('Failed to fetch sales order ID. Status code: ${response.statusCode}');
       }
-
-      await conn.close();
     } catch (e) {
-      developer.log('Error retrieving sales order ID: $e', error: e);
+      developer.log('Error retrieving sales order ID: $e');
     }
 
     return salesOrderId;
@@ -585,13 +619,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           const SizedBox(height: 16.0),
           ElevatedButton(
             style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
               ),
-              minimumSize: MaterialStateProperty.all<Size>(
+              minimumSize: WidgetStateProperty.all<Size>(
                 const Size(120, 40),
               ),
             ),

@@ -3,7 +3,7 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/create_task_page.dart';
-import 'package:sales_navigator/customer_insight.dart';
+import 'package:sales_navigator/customer_insights.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'dart:developer' as developer;
@@ -50,7 +50,7 @@ class EngagementLeadItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerInsightPage(
+            builder: (context) => CustomerInsightsPage(
               customerName: leadItem.customerName,
             ),
           ),
@@ -182,7 +182,7 @@ class EngagementLeadItem extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => CustomerInsightPage(
+                                  builder: (context) => CustomerInsightsPage(
                                     customerName: leadItem.customerName,
                                   ),
                                 ),

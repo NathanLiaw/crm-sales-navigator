@@ -1,33 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/cart_page.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:sales_navigator/utility_function.dart';
 
-class OrderSubmittedPage extends StatelessWidget {
+class OrderSubmittedPage extends StatefulWidget {
   const OrderSubmittedPage({super.key});
+
+  @override
+  _OrderSubmittedPageState createState() => _OrderSubmittedPageState();
+}
+
+class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
+  late int salesmanId = 3;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _initializeSalesmanId() async {
+    final id = await UtilityFunction.getUserId();
+    setState(() {
+      salesmanId = id;
+    });
+  }
 
   Future<int> fetchSalesOrderId() async {
     int salesOrderId = 0;
 
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final result = await readFirst(conn, 'cart', '', 'id DESC');
+      final response = await http.post(
+        Uri.parse('https://haluansama.com/crm-sales/api/cart/get_sales_order_id.php?salesman_id=$salesmanId'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-      if (result.isNotEmpty) {
-        // Extract the 'id' field from the first row of the result
-        salesOrderId = result['id'] as int;
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status'] == 'success') {
+          salesOrderId = responseData['sales_order_id'] as int;
+        } else {
+          // Handle error
+          developer.log('Error: ${responseData['message']}');
+        }
       } else {
-        developer.log(
-            'No sales order ID found in the cart table: $salesOrderId',
-            level: 1);
+        developer.log('Failed to fetch sales order ID. Status code: ${response.statusCode}');
       }
-
-      await conn.close();
     } catch (e) {
-      developer.log('Error retrieving sales order ID: $e', error: e);
+      developer.log('Error retrieving sales order ID: $e');
     }
 
     return salesOrderId;
@@ -127,15 +150,15 @@ class OrderSubmittedPage extends StatelessWidget {
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
+                          backgroundColor: WidgetStateProperty.all<Color>(
                               const Color(0xff0175FF)),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                          WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(130.0, 40.0),
                           ),
                         ),
@@ -154,16 +177,15 @@ class OrderSubmittedPage extends StatelessWidget {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  OrderDetailsPage(cartID: salesOrderId),
+                              builder: (context) => OrderDetailsPage(cartID: salesOrderId, fromOrderConfirmation: true, fromSalesOrder: false,),
                             ),
                           );
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
+                          backgroundColor: WidgetStateProperty.all<Color>(
                               const Color(0xffffffff)),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                          WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                               side: const BorderSide(
@@ -172,10 +194,10 @@ class OrderSubmittedPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(120.0, 40.0),
                           ),
-                          maximumSize: MaterialStateProperty.all<Size>(
+                          maximumSize: WidgetStateProperty.all<Size>(
                             const Size(150.0, 40.0),
                           ),
                         ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/data/brand_data.dart';
-import 'package:sales_navigator/db_connection.dart';
 
 class BrandScreen extends StatefulWidget {
   const BrandScreen({super.key});
@@ -20,9 +19,7 @@ class _BrandScreenState extends State<BrandScreen> {
   }
 
   Future<void> _loadData() async {
-    final conn = await connectToDatabase();
-    _brands = await fetchBrands(conn);
-    await conn.close();
+    _brands = await fetchBrands();
     setState(() {});
   }
 

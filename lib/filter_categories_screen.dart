@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/data/brand_data.dart';
 import 'package:sales_navigator/data/category_data.dart';
 import 'package:sales_navigator/data/sub_category_data.dart';
-import 'package:sales_navigator/db_connection.dart';
 
 class FilterCategoriesScreen extends StatefulWidget {
   final List<int> initialSelectedSubCategoryIds;
@@ -34,11 +33,9 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
   }
 
   Future<void> _loadData() async {
-    final conn = await connectToDatabase();
-    _categories = await fetchCategories(conn);
-    _subCategories = await fetchSubCategories(conn);
-    _brands = await fetchBrands(conn); // Fetch brands from the database
-    await conn.close();
+    _categories = await fetchCategories();
+    _subCategories = await fetchAllSubCategories();
+    _brands = await fetchBrands();
     setState(() {});
   }
 

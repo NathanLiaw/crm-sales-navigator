@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, use_build_context_synchronously, library_private_types_in_public_api, depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -9,8 +11,6 @@ import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
-import 'db_connection.dart';
-import 'customer_details_page.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
@@ -158,7 +158,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     final Customer? result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CustomerList(),
+        builder: (context) => const CustomerList(),
       ),
     );
 
@@ -305,9 +305,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1F5FE),
+                  color: const Color.fromARGB(255, 255, 255, 255),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 width: screenWidth * 0.95,
@@ -322,7 +322,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
-                        color: Color(0xFF004072),
+                        color: Color.fromARGB(255, 0, 0, 0),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -369,7 +369,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Padding(
-                          padding: EdgeInsets.only(left: 0),
+                          padding: const EdgeInsets.only(left: 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -524,7 +524,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            backgroundColor: Colors.green,
+                            backgroundColor: const Color(0xFF33B44F),
                           ),
                           child: const Text(
                             'Copy to cart',
@@ -535,10 +535,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                               if (checkedItems[i]) {
                                 final item = items[i];
                                 final oriUnitPrice =
-                                    (item['ori_unit_price'] ?? 0.0)
-                                        .toDouble();
+                                    (item['ori_unit_price'] ?? 0.0).toDouble();
                                 final qty = (item['qty'] ?? 0).toInt();
                                 final total = oriUnitPrice * qty;
+
                                 final cartItem = CartItem(
                                   buyerId: await UtilityFunction.getUserId(),
                                   productId: item['product_id'],
@@ -558,7 +558,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 await insertItemIntoCart(cartItem);
                               }
                             }
-                            Provider.of<CartModel>(context, listen: false).initializeCartCount();
+
+                            Provider.of<CartModel>(context, listen: false)
+                                .initializeCartCount();
 
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -833,11 +835,11 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         decoration: const InputDecoration(
           hintText: 'Search Sales Order',
           border: InputBorder.none,
-          icon: Icon(Icons.search, color: Colors.grey), // Search icon
+          icon: Icon(Icons.search, color: Colors.grey),
         ),
         onChanged: (value) {
           _filterSalesOrders(
-              value); // Call a function to filter orders based on search
+              value);
         },
       ),
     );
@@ -846,17 +848,22 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   void _filterSalesOrders(String query) {
     setState(() {
       if (query.isEmpty) {
-        _loadSalesOrders(); // Reload all orders if the query is empty
+        _loadSalesOrders();
       } else {
         orders = orders.where((order) {
           String orderId = order['id'].toString();
-          String formattedOrderId =
-              'S${orderId.padLeft(7, '0')}'; // Format as S0000001
-
-          // Convert both query and formattedOrderId to lowercase for case-insensitive matching
+          String formattedOrderId = 'S${orderId.padLeft(7, '0')}';
+          String creationDate = '';
+          if (order['created_date'] != null) {
+            DateTime dateTime =
+                DateFormat('dd/MM/yyyy').parse(order['created_date']);
+            creationDate = DateFormat('dd-MM-yyyy').format(dateTime);
+          }
+          String companyName = order['company_name']?.toString() ?? '';
           return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
-              orderId.contains(
-                  query); // Allow partial number search (e.g., "1" for "S0000001")
+              orderId.contains(query) ||
+              companyName.toLowerCase().contains(query.toLowerCase()) ||
+              creationDate.contains(query);
         }).toList();
       }
     });
@@ -1088,15 +1095,22 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
       );
     }
 
-    String formattedOrderNumber = 'S${orderNumber.toString().padLeft(7, '0')}';
-    int orderId = int.parse(orderNumber);
+    // Safely attempt to parse orderNumber
+    String formattedOrderNumber = 'S${orderNumber.padLeft(7, '0')}';
+    int? orderId = int.tryParse(orderNumber);
+
+    if (orderId == null) {
+      // Handle invalid number, log an error or show a fallback UI
+      developer.log('Invalid order number: $orderNumber');
+      return Container(); // Fallback widget to avoid crashes
+    }
 
     return GestureDetector(
       onTap: () async {
         bool? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: orderId),
+            builder: (context) => OrderDetailsPage(cartID: orderId, fromOrderConfirmation: false, fromSalesOrder: false,),
           ),
         );
         if (result == true) {
@@ -1110,206 +1124,194 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         elevation: 4,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 255, 255, 255),
-            borderRadius: BorderRadius.circular(4.0),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.0),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Stack(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${index + 1}. $formattedOrderNumber',
-                                          style: const TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          companyName,
-                                          style: GoogleFonts.inter(
-                                            textStyle: const TextStyle(
-                                                letterSpacing: -0.8),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.black,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              'RM $amount',
-                                              style: const TextStyle(
-                                                color: Color(0xFF0175FF),
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(Icons.copy),
-                                                  onPressed: () async {
-                                                    await _showItemSelectionDialog(
-                                                        items);
-                                                  },
-                                                ),
-                                                Text(
-                                                  'Copy',
-                                                  style: GoogleFonts.inter(
-                                                    textStyle: const TextStyle(
-                                                        letterSpacing: -0.8),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.black,
-                                                  ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                        // Order number and company name
+                        Text(
+                          '${index + 1}. $formattedOrderNumber',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          companyName,
+                          style: GoogleFonts.inter(
+                            textStyle: const TextStyle(letterSpacing: -0.8),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        // Creation date
+                        Text(
+                          'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Amount and copy button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'RM $amount',
+                              style: const TextStyle(
+                                color: Color(0xFF0175FF),
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy),
+                              onPressed: () async {
+                                await _showItemSelectionDialog(items);
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    // Status label
                     Positioned(
                       right: 6,
                       child: getStatusLabel(status),
                     ),
                   ],
                 ),
-              ),
-              ExpansionTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                title: const Text(
-                  'Items',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                children: [
-                  Container(
-                    color: const Color(0xFFE1F5FE),
-                    child: Column(
-                      children: items
-                          .map((item) => Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 2, 16, 2),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(
-                                                height: 2,
-                                              ),
-                                              Text(
-                                                item['product_name'],
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 16,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text(
-                                                    'UOM: ',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: Text(
-                                                      item['uom'],
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  const Text(
-                                                    'Qty: ',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    item['qty'].toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Divider(color: Colors.grey),
-                                  ],
-                                ),
-                              ))
-                          .toList(),
-                    ),
+                const SizedBox(height: 8),
+                // Expansion tile for items
+                Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                  elevation: 4, // Adds a shadow effect for depth
+                  color: const Color(0xFFFFFFFF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ],
-              ),
-            ],
+                  child: ExpansionTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    tilePadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    iconColor: Colors.blueAccent, // Icon color when expanded
+                    collapsedIconColor:
+                        Colors.grey, // Icon color when collapsed
+                    title: const Text(
+                      'Items',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black, // Darker title color
+                      ),
+                    ),
+                    children: items.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 2),
+                                      // Product name
+                                      Text(
+                                        item['product_name'] ?? 'Unknown',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                          color: Colors
+                                              .black87, // Darker product name color
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // UOM and Quantity
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'UOM: ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Colors
+                                                  .black54, // Softer text color
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              item['uom'] ?? 'N/A',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors
+                                                    .black54, // Softer text color
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            'Qty: ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Colors
+                                                  .black54, // Softer text color
+                                            ),
+                                          ),
+                                          Text(
+                                            item['qty']?.toString() ?? '0',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: Colors
+                                                  .black87,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(
+                              color: Colors.grey,
+                              thickness: 1,
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                )
+              ],
+            ),
           ),
         ),
       ),
