@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:sales_navigator/create_task_page.dart';
@@ -7,7 +9,7 @@ import 'package:sales_navigator/home_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
-
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class NegotiationLeadItem extends StatefulWidget {
@@ -53,33 +55,77 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     }
   }
 
+  // Future<void> _fetchTaskDetails() async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     Results results = await conn.query(
+  //       'SELECT t.id, t.title, t.description, t.due_date, t.creation_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
+  //       [widget.leadItem.id],
+  //     );
+  //     if (results.isNotEmpty && mounted) {
+  //       setState(() {
+  //         tasks = results.map((row) {
+  //           return {
+  //             'title': row['title'],
+  //             'description': row['description'],
+  //             'due_date': row['due_date'],
+  //             'creation_date': row['creation_date'],
+  //             'id': row['id'],
+  //           };
+  //         }).toList();
+  //         // 默认按创建日期排序
+  //         tasks
+  //             .sort((a, b) => b['creation_date'].compareTo(a['creation_date']));
+  //       });
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching task details: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
+
   Future<void> _fetchTaskDetails() async {
-    MySqlConnection conn = await connectToDatabase();
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/get_task_details.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': widget.leadItem.id.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      Results results = await conn.query(
-        'SELECT t.id, t.title, t.description, t.due_date, t.creation_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
-        [widget.leadItem.id],
-      );
-      if (results.isNotEmpty && mounted) {
-        setState(() {
-          tasks = results.map((row) {
-            return {
-              'title': row['title'],
-              'description': row['description'],
-              'due_date': row['due_date'],
-              'creation_date': row['creation_date'],
-              'id': row['id'],
-            };
-          }).toList();
-          // 默认按创建日期排序
-          tasks
-              .sort((a, b) => b['creation_date'].compareTo(a['creation_date']));
-        });
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          if (mounted) {
+            setState(() {
+              tasks = (responseData['tasks'] as List).map((task) {
+                return {
+                  'id': task['id'],
+                  'title': task['title'],
+                  'description': task['description'],
+                  'due_date': DateTime.parse(task['due_date']),
+                  'creation_date': DateTime.parse(task['creation_date']),
+                };
+              }).toList();
+            });
+          }
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to fetch task details: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching task details: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch task details: $e')),
+      );
     }
   }
 
@@ -167,17 +213,54 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     _fetchTaskDetails();
   }
 
+  // Future<void> _deleteTask(int taskId) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query('DELETE FROM tasks WHERE id = ?', [taskId]);
+  //     setState(() {
+  //       tasks.removeWhere((task) => task['id'] == taskId);
+  //     });
+  //   } catch (e) {
+  //     developer.log('Error deleting task: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
+
   Future<void> _deleteTask(int taskId) async {
-    MySqlConnection conn = await connectToDatabase();
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/delete_task.php';
+
+    final Map<String, String> queryParameters = {
+      'task_id': taskId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      await conn.query('DELETE FROM tasks WHERE id = ?', [taskId]);
-      setState(() {
-        tasks.removeWhere((task) => task['id'] == taskId);
-      });
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          setState(() {
+            tasks.removeWhere((task) => task['id'] == taskId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to delete task: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error deleting task: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete task: $e')),
+      );
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/customer_details_page.dart';
 import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
 
 class CreateLeadPage extends StatefulWidget {
   final Function(String, String, String) onCreateLead;
@@ -261,65 +264,110 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
     }
   }
 
-  Future<void> _saveLeadToDatabase() async {
-    MySqlConnection conn = await connectToDatabase();
+  // Future<void> _saveLeadToDatabase() async {
+  //   MySqlConnection conn = await connectToDatabase();
 
-    Map<String, dynamic> leadData = {
-      'salesman_id': widget.salesmanId,
+  //   Map<String, dynamic> leadData = {
+  //     'salesman_id': widget.salesmanId,
+  //     'customer_name': customerNameController.text,
+  //     'contact_number': contactNumberController.text,
+  //     'email_address': emailAddressController.text,
+  //     'address': addressController.text,
+  //     'description': descriptionController.text,
+  //     'predicted_sales': amountController.text,
+  //     'stage': 'Opportunities',
+  //     'previous_stage': 'Opportunities',
+  //     'so_id': null,
+  //     'created_date': DateTime.now().toString(), // Current date as created_date
+  //   };
+
+  //   if (leadData['description'].length > 255) {
+  //     developer.log('The description cannot exceed 255 characters.');
+  //     return;
+  //   }
+
+  //   // Save data to database
+  //   var result = await conn.query(
+  //       'INSERT INTO sales_lead (salesman_id, customer_name, contact_number, email_address, address, description, predicted_sales, stage, previous_stage, so_id, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  //       [
+  //         leadData['salesman_id'],
+  //         leadData['customer_name'],
+  //         leadData['contact_number'],
+  //         leadData['email_address'],
+  //         leadData['address'],
+  //         leadData['description'],
+  //         leadData['predicted_sales'],
+  //         leadData['stage'],
+  //         leadData['previous_stage'],
+  //         leadData['so_id'],
+  //         leadData['created_date']
+  //       ]);
+
+  //   if (result.affectedRows == 1) {
+  //     int? leadId = result.insertId; // Get new inserted lead_id
+  //     developer.log('Lead data saved successfully,lead_id: $leadId');
+
+  //     // Log the event
+  //     await conn.query(
+  //         'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, ?, ?)',
+  //         [
+  //           leadData['salesman_id'],
+  //           'Created new lead for customer: ${leadData['customer_name']}',
+  //           'Create Lead',
+  //           DateTime.now().toString(),
+  //           leadId
+  //         ]);
+  //     developer.log('Event Logging Successful,lead_id: $leadId');
+  //   } else {
+  //     developer.log('Failure to save lead data');
+  //   }
+
+  //   await conn.close();
+  // }
+
+  Future<void> _saveLeadToDatabase() async {
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead_to_database.php';
+
+    final Map<String, String> queryParameters = {
+      'salesman_id': widget.salesmanId.toString(),
       'customer_name': customerNameController.text,
       'contact_number': contactNumberController.text,
       'email_address': emailAddressController.text,
       'address': addressController.text,
       'description': descriptionController.text,
       'predicted_sales': amountController.text,
-      'stage': 'Opportunities',
-      'previous_stage': 'Opportunities',
-      'so_id': null,
-      'created_date': DateTime.now().toString(), // Current date as created_date
     };
 
-    if (leadData['description'].length > 255) {
-      developer.log('The description cannot exceed 255 characters.');
-      return;
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          int leadId = responseData['lead_id'];
+          developer.log('Lead data saved successfully, lead_id: $leadId');
+
+          // You might want to update your local state or navigate to a different screen here
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to save lead: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error saving lead data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save lead: $e')),
+      );
     }
-
-    // Save data to database
-    var result = await conn.query(
-        'INSERT INTO sales_lead (salesman_id, customer_name, contact_number, email_address, address, description, predicted_sales, stage, previous_stage, so_id, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-          leadData['salesman_id'],
-          leadData['customer_name'],
-          leadData['contact_number'],
-          leadData['email_address'],
-          leadData['address'],
-          leadData['description'],
-          leadData['predicted_sales'],
-          leadData['stage'],
-          leadData['previous_stage'],
-          leadData['so_id'],
-          leadData['created_date']
-        ]);
-
-    if (result.affectedRows == 1) {
-      int? leadId = result.insertId; // Get new inserted lead_id
-      developer.log('Lead data saved successfully,lead_id: $leadId');
-
-      // Log the event
-      await conn.query(
-          'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, ?, ?)',
-          [
-            leadData['salesman_id'],
-            'Created new lead for customer: ${leadData['customer_name']}',
-            'Create Lead',
-            DateTime.now().toString(),
-            leadId
-          ]);
-      developer.log('Event Logging Successful,lead_id: $leadId');
-    } else {
-      developer.log('Failure to save lead data');
-    }
-
-    await conn.close();
   }
 
   // Future<void> _saveLeadToDatabase() async {
