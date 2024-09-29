@@ -1110,7 +1110,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         bool? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: orderId),
+            builder: (context) => OrderDetailsPage(cartID: orderId, fromOrderConfirmation: false, fromSalesOrder: true,),
           ),
         );
         if (result == true) {

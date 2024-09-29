@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/customer_insight.dart';
+import 'package:sales_navigator/customer_insights.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
@@ -304,7 +304,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerInsightPage(
+            builder: (context) => CustomerInsightsPage(
               customerName: widget.leadItem.customerName,
             ),
           ),
@@ -418,7 +418,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => CustomerInsightPage(
+                                  builder: (context) => CustomerInsightsPage(
                                     customerName: widget.leadItem.customerName,
                                   ),
                                 ),

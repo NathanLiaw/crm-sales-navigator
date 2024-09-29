@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'db_connection.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AccountSetting extends StatefulWidget {
   const AccountSetting({super.key});
@@ -46,34 +46,45 @@ class _AccountSettingState extends State<AccountSetting> {
 
   // The function used to update salesman info in database
   Future<void> updateSalesmanDetailsInDatabase() async {
-    // Get the updated value from a text edit control
     String newName = nameController.text;
     String newPhoneNumber = phoneNumberController.text;
     String newEmail = emailController.text;
 
-    // Connect to database
-    MySqlConnection conn = await connectToDatabase();
-
     try {
-      // Execute the update statement
-      await conn.query('''
-        UPDATE salesman
-        SET salesman_name = ?, contact_number = ?, email = ?
-        WHERE id = ?;
-      ''', [newName, newPhoneNumber, newEmail, salesmanId]);
+      // Prepare API URL
+      final url = Uri.parse('https://haluansama.com/crm-sales/api/salesman/update_salesman_details.php');
 
-      // After successful update, save the new value to the SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('salesmanName', newName);
-      prefs.setString('contactNumber', newPhoneNumber);
-      prefs.setString('email', newEmail);
-
-      // show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Salesman details updated successfully.'),
-        ),
+      // Make POST request to API with salesman details
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'salesmanId': salesmanId,
+          'newName': newName,
+          'newPhoneNumber': newPhoneNumber,
+          'newEmail': newEmail,
+        }),
       );
+
+      // Parse the API response
+      final data = jsonDecode(response.body);
+
+      if (data['status'] == 'success') {
+        // Save updated details to SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('salesmanName', newName);
+        prefs.setString('contactNumber', newPhoneNumber);
+        prefs.setString('email', newEmail);
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Salesman details updated successfully.'),
+          ),
+        );
+      } else {
+        throw Exception(data['message']);
+      }
     } catch (e) {
       developer.log('Error updating salesman details: $e', error: e);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,8 +92,6 @@ class _AccountSettingState extends State<AccountSetting> {
           content: Text('Failed to update salesman details. Please try again.'),
         ),
       );
-    } finally {
-      await conn.close();
     }
     Navigator.pop(context, true);
   }

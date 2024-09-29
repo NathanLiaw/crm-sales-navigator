@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:crypto/crypto.dart';
 import 'home_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'db_connection.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
@@ -20,53 +19,62 @@ class LoginPage extends StatelessWidget {
     // Hash the password using MD5
     String hashedPassword = md5.convert(utf8.encode(password)).toString();
 
-    // Connect to the MySQL database
-    MySqlConnection conn = await connectToDatabase();
-
     try {
-      // Query to fetch salesman data from the database based on email and password
-      Results results = await conn.query(
-          'SELECT * FROM salesman WHERE username = ? AND password = ?',
-          [username, hashedPassword]);
+      // API URL for the login request
+      var url = Uri.parse('https://haluansama.com/crm-sales/api/authentication/authenticate_login.php');
 
-      // If there is a matching salesman, navigate to the home page
-      if (results.isNotEmpty) {
-        // Fetch the first row (should be only one)
-        var row = results.first;
+      // Make a POST request to the API
+      var response = await http.post(
+        url,
+        body: {
+          'username': username,
+          'password': hashedPassword,
+        },
+      );
+
+      // Parse the JSON response
+      var jsonResponse = jsonDecode(response.body);
+
+      if (jsonResponse['status'] == 'success') {
+        // Fetch salesman data from the response
+        var salesman = jsonResponse['salesman'];
 
         // Save salesman data to shared preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setInt('id', row['id']);
-        prefs.setInt('area', row['area']);
-        prefs.setString('salesmanName', row['salesman_name']);
-        prefs.setString('username', row['username']);
-        prefs.setString('contactNumber', row['contact_number']);
-        prefs.setString('email', row['email']);
-        prefs.setString('repriceAuthority', row['reprice_authority']);
-        prefs.setString('discountAuthority', row['discount_authority']);
-        prefs.setInt('status', row['status']);
+        prefs.setInt('id', salesman['id']);
+        prefs.setInt('area', salesman['area']);
+        prefs.setString('salesmanName', salesman['salesman_name']);
+        prefs.setString('username', salesman['username']);
+        prefs.setString('contactNumber', salesman['contact_number']);
+        prefs.setString('email', salesman['email']);
+        prefs.setString('repriceAuthority', salesman['reprice_authority']);
+        prefs.setString('discountAuthority', salesman['discount_authority']);
+        prefs.setInt('status', salesman['status']);
+
         // Save login status and expiration time to shared preferences
         prefs.setBool('isLoggedIn', true);
         prefs.setInt('loginExpirationTime',
             DateTime.now().add(const Duration(days: 31)).millisecondsSinceEpoch);
 
-        // Navigate to HomePage and pass salesmanName
+        // Navigate to HomePage
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => const HomePage(),
             ));
       } else {
+        // Show an error message if login fails
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid username or password. Please try again.'),
-          ),
+          SnackBar(content: Text(jsonResponse['message'])),
         );
       }
     } catch (e) {
       developer.log('Error signing in: $e', error: e);
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login failed. Please try again.'),
+        ),
+      );
     }
   }
 

@@ -391,7 +391,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
         developer.log('New cart item inserted successfully');
       }
 
-      // Update the cart count in the navigation bar
       // Use the CartModel to update the cart count
       Provider.of<CartModel>(context, listen: false).initializeCartCount();
 

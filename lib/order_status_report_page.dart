@@ -1110,7 +1110,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         bool? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: orderId),
+            builder: (context) => OrderDetailsPage(cartID: orderId, fromOrderConfirmation: false, fromSalesOrder: false,),
           ),
         );
         if (result == true) {
