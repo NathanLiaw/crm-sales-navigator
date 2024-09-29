@@ -84,8 +84,29 @@ class _ItemsWidgetState extends State<ItemsWidget> {
     required int limit,
   }) async {
     try {
-      final response = await http.get(Uri.parse(
-          'https://haluansama.com/crm-sales/api/product/get_products.php?brandId=${widget.brandId}&subCategoryId=${widget.subCategoryId}&sortOrder=${widget.sortOrder}&isFeatured=${widget.isFeatured}&limit=$limit&offset=$offset'));
+      // Construct the query parameters
+      final queryParams = {
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
+
+      // Add optional filter parameters only if they are not null and not empty
+      if (widget.sortOrder.isNotEmpty)
+        queryParams['sortOrder'] = widget.sortOrder;
+      if (widget.isFeatured) queryParams['isFeatured'] = 'true';
+      if (widget.brandId != null)
+        queryParams['brandId'] = widget.brandId.toString();
+      if (widget.subCategoryId != null)
+        queryParams['subCategoryId'] = widget.subCategoryId.toString();
+      if (widget.subCategoryIds != null && widget.subCategoryIds!.isNotEmpty)
+        queryParams['subCategoryIds'] = widget.subCategoryIds!.join(',');
+      if (widget.brandIds != null && widget.brandIds!.isNotEmpty)
+        queryParams['brandIds'] = widget.brandIds!.join(',');
+
+      final uri = Uri.https('haluansama.com',
+          '/crm-sales/api/product/get_products.php', queryParams);
+
+      final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
