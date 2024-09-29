@@ -36,6 +36,11 @@ class CartItem {
     required this.modified,
   });
 
+  @override
+  String toString() {
+    return 'CartItem(id: $id, productId: $productId, productName: $productName, quantity: $quantity, total: $total)';
+  }
+
   // Factory constructor to create CartItem from map
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(

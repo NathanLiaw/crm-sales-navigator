@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/data/category_data.dart';
 import 'package:sales_navigator/data/sub_category_data.dart';
-import 'package:sales_navigator/db_connection.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -25,10 +24,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Future<void> _loadData() async {
-    final conn = await connectToDatabase();
-    _categories = await fetchCategories(conn);
-    _subCategories = await fetchSubCategories(conn);
-    await conn.close();
+    _categories = await fetchCategories();
+    _subCategories = await fetchAllSubCategories();
     setState(() {});
   }
 

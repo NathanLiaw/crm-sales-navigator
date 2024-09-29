@@ -31,7 +31,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Create Lead',
           style: TextStyle(color: Colors.white),
@@ -61,7 +61,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                     IconButton(
                       icon:
-                          const Icon(Icons.contacts, color: Color(0xff0069BA)),
+                          const Icon(Icons.contacts, color: Color(0xff0175FF)),
                       onPressed: _selectCustomer,
                     ),
                   ],
@@ -72,7 +72,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     labelText: 'Enter customer/company name',
                     prefixIcon: Icon(
                       Icons.person,
-                      color: Color(0xff0069BA),
+                      color: Color(0xff0175FF),
                     ),
                   ),
                   validator: (value) {
@@ -89,7 +89,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                   controller: contactNumberController,
                   decoration: const InputDecoration(
                     labelText: 'Enter contact number',
-                    prefixIcon: Icon(Icons.phone, color: Color(0xff0069BA)),
+                    prefixIcon: Icon(Icons.phone, color: Color(0xff0175FF)),
                   ),
                   keyboardType: TextInputType.phone,
                   inputFormatters: <TextInputFormatter>[
@@ -109,7 +109,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                   controller: emailAddressController,
                   decoration: const InputDecoration(
                     labelText: 'Enter email address',
-                    prefixIcon: Icon(Icons.email, color: Color(0xff0069BA)),
+                    prefixIcon: Icon(Icons.email, color: Color(0xff0175FF)),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -126,7 +126,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                   decoration: const InputDecoration(
                     labelText: 'Enter address',
                     prefixIcon:
-                        Icon(Icons.location_on, color: Color(0xff0069BA)),
+                        Icon(Icons.location_on, color: Color(0xff0175FF)),
                   ),
                   maxLength: 200,
                   maxLines: 2,
@@ -225,7 +225,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: const Color(0xff0175FF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),

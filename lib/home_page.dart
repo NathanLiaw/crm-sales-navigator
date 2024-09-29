@@ -87,6 +87,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late TabController _tabController;
   String _sortBy = 'created_date';
   bool _sortAscending = true;
+  bool _isButtonVisible = true;
 
   @override
   void initState() {
@@ -105,6 +106,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       vsync: this,
       initialIndex: widget.initialIndex,
     );
+    _tabController.addListener(() {
+      setState(() {
+        _isButtonVisible = _tabController.index == 0; // Show button only on first tab
+      });
+    });
   }
 
   void _initializeSalesmanId() async {
@@ -1374,7 +1380,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               bottomNavigationBar: const CustomNavigationBar(),
-              floatingActionButton: _buildFloatingActionButton(context),
+              floatingActionButton: _isButtonVisible
+                  ? _buildFloatingActionButton(context)
+                  : null, // Use null to hide the button
+
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
             );

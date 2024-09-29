@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/customer_details_page.dart';
 import 'package:sales_navigator/customer_insights.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;

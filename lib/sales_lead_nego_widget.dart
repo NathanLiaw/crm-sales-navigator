@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/customer_insight.dart';
+import 'package:sales_navigator/customer_insights.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_connection.dart';
@@ -304,14 +304,13 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerInsightPage(
+            builder: (context) => CustomerInsightsPage(
               customerName: widget.leadItem.customerName,
             ),
           ),
         );
       },
       child: Container(
-        height: 248,
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(2),
@@ -419,7 +418,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => CustomerInsightPage(
+                                  builder: (context) => CustomerInsightsPage(
                                     customerName: widget.leadItem.customerName,
                                   ),
                                 ),
@@ -573,60 +572,70 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    SizedBox(
-                      height: 200,
-                      child: ListView.builder(
-                        itemCount: tasks.length,
-                        itemBuilder: (context, index) {
-                          final task = tasks[index];
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        task['title'],
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(task['description']),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                          'Due Date: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}'),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  Column(
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () =>
-                                            _navigateToEditTaskPage(
-                                                context, task),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        onPressed: () =>
-                                            _showDeleteConfirmationDialog(
-                                                task['id']),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white, // Background color of the container
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2), // Shadow color
+                            offset: const Offset(0, 1), // Vertical offset
+                            blurRadius: 4, // Blur radius of the shadow
+                            spreadRadius: 1, // Spread radius of the shadow
+                          ),
+                        ],
                       ),
-                    ),
+                      child: SizedBox(
+                        height: 220,
+                        child: Scrollbar( // Add Scrollbar here
+                          child: ListView.builder(
+                            itemCount: tasks.length,
+                            itemBuilder: (context, index) {
+                              final task = tasks[index];
+                              return Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            task['title'],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(task['description']),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Due Date: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}',
+                                          ),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      Column(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            onPressed: () => _navigateToEditTaskPage(context, task),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () => _showDeleteConfirmationDialog(task['id']),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    )
                   ],
                 )
               else
@@ -675,7 +684,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               //       fontSize: 14,
               //     ),
               //   ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -734,32 +743,32 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: 342,
-                    height: 34,
-                    child: ElevatedButton(
-                      onPressed: () => _navigateToCreateTaskPage(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 62, 147, 252),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                  Expanded( // Wrap the button in Expanded
+                    child: SizedBox(
+                      height: 34,
+                      child: ElevatedButton(
+                        onPressed: () => _navigateToCreateTaskPage(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 62, 147, 252),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                         ),
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      ),
-                      child: const Text(
-                        'Create Task / Select Order ID',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
+                        child: const Text(
+                          'Create Task / Select Order ID',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  )
+                  ),
                 ],
-              ),
+              )
             ],
           ),
         ),

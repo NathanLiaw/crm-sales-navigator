@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/customer.dart' as Customer;
-import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
 import 'package:sales_navigator/item_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -43,34 +42,37 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<Customer.Customer> fetchCustomer() async {
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readFirst(
-        conn,
-        'customer',
-        "company_name = '${widget.customerName}' AND status = 1",
-        '',
-      );
-      await conn.close();
+      // Replace with your API endpoint
+      const String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_customer_data.php';
+      final response = await http.get(Uri.parse('$apiUrl?company_name=${widget.customerName}'));
 
-      if (results.isNotEmpty) {
-        var row = results;
-        setState(() {
-          customerId = row['id'];
-        });
-        return Customer.Customer(
-          id: row['id'] as int? ?? 0,
-          companyName: row['company_name'] as String? ?? '',
-          addressLine1: row['address_line_1'] as String? ?? '',
-          addressLine2: row['address_line_2'] as String? ?? '',
-          contactNumber: row['contact_number'] as String? ?? '',
-          email: row['email'] as String? ?? '',
-          customerRate: row['customer_rate'] != null
-              ? row['customer_rate'].toString() // Convert int to String if necessary
-              : '',
-          discountRate: row['discount_rate'] as int? ?? 0,
-        );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        if (jsonResponse['status'] == 'success') {
+          final data = jsonResponse['data'];
+
+          setState(() {
+            customerId = data['id'];
+          });
+
+          return Customer.Customer(
+            id: data['id'] as int? ?? 0,
+            companyName: data['company_name'] as String? ?? '',
+            addressLine1: data['address_line_1'] as String? ?? '',
+            addressLine2: data['address_line_2'] as String? ?? '',
+            contactNumber: data['contact_number'] as String? ?? '',
+            email: data['email'] as String? ?? '',
+            customerRate: data['customer_rate'] != null
+                ? data['customer_rate'].toString() // Convert int to String if necessary
+                : '',
+            discountRate: data['discount_rate'] as int? ?? 0,
+          );
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Customer not found');
+        }
       } else {
-        throw Exception('Customer not found with company name: ${widget.customerName}');
+        throw Exception('Failed to load customer data: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching customer: $e', error: e);
@@ -80,17 +82,24 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<List<Map<String, dynamic>>> fetchSalesDataByCustomer(int customerId) async {
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readData(
-        conn,
-        'cart',
-        'created >= DATE_SUB(NOW(), INTERVAL 12 MONTH) AND customer_id = $customerId GROUP BY YEAR(created), MONTH(created)',
-        'sales_year DESC, sales_month DESC;',
-        'YEAR(created) AS sales_year, MONTH(created) AS sales_month, SUM(final_total) AS total_sales',
-      );
-      await conn.close();
-      return results;
+      String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_customer_salesdata.php?customer_id=$customerId';
+
+      // Prepare the API request
+      final url = Uri.parse(apiUrl);
+
+      // Parse the API response
+      final data = jsonDecode((await http.get(url)).body);
+
+      // Check if the response is successful
+      if (data['status'] == 'success') {
+        // Return the sales data from the API response
+        return List<Map<String, dynamic>>.from(data['data']);
+      } else {
+        // Throw an exception if the API returns an error
+        throw Exception(data['message']);
+      }
     } catch (e) {
+      // Log the error for debugging
       developer.log('Error fetching sales data: $e', error: e);
       rethrow;
     }
@@ -98,31 +107,26 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<List<Map<String, dynamic>>> fetchProductsByCustomer(int customerId) async {
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await conn.query('''
-      SELECT p.id, p.product_name, p.photo1, ci.uom, COUNT(*) as number_of_items
-      FROM cart_item ci
-      JOIN product p ON ci.product_id = p.id
-      JOIN (
-        SELECT product_id, MIN(uom) AS first_uom
-        FROM cart_item
-        WHERE customer_id = $customerId
-        GROUP BY product_id
-      ) AS first_uom_per_product ON ci.product_id = first_uom_per_product.product_id
-          AND ci.uom = first_uom_per_product.first_uom
-      WHERE ci.customer_id = $customerId AND p.status = 1
-      GROUP BY p.product_name, p.photo1, ci.uom
-      LIMIT 10
-    ''');
-      await conn.close();
-      return results.map((row) => {
-        'product_id': row['id'],
-        'product_name': row['product_name'],
-        'photo1': row['photo1'],
-        'uom': row['uom'],
-      }).toList();
+      // API URL where the PHP script is hosted
+      final String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_products_by_customer_id.php?customer_id=$customerId';
+
+      // Prepare the API request
+      final url = Uri.parse(apiUrl);
+      final response = await http.get(url);
+
+      // Parse the API response
+      final data = jsonDecode(response.body);
+
+      // Check if the response is successful
+      if (data['status'] == 'success') {
+        return List<Map<String, dynamic>>.from(data['data']);
+      } else {
+        // Handle error response from the API
+        throw Exception(data['message']);
+      }
     } catch (e) {
-      developer.log('Error fetching products: $e');
+      // Log the error for debugging
+      developer.log('Error fetching products: $e', error: e);
       return [];
     }
   }
@@ -245,7 +249,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           child: Row(
                             children: [
                               SvgPicture.asset(
-                                "icons/predictive_analytics.svg",
+                                "asset/icons/predictive_analytics.svg",
                               ),
                               const SizedBox(
                                 width: 8,
@@ -532,7 +536,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           Image.asset(
-                                            "icons/Ai_star.png",
+                                            "asset/icons/ai_star.png",
                                             width: 16,
                                             height: 16,
                                           ),
@@ -581,7 +585,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           Image.asset(
-                                            "icons/Ai_star.png",
+                                            "asset/icons/ai_star.png",
                                             width: 16,
                                             height: 16,
                                           ),
@@ -775,7 +779,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                   ),
                                                 ),
                                                 Image.asset(
-                                                  "icons/Ai_star.png",
+                                                  "asset/icons/ai_star.png",
                                                   width: 16,
                                                   height: 16,
                                                 ),

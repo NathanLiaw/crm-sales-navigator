@@ -41,7 +41,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         title: const Text(
           'Sales Order ID',
           style: TextStyle(color: Colors.white),
@@ -103,7 +103,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => OrderDetailsPage(cartID: cartID),
+                      builder: (context) => OrderDetailsPage(cartID: cartID, fromOrderConfirmation: false, fromSalesOrder: false,),
                     ),
                   ).then((selectedOrderID) {
                     if (selectedOrderID != null) {
@@ -145,7 +145,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          OrderDetailsPage(cartID: cartID),
+                                          OrderDetailsPage(cartID: cartID, fromOrderConfirmation: false, fromSalesOrder: false,),
                                     ),
                                   ).then((selectedOrderID) {
                                     if (selectedOrderID != null) {
