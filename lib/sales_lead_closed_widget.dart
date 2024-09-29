@@ -162,7 +162,8 @@ class ClosedLeadItem extends StatelessWidget {
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: leadItem.emailAddress.isNotEmpty
-                      ? () => _launchURL('mailto:${leadItem.emailAddress}' as Uri)
+                      ? () =>
+                          _launchURL('mailto:${leadItem.emailAddress}' as Uri)
                       : null,
                   child: Row(
                     children: [

@@ -197,30 +197,31 @@ class EngagementLeadItem extends StatelessWidget {
                             value: 'undo',
                             child: const Text('Undo'),
                             onTap: () async {
-                              MySqlConnection conn = await connectToDatabase();
                               try {
-                                Results results = await conn.query(
-                                  'SELECT previous_stage FROM sales_lead WHERE id = ?',
-                                  [leadItem.id],
-                                );
-                                if (results.isNotEmpty) {
-                                  String? previousStage =
-                                      results.first['previous_stage'];
-                                  if (previousStage != null &&
-                                      previousStage.isNotEmpty) {
-                                    onUndoLead(leadItem, previousStage);
-                                    leadItem.stage = previousStage;
-                                    await conn.query(
-                                      'UPDATE sales_lead SET previous_stage = NULL WHERE id = ?',
-                                      [leadItem.id],
-                                    );
-                                  }
+                                if (leadItem.previousStage != null &&
+                                    leadItem.previousStage!.isNotEmpty) {
+                                  await onUndoLead(
+                                      leadItem, leadItem.previousStage!);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Successfully undone Engagement lead')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Cannot undo: No previous stage available')),
+                                  );
                                 }
                               } catch (e) {
                                 developer
-                                    .log('Error checking previous stage: $e');
-                              } finally {
-                                await conn.close();
+                                    .log('Error undoing engagement lead: $e');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Error undoing Engagement lead: $e')),
+                                );
                               }
                             },
                           ),

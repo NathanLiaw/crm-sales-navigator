@@ -433,31 +433,36 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                             value: 'undo',
                             child: const Text('Undo'),
                             onTap: () async {
-                              MySqlConnection conn = await connectToDatabase();
-                              try {
-                                Results results = await conn.query(
-                                  'SELECT previous_stage FROM sales_lead WHERE id = ?',
-                                  [widget.leadItem.id],
-                                );
-                                if (results.isNotEmpty) {
-                                  String? previousStage =
-                                      results.first['previous_stage'];
-                                  if (previousStage != null &&
-                                      previousStage.isNotEmpty) {
-                                    widget.onUndoLead(
-                                        widget.leadItem, previousStage);
-                                    widget.leadItem.stage = previousStage;
-                                    await conn.query(
-                                      'UPDATE sales_lead SET previous_stage = NULL WHERE id = ?',
-                                      [widget.leadItem.id],
-                                    );
-                                  }
+                              if (widget.leadItem.previousStage != null &&
+                                  widget.leadItem.previousStage!.isNotEmpty) {
+                                try {
+                                  await widget.onUndoLead(widget.leadItem,
+                                      widget.leadItem.previousStage!);
+                                  setState(() {
+                                    widget.leadItem.stage =
+                                        widget.leadItem.previousStage!;
+                                    widget.leadItem.previousStage = null;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Successfully undone Negotiation lead')),
+                                  );
+                                } catch (e) {
+                                  developer.log(
+                                      'Error undoing negotiation lead: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Error undoing Negotiation lead: $e')),
+                                  );
                                 }
-                              } catch (e) {
-                                developer
-                                    .log('Error checking previous stage: $e');
-                              } finally {
-                                await conn.close();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Cannot undo: No previous stage available')),
+                                );
                               }
                             },
                           ),
@@ -565,7 +570,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                               const Icon(Icons.sort, color: Color(0xff0069BA)),
                               const SizedBox(width: 4),
                               Text(_getSortButtonText(),
-                                  style: const TextStyle(color: Color(0xff0069BA))),
+                                  style: const TextStyle(
+                                      color: Color(0xff0069BA))),
                             ],
                           ),
                         ),
@@ -574,10 +580,12 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white, // Background color of the container
+                        color:
+                            Colors.white, // Background color of the container
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2), // Shadow color
+                            color:
+                                Colors.black.withOpacity(0.2), // Shadow color
                             offset: const Offset(0, 1), // Vertical offset
                             blurRadius: 4, // Blur radius of the shadow
                             spreadRadius: 1, // Spread radius of the shadow
@@ -586,7 +594,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       ),
                       child: SizedBox(
                         height: 220,
-                        child: Scrollbar( // Add Scrollbar here
+                        child: Scrollbar(
+                          // Add Scrollbar here
                           child: ListView.builder(
                             itemCount: tasks.length,
                             itemBuilder: (context, index) {
@@ -597,7 +606,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                   child: Row(
                                     children: [
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             task['title'],
@@ -619,11 +629,16 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                         children: [
                                           IconButton(
                                             icon: const Icon(Icons.edit),
-                                            onPressed: () => _navigateToEditTaskPage(context, task),
+                                            onPressed: () =>
+                                                _navigateToEditTaskPage(
+                                                    context, task),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red),
-                                            onPressed: () => _showDeleteConfirmationDialog(task['id']),
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            onPressed: () =>
+                                                _showDeleteConfirmationDialog(
+                                                    task['id']),
                                           ),
                                         ],
                                       ),
@@ -743,17 +758,21 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded( // Wrap the button in Expanded
+                  Expanded(
+                    // Wrap the button in Expanded
                     child: SizedBox(
                       height: 34,
                       child: ElevatedButton(
-                        onPressed: () => _navigateToCreateTaskPage(context, true),
+                        onPressed: () =>
+                            _navigateToCreateTaskPage(context, true),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 62, 147, 252),
+                          backgroundColor:
+                              const Color.fromARGB(255, 62, 147, 252),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
                         ),
                         child: const Text(
                           'Create Task / Select Order ID',
