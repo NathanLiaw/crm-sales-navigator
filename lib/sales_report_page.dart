@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'db_connection.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -120,7 +120,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching sales data: $e');
+      developer.log('Error fetching sales data: $e');
       return [];
     }
   }
@@ -249,23 +249,23 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
                       }
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -308,25 +308,25 @@ class _SalesReportPageState extends State<SalesReportPage> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             side: const BorderSide(color: Color(0xFF999999)),
             borderRadius: BorderRadius.circular(50),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),

@@ -1,7 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
-import 'package:sales_navigator/api/firebase_api.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
@@ -11,7 +10,6 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/notification_page.dart';
-import 'package:sales_navigator/event_logger.dart';
 import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
 import 'package:sales_navigator/sales_lead_nego_widget.dart';
@@ -107,6 +105,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late TabController _tabController;
   String _sortBy = 'created_date';
   bool _sortAscending = true;
+  bool _isButtonVisible = true;
 
   @override
   void initState() {
@@ -125,6 +124,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       vsync: this,
       initialIndex: widget.initialIndex,
     );
+    _tabController.addListener(() {
+      setState(() {
+        _isButtonVisible = _tabController.index == 0; // Show button only on first tab
+      });
+    });
   }
 
   void _initializeSalesmanId() async {
@@ -216,7 +220,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _tabController.dispose();
-    _performanceUpdater?.stopPeriodicUpdate();
+    _performanceUpdater.stopPeriodicUpdate();
     super.dispose();
   }
 
@@ -1781,7 +1785,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               bottomNavigationBar: const CustomNavigationBar(),
-              floatingActionButton: _buildFloatingActionButton(context),
+              floatingActionButton: _isButtonVisible
+                  ? _buildFloatingActionButton(context)
+                  : null,
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
             );

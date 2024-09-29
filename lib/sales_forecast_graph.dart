@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'db_connection.dart';
-import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class SalesForecastGraph extends StatefulWidget {
   const SalesForecastGraph({super.key});
@@ -108,7 +108,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching sales forecasts: $e');
+      developer.log('Error fetching sales forecasts: $e');
       return [];
     }
   }

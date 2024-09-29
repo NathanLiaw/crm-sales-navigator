@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class CustomersGraph extends StatefulWidget {
   const CustomersGraph({super.key});
@@ -57,7 +58,7 @@ class _CustomersGraphState extends State<CustomersGraph> {
         throw Exception('Failed to load customers');
       }
     } catch (e) {
-      print('Error fetching customers: $e');
+      developer.log('Error fetching customers: $e');
       return [];
     }
   }

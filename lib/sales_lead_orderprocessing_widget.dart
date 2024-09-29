@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_Insights.dart';
+// ignore: unused_import
 import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
@@ -95,7 +96,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   //   ),
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 250,
                     child: Text(
                       leadItem.customerName,
@@ -116,7 +117,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     ),
                     child: Text(
                       orderStatus,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -137,10 +138,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.phone,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 100,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
@@ -167,10 +168,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.email,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
+                        SizedBox(
                           width: 150,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty
@@ -196,7 +197,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
-                    color: const Color(0xff0175FF)),
+                    color: Color(0xff0175FF)),
               ),
               const SizedBox(
                 height: 8,
@@ -251,8 +252,8 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       'View Order',
                       style: TextStyle(
                         decoration: TextDecoration.underline,
-                        decorationColor: const Color(0xff0175FF),
-                        color: const Color(0xff0175FF),
+                        decorationColor: Color(0xff0175FF),
+                        color: Color(0xff0175FF),
                         fontSize: 14,
                       ),
                     ),

@@ -198,7 +198,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     try {
       MySqlConnection conn = await connectToDatabase();
       Results results = await conn.query(
-        'SELECT created, expiration_date, total, session FROM cart WHERE id = ?',
+        'SELECT created, expiration_date, final_total, session FROM cart WHERE id = ?',
         [int.parse(salesOrderId)],
       );
       if (results.isNotEmpty) {
@@ -228,7 +228,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
         setState(() {
           createdDate = row['created'].toString();
           expirationDate = row['expiration_date'].toString();
-          total = row['total'].toString();
+          total = row['final_total'].toString();
           quantity = totalQuantity;
           formattedCreatedDate = _formatDate(createdDate!);
           cartItemList = cartItems;

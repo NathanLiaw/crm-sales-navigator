@@ -73,33 +73,36 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             salesmanName = orderDetails['salesman_name'];
             createdDate = orderDetails['created_date'];
             salesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
+            total = double.tryParse(orderDetails['final_total']) ?? 0.0; // Convert to double
+            subtotal = double.tryParse(orderDetails['total']) ?? 0.0; // Convert to double
 
             orderItems = [];
+          });
 
-            // Loop through each cart item to fetch its photo
-            cartItems.forEach((item) async {
-              final productId = item['product_id'];
-              final productName = item['product_name'];
+          // Use a for loop to await each fetchProductPhoto call
+          for (var item in cartItems) {
+            final productId = item['product_id'];
+            final productName = item['product_name'];
 
-              // Fetch the product photo for each item
-              final photoPath = await fetchProductPhoto(productId);
+            // Fetch the product photo for each item
+            final photoPath = await fetchProductPhoto(productId);
 
+            // Update the state inside the for loop
+            setState(() {
               orderItems.add(OrderItem(
                 productId: productId,
                 productName: productName,
-                unitPrice: item['unit_price'] ?? '0.00',
+                unitPrice: (item['unit_price'] != null ? double.parse(item['unit_price']).toStringAsFixed(2) : '0.00'), // Convert double to String
                 qty: item['qty']?.toString() ?? '0',
                 status: item['status'] ?? '',
-                total: item['total'] ?? '0.00',
+                total: (item['total'] != null ? double.parse(item['total']).toStringAsFixed(2) : '0.00'), // Convert double to String
                 photoPath: photoPath,
               ));
-
-              // Calculate subtotal
-              subtotal = orderItems.fold(0.0, (sum, item) => sum + double.parse(item.total));
-
-              calculateTotalAndSubTotal();
             });
-          });
+          }
+
+          // Calculate subtotal after all items have been added
+          subtotal = orderItems.fold(0.0, (sum, item) => sum + double.parse(item.total));
         } else {
           developer.log('Failed to fetch order details: ${data['message']}');
         }
@@ -176,14 +179,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     } catch (e) {
       developer.log('Error voiding order: $e');
     }
-  }
-
-  Future<void> calculateTotalAndSubTotal() async {
-    double finalTotal = subtotal * (1 + gst + sst);
-
-    setState(() {
-      total = finalTotal;
-    });
   }
 
   Future<void> getTax() async {

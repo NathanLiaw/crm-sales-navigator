@@ -1507,29 +1507,31 @@ class _CartPage extends State<CartPage> {
           });
         }
       },
-      child: Container(
-        width: 368,
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color.fromARGB(255, 196, 196, 196)),
-            boxShadow: const [
-              BoxShadow(
-                blurStyle: BlurStyle.normal,
-                color: Color.fromARGB(75, 117, 117, 117),
-                spreadRadius: 0.1,
-                blurRadius: 2,
-                offset: Offset(0, 1),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: Container(
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color.fromARGB(255, 196, 196, 196)),
+              boxShadow: const [
+                BoxShadow(
+                  blurStyle: BlurStyle.normal,
+                  color: Color.fromARGB(75, 117, 117, 117),
+                  spreadRadius: 0.1,
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ]),
+          child: ListTile(
+            titleAlignment: ListTileTitleAlignment.center,
+            title: Text(
+              'Select Customer',
+              style: GoogleFonts.inter(
+                color: const Color(0xff0175FF),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-            ]),
-        child: ListTile(
-          titleAlignment: ListTileTitleAlignment.center,
-          title: Text(
-            'Select Customer',
-            style: GoogleFonts.inter(
-              color: const Color(0xff0175FF),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ),

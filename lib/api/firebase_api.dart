@@ -61,11 +61,11 @@ class FirebaseApi {
           content: Text(notification.body ?? ''),
           actions: [
             TextButton(
-              child: Text('Close'),
+              child: const Text('Close'),
               onPressed: () => Navigator.of(navigatorKey.currentContext!).pop(),
             ),
             TextButton(
-              child: Text('View'),
+              child: const Text('View'),
               onPressed: () {
                 Navigator.of(navigatorKey.currentContext!).pop();
                 handleMessage(message);
@@ -101,7 +101,7 @@ class FirebaseApi {
     await _localNotifications.initialize(
       settings,
       onSelectNotification: (payload) {
-        print("Local notification selected: $payload");
+        developer.log("Local notification selected: $payload");
         if (payload != null) {
           final data = jsonDecode(payload);
           handleMessage(RemoteMessage(
