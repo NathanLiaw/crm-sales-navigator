@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/customer.dart' as Customer;
 import 'dart:developer' as developer;
@@ -26,6 +28,8 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   late Future<List<Map<String, dynamic>>> productsFuture = Future.value([]);
   late int customerId = 0;
   late String customerUsername = '';
+  double latestSpending = 0.00;
+  List<Map<String, dynamic>> productRecommendations = [];
 
   @override
   void initState() {
@@ -35,6 +39,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         customerId = customer.id;
         salesDataFuture = fetchSalesDataByCustomer(customerId);
         productsFuture = fetchProductsByCustomer(customerId);
+        fetchRecommendations(customerId);
       });
       return customer;
     });
@@ -92,6 +97,29 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
       // Check if the response is successful
       if (data['status'] == 'success') {
+        try {
+          // Assuming `data` is the parsed JSON response from your API
+          var latestSpendingData = data['latest_spending'];
+
+          // Check if latestSpendingData is not null and has the expected structure
+          if (latestSpendingData != null && latestSpendingData.containsKey('final_total')) {
+            // Store the last spending in a Future
+            var finalTotal = await latestSpendingData['final_total'];
+
+            if (finalTotal is String) {
+              latestSpending = double.tryParse(finalTotal) ?? 0;
+            } else if (finalTotal is int) {
+              latestSpending = finalTotal.toDouble();
+            } else {
+              latestSpending = 0;
+            }
+          } else {
+            developer.log('No latest spending data or final total key not found.');
+          }
+        } catch (e) {
+          developer.log('Error fetching sales data: $e');
+        }
+        
         // Return the sales data from the API response
         return List<Map<String, dynamic>>.from(data['data']);
       } else {
@@ -191,6 +219,79 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     return blob;
   }
 
+  Future<List<Map<String, dynamic>>> getProductRecommendations(String keyword) async {
+    try {
+      // Set the API URL with the keyword as a query parameter
+      String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_product_recommendation.php?keyword=${Uri.encodeComponent(keyword)}';
+
+      // Prepare the API request
+      final url = Uri.parse(apiUrl);
+
+      // Parse the API response
+      final response = await http.get(url);
+
+      // Decode the JSON response
+      final data = jsonDecode(response.body);
+
+      // Check if the response is successful
+      if (data['status'] == 'success') {
+        // Store the product recommendations from the API response in the variable
+        return List<Map<String, dynamic>>.from(data['data']);
+      } else {
+        // Throw an exception if the API returns an error
+        throw Exception(data['message']);
+      }
+    } catch (e) {
+      // Log the error for debugging
+      developer.log('Error fetching product recommendations: $e');
+      return [];
+    }
+  }
+
+  // Function to fetch keywords based on the last 10 cart items
+  Future<List<String>> fetchKeywords(int customerId) async {
+    try {
+      String sqlUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_keywords.php?customer_id=$customerId'; // Adjust this API endpoint to fetch keywords
+
+      // Prepare the API request
+      final url = Uri.parse(sqlUrl);
+
+      // Parse the API response
+      final response = await http.get(url);
+      final data = jsonDecode(response.body);
+
+      // Check if the response is successful
+      if (data['status'] == 'success') {
+        // Extract the keywords from the response
+        return List<String>.from(data['data'].map((item) => item['sub_category']) ?? '');
+      } else {
+        // Throw an exception if the API returns an error
+        throw Exception(data['message']);
+      }
+    } catch (e) {
+      // Log the error for debugging
+      developer.log('Error fetching keywords: $e');
+      rethrow;
+    }
+  }
+
+  void fetchRecommendations(int customerId) async {
+    // Fetch keywords first
+    List<String> keywords = await fetchKeywords(customerId);
+
+    // Loop through each keyword to fetch recommendations
+    for (String keyword in keywords) {
+      // Fetch recommendations for the current keyword
+      List<Map<String, dynamic>> recommendations = await getProductRecommendations(keyword);
+
+      // Add fetched recommendations to the main productRecommendations list
+      productRecommendations.addAll(recommendations);
+    }
+
+    // Log the final list of product recommendations after all keywords have been processed
+    developer.log('Final Product Recommendations: $productRecommendations');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -223,7 +324,24 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {
             Customer.Customer customer = snapshot.data![0] as Customer.Customer;
+            List<Map<String, dynamic>> salesData = snapshot.data![1] as List<Map<String, dynamic>>;
             List<Map<String, dynamic>> products = snapshot.data![2] as List<Map<String, dynamic>>;
+
+            // Extract total spent
+            String totalSpent = salesData.isNotEmpty
+                ? salesData.map((entry) => entry['total_spent'] ?? '0.00') // Reference total_spent and default to '0.00' if null
+                .map((spent) => double.parse(spent.toString())) // Ensure we parse to double
+                .reduce((a, b) => (a + b)) // Sum the values
+                .toString() // Convert back to string
+                : '0.00';
+
+            // Extract latest spending
+            String lastSpending = latestSpending.toString();
+
+            // Format the total sales with a thousand separator
+            final formatter = NumberFormat("#,##0.000", "en_MY");
+            String formattedTotalSpent = formatter.format(double.parse(totalSpent));
+            String formattedLastSpending = formatter.format(double.parse(lastSpending));
 
             return SingleChildScrollView(
               child: Column(
@@ -339,7 +457,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                           // Row 3 Total Spent
                           margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 16),
                           child: Text(
-                            'RM 80,000,000',
+                            'RM $formattedTotalSpent',
                             style: GoogleFonts.inter(
                               textStyle: const TextStyle(letterSpacing: -0.8),
                               fontSize: 32,
@@ -675,14 +793,22 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                 ),
                                               ],
                                             ),
-                                            Text(
-                                              'RM100,000',
-                                              style: GoogleFonts.inter(
-                                                textStyle:
-                                                const TextStyle(letterSpacing: -0.8),
-                                                fontSize: 28,
-                                                fontWeight: FontWeight.w700,
-                                                color: const Color(0xff0066FF),
+                                            SizedBox(
+                                              width: double.infinity, // Adjust the width as needed
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown, // Scale down to fit
+                                                child: Text(
+                                                  'RM $formattedLastSpending',
+                                                  style: GoogleFonts.inter(
+                                                    textStyle: const TextStyle(
+                                                      letterSpacing: -0.8,
+                                                      fontSize: 24, // Starting font size
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Color(0xff0066FF),
+                                                    ),
+                                                  ),
+                                                  maxLines: 1, // Limit to one line
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -935,50 +1061,51 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                     color: const Color.fromARGB(255, 0, 0, 0),
                                   ),
                                 ),
-                                Row(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id)),
-                                        );
-                                      },
-                                      child: const Text(
-                                        'View more',
-                                        style: TextStyle(fontSize: 16.0, color: Colors.grey),
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.chevron_right,
-                                      size: 24,
-                                      color: Colors.grey,
-                                    ),
-                                  ],
-                                ),
+                                // Row(
+                                //   children: [
+                                //     GestureDetector(
+                                //       onTap: () {
+                                //         Navigator.push(
+                                //           context,
+                                //           MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id)),
+                                //         );
+                                //       },
+                                //       child: const Text(
+                                //         'View more',
+                                //         style: TextStyle(fontSize: 16.0, color: Colors.grey),
+                                //       ),
+                                //     ),
+                                //     const Icon(
+                                //       Icons.chevron_right,
+                                //       size: 24,
+                                //       color: Colors.grey,
+                                //     ),
+                                //   ],
+                                // ),
                               ]
                           ),
                           const SizedBox(height: 10.0),
                           SizedBox(
-                            height: 250.0,
-                            child: products.isEmpty
+                            height: 200.0,
+                            child: productRecommendations.isEmpty
                                 ? const Text('No purchases yet')
                                 : ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              itemCount: products.length,
+                              // Use min to limit the number of displayed products to 20
+                              itemCount: productRecommendations.length > 50 ? 50 : productRecommendations.length,
                               itemBuilder: (context, index) {
-                                var product = products[index];
+                                var product = productRecommendations[index];
                                 final productId = product['product_id'] ?? 0;
                                 final localPath = product['photo1'] ?? '';
                                 final photoUrl = "https://haluansama.com/crm-sales/$localPath";
                                 final productName = product['product_name'] ?? '';
-                                final productUom = product['uom'] ?? '';
 
                                 return GestureDetector(
                                   onTap: () {
                                     navigateToItemScreen(productId);
                                   },
                                   child: Card(
+                                    color: Colors.white,
                                     elevation: 1,
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
@@ -1005,17 +1132,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                               textAlign: TextAlign.center,
                                               style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
                                               overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          // Container for product uom with fixed width
-                                          SizedBox(
-                                            width: 120.0,
-                                            child: Text(
-                                              productUom,
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.normal, color: Colors.grey),
-                                              softWrap: true,
                                             ),
                                           ),
                                         ],
