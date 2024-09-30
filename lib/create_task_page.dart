@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/select_order_id.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CreateTaskPage extends StatefulWidget {
   final int id;
@@ -161,23 +161,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     });
   }
 
-  // Future<void> _navigateToSelectOrderIDPage() async {
-  //   final selectedOrderID = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) =>
-  //           SelectOrderIDPage(customerName: widget.customerName),
-  //     ),
-  //   );
-
-  //   if (selectedOrderID != null) {
-  //     setState(() {
-  //       selectedSalesOrderId = selectedOrderID.toString();
-  //     });
-  //     _fetchSalesOrderDetails(selectedSalesOrderId);
-  //   }
-  // }
-
   Future<void> _navigateToSelectOrderIDPage() async {
     final selectedOrderID = await Navigator.push(
       context,
@@ -196,93 +179,62 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     if (salesOrderId == null) return;
 
     try {
-      MySqlConnection conn = await connectToDatabase();
-      Results results = await conn.query(
-        'SELECT created, expiration_date, final_total, session FROM cart WHERE id = ?',
-        [int.parse(salesOrderId)],
+      final response = await http.get(
+        Uri.parse('https://haluansama.com/crm-sales/api/create_task/get_sales_order_details.php?salesOrderId=$salesOrderId'),
       );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        String session = row['session'].toString();
 
-        // get the qty sum in the cart_item table based on session
-        Results quantityResults = await conn.query(
-          "SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ? OR cart_id = ?",
-          [session, int.parse(salesOrderId)],
-        );
-        int totalQuantity =
-            quantityResults.isEmpty ? 0 : quantityResults.first['total_qty'];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-        // get product names and quantities from cart_item
-        Results cartItemResults = await conn.query(
-          "SELECT product_name, qty FROM cart_item WHERE cart_id = ?",
-          [int.parse(salesOrderId)],
-        );
-        List<Map<String, dynamic>> cartItems = cartItemResults
-            .map((row) => {
-                  'product_name': row['product_name'],
-                  'qty': row['qty'],
-                })
-            .toList();
+        if (data['status'] == 'success') {
+          final orderDetails = data['orderDetails'];
 
-        setState(() {
-          createdDate = row['created'].toString();
-          expirationDate = row['expiration_date'].toString();
-          total = row['final_total'].toString();
-          quantity = totalQuantity;
-          formattedCreatedDate = _formatDate(createdDate!);
-          cartItemList = cartItems;
-        });
+          // Extract the data from the API response
+          setState(() {
+            createdDate = orderDetails['created'];
+            expirationDate = orderDetails['expiration_date'];
+            total = orderDetails['final_total'].toString();
+            quantity = orderDetails['quantity'];
+            formattedCreatedDate = _formatDate(createdDate!);
+            cartItemList = List<Map<String, dynamic>>.from(orderDetails['cartItems']);
+          });
+        } else {
+          developer.log('Error fetching sales order details: ${data['message']}');
+        }
+      } else {
+        developer.log('Failed to fetch sales order details: ${response.statusCode}');
       }
-      await conn.close();
     } catch (e) {
       developer.log('Error fetching sales order details: $e');
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchSalesOrderDropdown(
-      String customerName) async {
+  Future<List<Map<String, dynamic>>> fetchSalesOrderDropdown(String customerName) async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     int buyerId = pref.getInt('id') ?? 1;
 
+    const String apiUrl = 'https://haluansama.com/crm-sales/api/create_task/get_sales_orders_dropdown.php';
+
     try {
-      MySqlConnection conn = await connectToDatabase();
+      final response = await http.get(Uri.parse('$apiUrl?buyer_id=$buyerId&customer_name=${Uri.encodeComponent(customerName)}'));
 
-      String condition =
-          "buyer_id = $buyerId AND customer_company_name = '$customerName' "
-          "AND status = 'Pending' AND CURDATE() <= expiration_date";
-
-      List<Map<String, dynamic>> salesOrders = await readData(
-        conn,
-        'cart',
-        condition,
-        '',
-        '*',
-      );
-      await conn.close();
-
-      return salesOrders;
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse['status'] == 'success') {
+          return List<Map<String, dynamic>>.from(jsonResponse['data']);
+        } else {
+          developer.log('Error fetching sales orders: ${jsonResponse['message']}');
+          return [];
+        }
+      } else {
+        developer.log('Failed to fetch sales orders: ${response.statusCode}');
+        return [];
+      }
     } catch (e) {
       developer.log('Error fetching sales orders: $e');
       return [];
     }
   }
-
-  // Future<List<String>> fetchSalesOrderIds() async {
-  //   try {
-  //     List<Map<String, dynamic>> salesOrders =
-  //         await fetchSalesOrderDropdown(widget.customerName);
-  //     setState(() {
-  //       salesOrderIds = salesOrders.map((order) {
-  //         final orderId = order['id'];
-  //         return orderId.toString();
-  //       }).toList();
-  //     });
-  //   } catch (e) {
-  //     developer.log('Error fetching sales order IDs: $e');
-  //   }
-  //   return salesOrderIds;
-  // }
 
   Future<List<String>> fetchSalesOrderIds() async {
     try {
@@ -739,8 +691,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
   }
 
   Future<Map<String, dynamic>> _saveTaskToDatabase() async {
-    MySqlConnection conn = await connectToDatabase();
-
     String taskTitle = titleController.text.trim();
     String taskDescription = descriptionController.text.trim();
     String taskDueDate = selectedDate != null
@@ -749,49 +699,45 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     String salesOrderId = selectedSalesOrderId ?? '';
     int? quantityInt = quantity;
 
+    // Prepare the payload for the API request
+    Map<String, dynamic> payload = {
+      'taskTitle': taskTitle,
+      'taskDescription': taskDescription,
+      'taskDueDate': taskDueDate,
+      'salesOrderId': salesOrderId,
+      'quantity': quantityInt,
+      'id': widget.id, // Sales lead ID
+      'taskId': widget.taskId, // Task ID if updating an existing task
+    };
+
     try {
-      // 检查是否有任务详情需要保存
-      bool hasTaskDetails = taskTitle.isNotEmpty || taskDescription.isNotEmpty;
-
-      if (hasTaskDetails) {
-        if (widget.taskId != null) {
-          // 更新现有任务
-          await conn.query(
-            'UPDATE tasks SET title = ?, description = ?, due_date = ? WHERE id = ?',
-            [taskTitle, taskDescription, taskDueDate, widget.taskId],
-          );
-        } else {
-          // 插入新任务，包括 creation_date
-          Results leadResults = await conn.query(
-            'SELECT id FROM sales_lead WHERE id = ?',
-            [widget.id],
-          );
-          int leadId = leadResults.first['id'];
-
-          await conn.query(
-            'INSERT INTO tasks (title, description, due_date, lead_id, creation_date) VALUES (?, ?, ?, ?, NOW())',
-            [taskTitle, taskDescription, taskDueDate, leadId],
-          );
-        }
-      }
-
-      // 更新 sales_lead 表
-      await conn.query(
-        'UPDATE sales_lead SET so_id = ?, quantity = ? WHERE id = ?',
-        [salesOrderId.isEmpty ? null : salesOrderId, quantityInt, widget.id],
+      // Make the API request
+      final response = await http.post(
+        Uri.parse('https://haluansama.com/crm-sales/api/create_task/save_task_to_database.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
       );
 
-      developer.log('Data saved successfully.');
-      return {
-        'salesOrderId': salesOrderId.isEmpty ? null : salesOrderId,
-        'quantity': quantityInt,
-        'hasTaskDetails': hasTaskDetails,
-      };
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          developer.log('Data saved successfully.');
+          return {
+            'salesOrderId': responseData['salesOrderId'],
+            'quantity': responseData['quantity'],
+            'hasTaskDetails': responseData['hasTaskDetails'],
+          };
+        } else {
+          developer.log('Failed to save data: ${responseData['message']}');
+          return {'error': responseData['message']};
+        }
+      } else {
+        developer.log('Failed to save data: Server error');
+        return {'error': 'Server error'};
+      }
     } catch (e) {
       developer.log('Failed to save data: $e');
       return {'error': 'Failed to save data'};
-    } finally {
-      await conn.close();
     }
   }
 

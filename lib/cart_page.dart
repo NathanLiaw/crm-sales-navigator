@@ -290,6 +290,46 @@ class _CartPage extends State<CartPage> {
     }
   }
 
+  Future<void> deleteSingleCartItem(int? cartItemId) async {
+    try {
+      // Delete the selected cart item from the database
+      await DatabaseHelper.deleteData(cartItemId, DatabaseHelper.cartItemTableName);
+
+      // Log the event (you may want to adjust this based on your logging strategy)
+      await EventLogger.logEvent(
+        salesmanId,
+        'Deleted item with ID $cartItemId from cart',
+        'Cart Item Deletion',
+      );
+
+      // Reload the cart items after deletion
+      await loadCartItemsAndPhotos();
+
+      // Show a snackbar to confirm deletion
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item removed from cart'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Update the cart count
+      final cartModel = Provider.of<CartModel>(context, listen: false);
+      cartModel.initializeCartCount();
+    } catch (e) {
+      developer.log('Error deleting item with ID $cartItemId: $e', error: e);
+      // Show an error message if deletion fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete item. Please try again.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> updateItemQuantity(int? id, int quantity) async {
     try {
       int? itemId = id ?? 0;
@@ -710,15 +750,13 @@ class _CartPage extends State<CartPage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(
-                                          false); // User canceled the action
+                                      Navigator.of(context).pop(false); // User canceled the action
                                     },
                                     child: const Text("Cancel"),
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(
-                                          true); // User confirmed the action
+                                      Navigator.of(context).pop(true); // User confirmed the action
                                     },
                                     child: const Text("Remove"),
                                   ),
@@ -728,23 +766,16 @@ class _CartPage extends State<CartPage> {
                           );
                         },
                         onDismissed: (direction) async {
-                          // Remove the item from the list and delete from the database
+                          // Call the delete function for the single cart item
+                          await deleteSingleCartItem(item.id);
+
+                          // Optionally, you can remove the item from the list here as well
                           setState(() {
-                            cartItems.removeAt(index);
-                            selectedCartItems.remove(item);
+                            cartItems.removeAt(index); // Assuming you have access to the index
+                            selectedCartItems.remove(item); // Remove from selected items if necessary
                           });
-                          await DatabaseHelper.deleteData(
-                              item.id, DatabaseHelper.cartItemTableName);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text('${item.productName} removed from cart'),
-                              duration: const Duration(seconds: 1),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
                         },
-                        background: Container(
+                      background: Container(
                           color: Colors.red,
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.symmetric(horizontal: 20),

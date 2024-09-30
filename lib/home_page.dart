@@ -4,11 +4,9 @@ import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
-import 'package:sales_navigator/customer_insight.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_navigator/customer_Insights.dart';
 import 'dart:async';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
@@ -22,6 +20,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -37,7 +36,7 @@ class SalesmanPerformanceUpdater {
 
   void startPeriodicUpdate(int salesmanId) {
     // Update every hour
-    _timer = Timer.periodic(Duration(hours: 1), (timer) {
+    _timer = Timer.periodic(const Duration(hours: 1), (timer) {
       _updateSalesmanPerformance(salesmanId);
     });
   }
@@ -82,7 +81,7 @@ class SalesmanPerformanceUpdater {
 class HomePage extends StatefulWidget {
   final int initialIndex;
 
-  const HomePage({Key? key, this.initialIndex = 0}) : super(key: key);
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -379,7 +378,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ));
             });
 
-            print("Created new lead for customer: $customerName");
+            developer.log("Created new lead for customer: $customerName");
           }
         } else {
           developer.log('Error fetching lead items: ${data['message']}');
@@ -398,7 +397,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _sortLeads(negotiationLeads);
     _sortLeads(orderProcessingLeads);
     _sortLeads(closedLeads);
-    print("Finished _fetchLeadItems");
+    developer.log("Finished _fetchLeadItems");
   }
 
   Future<void> _fetchCreateLeadItems() async {
@@ -601,7 +600,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _moveFromNegotiationToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_negotiation_to_order_processing.php';
 
     final Map<String, String> queryParameters = {
@@ -637,7 +636,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
                 content:
                     Text('Successfully moved lead to Order Processing stage')),
           );
@@ -648,7 +647,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to move lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error moving lead to Order Processing: $e');
+      developer.log('Error moving lead to Order Processing: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error moving lead to Order Processing: $e')),
       );
@@ -804,7 +803,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _moveFromOrderProcessingToClosed(LeadItem leadItem) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_order_processing_to_closed.php';
 
     final Map<String, String> queryParameters = {
@@ -834,7 +833,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Successfully moved lead to Closed stage')),
+            const SnackBar(content: Text('Successfully moved lead to Closed stage')),
           );
         } else {
           throw Exception(responseData['message']);
@@ -843,7 +842,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to move lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error moving lead to Closed stage: $e');
+      developer.log('Error moving lead to Closed stage: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error moving lead to Closed stage: $e')),
       );
@@ -974,7 +973,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _moveFromOpportunitiesToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_opportunities_to_order_processing.php';
 
     final Map<String, String> queryParameters = {
@@ -1007,7 +1006,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
                 content:
                     Text('Successfully moved lead to Order Processing stage')),
           );
@@ -1018,7 +1017,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to move lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error moving lead to Order Processing: $e');
+      developer.log('Error moving lead to Order Processing: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error moving lead to Order Processing: $e')),
       );
@@ -1039,42 +1038,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //   }
   // }
 
-  Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
-    MySqlConnection conn = await connectToDatabase();
-    try {
-      String query;
-      List<Object> params;
-
-      if (leadItem.stage == 'Negotiation') {
-        query = '''
-        UPDATE sales_lead 
-        SET stage = ?, previous_stage = ?, negotiation_start_date = NOW() 
-        WHERE id = ?
-      ''';
-        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
-      } else if (leadItem.stage == 'Engagement') {
-        query = '''
-        UPDATE sales_lead 
-        SET stage = ?, previous_stage = ?, engagement_start_date = NOW() 
-        WHERE id = ?
-      ''';
-        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
-      } else {
-        query =
-            'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
-        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
-      }
-
-      await conn.query(query, params);
-
-      developer.log(
-          'Successfully updated lead stage to ${leadItem.stage} for lead ${leadItem.id}');
-    } catch (e) {
-      developer.log('Error updating stage: $e');
-    } finally {
-      await conn.close();
-    }
-  }
+  // Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     String query;
+  //     List<Object> params;
+  //
+  //     if (leadItem.stage == 'Negotiation') {
+  //       query = '''
+  //       UPDATE sales_lead
+  //       SET stage = ?, previous_stage = ?, negotiation_start_date = NOW()
+  //       WHERE id = ?
+  //     ''';
+  //       params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+  //     } else if (leadItem.stage == 'Engagement') {
+  //       query = '''
+  //       UPDATE sales_lead
+  //       SET stage = ?, previous_stage = ?, engagement_start_date = NOW()
+  //       WHERE id = ?
+  //     ''';
+  //       params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+  //     } else {
+  //       query =
+  //           'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
+  //       params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+  //     }
+  //
+  //     await conn.query(query, params);
+  //
+  //     developer.log(
+  //         'Successfully updated lead stage to ${leadItem.stage} for lead ${leadItem.id}');
+  //   } catch (e) {
+  //     developer.log('Error updating stage: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   // Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
   //   MySqlConnection conn = await connectToDatabase();
@@ -1116,7 +1115,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/delete_engagement_lead.php';
 
     final Map<String, String> queryParameters = {
@@ -1143,10 +1142,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Successfully deleted Engagement lead')),
+            const SnackBar(content: Text('Successfully deleted Engagement lead')),
           );
-
-          print('Engagement lead deleted and event logged successfully');
+          developer.log('Engagement lead deleted and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1154,7 +1152,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to delete lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error deleting engagement lead: $e');
+      developer.log('Error deleting engagement lead: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error deleting Engagement lead: $e')),
       );
@@ -1201,7 +1199,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _onDeleteNegotiationLead(LeadItem leadItem) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/delete_negotiation_lead.php';
 
     final Map<String, String> queryParameters = {
@@ -1228,10 +1226,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Successfully deleted Negotiation lead')),
+            const SnackBar(content: Text('Successfully deleted Negotiation lead')),
           );
 
-          print('Negotiation lead deleted and event logged successfully');
+          developer.log('Negotiation lead deleted and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1239,7 +1237,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to delete lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error deleting negotiation lead: $e');
+      developer.log('Error deleting negotiation lead: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error deleting Negotiation lead: $e')),
       );
@@ -1268,7 +1266,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _onUndoEngagementLead(
       LeadItem leadItem, String previousStage) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_engagement_to_previous_stage.php';
 
     final Map<String, String> queryParameters = {
@@ -1304,10 +1302,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Successfully undone Engagement lead')),
+            const SnackBar(content: Text('Successfully undone Engagement lead')),
           );
 
-          print('Engagement lead undone and event logged successfully');
+          developer.log('Engagement lead undone and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1315,7 +1313,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to undo lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error undoing engagement lead: $e');
+      developer.log('Error undoing engagement lead: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error undoing Engagement lead: $e')),
       );
@@ -1357,7 +1355,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _onUndoNegotiationLead(
       LeadItem leadItem, String previousStage) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_negotiation_to_previous_stage.php';
 
     final Map<String, String> queryParameters = {
@@ -1393,10 +1391,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Successfully undone Negotiation lead')),
+            const SnackBar(content: Text('Successfully undone Negotiation lead')),
           );
 
-          print('Negotiation lead undone and event logged successfully');
+          developer.log('Negotiation lead undone and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1404,7 +1402,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to undo lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error undoing negotiation lead: $e');
+      developer.log('Error undoing negotiation lead: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error undoing Negotiation lead: $e')),
       );
@@ -1495,9 +1493,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //     });
 
   //     await _updateSalesmanPerformance(salesmanId);
-  //     print('Lead created and event logged successfully');
+  //     developer.log('Lead created and event logged successfully');
   //   } catch (e) {
-  //     print('Error creating lead: $e');
+  //     developer.log('Error creating lead: $e');
   //   } finally {
   //     await conn.close();
   //   }
@@ -1505,7 +1503,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _createLead(
       String customerName, String description, String amount) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead.php';
 
     final Map<String, String> queryParameters = {
@@ -1554,7 +1552,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to create lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error creating lead: $e');
+      developer.log('Error creating lead: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to create lead: $e')),
       );
@@ -1628,7 +1626,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     if (confirmDelete == true) {
-      final String baseUrl =
+      const String baseUrl =
           'https://haluansama.com/crm-sales/api/sales_lead/delete_opportunities_lead.php';
 
       final Map<String, String> queryParameters = {
@@ -1661,7 +1659,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           throw Exception('Failed to delete lead: ${response.statusCode}');
         }
       } catch (e) {
-        print('Error deleting lead: $e');
+        developer.log('Error deleting lead: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete lead: $e')),
         );
@@ -1790,7 +1788,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //   ],
                   // ),
                   IconButton(
-                    icon: Icon(Icons.sort, color: Colors.white),
+                    icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: _showSortOptions,
                   ),
                   IconButton(
@@ -1803,34 +1801,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       );
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                    onPressed: () async {
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        },
-                      );
+                  if (kDebugMode)
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: () async {
+                        // Show loading indicator
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext context) {
+                            return const Center(child: CircularProgressIndicator());
+                          },
+                        );
 
-                      // Trigger notification check
-                      await checkOrderStatusAndNotify();
-                      // await checkTaskDueDatesAndNotify();
-                      // await checkNewSalesLeadsAndNotify();
+                        // Trigger notification check
+                        await checkOrderStatusAndNotify();
+                        // await checkTaskDueDatesAndNotify();
+                        // await checkNewSalesLeadsAndNotify();
 
-                      // Close the loading indicator
-                      Navigator.of(context).pop();
+                        // Close the loading indicator
+                        Navigator.of(context).pop();
 
-                      // Show completion message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Notification check completed')),
-                      );
-                    },
-                  ),
+                        // Show completion message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Notification check completed')),
+                        );
+                      },
+                    ),
+
                 ],
               ),
               body: Column(
@@ -1849,14 +1847,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           )),
                       Container(
                         height: 78,
-                        padding: EdgeInsets.only(left: 12, bottom: 2),
+                        padding: const EdgeInsets.only(left: 12, bottom: 2),
                         child: Column(
                           children: [
-                            Spacer(),
+                            const Spacer(),
                             Text(
                               'Sales Lead Pipeline',
                               style: GoogleFonts.inter(
-                                textStyle: TextStyle(letterSpacing: -0.8),
+                                textStyle: const TextStyle(letterSpacing: -0.8),
                                 fontSize: 26,
                                 fontWeight: FontWeight.w700,
                                 color: const Color.fromARGB(255, 255, 255, 255),
@@ -1994,7 +1992,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(8))),
                 label: const Text('Create Lead',
                     style: TextStyle(color: Colors.white)),
@@ -2033,7 +2031,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerInsightPage(
+            builder: (context) => CustomerInsightsPage(
               customerName: leadItem.customerName,
             ),
           ),
@@ -2042,7 +2040,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Container(
         height: 200,
         decoration: BoxDecoration(
-            image: DecorationImage(
+            image: const DecorationImage(
               image: ResizeImage(AssetImage('asset/bttm_start.png'),
                   width: 128, height: 98),
               alignment: Alignment.bottomLeft,
@@ -2076,12 +2074,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //   maxLines: 2,
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  Container(
+                  SizedBox(
                     width: 200,
                     child: Text(
                       leadItem.customerName,
                       style: GoogleFonts.inter(
-                        textStyle: TextStyle(letterSpacing: -0.8),
+                        textStyle: const TextStyle(letterSpacing: -0.8),
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: const Color.fromARGB(255, 25, 23, 49),
@@ -2096,7 +2094,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(71, 148, 255, 223),
+                      color: const Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -2155,19 +2153,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Text(
                 leadItem.description,
                 style: GoogleFonts.inter(
-                  textStyle: TextStyle(letterSpacing: -0.5),
+                  textStyle: const TextStyle(letterSpacing: -0.5),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: const Color.fromARGB(255, 25, 23, 49),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DropdownButtonHideUnderline(
                     child: DropdownButton2<String>(
-                      iconStyleData: IconStyleData(
+                      iconStyleData: const IconStyleData(
                           icon: Icon(Icons.arrow_drop_down),
                           iconDisabledColor: Colors.white,
                           iconEnabledColor: Colors.white),
@@ -2206,7 +2204,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         height: 24,
                         width: 136,
                         decoration:
-                            BoxDecoration(color: const Color(0xff0175FF)),
+                            BoxDecoration(color: Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -2253,21 +2251,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: TextButton(
                             style: ButtonStyle(
                               padding:
-                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
-                              shape: MaterialStateProperty.all<
+                                  const WidgetStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: WidgetStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
-                                      side: BorderSide(color: Colors.red))),
-                              backgroundColor: MaterialStateProperty.all<Color>(
+                                      side: const BorderSide(color: Colors.red))),
+                              backgroundColor: WidgetStateProperty.all<Color>(
                                   const Color(0xffF01C54)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
+                              foregroundColor: WidgetStateProperty.all<Color>(
                                   const Color.fromARGB(255, 255, 255, 255)),
                             ),
                             onPressed: () {
                               _handleIgnore(leadItem);
                             },
-                            child: Text(
+                            child: const Text(
                               'Cancel',
                               style: TextStyle(
                                   fontSize: 12, fontWeight: FontWeight.w300),
@@ -2275,7 +2273,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                         ),
 
-                        SizedBox(
+                        const SizedBox(
                           width: 12,
                         ),
                         // const SizedBox(width: 8),
@@ -2299,22 +2297,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: TextButton(
                             style: ButtonStyle(
                               padding:
-                                  MaterialStatePropertyAll(EdgeInsets.all(1.0)),
-                              shape: MaterialStateProperty.all<
+                                  const WidgetStatePropertyAll(EdgeInsets.all(1.0)),
+                              shape: WidgetStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
-                                      side: BorderSide(
-                                          color: const Color(0xff4566DD)))),
-                              backgroundColor: MaterialStateProperty.all<Color>(
+                                      side: const BorderSide(
+                                          color: Color(0xff4566DD)))),
+                              backgroundColor: WidgetStateProperty.all<Color>(
                                   const Color(0xff4566DD)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
+                              foregroundColor: WidgetStateProperty.all<Color>(
                                   const Color.fromARGB(255, 255, 255, 255)),
                             ),
                             onPressed: () {
                               _moveToEngagement(leadItem);
                             },
-                            child: Text(
+                            child: const Text(
                               'Accept',
                               style: TextStyle(
                                   fontSize: 12, fontWeight: FontWeight.w300),
@@ -2407,7 +2405,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _moveFromEngagementToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    final String baseUrl =
+    const String baseUrl =
         'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_engagement_to_order_processing.php';
 
     final Map<String, String> queryParameters = {
@@ -2441,7 +2439,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
                 content:
                     Text('Successfully moved lead to Order Processing stage')),
           );
@@ -2452,7 +2450,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         throw Exception('Failed to move lead: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error moving lead to Order Processing: $e');
+      developer.log('Error moving lead to Order Processing: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error moving lead to Order Processing: $e')),
       );
@@ -2613,55 +2611,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
-    int salesOrderIdInt = int.parse(salesOrderId);
     try {
-      MySqlConnection conn = await connectToDatabase();
-      Results results = await conn.query(
-        'SELECT status, created, expiration_date, total FROM cart WHERE id = ?',
-        [salesOrderIdInt],
-      );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        String newStatus = row['status'].toString();
-        String createdDate = row['created'].toString();
-        String expirationDate = row['expiration_date'].toString();
-        String total = row['total'].toString();
+      // Replace with your actual PHP API URL
+      final String apiUrl = 'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_status.php?salesOrderId=$salesOrderId';
 
-        // Check if status has changed from 'Pending' to 'Confirm'
-        LeadItem leadItem = orderProcessingLeads.firstWhere(
-          (item) => item.salesOrderId == salesOrderId,
-          orElse: () => LeadItem(
-            id: -1,
-            salesmanId: -1,
-            customerName: '',
-            description: '',
-            createdDate: '',
-            amount: '',
-            contactNumber: '',
-            emailAddress: '',
-            stage: '',
-            addressLine1: '',
-            salesOrderId: '',
-            status: '',
-          ),
-        );
+      // Send the GET request to the PHP API
+      final response = await http.get(Uri.parse(apiUrl));
 
-        // if (leadItem.id != -1 &&
-        //     leadItem.status == 'Pending' &&
-        //     newStatus == 'Confirm') {
-        //   await _generateNotification(leadItem, newStatus);
-        //   setState(() {
-        //     leadItem.status = newStatus;
-        //   });
-        // }
+      // Check the response status
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-        // Update the lead item status
-        if (leadItem.id != -1) {
-          leadItem.status = newStatus;
+        // Check if the API returned a success status
+        if (jsonResponse['status'] == 'success') {
+          var data = jsonResponse['data'];
+          String newStatus = data['status'].toString();
+          String createdDate = data['created'].toString();
+          String expirationDate = data['expiration_date'].toString();
+          String total = data['total'].toString();
+
+          // Return the concatenated result
+          return '$newStatus|$createdDate|$expirationDate|$total';
+        } else {
+          developer.log('Error: ${jsonResponse['message']}');
+          return 'Unknown|Unknown|Unknown|Unknown';
         }
-
-        return '$newStatus|$createdDate|$expirationDate|$total';
       } else {
+        developer.log('Error: Failed to fetch data from API with status code ${response.statusCode}');
         return 'Unknown|Unknown|Unknown|Unknown';
       }
     } catch (e) {
@@ -2697,41 +2673,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //       'Order for ${leadItem.customerName} has changed from Pending to Confirm.',
   //     );
   //   } catch (e) {
-  //     print('Error generating notification: $e');
+  //     developer.log('Error generating notification: $e');
   //   } finally {
   //     await conn.close();
   //   }
   // }
 
-  Future<Map<String, String>> _fetchSalesOrderDetails(
-      String salesOrderId) async {
+  Future<Map<String, String>> _fetchSalesOrderDetails(String salesOrderId) async {
     try {
-      MySqlConnection conn = await connectToDatabase();
-      Results results = await conn.query(
-        'SELECT created, expiration_date, total, session FROM cart WHERE id = ?',
-        [int.parse(salesOrderId)],
+      final response = await http.get(
+        Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_details.php?id=$salesOrderId'),
+        headers: {'Content-Type': 'application/json'},
       );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        String createdDate = row['created'].toString();
-        String expirationDate = row['expiration_date'].toString();
-        String total = row['total'].toString();
-        String session = row['session'].toString();
 
-        Results quantityResults = await conn.query(
-          'SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ?',
-          [session],
-        );
-        String totalQuantity = quantityResults.first['total_qty'].toString();
-
-        String formattedCreatedDate = _formatDate(createdDate);
-        return {
-          'formattedCreatedDate': formattedCreatedDate,
-          'expirationDate': expirationDate,
-          'total': total,
-          'quantity': totalQuantity,
-        };
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          return {
+            'formattedCreatedDate': responseData['data']['formattedCreatedDate'].toString(),
+            'expirationDate': responseData['data']['expirationDate'].toString(),
+            'total': responseData['data']['total'].toString(),
+            'quantity': responseData['data']['quantity'].toString(),
+          };
+        } else {
+          developer.log('Error: ${responseData['message']}');
+          return {};
+        }
       } else {
+        developer.log('HTTP request failed with status: ${response.statusCode}');
         return {};
       }
     } catch (e) {

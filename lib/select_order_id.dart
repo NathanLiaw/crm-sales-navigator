@@ -80,6 +80,42 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
   }
 
   Widget buildOrderList(List<Map<String, dynamic>> salesOrders) {
+    if (salesOrders.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0), // Add padding for a clean layout
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.assignment_late, // Use an icon to represent the empty state
+              size: 80.0,
+              color: Color(0xff0175FF), // Same blue color for consistency
+            ),
+            SizedBox(height: 20.0), // Space between icon and text
+            Text(
+              'No pending sales order for this customer',
+              textAlign: TextAlign.center, // Center-align the text
+              style: TextStyle(
+                fontSize: 22.0, // Larger font size
+                fontWeight: FontWeight.w600, // Slightly bold for emphasis
+                color: Color(0xff191731), // Darker color for better contrast
+              ),
+            ),
+            SizedBox(height: 10.0),
+            Text(
+              'Please check again later or contact support for assistance.',
+              textAlign: TextAlign.center, // Center-align the text
+              style: TextStyle(
+                fontSize: 16.0, // Smaller sub-text font size
+                color: Color(0xff6b7280), // Use a softer, neutral color
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
