@@ -1,26 +1,36 @@
-import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_connection.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 class EventLogger {
   static Future<void> logEvent(
       int salesmanId, String activityDescription, String activityType,
       {int? leadId}) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl =
+        Uri.parse('https://haluansama.com/crm-sales/api/event_logger/update_log_event.php');
+
     try {
-      var result = await conn.query(
-          'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), ?)',
-          [salesmanId, activityDescription, activityType, leadId]);
-      // developer.log('Event logged successfully. Inserted ID: ${result.insertId}');
+      final response = await http.post(apiUrl, body: {
+        'salesmanId': salesmanId.toString(),
+        'activityDescription': activityDescription,
+        'activityType': activityType,
+        'leadId': leadId?.toString(),
+      });
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          developer.log('Event logged successfully');
+        } else {
+          developer.log('Error logging event: ${jsonData['message']}');
+        }
+      } else {
+        developer
+            .log('Failed to log event. Server error: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error logging event: $e');
-      developer.log('Attempted to log event with:');
-      developer.log('Salesman ID: $salesmanId');
-      developer.log('Activity Description: $activityDescription');
-      developer.log('Activity Type: $activityType');
-      developer.log('Lead ID: $leadId');
-    } finally {
-      await conn.close();
     }
   }
 }

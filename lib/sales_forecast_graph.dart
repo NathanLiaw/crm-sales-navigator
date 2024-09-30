@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'db_connection.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -45,7 +44,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 
     try {
       final response = await http.get(apiUrl);
-
+      print('Response: ${response.body}');
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
@@ -219,27 +218,41 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 
   Future<void> _fetchSalesTarget() async {
-    var db = await connectToDatabase();
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
 
-    var results = await db.query('''
-      SELECT sales_target
-      FROM sales_targets
-      WHERE username = ?
-      AND purchase_month = ?
-      AND purchase_year = ?
-    ''', [widget.loggedInUsername, currentMonth, currentYear]);
+    // Construct the API URL with the necessary parameters
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_target.php?username=${widget.loggedInUsername}&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
-    if (results.isNotEmpty) {
-      final salesTarget = results.first['sales_target'] as double;
-      setState(() {
-        _salesTarget = _currencyFormat.format(salesTarget);
-      });
+    try {
+      // Make a GET request to fetch the sales target from the API
+      final response = await http.get(apiUrl);
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        // Check if the response is successful and contains the sales target
+        if (jsonData['status'] == 'success') {
+          final salesTarget = double.parse(jsonData['sales_target'].toString());
+          setState(() {
+            _salesTarget = _currencyFormat.format(salesTarget);
+          });
+        } else {
+          // Handle case where no sales target is found
+          print('Error: ${jsonData['message']}');
+        }
+      } else {
+        // Handle unsuccessful responses (e.g., server issues, 404, etc.)
+        print(
+            'Failed to load sales target, status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the API call
+      print('Error fetching sales target: $e');
     }
-
-    await db.close();
   }
 
   @override
@@ -496,20 +509,35 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 
   Future<void> updateSalesTargetInDatabase(double newSalesTarget) async {
-    var db = await connectToDatabase();
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
 
-    await db.query('''
-      UPDATE sales_targets
-      SET sales_target = ?
-      WHERE username = ?
-      AND purchase_month = ?
-      AND purchase_year = ?
-    ''', [newSalesTarget, widget.loggedInUsername, currentMonth, currentYear]);
+    // Prepare the API URL with query parameters
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target.php'
+        '?username=${widget.loggedInUsername}&newSalesTarget=$newSalesTarget&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
-    await db.close();
+    try {
+      // Make the HTTP GET request
+      final response = await http.get(apiUrl);
+
+      // Check the status code of the response
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        // Check if the API returned a success status
+        if (jsonData['status'] == 'success') {
+          developer.log('Sales target updated successfully');
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to update sales target');
+      }
+    } catch (e) {
+      developer.log('Error updating sales target: $e');
+    }
   }
 }
 

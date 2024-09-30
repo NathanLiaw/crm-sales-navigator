@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'db_connection.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:mysql1/mysql1.dart';
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -12,35 +14,57 @@ class ProductCard extends StatelessWidget {
 
   Future<Map<String, dynamic>> _fetchProductDetails(
       int productId, int areaId) async {
-    final conn = await connectToDatabase();
-    try {
-      var results = await conn.query(
-        'SELECT description, uom, price_by_uom FROM product WHERE id = ?',
-        [productId],
-      );
+    // Construct the API URL
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/product_card/get_product_details.php?productId=$productId');
 
-      if (results.isNotEmpty) {
-        var row = results.first;
-        return {
-          'description': row['description'],
-          'uom': row['uom'],
-          'price_by_uom': row['price_by_uom'],
-        };
+    try {
+      final response = await http.get(apiUrl);
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        // Check if the API returned success
+        if (jsonData['status'] == 'success') {
+          // Convert the description from String to Blob
+          String descriptionString = jsonData['description'];
+          Blob descriptionBlob =
+              Blob.fromString(descriptionString); // Convert String to Blob
+
+          return {
+            'description':
+                descriptionBlob, // Now returning Blob instead of String
+            'uom': jsonData['uom'],
+            'price_by_uom': jsonData['price_by_uom'],
+          };
+        } else {
+          // Handle the error if API returns failure
+          print('Error: ${jsonData['message']}');
+          return {
+            'description': Blob.fromString(
+                'No description available.'), // Returning a Blob
+            'uom': '',
+            'price_by_uom': '',
+          };
+        }
       } else {
+        print('Failed to load product details');
         return {
-          'description': 'No description available.',
+          'description':
+              Blob.fromString('Error fetching details.'), // Returning a Blob
           'uom': '',
           'price_by_uom': '',
         };
       }
     } catch (e) {
+      print('Error fetching product details: $e');
       return {
-        'description': 'Error fetching details.',
+        'description':
+            Blob.fromString('Error fetching details.'), // Returning a Blob
         'uom': '',
         'price_by_uom': '',
       };
-    } finally {
-      await conn.close();
     }
   }
 
@@ -55,11 +79,9 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final photoUrl1 = _formatImageUrl(product['photo1']);
-    final photoUrl2 = _formatImageUrl(product['photo2']);
-    final photoUrl3 = _formatImageUrl(product['photo3']);
 
     // Filter out any null or empty URLs
-    final List<String> photoUrls = [photoUrl1, photoUrl2, photoUrl3]
+    final List<String> photoUrls = [photoUrl1]
         .where((url) => url.isNotEmpty)
         .toList();
 
@@ -70,7 +92,6 @@ class ProductCard extends StatelessWidget {
             await _fetchProductDetails(productId, areaId ?? -1);
 
         Navigator.push(
-          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(
             builder: (context) => ItemScreen(
@@ -189,7 +210,11 @@ class SalesOrderCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: order['order_id'], fromOrderConfirmation: false, fromSalesOrder: false,),
+            builder: (context) => OrderDetailsPage(
+              cartID: order['order_id'],
+              fromOrderConfirmation: false,
+              fromSalesOrder: false,
+            ),
           ),
         );
       },

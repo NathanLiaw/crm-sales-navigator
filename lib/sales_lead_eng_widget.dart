@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:intl/intl.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/customer_insights.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'dart:developer' as developer;
 import 'package:url_launcher/url_launcher.dart';

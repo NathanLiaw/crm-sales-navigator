@@ -70,7 +70,7 @@ class _ChatScreenState extends State<ChatScreen> {
         feedbackEnabled = false;
       });
 
-      const String url = 'https://salesnavigator-production-fdd1.up.railway.app/chat';
+      const String url = 'http://10.0.2.2:5000/chat';
 
       try {
         final response = await http.post(
@@ -179,7 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
           (thumbsDownResponseIndex + 1) % thumbsDownResponses.length;
     }
 
-    final url = Uri.parse('https://salesnavigator-production-fdd1.up.railway.app/feedback');
+    final url = Uri.parse('http://10.0.2.2:5000/feedback');
     try {
       await http.post(
         url,

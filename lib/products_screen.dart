@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
@@ -8,7 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/model/sort_popup.dart';
 import 'model/items_widget.dart';
-import 'db_connection.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 class ProductsScreen extends StatefulWidget {
@@ -50,37 +53,48 @@ class _ProductsScreenState extends State<ProductsScreen>
   Future<void> fetchAreaFromDb() async {
     Map<int, String> areaMap = {};
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readData(
-        conn,
-        'area',
-        'status=1',
-        '',
-        'id, area',
-      );
-      await conn.close();
+      // API URL
+      final apiUrl =
+          Uri.parse('https://haluansama.com/crm-sales/api/product_screen/get_areas.php');
 
-      areaMap = Map.fromEntries(results.map((row) => MapEntry<int, String>(
-            row['id'],
-            row['area'] ?? '',
-          )));
+      // Make the API call
+      final response = await http.get(apiUrl);
 
-      setState(() {
-        area = areaMap;
-      });
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? storedAreaId = prefs.getInt('areaId');
+        if (jsonData['status'] == 'success') {
+          // Parse the area data
+          areaMap = Map.fromEntries(
+              jsonData['data'].map((row) => MapEntry<int, String>(
+                    row['id'],
+                    row['area'] ?? '',
+                  )));
 
-      if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
-        setState(() {
-          selectedAreaId = storedAreaId;
-        });
-      } else if (areaMap.isNotEmpty) {
-        setState(() {
-          selectedAreaId = areaMap.keys.first;
-          prefs.setInt('areaId', selectedAreaId);
-        });
+          setState(() {
+            area = areaMap;
+          });
+
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          int? storedAreaId = prefs.getInt('areaId');
+
+          // Set the area ID based on stored preferences or the first area in the list
+          if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
+            setState(() {
+              selectedAreaId = storedAreaId;
+            });
+          } else if (areaMap.isNotEmpty) {
+            setState(() {
+              selectedAreaId = areaMap.keys.first;
+              prefs.setInt('areaId', selectedAreaId);
+            });
+          }
+        } else {
+          print('Error: ${jsonData['message']}');
+        }
+      } else {
+        print('Failed to load area data');
       }
     } catch (e) {
       developer.log('Error fetching area: $e');

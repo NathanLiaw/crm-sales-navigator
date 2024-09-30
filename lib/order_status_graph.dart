@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'db_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'order_status_report_page.dart';
@@ -317,7 +316,8 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStatusIndicator('Complete', const Color(0xFF487C08), complete),
+            _buildStatusIndicator(
+                'Complete', const Color(0xFF487C08), complete),
             _buildStatusIndicator('Pending', Colors.blue, pending),
             _buildStatusIndicator('Void', Colors.red, voided),
           ],
@@ -496,22 +496,38 @@ class InProgressOrdersWidget extends StatelessWidget {
   }
 
   Future<List<InProgressOrder>> fetchInProgressOrders() async {
-    var db = await connectToDatabase();
-    var results = await db.query(
-      'SELECT id, CASE WHEN status = Pending ELSE status END AS status, created FROM cart;',
-    );
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/order_status_graph/get_in_progress_orders.php');
 
-    List<InProgressOrder> inProgressOrders = [];
-    for (var row in results) {
-      inProgressOrders.add(
-        InProgressOrder(
-          row['created'].toString(),
-          row['status'].toString(),
-        ),
-      );
+    try {
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          List<InProgressOrder> inProgressOrders = [];
+
+          for (var row in jsonData['data']) {
+            inProgressOrders.add(
+              InProgressOrder(
+                row['created'].toString(),
+                row['status'].toString(),
+              ),
+            );
+          }
+
+          return inProgressOrders;
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to load in-progress orders');
+      }
+    } catch (e) {
+      print('Error fetching in-progress orders: $e');
+      return [];
     }
-    await db.close();
-    return inProgressOrders;
   }
 }
 

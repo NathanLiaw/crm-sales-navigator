@@ -3,9 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/customer_details_page.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 

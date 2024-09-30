@@ -1,11 +1,14 @@
+// ignore_for_file: unused_import, unused_local_variable
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class NotificationsPage extends StatefulWidget {
   final RemoteMessage? message;
@@ -26,7 +29,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void initState() {
     super.initState();
-    developer.log("NotificationsPage initialized with message: ${widget.message}");
+    developer
+        .log("NotificationsPage initialized with message: ${widget.message}");
     _initializeSalesmanId().then((_) => _fetchNotifications());
   }
 
@@ -38,84 +42,84 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Future<void> _fetchNotifications() async {
-    MySqlConnection? conn;
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/notification_page/get_notifications.php?salesmanId=$salesmanId');
     try {
-      conn = await connectToDatabase();
-      Results results = await conn.query(
-        'SELECT n.*, sl.stage, sl.customer_name FROM notifications n '
-        'LEFT JOIN sales_lead sl ON n.related_lead_id = sl.id '
-        'WHERE n.salesman_id = ? ORDER BY n.created_at DESC LIMIT 20',
-        [salesmanId],
-      );
-      developer.log('Fetched ${results.length} notifications');
-      setState(() {
-        notifications = results.map((row) {
-          return {
-            'id': row['id'] as int,
-            'salesman_id': row['salesman_id'] as int,
-            'title': row['title']?.toString() ?? 'No Title',
-            'description': row['description']?.toString() ?? 'No Description',
-            'created_at': row['created_at'] as DateTime,
-            'read_status': row['read_status'] as int,
-            'related_lead_id': row['related_lead_id'] as int?,
-            'type': row['type']?.toString() ?? 'UNKNOWN',
-          };
-        }).toList();
-        isLoading = false;
-      });
-    } catch (e, stackTrace) {
-      developer.log('Error fetching notifications: $e\n$stackTrace');
-      setState(() {
-        errorMessage = 'Failed to load notifications: ${e.toString()}';
-        isLoading = false;
-      });
-    } finally {
-      if (conn != null) {
-        try {
-          await conn.close();
-        } catch (e) {
-          developer.log('Error closing database connection: $e');
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          setState(() {
+            notifications = List<Map<String, dynamic>>.from(jsonData['data']);
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            errorMessage = jsonData['message'];
+            isLoading = false;
+          });
         }
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load notifications';
+          isLoading = false;
+        });
       }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error fetching notifications: $e';
+        isLoading = false;
+      });
     }
   }
 
   Future<void> _deleteNotification(int notificationId) async {
-    MySqlConnection? conn;
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/notification_page/update_delete_notification.php');
+
     try {
-      conn = await connectToDatabase();
-      await conn
-          .query('DELETE FROM notifications WHERE id = ?', [notificationId]);
-      setState(() {
-        notifications.removeWhere(
-            (notification) => notification['id'] == notificationId);
+      final response = await http.post(apiUrl, body: {
+        'notificationId': notificationId.toString(),
       });
+
+      final jsonData = json.decode(response.body);
+      if (jsonData['status'] == 'success') {
+        setState(() {
+          notifications.removeWhere(
+              (notification) => notification['id'] == notificationId);
+        });
+      } else {
+        developer.log('Error deleting notification: ${jsonData['message']}');
+      }
     } catch (e) {
       developer.log('Error deleting notification: $e');
-    } finally {
-      if (conn != null) {
-        await conn.close();
-      }
     }
   }
 
   Future<void> _markAsRead(int notificationId) async {
-    MySqlConnection? conn;
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/notification_page/update_mark_as_read.php');
+
     try {
-      conn = await connectToDatabase();
-      await conn.query('UPDATE notifications SET read_status = 1 WHERE id = ?',
-          [notificationId]);
-      setState(() {
-        var notification =
-            notifications.firstWhere((n) => n['id'] == notificationId);
-        notification['read_status'] = 1;
+      final response = await http.post(apiUrl, body: {
+        'notificationId': notificationId.toString(),
       });
+
+      final jsonData = json.decode(response.body);
+      if (jsonData['status'] == 'success') {
+        setState(() {
+          var notification =
+              notifications.firstWhere((n) => n['id'] == notificationId);
+          notification['read_status'] = 1;
+        });
+      } else {
+        developer
+            .log('Error marking notification as read: ${jsonData['message']}');
+      }
     } catch (e) {
       developer.log('Error marking notification as read: $e');
-    } finally {
-      if (conn != null) {
-        await conn.close();
-      }
     }
   }
 
@@ -275,7 +279,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               Text(
                 notification['created_at'] != null
                     ? DateFormat('yyyy-MM-dd HH:mm')
-                        .format(notification['created_at'])
+                        .format(DateTime.parse(notification['created_at']))
                     : 'Unknown Date',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
