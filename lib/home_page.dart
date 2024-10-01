@@ -2246,7 +2246,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         //       style: TextStyle(color: Colors.red)),
                         // ),
                         SizedBox(
-                          height: 22,
+                          height: 30,
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
@@ -2292,7 +2292,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         //       style: TextStyle(color: Colors.white)),
                         // ),
                         SizedBox(
-                          height: 22,
+                          height: 30,
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(

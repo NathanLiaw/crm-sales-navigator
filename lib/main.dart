@@ -19,6 +19,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:developer' as developer;
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
+import 'package:permission_handler/permission_handler.dart'; // Import permission handler
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -27,20 +28,23 @@ void main() async {
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initNotifications();
-  // // Initialize the SQLite database
-  // await DatabaseHelper.database;
 
   // Initialize local notifications
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@drawable/sales_navigator');
+  AndroidInitializationSettings('@drawable/sales_navigator');
   const InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+  InitializationSettings(android: initializationSettingsAndroid);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Initialize Workmanager
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  // Check and request the SCHEDULE_EXACT_ALARM permission for Android 14+
+  if (await shouldRequestExactAlarmPermission()) {
+    await requestExactAlarmPermission();
+  }
 
-  // Register periodic task
+  // Initialize Workmanager
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+
+  // Register periodic tasks
   await Workmanager().registerPeriodicTask(
     "1",
     "fetchSalesOrderStatus",
@@ -91,9 +95,6 @@ void main() async {
     });
   });
 
-  // Load the .env file
-  await dotenv.load(fileName: '.env');
-
   // Initialize the SQLite database
   await DatabaseHelper.database;
 
@@ -106,6 +107,22 @@ void main() async {
       child: MyApp(),
     ),
   );
+}
+
+// Permission handling functions for Android 14+
+Future<bool> shouldRequestExactAlarmPermission() async {
+  if (await Permission.scheduleExactAlarm.isDenied) {
+    return true;
+  }
+  return false;
+}
+
+Future<void> requestExactAlarmPermission() async {
+  if (await Permission.scheduleExactAlarm.request().isGranted) {
+    developer.log('SCHEDULE_EXACT_ALARM permission granted');
+  } else {
+    developer.log('SCHEDULE_EXACT_ALARM permission denied');
+  }
 }
 
 class MyApp extends StatelessWidget {

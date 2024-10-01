@@ -41,8 +41,9 @@ class _ItemScreenState extends State<ItemScreen> {
   Future<void> getAreaId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _areaId = prefs.getInt('areaId') ?? 0;
+      _areaId = prefs.getInt('areaId') ?? 1;
     });
+    await getPriceData();
   }
 
   void retrievePriceByUomUsingAreaId() {
@@ -67,7 +68,7 @@ class _ItemScreenState extends State<ItemScreen> {
       _priceData = {};
 
       decodedData.forEach((key, value) {
-        int areaId = int.tryParse(key) ?? 0;
+        int areaId = int.tryParse(key) ?? 1;
         if (value is Map<String, dynamic>) {
           Map<String, double> areaPrices = {};
           value.forEach((uom, price) {
@@ -102,7 +103,6 @@ class _ItemScreenState extends State<ItemScreen> {
 
   Future<void> initializeData() async {
     await getAreaId();
-    await getPriceData();
   }
 
   @override

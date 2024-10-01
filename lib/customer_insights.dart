@@ -30,10 +30,14 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   late String customerUsername = '';
   double latestSpending = 0.00;
   List<Map<String, dynamic>> productRecommendations = [];
+  late Completer<bool> _isLoadedCompleter;
+  late Future<bool> isLoaded;
 
   @override
   void initState() {
     super.initState();
+    _isLoadedCompleter = Completer<bool>();
+    isLoaded = _isLoadedCompleter.future;
     customerFuture = fetchCustomer().then((customer) {
       setState(() {
         customerId = customer.id;
@@ -288,6 +292,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
       productRecommendations.addAll(recommendations);
     }
 
+    _isLoadedCompleter.complete(true);
     // Log the final list of product recommendations after all keywords have been processed
     developer.log('Final Product Recommendations: $productRecommendations');
   }
@@ -316,7 +321,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         ),
       ),
       body: FutureBuilder(
-        future: Future.wait([customerFuture, salesDataFuture, productsFuture]),
+        future: Future.wait([customerFuture, salesDataFuture, productsFuture, isLoaded]),
         builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

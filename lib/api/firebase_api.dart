@@ -6,6 +6,7 @@ import 'package:sales_navigator/notification_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:permission_handler/permission_handler.dart'; // For requesting permissions
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -18,16 +19,33 @@ class FirebaseApi {
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
   Future<void> initNotifications() async {
-    await _firebaseMessaging.requestPermission();
+    // Check and request notification permission
+    await _checkNotificationPermission();
+
     final fCMToken = await _firebaseMessaging.getToken();
     developer.log('FCM Token: $fCMToken');
+
     await initPushNotifications();
     await initLocalNotifications();
   }
 
+  // Function to check and request notification permission
+  Future<void> _checkNotificationPermission() async {
+    // Check if notification permission is already granted
+    if (!await Permission.notification.isGranted) {
+      // Request permission if not granted
+      PermissionStatus status = await Permission.notification.request();
+
+      if (status.isGranted) {
+        developer.log('Notification permission granted');
+      } else {
+        developer.log('Notification permission denied');
+      }
+    }
+  }
+
   Future<void> initPushNotifications() async {
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -39,6 +57,8 @@ class FirebaseApi {
     FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
       if (notification == null) return;
+
+      // Show local notification if permission is granted
       _localNotifications.show(
         notification.hashCode,
         notification.title,
@@ -53,7 +73,8 @@ class FirebaseApi {
         ),
         payload: jsonEncode(message.toMap()),
       );
-      // Display a dialog box that lets the user choose whether or not to view the notification
+
+      // Display a dialog box to allow the user to choose to view the notification
       showDialog(
         context: navigatorKey.currentContext!,
         builder: (_) => AlertDialog(
@@ -74,7 +95,6 @@ class FirebaseApi {
           ],
         ),
       );
-      // handleMessage(message);
     });
   }
 
@@ -115,32 +135,11 @@ class FirebaseApi {
       },
     );
 
-    final platform = _localNotifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final platform = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await platform?.createNotificationChannel(_androidChannel);
   }
 
-  // void handleMessage(RemoteMessage? message) {
-  //   if (message == null) return;
-  //   navigatorkey.currentState?.pushNamed(
-  //     NotificationsPage.route,
-  //     arguments: message,
-  //   );
-  // }
-
-  // void handleMessage(RemoteMessage? message) {
-  //   if (message == null) return;
-
-  //   Future.delayed(Duration.zero, () {
-  //     navigatorKey.currentState?.pushNamed(
-  //       NotificationsPage.route,
-  //       arguments: message,
-  //     );
-  //   });
-  // }
-
-  Future<void> sendPushNotification(
-      String salesmanId, String title, String body) async {
+  Future<void> sendPushNotification(String salesmanId, String title, String body) async {
     // Get FCM token
     final fcmToken = await _getFCMTokenForSalesman(salesmanId);
     developer.log('Sending push notification to token: $fcmToken');
@@ -149,8 +148,7 @@ class FirebaseApi {
       Uri.parse('https://fcm.googleapis.com/fcm/send'),
       headers: <String, String>{
         'Content-Type': 'application/json',
-        'Authorization':
-            'key=AIzaSyCScCknaXQpG_apftYmhGtODr_a11YgtoY', // Firebase server key
+        'Authorization': 'key=AIzaSyCScCknaXQpG_apftYmhGtODr_a11YgtoY', // Firebase server key
       },
       body: jsonEncode(
         <String, dynamic>{
@@ -178,7 +176,7 @@ class FirebaseApi {
 
   // Function to get FCM token
   Future<String> _getFCMTokenForSalesman(String salesmanId) async {
-    // May need to change in the future
+    // Replace with actual logic to fetch FCM token for the salesman
     return "salesmanFCMToken";
   }
 
@@ -208,5 +206,5 @@ class FirebaseApi {
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   developer.log("Handling a background message: ${message.messageId}");
-  // can process the message here if needed
+  // Process the message here if needed
 }
