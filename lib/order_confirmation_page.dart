@@ -1,8 +1,10 @@
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/order_submitted_page.dart';
 import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
@@ -195,6 +197,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 'status': 'Confirm',
               };
 
+              final cartModel = Provider.of<CartModel>(context, listen: false);
+              cartModel.initializeCartCount();
               int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
               if (rowsAffected > 0) {
                 developer.log('Item status updated successfully for ID: ${item.id}');

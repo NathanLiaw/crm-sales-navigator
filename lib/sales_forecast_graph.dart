@@ -242,16 +242,16 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
           });
         } else {
           // Handle case where no sales target is found
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
         }
       } else {
         // Handle unsuccessful responses (e.g., server issues, 404, etc.)
-        print(
+        developer.log(
             'Failed to load sales target, status code: ${response.statusCode}');
       }
     } catch (e) {
       // Handle any errors that occur during the API call
-      print('Error fetching sales target: $e');
+      developer.log('Error fetching sales target: $e');
     }
   }
 
@@ -277,7 +277,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       children: [
         Center(
           child: SizedBox(
-            height: 220,
+            height: 240,
             width: MediaQuery.of(context).size.width * 0.95,
             child: Container(
               decoration: BoxDecoration(
