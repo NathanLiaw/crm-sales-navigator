@@ -71,16 +71,32 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
             );
           }).toList();
 
-          double predictedTarget = 0.0;
-          int stockNeeded = 0;
+          // New logic for calculating EMA (Exponential Moving Average)
+          double predictedSales = 0.0;
+          int predictedStock = 0;
 
-          if (forecasts.length == 2) {
-            predictedTarget =
-                (forecasts[0].totalSales + forecasts[1].totalSales) / 2;
-            stockNeeded =
-                ((forecasts[0].cartQuantity + forecasts[1].cartQuantity) / 2)
-                    .round();
+          if (forecasts.length >= 3) {
+            double alpha = 2 / (3 + 1); // Alpha for EMA with 3 periods
+
+            double emaSales =
+                forecasts[0].totalSales; // Starting with the first value
+            double emaStock = forecasts[0]
+                .cartQuantity
+                .toDouble(); // Starting with the first value
+
+            for (int i = 1; i < 3; i++) {
+              emaSales =
+                  alpha * forecasts[i].totalSales + (1 - alpha) * emaSales;
+              emaStock =
+                  alpha * forecasts[i].cartQuantity + (1 - alpha) * emaStock;
+            }
+
+            predictedSales = emaSales;
+            predictedStock = emaStock.round();
           }
+
+          // Create new row for the next month if it doesn't exist
+          await createNewMonthRow();
 
           if (forecasts.isNotEmpty) {
             forecasts[0] = SalesForecast(
@@ -94,8 +110,8 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                   forecasts.length > 1 ? forecasts[1].totalSales : 0.0,
               previousCartQuantity:
                   forecasts.length > 1 ? forecasts[1].cartQuantity : 0,
-              predictedTarget: predictedTarget,
-              stockNeeded: stockNeeded,
+              predictedTarget: predictedSales,
+              stockNeeded: predictedStock,
             );
           }
 
@@ -109,6 +125,33 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     } catch (e) {
       developer.log('Error fetching sales forecasts: $e');
       return [];
+    }
+  }
+
+  Future<void> createNewMonthRow() async {
+    final now = DateTime.now();
+    final currentMonth = now.month;
+    final currentYear = now.year;
+
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_new_month_row.php?username=$loggedInUsername&currentMonth=$currentMonth&currentYear=$currentYear');
+
+    try {
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          developer.log('New month row created successfully.');
+        } else {
+          developer
+              .log('Failed to create new month row: ${jsonData['message']}');
+        }
+      } else {
+        developer.log('Failed to create new month row.');
+      }
+    } catch (e) {
+      developer.log('Error creating new month row: $e');
     }
   }
 
@@ -546,6 +589,8 @@ class InfoBox extends StatelessWidget {
   final String value;
   final double currentValue;
   final double? previousValue;
+  final double?
+      previousPrediction; // Add this for predicted sales/stock comparison
   final bool isUp;
   final bool isDown;
   final Color backgroundColor1;
@@ -560,6 +605,7 @@ class InfoBox extends StatelessWidget {
     required this.value,
     required this.currentValue,
     this.previousValue,
+    this.previousPrediction,
     this.isUp = false,
     this.isDown = false,
     required this.backgroundColor1,
@@ -571,25 +617,26 @@ class InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double previousSales = previousValue ?? 0.0;
+    double previous = previousValue ?? 0.0;
+    double prediction = previousPrediction ?? 0.0;
     double change = 0.0;
 
-    if (!currentValue.isNaN && !previousSales.isNaN && previousSales != 0.0) {
-      change = ((currentValue - previousSales) / previousSales) * 100;
-    } else {
-      change = 0.0;
+    if (label == 'Monthly Revenue') {
+      if (previous != 0.0) {
+        change = ((currentValue - previous) / previous) * 100;
+      }
+    } else if (label == 'Stock Sold') {
+      if (previous != 0.0) {
+        change = ((currentValue - previous) / previous) * 100;
+      }
     }
 
     change = change.clamp(-100.0, 100.0);
-
     bool isIncrease = change >= 0;
 
-    Color increaseColor;
-    if (label == 'Stock Sold' || label == 'Predicted Stock') {
-      increaseColor = const Color.fromARGB(255, 0, 117, 6);
-    } else {
-      increaseColor = const Color.fromARGB(255, 0, 117, 6);
-    }
+    Color increaseColor = isIncrease
+        ? const Color.fromARGB(255, 0, 117, 6)
+        : const Color.fromARGB(255, 255, 0, 0);
 
     Widget icon;
     switch (label) {
@@ -608,13 +655,14 @@ class InfoBox extends StatelessWidget {
       default:
         icon = const SizedBox.shrink();
     }
+
     return Container(
       height: 120,
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: borderColor, // Color for top border
-            width: 4, // Setting width to 0 makes the top border invisible
+            color: borderColor,
+            width: 4,
           ),
         ),
         gradient: LinearGradient(
@@ -652,7 +700,12 @@ class InfoBox extends StatelessWidget {
               style: TextStyle(
                   fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(height: 6),
-          if (isUp || isDown) ...[
+          if ((label == 'Monthly Revenue' &&
+                  currentValue != 0 &&
+                  previous != 0) ||
+              (label == 'Stock Sold' &&
+                  currentValue != 0 &&
+                  previous != 0)) ...[
             Text(
               '${isIncrease ? '▲' : '▼'} ${change.abs().toStringAsFixed(1)}%',
               style: TextStyle(
