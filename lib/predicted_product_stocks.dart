@@ -113,8 +113,7 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
 
         // Predict stock needed based on growth rate and a buffer (e.g., 20% more stock)
         predictedStock = avgMonthlyQuantity * growthRate * 1.2;
-
-      } 
+      }
       // If sales are declining or below average
       else if (product.salesOrder < avgMonthlySales && product.salesOrder > 0) {
         double lossRate = avgMonthlySales / product.salesOrder;
@@ -129,7 +128,8 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
       // Handle edge case where sales might be 0 to prevent division by zero
       if (product.salesOrder == 0) {
         predictedSales = 0;
-        predictedStock = avgMonthlyQuantity * 0.8; // Reduce stock prediction if sales are zero
+        predictedStock = avgMonthlyQuantity *
+            0.8; // Reduce stock prediction if sales are zero
       }
 
       // Assign the predicted values to the product
@@ -140,8 +140,14 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
 
   @override
   Widget build(BuildContext context) {
+    // Find the maximum quantity for normalization purposes
     final maxQuantity =
         products.fold<int>(0, (max, p) => p.quantity > max ? p.quantity : max);
+
+    // If the products list is empty, create 5 placeholder products
+    final displayedProducts = products.isNotEmpty
+        ? products
+        : List.generate(5, (index) => Product('No Product', 0, 0.0, 0, 0));
 
     return Scaffold(
       appBar: AppBar(
@@ -153,158 +159,157 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
         automaticallyImplyLeading: false,
         centerTitle: false,
       ),
-      body: products.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.9,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Column(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(18),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.all(18),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                'Product Name',
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                'Predicted Stocks',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                'Predicted Sales',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                ),
-                              ),
-                            ),
-                          ],
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Product Name',
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
                         ),
                       ),
-                      SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            ListView.separated(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: products.length,
-                              itemBuilder: (context, index) {
-                                final product = products[index];
-                                final double maxBarWidth =
-                                    MediaQuery.of(context).size.width * 0.8;
-                                final double normalizedQuantity =
-                                    product.quantity / maxQuantity;
-                                final double barWidth =
-                                    normalizedQuantity * maxBarWidth;
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 2, horizontal: 5),
-                                  child: Stack(
-                                    children: <Widget>[
-                                      Container(
-                                        alignment: Alignment.centerLeft,
-                                        color: Colors.blue.withOpacity(0.2),
-                                        height: 53,
-                                        width: barWidth,
-                                      ),
-                                      Positioned.fill(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
-                                            children: <Widget>[
-                                              Expanded(
-                                                flex: 2,
-                                                child: Text(
-                                                  product.name,
-                                                  textAlign: TextAlign.left,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  '${product.predictedStock}',
-                                                  textAlign: TextAlign.center,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  product.getFormattedSales(),
-                                                  textAlign: TextAlign.center,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              separatorBuilder: (context, index) => Divider(
-                                color: Colors.grey.shade300,
-                                height: 1,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ],
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          'Predicted Stocks',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          'Predicted Sales',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            )
-          : const Center(child: CircularProgressIndicator()),
+                SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      ListView.separated(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: displayedProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = displayedProducts[index];
+                          final double maxBarWidth =
+                              MediaQuery.of(context).size.width * 0.8;
+                          final double normalizedQuantity = maxQuantity != 0
+                              ? product.quantity / maxQuantity
+                              : 0.0;
+                          final double barWidth =
+                              normalizedQuantity * maxBarWidth;
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 2, horizontal: 5),
+                            child: Stack(
+                              children: <Widget>[
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  color: Colors.blue.withOpacity(0.2),
+                                  height: 53,
+                                  width: barWidth,
+                                ),
+                                Positioned.fill(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: <Widget>[
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                            product.name,
+                                            textAlign: TextAlign.left,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            '${product.predictedStock}',
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            product.getFormattedSales(),
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, index) => Divider(
+                          color: Colors.grey.shade300,
+                          height: 1,
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

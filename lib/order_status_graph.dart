@@ -359,59 +359,87 @@ class OrderStatusPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - lineWidth / 2;
     final total = complete + pending + voided;
-    const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
+
+    // Default grey color for zero status values
+    final noDataColor = Colors.grey;
 
     Paint paintComplete = Paint()
-      ..color = const Color(0xFF487C08)
+      ..color = complete == 0 && pending == 0 && voided == 0
+          ? noDataColor // Use grey for all zero values
+          : const Color(0xFF487C08) // Original color if not zero
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
 
     Paint paintPending = Paint()
-      ..color = Colors.blue
+      ..color = complete == 0 && pending == 0 && voided == 0
+          ? noDataColor // Use grey for all zero values
+          : Colors.blue // Original color if not zero
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
 
     Paint paintVoided = Paint()
-      ..color = Colors.red
+      ..color = complete == 0 && pending == 0 && voided == 0
+          ? noDataColor // Use grey for all zero values
+          : Colors.red // Original color if not zero
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
 
     double startAngle = -3.141592653589793238462643383279502884197 / 2;
+    const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
 
-    double completeSweep = sweepAngle * (complete / total);
-    double pendingSweep = sweepAngle * (pending / total);
-    double voidedSweep = sweepAngle * (voided / total);
+    if (total == 0) {
+      // If all statuses are 0, draw the entire chart in the `noDataColor`
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        Paint()
+          ..color = noDataColor
+          ..strokeCap = StrokeCap.round
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = lineWidth,
+      );
+    } else {
+      // Draw the segments for non-zero values
+      double completeSweep = sweepAngle * (complete / total);
+      double pendingSweep = sweepAngle * (pending / total);
+      double voidedSweep = sweepAngle * (voided / total);
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      completeSweep,
-      false,
-      paintComplete,
-    );
+      // Draw complete orders
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        completeSweep,
+        false,
+        paintComplete,
+      );
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle + completeSweep,
-      pendingSweep,
-      false,
-      paintPending,
-    );
+      // Draw pending orders
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle + completeSweep,
+        pendingSweep,
+        false,
+        paintPending,
+      );
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle + completeSweep + pendingSweep,
-      voidedSweep,
-      false,
-      paintVoided,
-    );
+      // Draw voided orders
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle + completeSweep + pendingSweep,
+        voidedSweep,
+        false,
+        paintVoided,
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
 class InProgressOrdersWidget extends StatelessWidget {

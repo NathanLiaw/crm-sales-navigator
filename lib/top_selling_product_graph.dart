@@ -93,22 +93,24 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final maxQuantity = products.fold<int>(
-        0, (max, p) => p.quantity > max ? p.quantity : max);
+    final maxQuantity =
+        products.fold<int>(0, (max, p) => p.quantity > max ? p.quantity : max);
+
+    // Show placeholders when no products are available
+    final displayedProducts = products.isNotEmpty
+        ? products
+        : List.generate(5, (index) => Product('No Product', 0, 0.0));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Top Selling Products',
-          style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         centerTitle: false,
       ),
-      body: products.isNotEmpty
-          ? Padding(
+      body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
         child: Container(
           height: MediaQuery.of(context).size.height * 0.9,
@@ -135,35 +137,32 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                       Expanded(
                           child: Text('Product Name',
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16))),
+                                  fontWeight: FontWeight.bold, fontSize: 16))),
                       Expanded(
                           child: Text('Quantity',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16))),
+                                  fontWeight: FontWeight.bold, fontSize: 16))),
                       Expanded(
                           child: Text('Sales Order',
                               textAlign: TextAlign.end,
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16))),
+                                  fontWeight: FontWeight.bold, fontSize: 16))),
                     ],
                   ),
                 ),
                 Expanded(
                   child: ListView.separated(
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: products.length,
+                    itemCount: displayedProducts.length,
                     itemBuilder: (context, index) {
-                      final product = products[index];
+                      final product = displayedProducts[index];
                       final double maxBarWidth =
                           MediaQuery.of(context).size.width * 0.8;
-                      final double normalizedQuantity =
-                          product.quantity / maxQuantity;
-                      final double barWidth =
-                          normalizedQuantity * maxBarWidth;
+                      final double normalizedQuantity = maxQuantity != 0
+                          ? product.quantity / maxQuantity
+                          : 0.0; // Avoid division by 0
+                      final double barWidth = normalizedQuantity * maxBarWidth;
                       return Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 2, horizontal: 5),
@@ -177,11 +176,11 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                             ),
                             Positioned.fill(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Row(
                                   mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                   children: <Widget>[
                                     Expanded(
                                       flex: 2,
@@ -198,7 +197,8 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                                       child: Text(
                                         '${product.quantity}',
                                         textAlign: TextAlign.center,
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                     Expanded(
@@ -206,7 +206,8 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                                       child: Text(
                                         _formatSalesOrder(product.salesOrder),
                                         textAlign: TextAlign.end,
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                   ],
@@ -228,8 +229,7 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
             ),
           ),
         ),
-      )
-          : const Center(child: CircularProgressIndicator()),
+      ),
     );
   }
 

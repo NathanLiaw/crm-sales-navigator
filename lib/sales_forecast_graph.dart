@@ -200,23 +200,29 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
-                  } else if (snapshot.hasData) {
-                    if (snapshot.data == null || snapshot.data!.isEmpty) {
-                      return const Center(
-                          child: Text('No sales forecast data available.'));
-                    }
+                  } else {
+                    // Even if snapshot has no data, we will still render the UI with default values
+                    final data = snapshot.data ??
+                        [
+                          SalesForecast(
+                            salesmanId: 0,
+                            salesmanName: 'No Data',
+                            purchaseMonth: DateTime.now().month,
+                            purchaseYear: DateTime.now().year,
+                            totalSales: 0.0,
+                            cartQuantity: 0,
+                            previousMonthSales: 0.0,
+                            previousCartQuantity: 0,
+                          )
+                        ];
 
-                    if (snapshot.data!.length < 2) {
-                      return const Center(
-                          child: Text('Not enough data for prediction.'));
-                    }
-
-                    final currentMonthData = snapshot.data!.firstWhere(
+                    // If there's no data, or data contains zero values, we show default values in the UI
+                    final currentMonthData = data.firstWhere(
                       (forecast) =>
                           forecast.purchaseMonth == DateTime.now().month,
                       orElse: () => SalesForecast(
                         salesmanId: 0,
-                        salesmanName: '',
+                        salesmanName: 'No Data',
                         purchaseMonth: DateTime.now().month,
                         purchaseYear: DateTime.now().year,
                         totalSales: 0.0,
@@ -225,7 +231,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                         previousCartQuantity: 0,
                       ),
                     );
-
                     return EditableSalesTargetCard(
                       currentSales: currentMonthData.totalSales,
                       predictedTarget: salesConversionRate,
@@ -238,8 +243,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                       averageOrderValue: averageOrderValue,
                       prevAverageOrderValue: prevAverageOrderValue,
                     );
-                  } else {
-                    return const Center(child: CircularProgressIndicator());
                   }
                 },
               ),
