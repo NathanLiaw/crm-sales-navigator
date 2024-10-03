@@ -105,44 +105,37 @@ class _CustomerSalesPredictionPageState
     }
   }
 
-  List<CustomerSalesData> calculateMovingAverage(
+  List<CustomerSalesData> calculateEMA(
       List<CustomerSalesData> data, int windowSize) {
-    List<CustomerSalesData> movingAverages = [];
+    List<CustomerSalesData> emaPredictions = [];
 
-    for (int i = 0; i <= data.length - windowSize; i++) {
-      var window = data.sublist(i, i + windowSize);
-      double avgSalesValue =
-          window.map((e) => e.totalSalesValue).reduce((a, b) => a + b) /
-              windowSize;
-      double avgQuantitySold =
-          window.map((e) => e.totalQuantitySold).reduce((a, b) => a + b) /
-              windowSize;
-      double lastSalesValue = window.last.totalSalesValue;
-      double growthRate = lastSalesValue / avgSalesValue;
-      double predictedSales = avgSalesValue;
-      double predictedStock = avgQuantitySold;
-      if (growthRate > 1) {
-        predictedSales = avgSalesValue * growthRate;
-        predictedStock =
-            avgQuantitySold * growthRate * 1.2;
-      } else if (growthRate < 1) {
-        predictedSales = avgSalesValue * growthRate;
-        predictedStock =
-            avgQuantitySold * growthRate * 0.8;
-      }
+    if (data.isEmpty || windowSize <= 1) return emaPredictions;
 
-      movingAverages.add(CustomerSalesData(
-        productId: window.last.productId,
-        productName: window.last.productName,
+    double alpha = 2 / (windowSize + 1);
+    double emaSales =
+        data.first.totalSalesValue; // Initialize EMA with the first data point
+    double emaStock =
+        data.first.totalQuantitySold.toDouble(); // Initialize EMA for stock
+
+    for (int i = 1; i < data.length; i++) {
+      emaSales = (data[i].totalSalesValue * alpha) + (emaSales * (1 - alpha));
+      emaStock = (data[i].totalQuantitySold * alpha) + (emaStock * (1 - alpha));
+
+      // Ensure stock prediction is not zero if sales is predicted
+      double predictedStock = emaStock > 0 ? emaStock : 1; // Avoid 0 stock
+
+      emaPredictions.add(CustomerSalesData(
+        productId: data[i].productId,
+        productName: data[i].productName,
         totalQuantitySold: predictedStock.round(),
-        totalSalesValue: predictedSales,
-        saleDate: window.last.saleDate,
-        customerCompanyName: window.last.customerCompanyName,
-        unitOfMeasure: window.last.unitOfMeasure,
+        totalSalesValue: emaSales,
+        saleDate: data[i].saleDate,
+        customerCompanyName: data[i].customerCompanyName,
+        unitOfMeasure: data[i].unitOfMeasure,
       ));
     }
 
-    return movingAverages;
+    return emaPredictions;
   }
 
   void toggleSortOrder() {
@@ -195,10 +188,18 @@ class _CustomerSalesPredictionPageState
                       developer.log(
                           'Group: ${entry.key}, Items: ${entry.value.length}',
                           level: 1);
+
                       if (entry.value.length >= 3) {
-                        var movingAverageData =
-                            calculateMovingAverage(entry.value, 3);
-                        if (movingAverageData.isNotEmpty) {
+                        var emaData = calculateEMA(entry.value, 3);
+                        if (emaData.isNotEmpty) {
+                          // Sum up total sales and stock for the group
+                          double totalSales = emaData
+                              .map((e) => e.totalSalesValue)
+                              .reduce((a, b) => a + b);
+                          int totalStock = emaData
+                              .map((e) => e.totalQuantitySold)
+                              .reduce((a, b) => a + b);
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
@@ -229,17 +230,17 @@ class _CustomerSalesPredictionPageState
                                         ),
                                         const SizedBox(height: 5),
                                         Text(
-                                          'Predicted Sales: RM${NumberFormat('#,##0').format(movingAverageData.last.totalSalesValue)}',
+                                          'Predicted Sales: RM${NumberFormat('#,##0').format(totalSales)}',
                                           style: const TextStyle(
-                                            color: Color(0xFF487C08),
+                                            color: Color(0xFF004072),
                                             fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                         Text(
-                                          'Predicted Stock: ${NumberFormat('#,##0').format(movingAverageData.last.totalQuantitySold)}',
+                                          'Predicted Stock: ${NumberFormat('#,##0').format(totalStock)}',
                                           style: const TextStyle(
-                                            color: Color(0xFF004072),
+                                            color: Color(0xFF487C08),
                                             fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -254,9 +255,8 @@ class _CustomerSalesPredictionPageState
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Column(
-                                        children: movingAverageData
-                                            .take(5)
-                                            .map((salesData) {
+                                        children:
+                                            emaData.take(5).map((salesData) {
                                           return Column(
                                             children: [
                                               Padding(
@@ -324,9 +324,8 @@ class _CustomerSalesPredictionPageState
                                                   ],
                                                 ),
                                               ),
-                                              if (movingAverageData
-                                                      .indexOf(salesData) !=
-                                                  movingAverageData.length - 1)
+                                              if (emaData.indexOf(salesData) !=
+                                                  emaData.length - 1)
                                                 const Divider(
                                                   color: Colors.grey,
                                                   thickness: 1,
@@ -342,12 +341,10 @@ class _CustomerSalesPredictionPageState
                             ),
                           );
                         } else {
-                          return const SizedBox
-                              .shrink();
+                          return const SizedBox.shrink();
                         }
                       } else {
-                        return const SizedBox
-                            .shrink(); 
+                        return const SizedBox.shrink();
                       }
                     }).toList(),
                   );

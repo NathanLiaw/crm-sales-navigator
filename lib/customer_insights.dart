@@ -32,6 +32,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   List<Map<String, dynamic>> productRecommendations = [];
   late Completer<bool> _isLoadedCompleter;
   late Future<bool> isLoaded;
+  String recency = 'High';
+  String nextVisit = '6';
+  String totalSpendGroup = 'High';
 
   @override
   void initState() {
@@ -44,6 +47,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         salesDataFuture = fetchSalesDataByCustomer(customerId);
         productsFuture = fetchProductsByCustomer(customerId);
         fetchRecommendations(customerId);
+        getRecency();
+        getNextVisit();
+        getTotalSpendGroup();
       });
       return customer;
     });
@@ -295,6 +301,142 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     _isLoadedCompleter.complete(true);
     // Log the final list of product recommendations after all keywords have been processed
     developer.log('Final Product Recommendations: $productRecommendations');
+  }
+
+  Future<void> getRecency() async {
+    final String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_recency.php?customer_id=$customerId';
+
+    try {
+      // Make the API request
+      final response = await http.get(Uri.parse(apiUrl));
+
+      // Check if the response status is successful (200 OK)
+      if (response.statusCode == 200) {
+        // Parse the JSON response body
+        final jsonResponse = json.decode(response.body);
+
+        setState(() {
+          // Assuming the API returns a number in JSON, you can store it as a string
+          recency = jsonResponse.toString();
+        });
+
+        // Print recency to debug
+        developer.log('Recency: $recency');
+      } else {
+        // If the server did not return a 200 OK response, handle the error
+        developer.log('Failed to fetch recency. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle any exceptions during the API call
+      developer.log('Error occurred: $error');
+    }
+  }
+
+  Future<void> getNextVisit() async {
+    final String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_next_visit.php?customer_id=$customerId';
+
+    try {
+      // Make the API request
+      final response = await http.get(Uri.parse(apiUrl));
+
+      // Check if the response status is successful (200 OK)
+      if (response.statusCode == 200) {
+        // Parse the JSON response body
+        final jsonResponse = json.decode(response.body);
+
+        setState(() {
+          // Assuming the API returns a date string in 'yyyy-mm-dd' format
+          final nextVisitDate = DateTime.parse('2024-10-10');
+
+          // Get the current date
+          final currentDate = DateTime.now();
+
+          // Calculate the difference in days between the next visit date and the current date
+          final difference = nextVisitDate.difference(currentDate).inDays;
+
+          // Store the result in the nextVisit variable
+          nextVisit = difference.toString();
+        });
+
+        // Print nextVisit to debug
+        developer.log('Next Visit in: $nextVisit');
+      } else {
+        // If the server did not return a 200 OK response, handle the error
+        developer.log('Failed to fetch next visit date. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle any exceptions during the API call
+      developer.log('Error occurred: $error');
+    }
+  }
+
+  Future<void> getTotalSpendGroup() async {
+    final String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_total_spend_group.php?customer_id=$customerId';
+
+    try {
+      // Make the API request
+      final response = await http.get(Uri.parse(apiUrl));
+
+      // Check if the response status is successful (200 OK)
+      if (response.statusCode == 200) {
+        // Parse the JSON response body
+        final jsonResponse = json.decode(response.body);
+
+        setState(() {
+          // Assuming the API returns a number in the JSON response
+          totalSpendGroup = jsonResponse.toDouble();
+        });
+
+        // Print totalSpendGroup to debug
+        developer.log('Total Spend Group: $totalSpendGroup');
+      } else {
+        // If the server did not return a 200 OK response, handle the error
+        developer.log('Failed to fetch total spend group. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle any exceptions during the API call
+      developer.log('Error occurred: $error');
+    }
+  }
+
+  IconData _getSpendGroupIcon(String totalSpendGroup) {
+    if (totalSpendGroup == 'High') {
+      // High spend group
+      return Icons.north_east;
+    } else if (totalSpendGroup == 'Mid') {
+      // Mid spend group
+      return Icons.east;
+    } else {
+      // Low spend group
+      return Icons.south_east;
+    }
+  }
+
+  // Function to get the appropriate color based on totalSpendGroup value
+  Color _getSpendGroupColor(String totalSpendGroup) {
+    if (totalSpendGroup == 'High') {
+      // High spend group
+      return const Color(0xff29c194);
+    } else if (totalSpendGroup == 'Mid') {
+      // Mid spend group
+      return const Color(0xffFFC300);
+    } else {
+      // Low spend group
+      return const Color(0xffFF5454);
+    }
+  }
+
+  IconData _getRecencyIcon(String recency) {
+    if (recency == 'High') {
+      // High spend group
+      return Icons.north;
+    } else if (recency == 'Mid') {
+      // Mid spend group
+      return Icons.east;
+    } else {
+      // Low spend group
+      return Icons.south;
+    }
   }
 
   @override
@@ -666,7 +808,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         ],
                                       ),
                                       Text(
-                                        '6 Days',
+                                        '$nextVisit Days',
                                         style: GoogleFonts.inter(
                                           textStyle: const TextStyle(letterSpacing: -0.8),
                                           fontSize: 40,
@@ -717,22 +859,22 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                       Row(
                                         children: [
                                           Text(
-                                            'Low',
+                                            totalSpendGroup,
                                             style: GoogleFonts.inter(
                                               textStyle:
                                               const TextStyle(letterSpacing: -0.8),
                                               fontSize: 40,
                                               fontWeight: FontWeight.w700,
-                                              color: const Color(0xffFF5454),
+                                              color: _getSpendGroupColor(totalSpendGroup),
                                             ),
                                           ),
                                           const SizedBox(
                                             width: 14,
                                           ),
-                                          const Icon(
-                                            Icons.south_east,
+                                          Icon(
+                                            _getSpendGroupIcon(totalSpendGroup),
                                             size: 44,
-                                            color: Color(0xffFF5454),
+                                            color: _getSpendGroupColor(totalSpendGroup),
                                           ),
                                         ],
                                       ),
@@ -921,22 +1063,22 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                             ),
                                             Container(
                                               alignment: Alignment.centerLeft,
-                                              child: const Icon(
-                                                Icons.arrow_upward,
+                                              child: Icon(
+                                                _getRecencyIcon(recency),
                                                 weight: 0.2,
                                                 size: 74,
-                                                color: Color(0xff29C194),
+                                                color: _getSpendGroupColor(recency),
                                               ),
                                             ),
                                             Text(
-                                              'High Recency',
+                                              '$recency Recency',
                                               maxLines: 2,
                                               style: GoogleFonts.inter(
                                                 textStyle: const TextStyle(
                                                     letterSpacing: -0.8),
                                                 fontSize: 32,
                                                 fontWeight: FontWeight.w700,
-                                                color: const Color(0xff29C194),
+                                                color: _getSpendGroupColor(recency),
                                               ),
                                             ),
                                           ],
