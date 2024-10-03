@@ -16,6 +16,9 @@ class SalesForecastGraph extends StatefulWidget {
 class _SalesForecastGraphState extends State<SalesForecastGraph> {
   Future<List<SalesForecast>>? salesForecasts;
   String loggedInUsername = '';
+  double salesConversionRate = 0.0;
+  double averageOrderValue = 0.0;
+  double prevAverageOrderValue = 0.0;
 
   @override
   void initState() {
@@ -24,6 +27,8 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
       if (mounted) {
         setState(() {
           salesForecasts = fetchSalesForecasts();
+          fetchSalesConversionRate();
+          fetchAverageOrderValue();
         });
       }
     });
@@ -44,7 +49,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 
     try {
       final response = await http.get(apiUrl);
-      print('Response: ${response.body}');
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
@@ -71,31 +75,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
             );
           }).toList();
 
-          // New logic for calculating EMA (Exponential Moving Average)
-          double predictedSales = 0.0;
-          int predictedStock = 0;
-
-          if (forecasts.length >= 3) {
-            double alpha = 2 / (3 + 1); // Alpha for EMA with 3 periods
-
-            double emaSales =
-                forecasts[0].totalSales; // Starting with the first value
-            double emaStock = forecasts[0]
-                .cartQuantity
-                .toDouble(); // Starting with the first value
-
-            for (int i = 1; i < 3; i++) {
-              emaSales =
-                  alpha * forecasts[i].totalSales + (1 - alpha) * emaSales;
-              emaStock =
-                  alpha * forecasts[i].cartQuantity + (1 - alpha) * emaStock;
-            }
-
-            predictedSales = emaSales;
-            predictedStock = emaStock.round();
-          }
-
-          // Create new row for the next month if it doesn't exist
           await createNewMonthRow();
 
           if (forecasts.isNotEmpty) {
@@ -110,8 +89,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                   forecasts.length > 1 ? forecasts[1].totalSales : 0.0,
               previousCartQuantity:
                   forecasts.length > 1 ? forecasts[1].cartQuantity : 0,
-              predictedTarget: predictedSales,
-              stockNeeded: predictedStock,
             );
           }
 
@@ -155,6 +132,58 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     }
   }
 
+  // Fetch Sales Conversion Rate from the new API
+  Future<void> fetchSalesConversionRate() async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_conversation_rate.php?username=$loggedInUsername');
+
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          setState(() {
+            salesConversionRate =
+                double.parse(jsonData['data']['conversion_rate'].toString());
+          });
+        } else {
+          developer.log('Failed to fetch conversion rate');
+        }
+      } else {
+        developer.log('Error: Failed to fetch conversion rate');
+      }
+    } catch (e) {
+      developer.log('Error fetching conversion rate: $e');
+    }
+  }
+
+// Fetch Average Order Value (AOV) from the new API
+  Future<void> fetchAverageOrderValue() async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_average_order_value.php?username=$loggedInUsername');
+
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          setState(() {
+            averageOrderValue =
+                double.parse(jsonData['data']['avg_order_value'].toString());
+            prevAverageOrderValue = double.parse(
+                jsonData['data']['prev_avg_order_value'].toString());
+          });
+        } else {
+          developer.log('Failed to fetch AOV');
+        }
+      } else {
+        developer.log('Error: Failed to fetch AOV');
+      }
+    } catch (e) {
+      developer.log('Error fetching AOV: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -194,20 +223,20 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                         cartQuantity: 0,
                         previousMonthSales: 0.0,
                         previousCartQuantity: 0,
-                        predictedTarget: 0.0,
-                        stockNeeded: 0,
                       ),
                     );
 
                     return EditableSalesTargetCard(
                       currentSales: currentMonthData.totalSales,
-                      predictedTarget: currentMonthData.predictedTarget,
+                      predictedTarget: salesConversionRate,
                       cartQuantity: currentMonthData.cartQuantity,
-                      stockNeeded: currentMonthData.stockNeeded,
+                      stockNeeded: averageOrderValue.toInt(),
                       previousMonthSales: currentMonthData.previousMonthSales,
                       previousCartQuantity:
                           currentMonthData.previousCartQuantity,
                       loggedInUsername: loggedInUsername,
+                      averageOrderValue: averageOrderValue,
+                      prevAverageOrderValue: prevAverageOrderValue,
                     );
                   } else {
                     return const Center(child: CircularProgressIndicator());
@@ -230,6 +259,8 @@ class EditableSalesTargetCard extends StatefulWidget {
   final double previousMonthSales;
   final int previousCartQuantity;
   final String loggedInUsername;
+  final double averageOrderValue;
+  final double prevAverageOrderValue;
 
   const EditableSalesTargetCard({
     super.key,
@@ -240,6 +271,8 @@ class EditableSalesTargetCard extends StatefulWidget {
     required this.previousMonthSales,
     required this.previousCartQuantity,
     required this.loggedInUsername,
+    required this.averageOrderValue,
+    required this.prevAverageOrderValue,
   });
 
   @override
@@ -466,8 +499,8 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   fromLastMonthTextColor: Colors.black87,
                 ),
                 InfoBox(
-                  label: 'Predicted Target',
-                  value: _currencyFormat.format(widget.predictedTarget),
+                  label: 'Sales Conversion Rate',
+                  value: '${widget.predictedTarget.toStringAsFixed(1)}%',
                   currentValue: widget.predictedTarget,
                   previousValue: widget.previousMonthSales,
                   isUp: widget.predictedTarget >= widget.previousMonthSales,
@@ -492,12 +525,16 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   fromLastMonthTextColor: Colors.black,
                 ),
                 InfoBox(
-                  label: 'Predicted Stock',
-                  value: '${widget.stockNeeded}',
-                  currentValue: widget.stockNeeded.toDouble(),
-                  previousValue: widget.previousCartQuantity.toDouble(),
-                  isUp: widget.stockNeeded >= widget.previousCartQuantity,
-                  isDown: widget.stockNeeded < widget.previousCartQuantity,
+                  label: 'Average Order Value (AOV)',
+                  value: NumberFormat.currency(
+                          locale: 'en_MY', symbol: 'RM', decimalDigits: 2)
+                      .format(widget.averageOrderValue),
+                  currentValue: widget.averageOrderValue,
+                  previousValue: widget.prevAverageOrderValue,
+                  isUp:
+                      widget.averageOrderValue >= widget.prevAverageOrderValue,
+                  isDown:
+                      widget.averageOrderValue < widget.prevAverageOrderValue,
                   backgroundColor1: const Color(0x30D563E3),
                   backgroundColor2: const Color(0xFFFFFFFF),
                   borderColor: const Color(0xFFD563E3),
@@ -555,8 +592,6 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
-
-    // Prepare the API URL with query parameters
     final apiUrl = Uri.parse(
         'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target.php'
         '?username=${widget.loggedInUsername}&newSalesTarget=$newSalesTarget&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
@@ -589,8 +624,7 @@ class InfoBox extends StatelessWidget {
   final String value;
   final double currentValue;
   final double? previousValue;
-  final double?
-      previousPrediction; // Add this for predicted sales/stock comparison
+  final double? previousPrediction;
   final bool isUp;
   final bool isDown;
   final Color backgroundColor1;
@@ -643,13 +677,13 @@ class InfoBox extends StatelessWidget {
       case 'Monthly Revenue':
         icon = const Icon(Icons.monetization_on, color: Colors.black);
         break;
-      case 'Predicted Target':
+      case 'Sales Conversion Rate':
         icon = const Icon(Icons.gps_fixed, color: Colors.black);
         break;
       case 'Stock Sold':
         icon = const Icon(Icons.outbox, color: Colors.black);
         break;
-      case 'Predicted Stock':
+      case 'Average Order Value (AOV)':
         icon = const Icon(Icons.inbox, color: Colors.black);
         break;
       default:
@@ -690,15 +724,30 @@ class InfoBox extends StatelessWidget {
               const SizedBox(
                 width: 8,
               ),
-              Text(label,
+              Expanded(
+                child: Text(
+                  label,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  softWrap: true,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(value,
+          Expanded(
+            child: Text(
+              value,
               style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+              softWrap: true,
+            ),
+          ),
           const SizedBox(height: 6),
           if ((label == 'Monthly Revenue' &&
                   currentValue != 0 &&
@@ -706,20 +755,28 @@ class InfoBox extends StatelessWidget {
               (label == 'Stock Sold' &&
                   currentValue != 0 &&
                   previous != 0)) ...[
-            Text(
-              '${isIncrease ? '▲' : '▼'} ${change.abs().toStringAsFixed(1)}%',
-              style: TextStyle(
+            Expanded(
+              child: Text(
+                '${isIncrease ? '▲' : '▼'} ${change.abs().toStringAsFixed(1)}%',
+                style: TextStyle(
                   color: isIncrease ? increaseColor : Colors.red,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20),
+                  fontSize: 20,
+                ),
+                softWrap: true,
+              ),
             ),
             const SizedBox(height: 3),
-            Text(
-              'From Last Month',
-              style: TextStyle(
+            Expanded(
+              child: Text(
+                'From Last Month',
+                style: TextStyle(
                   color: fromLastMonthTextColor,
                   fontSize: 13,
-                  fontWeight: FontWeight.w500),
+                  fontWeight: FontWeight.w500,
+                ),
+                softWrap: true,
+              ),
             ),
           ],
         ],
