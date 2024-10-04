@@ -6,9 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:sales_navigator/customer_details_page.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
+import 'package:sales_navigator/home_page.dart';
 
 class CreateLeadPage extends StatefulWidget {
-  final Function(String, String, String) onCreateLead;
+  final Function(LeadItem) onCreateLead;
   final int salesmanId;
 
   const CreateLeadPage(
@@ -214,15 +215,18 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                     ElevatedButton(
                       onPressed: () {
+                        // if (_formKey.currentState!.validate()) {
+                        //   // Call the onCreateLead function with entered values
+                        //   widget.onCreateLead(
+                        //     customerNameController.text,
+                        //     descriptionController.text,
+                        //     amountController.text,
+                        //   );
+                        //   _saveLeadToDatabase();
+                        //   Navigator.pop(context);
+                        // }
                         if (_formKey.currentState!.validate()) {
-                          // Call the onCreateLead function with entered values
-                          widget.onCreateLead(
-                            customerNameController.text,
-                            descriptionController.text,
-                            amountController.text,
-                          );
                           _saveLeadToDatabase();
-                          Navigator.pop(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -351,9 +355,30 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
 
           // You might want to update your local state or navigate to a different screen here
 
+          // Create a new LeadItem
+          LeadItem newLead = LeadItem(
+            id: leadId,
+            salesmanId: widget.salesmanId,
+            customerName: customerNameController.text,
+            description: descriptionController.text,
+            createdDate: DateTime.now().toString(),
+            amount: 'RM${amountController.text}',
+            contactNumber: contactNumberController.text,
+            emailAddress: emailAddressController.text,
+            stage: 'Opportunities',
+            addressLine1: addressController.text,
+            salesOrderId: '',
+          );
+
+          // Call the onCreateLead callback with the new LeadItem
+          widget.onCreateLead(newLead);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData['message'])),
           );
+
+          // Return to HomePage
+          Navigator.pop(context);
         } else {
           throw Exception(responseData['message']);
         }
