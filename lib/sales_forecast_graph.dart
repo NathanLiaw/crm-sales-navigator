@@ -26,12 +26,37 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     _loadUserDetails().then((_) {
       if (mounted) {
         setState(() {
+          // Call the API to update the sales target before fetching data
+          updateSalesTargetsInDatabase(); // Add this function call
           salesForecasts = fetchSalesForecasts();
           fetchSalesConversionRate();
           fetchAverageOrderValue();
         });
       }
     });
+  }
+
+  Future<void> updateSalesTargetsInDatabase() async {
+    final apiUrl = Uri.parse(
+      'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target_table.php?username=$loggedInUsername',
+    );
+
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          developer.log('Sales targets updated successfully');
+        } else {
+          developer
+              .log('Failed to update sales targets: ${jsonData['message']}');
+        }
+      } else {
+        developer.log('Error: Failed to update sales targets');
+      }
+    } catch (e) {
+      developer.log('Error updating sales targets: $e');
+    }
   }
 
   Future<void> _loadUserDetails() async {
