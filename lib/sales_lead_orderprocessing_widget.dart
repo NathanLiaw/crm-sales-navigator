@@ -12,12 +12,14 @@ class OrderProcessingLeadItem extends StatelessWidget {
   final LeadItem leadItem;
   final String status;
   final Function(LeadItem) onMoveToClosed;
+  final Function(LeadItem) onRemoveLead;
 
   const OrderProcessingLeadItem({
     super.key,
     required this.leadItem,
     required this.status,
     required this.onMoveToClosed,
+    required this.onRemoveLead,
   });
 
   Future<void> _launchURL(String urlString) async {
@@ -47,11 +49,13 @@ class OrderProcessingLeadItem extends StatelessWidget {
           content: const Text('Are you sure you want to delete this order?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // User pressed Cancel
+              onPressed: () =>
+                  Navigator.of(context).pop(false), // User pressed Cancel
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true), // User pressed Confirm
+              onPressed: () =>
+                  Navigator.of(context).pop(true), // User pressed Confirm
               child: const Text('Delete'),
             ),
           ],
@@ -60,8 +64,10 @@ class OrderProcessingLeadItem extends StatelessWidget {
     );
 
     if (confirmed == true) {
+      onRemoveLead(leadItem);
       final response = await http.get(
-        Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/void_sales_order.php?id=${leadItem.id}'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/sales_lead/void_sales_order.php?id=${leadItem.id}&salesman_id=${leadItem.salesmanId}'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -85,13 +91,15 @@ class OrderProcessingLeadItem extends StatelessWidget {
           // Show Snackbar for failure
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete order: ${responseData['message']}'),
+              content:
+                  Text('Failed to delete order: ${responseData['message']}'),
               duration: const Duration(seconds: 2),
             ),
           );
         }
       } else {
-        developer.log('HTTP request failed with status: ${response.statusCode}');
+        developer
+            .log('HTTP request failed with status: ${response.statusCode}');
 
         // Show Snackbar for HTTP request failure
         ScaffoldMessenger.of(context).showSnackBar(
@@ -163,13 +171,14 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: orderStatus == 'Pending'
                           ? const Color.fromARGB(255, 255, 195, 31)
                           : orderStatus == 'Void'
-                          ? Colors.red
-                          : Colors.green,
+                              ? Colors.red
+                              : Colors.green,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -273,7 +282,11 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   Visibility(
                     visible: orderStatus == 'Void',
                     child: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red, size: 32,),
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
+                        size: 32,
+                      ),
                       onPressed: () => _removeOrder(context),
                     ),
                   ),

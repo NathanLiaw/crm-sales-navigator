@@ -1754,6 +1754,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  void _handleRemoveOrderProcessingLead(LeadItem leadItem) {
+    setState(() {
+      orderProcessingLeads.remove(leadItem);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -2548,6 +2554,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             leadItem: leadItem,
             status: 'Unknown',
             onMoveToClosed: _moveFromOrderProcessingToClosed,
+            onRemoveLead: _handleRemoveOrderProcessingLead,
           );
         } else {
           return FutureBuilder<String>(
@@ -2601,6 +2608,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   leadItem: leadItem,
                   status: status,
                   onMoveToClosed: _moveFromOrderProcessingToClosed,
+                  onRemoveLead: _handleRemoveOrderProcessingLead,
                 );
               }
             },
