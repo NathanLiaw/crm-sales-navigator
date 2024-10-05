@@ -93,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              buildProfileOption('Chatbot', Icons.chat, context),
+              // buildProfileOption('Chatbot', Icons.chat, context),
               const SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
@@ -152,12 +152,12 @@ class _ProfilePageState extends State<ProfilePage> {
             MaterialPageRoute(builder: (context) => const AboutUs()),
           );
         }
-        if (title == 'Chatbot') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
-        }
+        // if (title == 'Chatbot') {
+        //   Navigator.push(
+        //     context,
+        //     MaterialPageRoute(builder: (context) => const ChatScreen()),
+        //   );
+        // }
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),

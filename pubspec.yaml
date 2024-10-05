@@ -37,6 +37,8 @@ dependencies:
   workmanager: ^0.5.1
   flutter_svg: ^2.0.10+1
   permission_handler: ^10.2.0
+  connectivity_plus: ^6.0.5
+  connectivity_plus_platform_interface: ^2.0.1
   
 dev_dependencies:
   flutter_test:

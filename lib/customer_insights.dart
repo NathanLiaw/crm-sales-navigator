@@ -33,8 +33,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   late Completer<bool> _isLoadedCompleter;
   late Future<bool> isLoaded;
   String recency = 'High';
-  String nextVisit = '6';
+  String nextVisit = '0';
   String totalSpendGroup = 'High';
+  List<dynamic> customerData = [];
+  Map<String, dynamic>? relevantCustomer;
 
   @override
   void initState() {
@@ -48,8 +50,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         productsFuture = fetchProductsByCustomer(customerId);
         fetchRecommendations(customerId);
         getRecency();
-        getNextVisit();
         getTotalSpendGroup();
+        fetchPredictedVisitDay();
+        fetchCustomerSegmentation();
       });
       return customer;
     });
@@ -299,8 +302,90 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     }
 
     _isLoadedCompleter.complete(true);
-    // Log the final list of product recommendations after all keywords have been processed
-    developer.log('Final Product Recommendations: $productRecommendations');
+  }
+
+  Future<void> fetchCustomerSegmentation() async {
+    const String apiUrl = 'http://13.250.43.17:5000/api/customer-segmentation'; // Replace with your API URL
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl)).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        customerData = json.decode(response.body);
+
+        int currentCustomerId = customerId;
+
+        // Filter the data to find the relevant customer
+        relevantCustomer = customerData.firstWhere(
+              (customer) => customer['customer_id'] == currentCustomerId,
+          orElse: () => null, // Return null if not found
+        );
+
+        // If relevant customer data is found, classify recency
+        if (relevantCustomer != null) {
+          relevantCustomer!['recency_category'] = categorizeRecency(relevantCustomer!['recency']);
+          relevantCustomer!['total_spend_group'] = categoriseTotalSpentGroup(relevantCustomer!['Segment']);
+          developer.log('Relevant Customer Data: $relevantCustomer');
+        }
+      } else {
+        throw Exception('Failed to load customer segmentation: ${response.statusCode}');
+      }
+    } catch (error) {
+      developer.log('Error fetching data: $error');
+    }
+  }
+
+  String categoriseTotalSpentGroup (String totalSpentGroup) {
+    if (totalSpentGroup == "Low Value") {
+      this.totalSpendGroup = 'Low';
+      return 'Low';
+    } else if (totalSpentGroup == "Mid Value") {
+      this.totalSpendGroup = 'Mid';
+      return 'Mid';
+    } else {
+      this.totalSpendGroup = 'High';
+      return 'High';
+    }
+  }
+
+  Color getCustomerValueBgColor(String spendGroup) {
+    if (totalSpendGroup == 'High') {
+      // High spend group
+      return const Color(0xff94FFDF);
+    } else if (totalSpendGroup == 'Mid') {
+      // Mid spend group
+      return const Color(0xffF1F78B); // Softer yellow
+    } else {
+      // Low spend group
+      return const Color(0xffFF6666); // Muted red
+    }
+  }
+
+  Color getCustomerValueTextColor(String spendGroup) {
+    if (spendGroup == 'High') {
+      // High spend group
+      return const Color(0xff008A64); // Original color for High group
+    } else if (spendGroup == 'Mid') {
+      // Mid spend group
+      return const Color(0xff808000); // Darker yellow for Mid group
+    } else {
+      // Low spend group
+      return const Color(0xff840000); // Darker red for Low group
+    }
+  }
+
+  String categorizeRecency(int recency) {
+    if (recency <= 30) {
+      this.recency = 'High';
+      return 'High';
+    } else if (recency <= 90) {
+      this.recency = 'Mid';
+      return 'Mid';
+    } else {
+      this.recency = 'Low';
+      return 'Low';
+    }
   }
 
   Future<void> getRecency() async {
@@ -325,44 +410,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
       } else {
         // If the server did not return a 200 OK response, handle the error
         developer.log('Failed to fetch recency. Status code: ${response.statusCode}');
-      }
-    } catch (error) {
-      // Handle any exceptions during the API call
-      developer.log('Error occurred: $error');
-    }
-  }
-
-  Future<void> getNextVisit() async {
-    final String apiUrl = 'https://haluansama.com/crm-sales/api/customer_insights/get_next_visit.php?customer_id=$customerId';
-
-    try {
-      // Make the API request
-      final response = await http.get(Uri.parse(apiUrl));
-
-      // Check if the response status is successful (200 OK)
-      if (response.statusCode == 200) {
-        // Parse the JSON response body
-        final jsonResponse = json.decode(response.body);
-
-        setState(() {
-          // Assuming the API returns a date string in 'yyyy-mm-dd' format
-          final nextVisitDate = DateTime.parse('2024-10-10');
-
-          // Get the current date
-          final currentDate = DateTime.now();
-
-          // Calculate the difference in days between the next visit date and the current date
-          final difference = nextVisitDate.difference(currentDate).inDays;
-
-          // Store the result in the nextVisit variable
-          nextVisit = difference.toString();
-        });
-
-        // Print nextVisit to debug
-        developer.log('Next Visit in: $nextVisit');
-      } else {
-        // If the server did not return a 200 OK response, handle the error
-        developer.log('Failed to fetch next visit date. Status code: ${response.statusCode}');
       }
     } catch (error) {
       // Handle any exceptions during the API call
@@ -439,6 +486,33 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     }
   }
 
+  Future<int?> fetchPredictedVisitDay() async {
+    try {
+      final response = await http.get(Uri.parse('https://haluansama.com/crm-sales/api/customer_insights/get_next_visit.php?customer_id=$customerId'));
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        // Check for success status
+        if (responseData['status'] == 'success') {
+          nextVisit = responseData['predicted_visit_day'].toString();
+          developer.log(responseData['predicted_visit_day'].toString());
+          return responseData['predicted_visit_day']; // Return the predicted day
+        } else {
+          developer.log('Error: ${responseData['message']}');
+          return null; // Return null if there was an error
+        }
+      } else {
+        developer.log('Failed to load data: ${response.reasonPhrase}');
+        return null; // Return null for other status codes
+      }
+    } catch (e) {
+      developer.log('Error occurred: $e');
+      return null; // Return null on exception
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -466,7 +540,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         future: Future.wait([customerFuture, salesDataFuture, productsFuture, isLoaded]),
         builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16), // Add space between the indicator and text
+                  Text('Fetching Customer Details'), // Display loading text
+                ],
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {
@@ -489,6 +572,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             final formatter = NumberFormat("#,##0.000", "en_MY");
             String formattedTotalSpent = formatter.format(double.parse(totalSpent));
             String formattedLastSpending = formatter.format(double.parse(lastSpending));
+
+            Color spendGroupBgColor = getCustomerValueBgColor(totalSpendGroup);
+            Color spendGroupTextColor = getCustomerValueTextColor(totalSpendGroup);
 
             return SingleChildScrollView(
               child: Column(
@@ -557,13 +643,13 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xff94FFDF),
+                                  color: spendGroupBgColor,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
-                                  'High Value',
+                                child: Text(
+                                  '$totalSpendGroup Value',
                                   style: TextStyle(
-                                    color: Color(0xff008A64),
+                                    color: spendGroupTextColor,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -792,7 +878,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                   decoration: const BoxDecoration(
                                     borderRadius:
                                     BorderRadius.all(Radius.circular(8)),
-                                    color: Color(0xFFECEDF5),
+                                    color: Color.fromARGB(255, 255, 255, 255),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurStyle: BlurStyle.normal,
+                                        color: Color.fromARGB(75, 117, 117, 117),
+                                        spreadRadius: 0.1,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,7 +936,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                   decoration: const BoxDecoration(
                                     borderRadius:
                                     BorderRadius.all(Radius.circular(8)),
-                                    color: Color(0xFFECEDF5),
+                                    color: Color.fromARGB(255, 255, 255, 255),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurStyle: BlurStyle.normal,
+                                        color: Color.fromARGB(75, 117, 117, 117),
+                                        spreadRadius: 0.1,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
