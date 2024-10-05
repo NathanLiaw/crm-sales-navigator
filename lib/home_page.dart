@@ -125,7 +125,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
     _tabController.addListener(() {
       setState(() {
-        _isButtonVisible = _tabController.index == 0; // Show button only on first tab
+        _isButtonVisible =
+            _tabController.index == 0; // Show button only on first tab
       });
     });
   }
@@ -833,7 +834,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Successfully moved lead to Closed stage')),
+            const SnackBar(
+                content: Text('Successfully moved lead to Closed stage')),
           );
         } else {
           throw Exception(responseData['message']);
@@ -1142,9 +1144,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Successfully deleted Engagement lead')),
+            const SnackBar(
+                content: Text('Successfully deleted Engagement lead')),
           );
-          developer.log('Engagement lead deleted and event logged successfully');
+          developer
+              .log('Engagement lead deleted and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1226,10 +1230,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Successfully deleted Negotiation lead')),
+            const SnackBar(
+                content: Text('Successfully deleted Negotiation lead')),
           );
 
-          developer.log('Negotiation lead deleted and event logged successfully');
+          developer
+              .log('Negotiation lead deleted and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1302,7 +1308,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Successfully undone Engagement lead')),
+            const SnackBar(
+                content: Text('Successfully undone Engagement lead')),
           );
 
           developer.log('Engagement lead undone and event logged successfully');
@@ -1391,10 +1398,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Successfully undone Negotiation lead')),
+            const SnackBar(
+                content: Text('Successfully undone Negotiation lead')),
           );
 
-          developer.log('Negotiation lead undone and event logged successfully');
+          developer
+              .log('Negotiation lead undone and event logged successfully');
         } else {
           throw Exception(responseData['message']);
         }
@@ -1739,6 +1748,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //   }
   // }
 
+  void _addNewLead(LeadItem newLead) {
+    setState(() {
+      leadItems.add(newLead);
+    });
+  }
+
+  void _handleRemoveOrderProcessingLead(LeadItem leadItem) {
+    setState(() {
+      orderProcessingLeads.remove(leadItem);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -1810,13 +1831,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           context: context,
                           barrierDismissible: false,
                           builder: (BuildContext context) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           },
                         );
 
                         // Trigger notification check
-                        await checkOrderStatusAndNotify();
-                        // await checkTaskDueDatesAndNotify();
+                        // await checkOrderStatusAndNotify();
+                        await checkTaskDueDatesAndNotify();
                         // await checkNewSalesLeadsAndNotify();
 
                         // Close the loading indicator
@@ -1824,11 +1846,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         // Show completion message
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Notification check completed')),
+                          const SnackBar(
+                              content: Text('Notification check completed')),
                         );
                       },
                     ),
-
                 ],
               ),
               body: Column(
@@ -1904,9 +1926,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               bottomNavigationBar: const CustomNavigationBar(),
-              floatingActionButton: _isButtonVisible
-                  ? _buildFloatingActionButton(context)
-                  : null,
+              floatingActionButton:
+                  _isButtonVisible ? _buildFloatingActionButton(context) : null,
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
             );
@@ -1986,10 +2007,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     MaterialPageRoute(
                       builder: (context) => CreateLeadPage(
                         salesmanId: salesmanId,
-                        onCreateLead: _createLead,
+                        onCreateLead: (LeadItem newLead) {
+                          setState(() {
+                            leadItems.add(newLead);
+                          });
+                        },
                       ),
                     ),
-                  );
+                  ).then((_) {
+                    // Refresh the data when returning from CreateLeadPage
+                    setState(() {
+                      _fetchLeadItems();
+                    });
+                  });
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
                 shape: const RoundedRectangleBorder(
@@ -2203,8 +2233,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         padding: EdgeInsets.symmetric(horizontal: 14),
                         height: 24,
                         width: 136,
-                        decoration:
-                            BoxDecoration(color: Color(0xff0175FF)),
+                        decoration: BoxDecoration(color: Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -2250,13 +2279,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
-                              padding:
-                                  const WidgetStatePropertyAll(EdgeInsets.all(1.0)),
+                              padding: const WidgetStatePropertyAll(
+                                  EdgeInsets.all(1.0)),
                               shape: WidgetStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
-                                      side: const BorderSide(color: Colors.red))),
+                                      side:
+                                          const BorderSide(color: Colors.red))),
                               backgroundColor: WidgetStateProperty.all<Color>(
                                   const Color(0xffF01C54)),
                               foregroundColor: WidgetStateProperty.all<Color>(
@@ -2296,8 +2326,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
-                              padding:
-                                  const WidgetStatePropertyAll(EdgeInsets.all(1.0)),
+                              padding: const WidgetStatePropertyAll(
+                                  EdgeInsets.all(1.0)),
                               shape: WidgetStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
@@ -2524,6 +2554,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             leadItem: leadItem,
             status: 'Unknown',
             onMoveToClosed: _moveFromOrderProcessingToClosed,
+            onRemoveLead: _handleRemoveOrderProcessingLead,
           );
         } else {
           return FutureBuilder<String>(
@@ -2577,6 +2608,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   leadItem: leadItem,
                   status: status,
                   onMoveToClosed: _moveFromOrderProcessingToClosed,
+                  onRemoveLead: _handleRemoveOrderProcessingLead,
                 );
               }
             },
@@ -2613,7 +2645,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
     try {
       // Replace with your actual PHP API URL
-      final String apiUrl = 'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_status.php?salesOrderId=$salesOrderId';
+      final String apiUrl =
+          'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_status.php?salesOrderId=$salesOrderId';
 
       // Send the GET request to the PHP API
       final response = await http.get(Uri.parse(apiUrl));
@@ -2637,7 +2670,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return 'Unknown|Unknown|Unknown|Unknown';
         }
       } else {
-        developer.log('Error: Failed to fetch data from API with status code ${response.statusCode}');
+        developer.log(
+            'Error: Failed to fetch data from API with status code ${response.statusCode}');
         return 'Unknown|Unknown|Unknown|Unknown';
       }
     } catch (e) {
@@ -2679,10 +2713,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //   }
   // }
 
-  Future<Map<String, String>> _fetchSalesOrderDetails(String salesOrderId) async {
+  Future<Map<String, String>> _fetchSalesOrderDetails(
+      String salesOrderId) async {
     try {
       final response = await http.get(
-        Uri.parse('https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_details.php?id=$salesOrderId'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_details.php?id=$salesOrderId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -2690,7 +2726,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final responseData = json.decode(response.body);
         if (responseData['status'] == 'success') {
           return {
-            'formattedCreatedDate': responseData['data']['formattedCreatedDate'].toString(),
+            'formattedCreatedDate':
+                responseData['data']['formattedCreatedDate'].toString(),
             'expirationDate': responseData['data']['expirationDate'].toString(),
             'total': responseData['data']['total'].toString(),
             'quantity': responseData['data']['quantity'].toString(),
@@ -2700,7 +2737,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return {};
         }
       } else {
-        developer.log('HTTP request failed with status: ${response.statusCode}');
+        developer
+            .log('HTTP request failed with status: ${response.statusCode}');
         return {};
       }
     } catch (e) {

@@ -44,7 +44,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   String remark = remarkController.text;
   bool isProcessing = false;
   double totalDiscount = 0;
-
+  int? salesOrderId;
   late int salesmanId;
 
   Future<List<String>> fetchOrderOptions() async {
@@ -144,6 +144,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   Future<void> completeCart() async {
     try {
+      salesOrderId = await fetchSalesOrderId();
       int cartId = await fetchSalesOrderId();
       List<Map<String, dynamic>> cartItemsData = [];
 
@@ -172,7 +173,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
       // Send the data to the API
       final response = await http.post(
-        Uri.parse('https://haluansama.com/crm-sales/api/cart/complete_cart.php'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/cart/complete_cart.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(cartItemsData),
       );
@@ -189,7 +191,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             CartItem item = widget.cartItems[i]; // Get the corresponding item
 
             if (itemResponse['status'] == 'success') {
-              developer.log('Item inserted successfully: ${itemResponse['message']}');
+              developer.log(
+                  'Item inserted successfully: ${itemResponse['message']}');
 
               // Update item status locally using the existing item.id
               Map<String, dynamic> updateData = {
@@ -199,26 +202,30 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
               final cartModel = Provider.of<CartModel>(context, listen: false);
               cartModel.initializeCartCount();
-              int rowsAffected = await DatabaseHelper.updateData(updateData, 'cart_item');
+              int rowsAffected =
+                  await DatabaseHelper.updateData(updateData, 'cart_item');
               if (rowsAffected > 0) {
-                developer.log('Item status updated successfully for ID: ${item.id}');
+                developer
+                    .log('Item status updated successfully for ID: ${item.id}');
               }
             } else {
-              developer.log('Failed to insert item: ${itemResponse['message']}');
+              developer
+                  .log('Failed to insert item: ${itemResponse['message']}');
             }
           }
         } else {
           // If it's a single object, handle accordingly
           if (responseBody['status'] == 'success') {
-            developer.log('All items inserted successfully: ${responseBody['message']}');
+            developer.log(
+                'All items inserted successfully: ${responseBody['message']}');
           } else {
             developer.log('Failed to insert items: ${responseBody['message']}');
           }
         }
       } else {
-        developer.log('Failed to complete cart. Status code: ${response.statusCode}');
+        developer.log(
+            'Failed to complete cart. Status code: ${response.statusCode}');
       }
-
     } catch (e) {
       developer.log('Error inserting item: $e', error: e);
     }
@@ -229,7 +236,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://haluansama.com/crm-sales/api/cart/get_sales_order_id.php?salesman_id=$salesmanId'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/cart/get_sales_order_id.php?salesman_id=$salesmanId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -242,7 +250,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           developer.log('Error: ${responseData['message']}');
         }
       } else {
-        developer.log('Failed to fetch sales order ID. Status code: ${response.statusCode}');
+        developer.log(
+            'Failed to fetch sales order ID. Status code: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error retrieving sales order ID: $e');
@@ -623,7 +632,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           const SizedBox(height: 16.0),
           ElevatedButton(
             style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+              backgroundColor:
+                  WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
               shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
@@ -636,46 +646,59 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             onPressed: isProcessing
                 ? null // Disable the button when processing
                 : () async {
-              if (!agreedToTerms) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('You must agree to the terms and conditions'),
-                  ),
-                );
-                return;
-              }
+                    if (!agreedToTerms) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'You must agree to the terms and conditions'),
+                        ),
+                      );
+                      return;
+                    }
 
-              setState(() {
-                isProcessing = true; // Set to true when processing starts
-              });
+                    setState(() {
+                      isProcessing = true; // Set to true when processing starts
+                    });
 
-              await createCart();
-              await completeCart();
+                    await createCart();
+                    await completeCart();
 
-              setState(() {
-                isProcessing = false; // Set to false when processing completes
-              });
+                    setState(() {
+                      isProcessing =
+                          false; // Set to false when processing completes
+                    });
 
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OrderSubmittedPage(),
-                ),
-              );
-            },
+                    if (salesOrderId != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              OrderSubmittedPage(salesOrderId: salesOrderId!),
+                        ),
+                      );
+                    } else {
+                      // Handling the case where salesOrderId is null
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Failed to create order. Please try again.'),
+                        ),
+                      );
+                    }
+                  },
             child: isProcessing
                 ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(color: Colors.white),
-            )
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
                 : const Text(
-              'Submit Order',
-              style: TextStyle(
-                color: Colors.white, // Set text color
-                fontSize: 20, // Set text size
-              ),
-            ),
+                    'Submit Order',
+                    style: TextStyle(
+                      color: Colors.white, // Set text color
+                      fontSize: 20, // Set text size
+                    ),
+                  ),
           ),
         ],
       ),
