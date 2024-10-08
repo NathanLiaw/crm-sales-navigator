@@ -2039,20 +2039,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildOpportunitiesTab() {
-    return ListView.builder(
-      itemCount: leadItems.length,
-      itemBuilder: (context, index) {
-        return Column(
+    if (leadItems.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildLeadItem(leadItems[index]),
-            // Check if it's the last item
-            if (index == leadItems.length - 1)
-              // Add additional padding for the last item
-              const SizedBox(height: 80),
+            Icon(
+              Icons.person_search_outlined,
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No Sales Leads created yet,\ncreate one now!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
           ],
-        );
-      },
-    );
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: leadItems.length,
+        itemBuilder: (context, index) {
+          return Column(
+            children: [
+              _buildLeadItem(leadItems[index]),
+              // Check if it's the last item
+              if (index == leadItems.length - 1)
+              // Add additional padding for the last item
+                const SizedBox(height: 80),
+            ],
+          );
+        },
+      );
+    }
   }
 
   Widget _buildLeadItem(LeadItem leadItem) {
@@ -2362,58 +2386,76 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEngagementTab() {
-    return ListView.builder(
-      itemCount: engagementLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = engagementLeads[index];
-        return EngagementLeadItem(
-          leadItem: leadItem,
-          onMoveToNegotiation: () => _moveFromEngagementToNegotiation(leadItem),
-          onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
-            // // Log the event
-            // await EventLogger.logEvent(
-            //     salesmanId,
-            //     'Moved lead from Engagement stage to Order Processing stage',
-            //     'Stage Movement',
-            //     leadId: leadItem.id);
-            await _updateSalesmanPerformance(salesmanId);
-            await _moveFromEngagementToOrderProcessing(
-                leadItem, salesOrderId, quantity);
-            setState(() {
-              engagementLeads.remove(leadItem);
-              orderProcessingLeads.add(leadItem);
-            });
-          },
-          onDeleteLead: _onDeleteEngagementLead,
-          onUndoLead: _onUndoEngagementLead,
-          onComplete: (leadItem) async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CreateTaskPage(
-                  id: leadItem.id,
-                  customerName: leadItem.customerName,
-                  contactNumber: leadItem.contactNumber,
-                  emailAddress: leadItem.emailAddress,
-                  address: leadItem.addressLine1,
-                  lastPurchasedAmount: leadItem.amount,
-                  showTaskDetails: false,
-                ),
+    if (engagementLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.handshake_outlined,
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No Engagement Leads yet,\nstart building relationships!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
               ),
-            );
-            if (result != null && result['salesOrderId'] != null) {
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: engagementLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = engagementLeads[index];
+          return EngagementLeadItem(
+            leadItem: leadItem,
+            onMoveToNegotiation: () => _moveFromEngagementToNegotiation(leadItem),
+            onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
+              await _updateSalesmanPerformance(salesmanId);
+              await _moveFromEngagementToOrderProcessing(
+                  leadItem, salesOrderId, quantity);
               setState(() {
                 engagementLeads.remove(leadItem);
-                leadItem.salesOrderId = result['salesOrderId'];
-                leadItem.quantity = result['quantity'];
-                closedLeads.add(leadItem);
+                orderProcessingLeads.add(leadItem);
               });
-              await _updateLeadStage(leadItem, 'Closed');
-            }
-          },
-        );
-      },
-    );
+            },
+            onDeleteLead: _onDeleteEngagementLead,
+            onUndoLead: _onUndoEngagementLead,
+            onComplete: (leadItem) async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateTaskPage(
+                    id: leadItem.id,
+                    customerName: leadItem.customerName,
+                    contactNumber: leadItem.contactNumber,
+                    emailAddress: leadItem.emailAddress,
+                    address: leadItem.addressLine1,
+                    lastPurchasedAmount: leadItem.amount,
+                    showTaskDetails: false,
+                  ),
+                ),
+              );
+              if (result != null && result['salesOrderId'] != null) {
+                setState(() {
+                  engagementLeads.remove(leadItem);
+                  leadItem.salesOrderId = result['salesOrderId'];
+                  leadItem.quantity = result['quantity'];
+                  closedLeads.add(leadItem);
+                });
+                await _updateLeadStage(leadItem, 'Closed');
+              }
+            },
+          );
+        },
+      );
+    }
   }
 
   // Future<void> _moveFromEngagementToOrderProcessing(
@@ -2488,134 +2530,173 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildNegotiationTab() {
-    return ListView.builder(
-      itemCount: negotiationLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = negotiationLeads[index];
-        return NegotiationLeadItem(
-          leadItem: leadItem,
-          onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
-            // // Log the event
-            // await EventLogger.logEvent(
-            //     salesmanId,
-            //     'Moved lead from Negotiation stage to Order Processing stage',
-            //     'Stage Movement',
-            //     leadId: leadItem.id);
-            await _moveFromNegotiationToOrderProcessing(
-                leadItem, salesOrderId, quantity);
-            await _updateSalesmanPerformance(salesmanId);
-            setState(() {
-              negotiationLeads.remove(leadItem);
-              orderProcessingLeads.add(leadItem);
-            });
-          },
-          onDeleteLead: _onDeleteNegotiationLead,
-          onUndoLead: _onUndoNegotiationLead,
-          onComplete: (leadItem) async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CreateTaskPage(
-                  id: leadItem.id,
-                  customerName: leadItem.customerName,
-                  contactNumber: leadItem.contactNumber,
-                  emailAddress: leadItem.emailAddress,
-                  address: leadItem.addressLine1,
-                  lastPurchasedAmount: leadItem.amount,
-                  // existingTitle: leadItem.title,
-                  // existingDescription: leadItem.description,
-                  // existingDueDate: leadItem.dueDate,
-                  showTaskDetails: false,
-                ),
+    if (negotiationLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.gavel, // Represents negotiations and decision-making
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No leads in negotiation,\nstart negotiating with your leads!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
               ),
-            );
-            if (result != null && result['salesOrderId'] != null) {
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: negotiationLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = negotiationLeads[index];
+          return NegotiationLeadItem(
+            leadItem: leadItem,
+            onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
+              await _moveFromNegotiationToOrderProcessing(
+                  leadItem, salesOrderId, quantity);
+              await _updateSalesmanPerformance(salesmanId);
               setState(() {
                 negotiationLeads.remove(leadItem);
-                leadItem.salesOrderId = result['salesOrderId'];
-                leadItem.quantity = result['quantity'];
-                closedLeads.add(leadItem);
+                orderProcessingLeads.add(leadItem);
               });
-              await _updateLeadStage(leadItem, 'Closed');
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildOrderProcessingTab() {
-    return ListView.builder(
-      itemCount: orderProcessingLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = orderProcessingLeads[index];
-        if (leadItem.salesOrderId == null) {
-          return OrderProcessingLeadItem(
-            leadItem: leadItem,
-            status: 'Unknown',
-            onMoveToClosed: _moveFromOrderProcessingToClosed,
-            onRemoveLead: _handleRemoveOrderProcessingLead,
-          );
-        } else {
-          return FutureBuilder<String>(
-            future: _fetchSalesOrderStatus(leadItem.salesOrderId!),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 2.0, horizontal: 8.0),
-                    child: Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 200.0,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Container(
-                              width: double.infinity,
-                              height: 24.0,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Container(
-                              width: double.infinity,
-                              height: 24.0,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+            },
+            onDeleteLead: _onDeleteNegotiationLead,
+            onUndoLead: _onUndoNegotiationLead,
+            onComplete: (leadItem) async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateTaskPage(
+                    id: leadItem.id,
+                    customerName: leadItem.customerName,
+                    contactNumber: leadItem.contactNumber,
+                    emailAddress: leadItem.emailAddress,
+                    address: leadItem.addressLine1,
+                    lastPurchasedAmount: leadItem.amount,
+                    showTaskDetails: false,
                   ),
-                );
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else {
-                String status = snapshot.data ?? 'Unknown';
-                return OrderProcessingLeadItem(
-                  leadItem: leadItem,
-                  status: status,
-                  onMoveToClosed: _moveFromOrderProcessingToClosed,
-                  onRemoveLead: _handleRemoveOrderProcessingLead,
-                );
+                ),
+              );
+              if (result != null && result['salesOrderId'] != null) {
+                setState(() {
+                  negotiationLeads.remove(leadItem);
+                  leadItem.salesOrderId = result['salesOrderId'];
+                  leadItem.quantity = result['quantity'];
+                  closedLeads.add(leadItem);
+                });
+                await _updateLeadStage(leadItem, 'Closed');
               }
             },
           );
-        }
-      },
-    );
+        },
+      );
+    }
+  }
+
+  Widget _buildOrderProcessingTab() {
+    if (orderProcessingLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.fact_check, // Represents order processing and verification
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No orders are being processed yet,\nstart managing your sales orders!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: orderProcessingLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = orderProcessingLeads[index];
+          if (leadItem.salesOrderId == null) {
+            return OrderProcessingLeadItem(
+              leadItem: leadItem,
+              status: 'Unknown',
+              onMoveToClosed: _moveFromOrderProcessingToClosed,
+              onRemoveLead: _handleRemoveOrderProcessingLead,
+            );
+          } else {
+            return FutureBuilder<String>(
+              future: _fetchSalesOrderStatus(leadItem.salesOrderId!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 2.0, horizontal: 8.0),
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 200.0,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: 8.0),
+                              Container(
+                                width: double.infinity,
+                                height: 24.0,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: 8.0),
+                              Container(
+                                width: double.infinity,
+                                height: 24.0,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  String status = snapshot.data ?? 'Unknown';
+                  return OrderProcessingLeadItem(
+                    leadItem: leadItem,
+                    status: status,
+                    onMoveToClosed: _moveFromOrderProcessingToClosed,
+                    onRemoveLead: _handleRemoveOrderProcessingLead,
+                  );
+                }
+              },
+            );
+          }
+        },
+      );
+    }
   }
 
   // Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
@@ -2757,32 +2838,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildClosedTab() {
-    return ListView.builder(
-      itemCount: closedLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = closedLeads[index];
-        return FutureBuilder<Map<String, String>>(
-          future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildShimmerCard();
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            } else {
-              Map<String, String> salesOrderDetails = snapshot.data ?? {};
-              return ClosedLeadItem(
-                leadItem: leadItem,
-                formattedCreatedDate:
-                    salesOrderDetails['formattedCreatedDate'] ?? '',
-                expirationDate: salesOrderDetails['expirationDate'] ?? '',
-                total: salesOrderDetails['total'] ?? '',
-                quantity: salesOrderDetails['quantity'] ?? 'Unknown',
-              );
-            }
-          },
-        );
-      },
-    );
+    if (closedLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.done_all, // Represents that all leads are closed
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No leads are closed yet,\nkeep working towards your goals!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: closedLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = closedLeads[index];
+          return FutureBuilder<Map<String, String>>(
+            future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildShimmerCard();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else {
+                Map<String, String> salesOrderDetails = snapshot.data ?? {};
+                return ClosedLeadItem(
+                  leadItem: leadItem,
+                  formattedCreatedDate:
+                  salesOrderDetails['formattedCreatedDate'] ?? '',
+                  expirationDate: salesOrderDetails['expirationDate'] ?? '',
+                  total: salesOrderDetails['total'] ?? '',
+                  quantity: salesOrderDetails['quantity'] ?? 'Unknown',
+                );
+              }
+            },
+          );
+        },
+      );
+    }
   }
 }
 

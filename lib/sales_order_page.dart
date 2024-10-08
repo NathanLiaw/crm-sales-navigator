@@ -822,6 +822,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     );
   }
 
+  final TextEditingController _searchController = TextEditingController();
   Widget _buildSearchBar() {
     return Container(
       height: 50.0,
@@ -831,16 +832,33 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(color: Colors.grey),
       ),
-      child: TextField(
-        decoration: const InputDecoration(
-          hintText: 'Search Sales Order',
-          border: InputBorder.none,
-          icon: Icon(Icons.search, color: Colors.grey), // Search icon
-        ),
-        onChanged: (value) {
-          _filterSalesOrders(
-              value); // Call a function to filter orders based on search
-        },
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: Colors.grey), // Search icon
+          const SizedBox(width: 8.0), // Optional space between icon and text field
+          Expanded(
+            child: TextField(
+              controller: _searchController, // Add the controller
+              decoration: const InputDecoration(
+                hintText: 'Search Sales Order',
+                border: InputBorder.none,
+              ),
+              onChanged: (value) {
+                _filterSalesOrders(value); // Call a function to filter orders
+              },
+            ),
+          ),
+          // The clear button is now at the end of the search bar
+          if (_searchController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear, color: Colors.grey), // "X" icon
+              onPressed: () {
+                _searchController.clear(); // Clear the search field
+                _filterSalesOrders(''); // Reset filter with empty input
+                setState(() {}); // Trigger UI update to hide the clear button
+              },
+            ),
+        ],
       ),
     );
   }
