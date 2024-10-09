@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _initializeSalesmanId();
     _performanceUpdater = SalesmanPerformanceUpdater();
     // _fetchLeadItems();
-    _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
+    // _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
     Future.delayed(const Duration(seconds: 2), () {
       setState(() {
         _isLoading = false; // Set loading state to false when data is loaded
@@ -133,10 +133,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _initializeSalesmanId() async {
     final id = await UtilityFunction.getUserId();
+    developer.log('Initialized salesmanId: $id');
     setState(() {
       salesmanId = id;
     });
     _performanceUpdater.startPeriodicUpdate(salesmanId);
+    await _cleanAndValidateLeadData();
+    await _fetchLeadItems();
   }
 
   void _sortLeads(List<LeadItem> leads) {
@@ -315,14 +318,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _cleanAndValidateLeadData() async {
+    developer
+        .log('Starting _cleanAndValidateLeadData for salesman_id: $salesmanId');
     final url = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
+        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
 
     try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
+        developer.log('_cleanAndValidateLeadData response: ${response.body}');
         if (data['status'] == 'success') {
           developer.log('Lead data cleaned and validated successfully.');
         } else {
@@ -336,6 +342,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       developer.log('Error making API call: $e');
     }
   }
+
+  // Future<void> _cleanAndValidateLeadData() async {
+  //   final url = Uri.parse(
+  //       'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
+
+  //   try {
+  //     final response = await http.get(url);
+
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> data = jsonDecode(response.body);
+  //       if (data['status'] == 'success') {
+  //         developer.log('Lead data cleaned and validated successfully.');
+  //       } else {
+  //         developer.log('Error: ${data['message']}');
+  //       }
+  //     } else {
+  //       developer
+  //           .log('Failed to load data. Status code: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error making API call: $e');
+  //   }
+  // }
 
   // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
@@ -1763,7 +1792,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<int?> _getSalesmanId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? id = prefs.getInt('id');
-    print("_getSalesmanId returned: $id"); // Add this log
+    developer.log("_getSalesmanId returned: $id"); // Add this log
     return id;
   }
 
@@ -1844,12 +1873,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         // Get the salesman ID
                         int? salesmanId = await _getSalesmanId();
-                        print("Retrieved salesmanId: $salesmanId");
+                        developer.log("Retrieved salesmanId: $salesmanId");
 
                         if (salesmanId != null) {
                           // await checkOrderStatusAndNotify(salesmanId);
-                          await checkTaskDueDatesAndNotify(salesmanId);
-                          // await checkNewSalesLeadsAndNotify(salesmanId);
+                          // await checkTaskDueDatesAndNotify(salesmanId);
+                          await checkNewSalesLeadsAndNotify(salesmanId);
 
                           Navigator.of(context).pop();
 
