@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
-import 'dart:developer' as developer;
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:sales_navigator/utility_function.dart';
 
 class OrderSubmittedPage extends StatefulWidget {
   final int salesOrderId;
@@ -102,14 +98,14 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
+                    backgroundColor: WidgetStateProperty.all<Color>(
                         const Color(0xff0175FF)),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       ),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(130.0, 40.0),
                     ),
                   ),
@@ -137,9 +133,9 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
+                    backgroundColor: WidgetStateProperty.all<Color>(
                         const Color(0xffffffff)),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                         side: const BorderSide(
@@ -148,10 +144,10 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                         ),
                       ),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
-                    maximumSize: MaterialStateProperty.all<Size>(
+                    maximumSize: WidgetStateProperty.all<Size>(
                       const Size(150.0, 40.0),
                     ),
                   ),
@@ -159,7 +155,7 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     'View Order',
                     style: TextStyle(
                       color: Color(0xff0175FF),
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

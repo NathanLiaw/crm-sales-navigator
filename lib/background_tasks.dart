@@ -145,7 +145,7 @@ Future<void> checkOrderStatusAndNotify(int salesmanId) async {
 // }
 
 Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
-  print('Starting checkTaskDueDatesAndNotify');
+  developer.log('Starting checkTaskDueDatesAndNotify');
 
   try {
     final apiUrl = Uri.parse(
@@ -174,15 +174,15 @@ Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
               'TASK_DUE_SOON');
         }
       } else {
-        print('Error: ${jsonData['message']}');
+        developer.log('Error: ${jsonData['message']}');
       }
     } else {
       throw Exception('Failed to load task due dates: ${response.statusCode}');
     }
   } catch (e) {
-    print('Error in checkTaskDueDatesAndNotify: $e');
+    developer.log('Error in checkTaskDueDatesAndNotify: $e');
   }
-  print('Finished checkTaskDueDatesAndNotify');
+  developer.log('Finished checkTaskDueDatesAndNotify');
 }
 
 // Future<void> checkTaskDueDatesAndNotify() async {
@@ -227,21 +227,21 @@ Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
 // }
 
 Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
-  print('Starting checkNewSalesLeadsAndNotify for salesman_id: $salesmanId');
+  developer.log('Starting checkNewSalesLeadsAndNotify for salesman_id: $salesmanId');
 
   try {
     final apiUrl = Uri.parse(
         'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php?salesman_id=$salesmanId');
-    print("Calling API with URL: $apiUrl"); // Add this log
+    developer.log("Calling API with URL: $apiUrl"); // Add this log
     final response = await http.get(apiUrl);
 
-    print("API Response Status Code: ${response.statusCode}"); // Add this log
-    print("API Response Body: ${response.body}"); // Add this log
+    developer.log("API Response Status Code: ${response.statusCode}"); // Add this log
+    developer.log("API Response Body: ${response.body}"); // Add this log
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
       if (jsonData['status'] == 'success') {
-        print('Found ${jsonData['data'].length} new sales leads today');
+        developer.log('Found ${jsonData['data'].length} new sales leads today');
 
         for (var lead in jsonData['data']) {
           // Convert string IDs to integers
@@ -261,15 +261,15 @@ Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
               'NEW_SALES_LEAD');
         }
       } else {
-        print('Error: ${jsonData['message']}');
+        developer.log('Error: ${jsonData['message']}');
       }
     } else {
       throw Exception('Failed to load new sales leads: ${response.statusCode}');
     }
   } catch (e) {
-    print('Error in checkNewSalesLeadsAndNotify: $e');
+    developer.log('Error in checkNewSalesLeadsAndNotify: $e');
   }
-  print('Finished checkNewSalesLeadsAndNotify');
+  developer.log('Finished checkNewSalesLeadsAndNotify');
 }
 
 // Future<void> checkNewSalesLeadsAndNotify() async {
@@ -310,7 +310,7 @@ Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
 // Generate status change notification
 Future<void> _generateNotification(
     LeadItem leadItem, String newStatus, String oldStatus) async {
-  final String baseUrl =
+  const String baseUrl =
       'https://haluansama.com/crm-sales/api/background_tasks/update_notification.php';
 
   final Map<String, String> queryParameters = {
@@ -387,7 +387,7 @@ Future<void> _generateNotification(
 
 Future<void> _generateTaskandSalesLeadNotification(int salesmanId, String title,
     String description, int leadId, String type) async {
-  final String baseUrl =
+  const String baseUrl =
       'https://haluansama.com/crm-sales/api/background_tasks/update_task_lead_notification.php';
 
   final Map<String, String> queryParameters = {

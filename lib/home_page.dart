@@ -1763,7 +1763,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<int?> _getSalesmanId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? id = prefs.getInt('id');
-    print("_getSalesmanId returned: $id"); // Add this log
+    developer.log("_getSalesmanId returned: $id"); // Add this log
     return id;
   }
 
@@ -1844,7 +1844,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         // Get the salesman ID
                         int? salesmanId = await _getSalesmanId();
-                        print("Retrieved salesmanId: $salesmanId");
+                        developer.log("Retrieved salesmanId: $salesmanId");
 
                         if (salesmanId != null) {
                           // await checkOrderStatusAndNotify(salesmanId);

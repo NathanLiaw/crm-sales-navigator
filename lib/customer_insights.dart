@@ -305,7 +305,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   }
 
   Future<void> fetchCustomerSegmentation() async {
-    const String apiUrl = 'http://13.250.43.17:5000/api/customer-segmentation'; // Replace with your API URL
+    const String apiUrl = 'http://18.142.14.144:5000/api/customer-segmentation';
 
     try {
       final response = await http.get(Uri.parse(apiUrl)).timeout(Duration(seconds: 10));
