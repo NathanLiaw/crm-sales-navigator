@@ -1,4 +1,5 @@
 import 'package:sales_navigator/home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:developer' as developer;
@@ -12,24 +13,49 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // Get the logged-in salesman_id
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? salesmanId = prefs.getInt('id');
+
+    if (salesmanId == null) {
+      // If no salesman is logged in, don't process any tasks
+      return Future.value(true);
+    }
+
     switch (task) {
       case "fetchSalesOrderStatus":
-        await checkOrderStatusAndNotify();
+        await checkOrderStatusAndNotify(salesmanId);
         break;
       case "checkTaskDueDates":
-        await checkTaskDueDatesAndNotify();
+        await checkTaskDueDatesAndNotify(salesmanId);
         break;
       case "checkNewSalesLeads":
-        await checkNewSalesLeadsAndNotify();
+        await checkNewSalesLeadsAndNotify(salesmanId);
         break;
     }
     return Future.value(true);
   });
 }
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) async {
+//     switch (task) {
+//       case "fetchSalesOrderStatus":
+//         await checkOrderStatusAndNotify();
+//         break;
+//       case "checkTaskDueDates":
+//         await checkTaskDueDatesAndNotify();
+//         break;
+//       case "checkNewSalesLeads":
+//         await checkNewSalesLeadsAndNotify();
+//         break;
+//     }
+//     return Future.value(true);
+//   });
+// }
 
-Future<void> checkOrderStatusAndNotify() async {
+Future<void> checkOrderStatusAndNotify(int salesmanId) async {
   final String baseUrl =
-      'https://haluansama.com/crm-sales/api/background_tasks/get_order_status.php';
+      'https://haluansama.com/crm-sales/api/background_tasks/get_order_status.php?salesman_id=$salesmanId';
 
   try {
     final response = await http.get(Uri.parse(baseUrl));
@@ -118,12 +144,12 @@ Future<void> checkOrderStatusAndNotify() async {
 //   developer.log('Finished checkOrderStatusAndNotify');
 // }
 
-Future<void> checkTaskDueDatesAndNotify() async {
+Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
   print('Starting checkTaskDueDatesAndNotify');
 
   try {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/background_tasks/get_task_due_dates.php');
+        'https://haluansama.com/crm-sales/api/background_tasks/get_task_due_dates.php?salesman_id=$salesmanId');
     final response = await http.get(apiUrl);
 
     if (response.statusCode == 200) {
@@ -132,16 +158,20 @@ Future<void> checkTaskDueDatesAndNotify() async {
         for (var row in jsonData['data']) {
           var taskTitle = row['title'];
           var dueDate = DateTime.parse(row['due_date']);
-          var leadId = int.parse(row['lead_id']);
-          var salesmanId = int.parse(row['salesman_id']);
+          var leadId = row['lead_id'].toString();
+          var salesmanId = row['salesman_id'].toString();
           var customerName = row['customer_name'];
 
           var notificationTitle = 'Task Due Soon';
           var notificationBody =
               'Task "$taskTitle" for $customerName is due on ${dueDate.toString().split(' ')[0]}';
 
-          await _generateTaskandSalesLeadNotification(salesmanId,
-              notificationTitle, notificationBody, leadId, 'TASK_DUE_SOON');
+          await _generateTaskandSalesLeadNotification(
+              int.parse(salesmanId),
+              notificationTitle,
+              notificationBody,
+              int.parse(leadId),
+              'TASK_DUE_SOON');
         }
       } else {
         print('Error: ${jsonData['message']}');
@@ -196,13 +226,17 @@ Future<void> checkTaskDueDatesAndNotify() async {
 //   developer.log('Finished checkTaskDueDatesAndNotify');
 // }
 
-Future<void> checkNewSalesLeadsAndNotify() async {
-  print('Starting checkNewSalesLeadsAndNotify');
+Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
+  print('Starting checkNewSalesLeadsAndNotify for salesman_id: $salesmanId');
 
   try {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php');
+        'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php?salesman_id=$salesmanId');
+    print("Calling API with URL: $apiUrl"); // Add this log
     final response = await http.get(apiUrl);
+
+    print("API Response Status Code: ${response.statusCode}"); // Add this log
+    print("API Response Body: ${response.body}"); // Add this log
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
@@ -211,16 +245,20 @@ Future<void> checkNewSalesLeadsAndNotify() async {
 
         for (var lead in jsonData['data']) {
           // Convert string IDs to integers
-          var leadId = int.parse(lead['id']);
+          var leadId = lead['id'].toString();
           var customerName = lead['customer_name'];
-          var salesmanId = int.parse(lead['salesman_id']);
+          var salesmanId = lead['salesman_id'].toString();
 
           var notificationTitle = 'New Sales Lead';
           var notificationBody =
               'A new sales lead for $customerName has been created today.';
 
-          await _generateTaskandSalesLeadNotification(salesmanId,
-              notificationTitle, notificationBody, leadId, 'NEW_SALES_LEAD');
+          await _generateTaskandSalesLeadNotification(
+              int.parse(salesmanId),
+              notificationTitle,
+              notificationBody,
+              int.parse(leadId),
+              'NEW_SALES_LEAD');
         }
       } else {
         print('Error: ${jsonData['message']}');

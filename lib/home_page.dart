@@ -1760,6 +1760,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  Future<int?> _getSalesmanId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? id = prefs.getInt('id');
+    print("_getSalesmanId returned: $id"); // Add this log
+    return id;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -1826,7 +1833,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     IconButton(
                       icon: const Icon(Icons.refresh, color: Colors.white),
                       onPressed: () async {
-                        // Show loading indicator
                         showDialog(
                           context: context,
                           barrierDismissible: false,
@@ -1836,19 +1842,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           },
                         );
 
-                        // Trigger notification check
-                        // await checkOrderStatusAndNotify();
-                        await checkTaskDueDatesAndNotify();
-                        // await checkNewSalesLeadsAndNotify();
+                        // Get the salesman ID
+                        int? salesmanId = await _getSalesmanId();
+                        print("Retrieved salesmanId: $salesmanId");
 
-                        // Close the loading indicator
-                        Navigator.of(context).pop();
+                        if (salesmanId != null) {
+                          // await checkOrderStatusAndNotify(salesmanId);
+                          await checkTaskDueDatesAndNotify(salesmanId);
+                          // await checkNewSalesLeadsAndNotify(salesmanId);
 
-                        // Show completion message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Notification check completed')),
-                        );
+                          Navigator.of(context).pop();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Notification check completed')),
+                          );
+                        } else {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Error: Salesman ID not found')),
+                          );
+                        }
                       },
                     ),
                 ],
@@ -2070,7 +2085,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               _buildLeadItem(leadItems[index]),
               // Check if it's the last item
               if (index == leadItems.length - 1)
-              // Add additional padding for the last item
+                // Add additional padding for the last item
                 const SizedBox(height: 80),
             ],
           );
@@ -2415,7 +2430,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           LeadItem leadItem = engagementLeads[index];
           return EngagementLeadItem(
             leadItem: leadItem,
-            onMoveToNegotiation: () => _moveFromEngagementToNegotiation(leadItem),
+            onMoveToNegotiation: () =>
+                _moveFromEngagementToNegotiation(leadItem),
             onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
               await _updateSalesmanPerformance(salesmanId);
               await _moveFromEngagementToOrderProcessing(
@@ -2877,7 +2893,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 return ClosedLeadItem(
                   leadItem: leadItem,
                   formattedCreatedDate:
-                  salesOrderDetails['formattedCreatedDate'] ?? '',
+                      salesOrderDetails['formattedCreatedDate'] ?? '',
                   expirationDate: salesOrderDetails['expirationDate'] ?? '',
                   total: salesOrderDetails['total'] ?? '',
                   quantity: salesOrderDetails['quantity'] ?? 'Unknown',

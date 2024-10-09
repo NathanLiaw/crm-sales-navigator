@@ -32,9 +32,9 @@ void main() async {
 
   // Initialize local notifications
   const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('@drawable/sales_navigator');
+      AndroidInitializationSettings('@drawable/sales_navigator');
   const InitializationSettings initializationSettings =
-  InitializationSettings(android: initializationSettingsAndroid);
+      InitializationSettings(android: initializationSettingsAndroid);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   // Check and request the SCHEDULE_EXACT_ALARM permission for Android 14+
@@ -42,36 +42,36 @@ void main() async {
     await requestExactAlarmPermission();
   }
 
-  // Initialize Workmanager
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  // // Initialize Workmanager
+  // await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
 
-  // Register periodic tasks
-  await Workmanager().registerPeriodicTask(
-    "1",
-    "fetchSalesOrderStatus",
-    frequency: const Duration(minutes: 15),
-    constraints: Constraints(
-      networkType: NetworkType.connected,
-    ),
-  );
+  // // Register periodic tasks
+  // await Workmanager().registerPeriodicTask(
+  //   "1",
+  //   "fetchSalesOrderStatus",
+  //   frequency: const Duration(minutes: 15),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
 
-  await Workmanager().registerPeriodicTask(
-    "2",
-    "checkTaskDueDates",
-    frequency: const Duration(days: 1),
-    constraints: Constraints(
-      networkType: NetworkType.connected,
-    ),
-  );
+  // await Workmanager().registerPeriodicTask(
+  //   "2",
+  //   "checkTaskDueDates",
+  //   frequency: const Duration(days: 1),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
 
-  await Workmanager().registerPeriodicTask(
-    "3",
-    "checkNewSalesLeads",
-    frequency: const Duration(days: 1),
-    constraints: Constraints(
-      networkType: NetworkType.connected,
-    ),
-  );
+  // await Workmanager().registerPeriodicTask(
+  //   "3",
+  //   "checkNewSalesLeads",
+  //   frequency: const Duration(days: 1),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
 
   // Handling notifications received when the app is completely closed
   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
@@ -143,17 +143,18 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _checkConnectivity() async {
-    final ConnectivityResult result = (await Connectivity().checkConnectivity()) as ConnectivityResult;
+    final ConnectivityResult result =
+        (await Connectivity().checkConnectivity()) as ConnectivityResult;
     setState(() {
       isOffline = result == ConnectivityResult.none;
     });
 
     // Listen for connectivity changes
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-      setState(() {
-        isOffline = result == ConnectivityResult.none;
-      });
-    } as void Function(List<ConnectivityResult> event)?);
+          setState(() {
+            isOffline = result == ConnectivityResult.none;
+          });
+        } as void Function(List<ConnectivityResult> event)?);
   }
 
   @override

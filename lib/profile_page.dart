@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:workmanager/workmanager.dart';
 import 'about_us_page.dart';
 import 'account_setting_page.dart';
 import 'contact_us_page.dart';
@@ -179,6 +180,9 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
+          // Cancel all background tasks
+          await Workmanager().cancelAll();
+
           // Clearing data in SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.clear();
