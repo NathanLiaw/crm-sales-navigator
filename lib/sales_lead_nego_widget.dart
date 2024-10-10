@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_insights.dart';
@@ -412,13 +413,16 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: 170,
+                  Flexible(
                     child: Text(
                       widget.leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                      maxLines: 3,
+                      style: GoogleFonts.inter(
+                        textStyle: const TextStyle(letterSpacing: -0.8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -524,7 +528,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                     widget.leadItem.previousStage = null;
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                         content: Text(
                                             'Successfully undone Negotiation lead')),
                                   );
@@ -539,7 +543,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                 }
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                       content: Text(
                                           'Cannot undo: No previous stage available')),
                                 );
@@ -560,12 +564,11 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: widget.leadItem.contactNumber.isNotEmpty
-                        ? () =>
-                            _launchURL('tel:${widget.leadItem.contactNumber}')
+                        ? () => _launchURL('tel:${widget.leadItem.contactNumber}')
                         : null,
                     child: Row(
                       children: [
@@ -575,7 +578,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 100,
+                          width: 90,
                           child: Text(
                             widget.leadItem.contactNumber.isNotEmpty
                                 ? widget.leadItem.contactNumber
@@ -592,11 +595,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: widget.leadItem.emailAddress.isNotEmpty
-                        ? () =>
-                            _launchURL('mailto:${widget.leadItem.emailAddress}')
+                        ? () => _launchURL('mailto:${widget.leadItem.emailAddress}')
                         : null,
                     child: Row(
                       children: [
@@ -606,7 +607,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 160,
+                          width: 140,
                           child: Text(
                             widget.leadItem.emailAddress.isNotEmpty
                                 ? widget.leadItem.emailAddress

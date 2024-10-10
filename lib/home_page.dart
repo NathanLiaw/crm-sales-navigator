@@ -2161,24 +2161,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Text(
-                  //   leadItem.customerName.length > 20
-                  //       ? '${leadItem.customerName.substring(0, 20)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //       fontWeight: FontWeight.bold, fontSize: 18),
-                  //   maxLines: 2,
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
-                  SizedBox(
-                    width: 200,
+                  Flexible(
                     child: Text(
                       leadItem.customerName,
                       style: GoogleFonts.inter(
                         textStyle: const TextStyle(letterSpacing: -0.8),
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: const Color.fromARGB(255, 25, 23, 49),
                       ),
@@ -2186,65 +2176,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
                   Container(
                     margin: const EdgeInsets.only(left: 18),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(
-                      leadItem.formattedAmount,
-                      style: const TextStyle(
-                        color: Color(0xff008A64),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        leadItem.formattedAmount,
+                        style: const TextStyle(
+                          color: Color(0xff008A64),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ),
-                  // const Spacer(),
-                  // DropdownButtonHideUnderline(
-                  //   child: DropdownButton2<String>(
-                  //     isExpanded: true,
-                  //     hint: const Text(
-                  //       'Opportunities',
-                  //       style: TextStyle(fontSize: 12, color: Colors.black),
-                  //     ),
-                  //     items: tabbarNames
-                  //         .skip(1)
-                  //         .map((item) => DropdownMenuItem<String>(
-                  //               value: item,
-                  //               child: Text(
-                  //                 item,
-                  //                 style: const TextStyle(fontSize: 12),
-                  //               ),
-                  //             ))
-                  //         .toList(),
-                  //     value: leadItem.selectedValue,
-                  //     onChanged: (String? value) {
-                  //       if (value == 'Engagement') {
-                  //         _moveToEngagement(leadItem);
-                  //       } else if (value == 'Negotiation') {
-                  //         _moveToNegotiation(leadItem);
-                  //       } else if (value == 'Closed') {
-                  //         _moveToCreateTaskPage(context, leadItem);
-                  //       } else if (value == 'Order Processing') {
-                  //         _navigateToCreateTaskPage(context, leadItem, false);
-                  //       }
-                  //     },
-                  //     buttonStyleData: const ButtonStyleData(
-                  //       padding: EdgeInsets.symmetric(horizontal: 16),
-                  //       height: 32,
-                  //       width: 140,
-                  //       decoration: BoxDecoration(color: Colors.white),
-                  //     ),
-                  //     menuItemStyleData: const MenuItemStyleData(
-                  //       height: 30,
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
               const SizedBox(height: 12),

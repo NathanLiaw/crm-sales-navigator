@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_Insights.dart';
 import 'package:sales_navigator/home_page.dart';
@@ -160,13 +161,16 @@ class OrderProcessingLeadItem extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: 250,
+                  Flexible(
                     child: Text(
                       leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                      maxLines: 3,
+                      style: GoogleFonts.inter(
+                        textStyle: const TextStyle(letterSpacing: -0.8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -194,7 +198,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: leadItem.contactNumber.isNotEmpty
@@ -208,14 +212,14 @@ class OrderProcessingLeadItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 100,
+                          width: 90,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
                                 ? leadItem.contactNumber
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontSize: 12,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -225,7 +229,6 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
                         ? () => _launchURL('mailto:${leadItem.emailAddress}')
@@ -238,14 +241,14 @@ class OrderProcessingLeadItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 150,
+                          width: 140,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty
                                 ? leadItem.emailAddress
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontSize: 12,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,

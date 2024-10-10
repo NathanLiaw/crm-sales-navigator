@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:sales_navigator/customer_insights.dart';
@@ -55,7 +56,7 @@ class EngagementLeadItem extends StatelessWidget {
         );
       },
       child: Container(
-        height: 210,
+        height: 220,
         decoration: BoxDecoration(
             image: const DecorationImage(
               image: ResizeImage(AssetImage('asset/bttm_start.png'),
@@ -80,7 +81,7 @@ class EngagementLeadItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Text(
                   //   leadItem.customerName.length > 10
@@ -92,37 +93,40 @@ class EngagementLeadItem extends StatelessWidget {
                   //   ),
                   //   overflow: TextOverflow.ellipsis,
                   // ),
-                  SizedBox(
-                    width: 170,
+                  Flexible(
                     child: Text(
                       leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
+                      style: GoogleFonts.inter(
+                        textStyle: const TextStyle(letterSpacing: -0.8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
                   Row(
                     children: [
                       Container(
-                        margin: const EdgeInsets.only(left: 20),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                        margin: const EdgeInsets.only(left: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: const Color.fromARGB(71, 148, 255, 223),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(
-                          'RM$formattedAmount',
-                          style: const TextStyle(
-                            color: Color(0xff008A64),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            leadItem.formattedAmount,
+                            style: const TextStyle(
+                              color: Color(0xff008A64),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
                       PopupMenuButton<String>(
                         onSelected: (String value) async {
                           if (value == 'delete') {
@@ -201,13 +205,13 @@ class EngagementLeadItem extends StatelessWidget {
                                   await onUndoLead(
                                       leadItem, leadItem.previousStage!);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                         content: Text(
                                             'Successfully undone Engagement lead')),
                                   );
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                         content: Text(
                                             'Cannot undo: No previous stage available')),
                                   );
@@ -237,7 +241,7 @@ class EngagementLeadItem extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: leadItem.contactNumber.isNotEmpty
@@ -251,7 +255,7 @@ class EngagementLeadItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 100,
+                          width: 90,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
                                 ? leadItem.contactNumber
@@ -268,7 +272,6 @@ class EngagementLeadItem extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
                         ? () => _launchURL('mailto:${leadItem.emailAddress}')
@@ -281,7 +284,7 @@ class EngagementLeadItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 160,
+                          width: 140,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty
                                 ? leadItem.emailAddress

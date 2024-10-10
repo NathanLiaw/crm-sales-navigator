@@ -65,10 +65,12 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             _customerFound = true;
           });
 
-          // If a customer is found, initialize other data acquisition
+          // Fetch recommendations first
+          fetchRecommendations(customerId);
+
+          // If fetchRecommendations is complete, initialize other data acquisition
           salesDataFuture = fetchSalesDataByCustomer(customerId);
           productsFuture = fetchProductsByCustomer(customerId);
-          fetchRecommendations(customerId);
           getRecency();
           getTotalSpendGroup();
           fetchPredictedVisitDay();
@@ -309,21 +311,31 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     }
   }
 
-  void fetchRecommendations(int customerId) async {
-    // Fetch keywords first
-    List<String> keywords = await fetchKeywords(customerId);
+  Future<bool> fetchRecommendations(int customerId) async {
+    try {
+      // Fetch keywords first
+      List<String> keywords = await fetchKeywords(customerId);
 
-    // Loop through each keyword to fetch recommendations
-    for (String keyword in keywords) {
-      // Fetch recommendations for the current keyword
-      List<Map<String, dynamic>> recommendations =
-          await getProductRecommendations(keyword);
+      // Loop through each keyword to fetch recommendations
+      for (String keyword in keywords) {
+        // Fetch recommendations for the current keyword
+        List<Map<String, dynamic>> recommendations =
+        await getProductRecommendations(keyword);
 
-      // Add fetched recommendations to the main productRecommendations list
-      productRecommendations.addAll(recommendations);
+        // Add fetched recommendations to the main productRecommendations list
+        productRecommendations.addAll(recommendations);
+      }
+
+      // Complete successfully
+      _isLoadedCompleter.complete(true);
+      return true;  // Indicate success
+    } catch (e) {
+      developer.log('Error fetching recommendations: $e', error: e);
+
+      // In case of any error, complete the completer and return false
+      _isLoadedCompleter.completeError(e);
+      return false;  // Indicate failure
     }
-
-    _isLoadedCompleter.complete(true);
   }
 
   Future<void> fetchCustomerSegmentation() async {
@@ -578,7 +590,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
           } else if (snapshot.hasError ||
               !_customerFound ||
               snapshot.data == null) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -589,7 +601,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'Customer not found.\nPlease check the customer name \nand try again.',
+                    'This customer is not registered.\nPlease contact the admin.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
@@ -606,7 +618,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
               future: Future.wait([salesDataFuture, productsFuture, isLoaded]),
               builder: (context, salesSnapshot) {
                 if (salesSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16), // Add space between the indicator and text
+                        Text('Fetching Customer Details'),
+                      ],
+                    ),
+                  );
                 } else if (salesSnapshot.hasError) {
                   return Center(child: Text('Error: ${salesSnapshot.error}'));
                 } else {
@@ -1083,7 +1104,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                   ),
                                                 ),
                                                 const SizedBox(
-                                                  width: 14,
+                                                  width: 10,
                                                 ),
                                                 Icon(
                                                   _getSpendGroupIcon(

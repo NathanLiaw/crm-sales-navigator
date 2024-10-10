@@ -43,11 +43,19 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(height: 90.0),
-              Text(
-                'Thank you for your order.',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+              Expanded( // Ensures it takes available space within the parent
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown, // Scales text to fit within its parent
+                    child: Text(
+                      'Thank you for your order.',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -134,7 +142,8 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                   },
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.all<Color>(
-                        const Color(0xffffffff)),
+                      const Color(0xffffffff),
+                    ),
                     shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
@@ -144,19 +153,19 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                         ),
                       ),
                     ),
-                    minimumSize: WidgetStateProperty.all<Size>(
-                      const Size(120.0, 40.0),
-                    ),
-                    maximumSize: WidgetStateProperty.all<Size>(
-                      const Size(150.0, 40.0),
+                    padding: WidgetStateProperty.all<EdgeInsets>(
+                      const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     ),
                   ),
-                  child: const Text(
-                    'View Order',
-                    style: TextStyle(
-                      color: Color(0xff0175FF),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown, // Scales down text to prevent overflow
+                    child: Text(
+                      'View Order',
+                      style: TextStyle(
+                        color: Color(0xff0175FF),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
