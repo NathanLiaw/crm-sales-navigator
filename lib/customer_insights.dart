@@ -26,6 +26,8 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   late Future<Customer.Customer?> customerFuture;
   late Future<List<Map<String, dynamic>>> salesDataFuture = Future.value([]);
   late Future<List<Map<String, dynamic>>> productsFuture = Future.value([]);
+  late Future<List<Map<String, dynamic>>> recommendationsFuture =
+      Future.value([]);
   late int customerId = 0;
   late String customerUsername = '';
   double latestSpending = 0.00;
@@ -65,12 +67,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             _customerFound = true;
           });
 
-          // Fetch recommendations first
-          fetchRecommendations(customerId);
-
-          // If fetchRecommendations is complete, initialize other data acquisition
+          // Initialize all data fetching futures
           salesDataFuture = fetchSalesDataByCustomer(customerId);
           productsFuture = fetchProductsByCustomer(customerId);
+          recommendationsFuture = fetchRecommendations(customerId);
           getRecency();
           getTotalSpendGroup();
           fetchPredictedVisitDay();
@@ -92,13 +92,13 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
           setState(() {
             _customerFound = false;
           });
-          throw Exception(jsonResponse['message'] ?? 'Customer not found');
+          return null;
         }
       } else {
         setState(() {
           _customerFound = false;
         });
-        throw Exception('Failed to load customer data: ${response.statusCode}');
+        return null;
       }
     } catch (e) {
       developer.log('Error fetching customer: $e', error: e);
@@ -311,30 +311,22 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     }
   }
 
-  Future<bool> fetchRecommendations(int customerId) async {
+  Future<List<Map<String, dynamic>>> fetchRecommendations(
+      int customerId) async {
     try {
-      // Fetch keywords first
       List<String> keywords = await fetchKeywords(customerId);
+      List<Map<String, dynamic>> recommendations = [];
 
-      // Loop through each keyword to fetch recommendations
       for (String keyword in keywords) {
-        // Fetch recommendations for the current keyword
-        List<Map<String, dynamic>> recommendations =
-        await getProductRecommendations(keyword);
-
-        // Add fetched recommendations to the main productRecommendations list
-        productRecommendations.addAll(recommendations);
+        List<Map<String, dynamic>> keywordRecommendations =
+            await getProductRecommendations(keyword);
+        recommendations.addAll(keywordRecommendations);
       }
 
-      // Complete successfully
-      _isLoadedCompleter.complete(true);
-      return true;  // Indicate success
+      return recommendations;
     } catch (e) {
       developer.log('Error fetching recommendations: $e', error: e);
-
-      // In case of any error, complete the completer and return false
-      _isLoadedCompleter.completeError(e);
-      return false;  // Indicate failure
+      return [];
     }
   }
 
@@ -615,15 +607,23 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
             // Customer data found, continue loading additional data
             Customer.Customer customer = snapshot.data!;
             return FutureBuilder<List<dynamic>>(
-              future: Future.wait([salesDataFuture, productsFuture, isLoaded]),
+              future: Future.wait([
+                salesDataFuture,
+                productsFuture,
+                recommendationsFuture,
+                isLoaded
+              ]),
               builder: (context, salesSnapshot) {
                 if (salesSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+                      mainAxisAlignment:
+                          MainAxisAlignment.center, // Center vertically
                       children: [
                         CircularProgressIndicator(),
-                        SizedBox(height: 16), // Add space between the indicator and text
+                        SizedBox(
+                            height:
+                                16), // Add space between the indicator and text
                         Text('Fetching Customer Details'),
                       ],
                     ),
@@ -636,6 +636,8 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                       salesSnapshot.data![0] as List<Map<String, dynamic>>;
                   List<Map<String, dynamic>> products =
                       salesSnapshot.data![1] as List<Map<String, dynamic>>;
+                  List<Map<String, dynamic>> recommendations =
+                      salesSnapshot.data![2] as List<Map<String, dynamic>>;
 
                   // Extract total spent
                   String totalSpent = salesData.isNotEmpty
@@ -1562,19 +1564,17 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 const SizedBox(height: 10.0),
                                 SizedBox(
                                   height: 200.0,
-                                  child: productRecommendations.isEmpty
+                                  child: recommendations.isEmpty
                                       ? const Text('No purchases yet')
                                       : ListView.builder(
                                           scrollDirection: Axis.horizontal,
                                           // Use min to limit the number of displayed products to 20
-                                          itemCount:
-                                              productRecommendations.length > 50
-                                                  ? 50
-                                                  : productRecommendations
-                                                      .length,
+                                          itemCount: recommendations.length > 50
+                                              ? 50
+                                              : recommendations.length,
                                           itemBuilder: (context, index) {
                                             var product =
-                                                productRecommendations[index];
+                                                recommendations[index];
                                             final productId =
                                                 product['product_id'] ?? 0;
                                             final localPath =
