@@ -1,283 +1,209 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
-import 'db_connection.dart';
-import 'cart.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:sales_navigator/api/firebase_api.dart';
+import 'package:sales_navigator/background_tasks.dart';
+import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/firebase_options.dart';
+import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/notification_page.dart';
+import 'package:sales_navigator/login_page.dart';
+import 'package:sales_navigator/profile_page.dart';
+import 'package:sales_navigator/sales_order_page.dart';
+import 'package:sales_navigator/starting_page.dart';
+import 'package:workmanager/workmanager.dart';
+import 'db_sqlite.dart';
+import 'products_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:developer' as developer;
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/model/cart_model.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-void main() {
-  runApp(MaterialApp(
-    title: 'Sales Navigator',
-    home: MainApp(),
-  ));
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseApi().initNotifications();
+
+  // Initialize local notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@drawable/sales_navigator');
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Check and request the SCHEDULE_EXACT_ALARM permission for Android 14+
+  if (await shouldRequestExactAlarmPermission()) {
+    await requestExactAlarmPermission();
+  }
+
+  // // Initialize Workmanager
+  // await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+
+  // // Register periodic tasks
+  // await Workmanager().registerPeriodicTask(
+  //   "1",
+  //   "fetchSalesOrderStatus",
+  //   frequency: const Duration(minutes: 15),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
+
+  // await Workmanager().registerPeriodicTask(
+  //   "2",
+  //   "checkTaskDueDates",
+  //   frequency: const Duration(days: 1),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
+
+  // await Workmanager().registerPeriodicTask(
+  //   "3",
+  //   "checkNewSalesLeads",
+  //   frequency: const Duration(days: 1),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.connected,
+  //   ),
+  // );
+
+  // Handling notifications received when the app is completely closed
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    if (message != null) {
+      Future.delayed(Duration.zero, () {
+        navigatorKey.currentState?.pushNamed(
+          NotificationsPage.route,
+          arguments: message,
+        );
+      });
+    }
+  });
+
+  // Handling notifications received when the app is open
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    developer.log("onMessageOpenedApp: $message");
+    Future.delayed(Duration.zero, () {
+      navigatorKey.currentState?.pushNamed(
+        NotificationsPage.route,
+        arguments: message,
+      );
+    });
+  });
+
+  // Initialize the SQLite database
+  await DatabaseHelper.database;
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartModel()),
+        // Add other providers here
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MainApp extends StatefulWidget {
-  const MainApp({Key? key}) : super(key: key);
-
-  @override
-  _MainAppState createState() => _MainAppState();
+// Permission handling functions for Android 14+
+Future<bool> shouldRequestExactAlarmPermission() async {
+  if (await Permission.scheduleExactAlarm.isDenied) {
+    return true;
+  }
+  return false;
 }
 
-class _MainAppState extends State<MainApp> {
-  List<Map<String, String>> selectedCompanies = [];
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Customer Details',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          leading: GestureDetector(
-            onTap: () {
-              Navigator.of(context).pop();
-            },
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                SizedBox(width: 10),
-                Text(
-                  'Back',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          title: const Text(
-            'Customer Details',
-            style: TextStyle(color: Color(0xffF8F9FA)),
-          ),
-          backgroundColor: const Color(0xff004c87),
-          centerTitle: true,
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: SelectableCardList(
-                onSelectionChanged: (companies) {
-                  setState(() {
-                    selectedCompanies = companies;
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            print("Selected Companies: $selectedCompanies");
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CartPage(companies: selectedCompanies),
-              ),
-            );
-          },
-          child: Icon(Icons.shopping_cart),
-        ),
-      ),
-    );
+Future<void> requestExactAlarmPermission() async {
+  if (await Permission.scheduleExactAlarm.request().isGranted) {
+    developer.log('SCHEDULE_EXACT_ALARM permission granted');
+  } else {
+    developer.log('SCHEDULE_EXACT_ALARM permission denied');
   }
 }
 
-class SelectableCardList extends StatefulWidget {
-  final ValueChanged<List<Map<String, String>>>? onSelectionChanged;
-
-  const SelectableCardList({Key? key, this.onSelectionChanged}) : super(key: key);
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
   @override
-  _SelectableCardListState createState() => _SelectableCardListState();
+  State<MyApp> createState() => _MyAppState();
 }
 
-class _SelectableCardListState extends State<SelectableCardList> {
-  List<Map<String, String>> companies = [];
-  int? selectedIndex;
-  List<Map<String, String>> selectedCompanies = [];
+class _MyAppState extends State<MyApp> {
+  bool isOffline = false;
 
   @override
   void initState() {
     super.initState();
-    fetchCustomers().then((value) {
-      setState(() {
-        companies = value;
-      });
+    _checkConnectivity();
+  }
+
+  void _checkConnectivity() async {
+    final ConnectivityResult result =
+        (await Connectivity().checkConnectivity()) as ConnectivityResult;
+    setState(() {
+      isOffline = result == ConnectivityResult.none;
     });
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: companies.asMap().entries.map((entry) {
-        final index = entry.key;
-        final company = entry.value;
-        return GestureDetector(
-         onTap: () {
+    // Listen for connectivity changes
+    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
           setState(() {
-            // Toggle the selection state
-            selectedIndex = selectedIndex == index ? null : index;
-            
-            if (selectedIndex != null) {
-              if (selectedIndex == index) {
-                // Add the selected company to the list if not already present
-                if (!selectedCompanies.contains(company)) {
-                  selectedCompanies.add(company);
-                  print("Company added: ${company['name']}");
-                }
-              } else {
-                // Remove the previously selected company from the list
-                // We need to find the company associated with the selectedIndex
-                if (selectedIndex! < selectedCompanies.length) {
-                  Map<String, String> deselectedCompany = selectedCompanies[selectedIndex!];
-                  selectedCompanies.remove(deselectedCompany);
-                  print("Company removed: ${deselectedCompany['name']}");
-                }
-              }
-            }
-            // Call the callback with the updated selected companies list
-            widget.onSelectionChanged?.call(selectedCompanies);
-        });
-      },  
-          child: Card(
-            color: selectedIndex == index ? Color(0xfff8f9fa) : Color(0xfff8f9fa),
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      RoundRadioButton(
-                        selected: selectedIndex == index,
-                      ),
-                      SizedBox(width: 8.0),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              company['name'] ?? '',
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xff191731),
-                              ),
-                            ),
-                            SizedBox(height: 4.0),
-                            Text(
-                              company['address'] ?? '',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: Color(0xff191731),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 32.0),
-                          child: Text(
-                            company['phone'] ?? '',
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff191731),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          company['email'] ?? '',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff191731),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
+            isOffline = result == ConnectivityResult.none;
+          });
+        } as void Function(List<ConnectivityResult> event)?);
   }
-}
-
-class RoundRadioButton extends StatelessWidget {
-  final bool selected;
-  final double size;
-
-  const RoundRadioButton({
-    required this.selected,
-    this.size = 16.0,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size + 8.0,
-      height: size + 8.0,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Color(0xff004c87),
-          width: 1.0,
-        ),
-        color: selected ? Colors.white : Colors.transparent,
-      ),
-      child: selected
-          ? Center(
-              child: Container(
-                width: size - 3.0,
-                height: size - 3.0,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xff004c87),
-                ),
-              ),
-            )
-          : null,
+    final cartModel = Provider.of<CartModel>(context, listen: false);
+    cartModel.initializeCartCount();
+
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      home: isOffline ? NoInternetScreen() : const StartingPage(),
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/sales': (context) => const SalesOrderPage(),
+        '/product': (context) => const ProductsScreen(),
+        '/cart': (context) => const CartPage(),
+        '/login': (context) => LoginPage(),
+        '/profile': (context) => const ProfilePage(),
+        NotificationsPage.route: (context) => const NotificationsPage(),
+      },
     );
   }
 }
 
-Future<List<Map<String, String>>> fetchCustomers() async {
-  List<Map<String, String>> fetchedCompanies = [];
-  try {
-    MySqlConnection conn = await connectToDatabase();
-    Results results = await conn.query(
-        'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE status=1');
-    await Future.delayed(Duration(seconds: 2));
-    await conn.close();
-
-    for (var row in results) {
-      fetchedCompanies.add({
-        'name': row[0] as String,
-        'address': row[1] as String,
-        'phone': row[2] as String,
-        'email': row[3] as String,
-      });
-    }
-  } catch (e) {
-    print('Error fetching customers: $e');
+class NoInternetScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("No Internet Connection"),
+      ),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off, size: 100, color: Colors.grey),
+            SizedBox(height: 20),
+            Text(
+              'No internet connection available.',
+              style: TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Please check your connection and try again.',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
-  return fetchedCompanies;
 }
