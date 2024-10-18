@@ -502,16 +502,25 @@ class _CustomerReportState extends State<CustomerReport> {
                                   Text(
                                     '${customer.serialNumber}. ',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
-                                      customer.companyName,
+                                      customer
+                                          .companyName, // Here is the customer company name
                                       style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      softWrap:
+                                          true, // Enables wrapping of long text
+                                      maxLines:
+                                          2, // Limits to 2 lines before truncating
+                                      overflow: TextOverflow
+                                          .ellipsis, // Adds "..." if text is too long
                                     ),
                                   ),
                                 ],
@@ -524,17 +533,19 @@ class _CustomerReportState extends State<CustomerReport> {
                                     Text(
                                       '     Total Sales: ${customer.totalSalesDisplay}',
                                       style: const TextStyle(
-                                          color: Color(0xFF0175FF),
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w500),
+                                        color: Color(0xFF0175FF),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       '      Total Quantity: ${customer.totalQuantityDisplay}',
                                       style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400),
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                      ),
                                     ),
                                   ],
                                 ),

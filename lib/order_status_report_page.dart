@@ -288,8 +288,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
   Future<void> _showItemSelectionDialog(
       List<Map<String, dynamic>> items) async {
-    List<bool> checkedItems = List<bool>.filled(items.length, false);
-    bool selectAll = false;
+    List<bool> checkedItems = List<bool>.filled(items.length, true);
+    bool selectAll = true;
 
     await showDialog(
       context: context,
@@ -1207,11 +1207,22 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.copy),
+                            TextButton.icon(
                               onPressed: () async {
                                 await _showItemSelectionDialog(items);
                               },
+                              icon:
+                                  const Icon(Icons.shopping_cart), // Cart icon
+                              label: const Text('Copy to Cart'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: const Color(0xff0175FF),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 8.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
                             ),
                           ],
                         ),
