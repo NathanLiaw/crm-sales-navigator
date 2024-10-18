@@ -1207,21 +1207,32 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            TextButton.icon(
+                            ElevatedButton.icon(
                               onPressed: () async {
                                 await _showItemSelectionDialog(items);
                               },
-                              icon:
-                                  const Icon(Icons.shopping_cart), // Cart icon
-                              label: const Text('Copy to Cart'),
-                              style: TextButton.styleFrom(
+                              icon: const Icon(
+                                Icons.shopping_cart,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Copy Order',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
                                 foregroundColor: Colors.white,
                                 backgroundColor: const Color(0xff0175FF),
+                                elevation: 6,
+                                shadowColor: Colors.grey.withOpacity(0.5),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0, vertical: 8.0),
+                                    horizontal: 12.0, vertical: 6.0),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
+                                minimumSize: const Size(98, 32),
                               ),
                             ),
                           ],
