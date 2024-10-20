@@ -37,6 +37,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   List<Map<String, dynamic>> tasks = [];
   String _sortBy = 'creation_date'; // 新添加的状态变量
   String _sortOrder = 'descending';
+  bool _isTasksExpanded = false; // New state variable for expansion
 
   @override
   void initState() {
@@ -568,7 +569,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 children: [
                   GestureDetector(
                     onTap: widget.leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${widget.leadItem.contactNumber}')
+                        ? () =>
+                            _launchURL('tel:${widget.leadItem.contactNumber}')
                         : null,
                     child: Row(
                       children: [
@@ -597,7 +599,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                   ),
                   GestureDetector(
                     onTap: widget.leadItem.emailAddress.isNotEmpty
-                        ? () => _launchURL('mailto:${widget.leadItem.emailAddress}')
+                        ? () =>
+                            _launchURL('mailto:${widget.leadItem.emailAddress}')
                         : null,
                     child: Row(
                       children: [
@@ -632,91 +635,224 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Tasks',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _isTasksExpanded = !_isTasksExpanded;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F8FF), // 浅蓝色背景
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF0175FF), // 蓝色边框
+                            width: 1,
                           ),
                         ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: _showSortOptions,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.sort, color: Color(0xff0069BA)),
-                              const SizedBox(width: 4),
-                              Text(_getSortButtonText(),
-                                  style: const TextStyle(
-                                      color: Color(0xff0069BA))),
-                            ],
-                          ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0175FF),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_month_outlined,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Tasks (${tasks.length})',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            if (!_isTasksExpanded)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE6EFFF),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Click to expand',
+                                  style: TextStyle(
+                                    color: Color(0xFF0175FF),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              _isTasksExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              color: const Color(0xFF0175FF),
+                              size: 24,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color:
-                            Colors.white, // Background color of the container
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.black.withOpacity(0.2), // Shadow color
-                            offset: const Offset(0, 1), // Vertical offset
-                            blurRadius: 4, // Blur radius of the shadow
-                            spreadRadius: 1, // Spread radius of the shadow
+                    if (_isTasksExpanded) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5F8FF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF0175FF),
+                                width: 1,
+                              ),
+                            ),
+                            child: InkWell(
+                              onTap: _showSortOptions,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.sort,
+                                    color: Color(0xFF0175FF),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _getSortButtonText(),
+                                    style: const TextStyle(
+                                      color: Color(0xFF0175FF),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      child: SizedBox(
-                        height: 220,
-                        child: Scrollbar(
-                          // Add Scrollbar here
-                          child: ListView.builder(
-                            itemCount: tasks.length,
-                            itemBuilder: (context, index) {
-                              final task = tasks[index];
-                              return Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              offset: const Offset(0, 2),
+                              blurRadius: 6,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            height: 220,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: tasks.length,
+                              separatorBuilder: (context, index) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final task = tasks[index];
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
                                   child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            task['title'],
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              task['title'],
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Color(0xFF2C3E50),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(task['description']),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Due Date: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}',
-                                          ),
-                                        ],
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              task['description'],
+                                              style: const TextStyle(
+                                                color: Color(0xFF7F8C8D),
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF5F8FF),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.calendar_today,
+                                                    size: 14,
+                                                    color: Color(0xFF0175FF),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Due: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF0175FF),
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      const Spacer(),
                                       Column(
                                         children: [
                                           IconButton(
-                                            icon: const Icon(Icons.edit),
+                                            icon: const Icon(
+                                              Icons.edit_outlined,
+                                              color: Color(0xFF0175FF),
+                                            ),
                                             onPressed: () =>
                                                 _navigateToEditTaskPage(
                                                     context, task),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red),
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Color(0xFFFF4444),
+                                            ),
                                             onPressed: () =>
                                                 _showDeleteConfirmationDialog(
                                                     task['id']),
@@ -725,13 +861,13 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                       ),
                                     ],
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                    )
+                    ],
                   ],
                 )
               else

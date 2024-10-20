@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
+import 'package:sales_navigator/customer.dart';
 import 'package:sales_navigator/customer_details_page.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
@@ -29,6 +30,58 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
 
   final _formKey = GlobalKey<FormState>();
 
+  List<Customer> customers = [];
+  bool isLoading = false;
+
+  Future<void> _fetchCustomers() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final String apiUrl =
+        'https://haluansama.com/crm-sales/api/customer/get_customers.php?limit=1000&offset=0';
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> customerList = responseData['customers'] ?? [];
+
+        setState(() {
+          customers = customerList
+              .map((item) => Customer(
+                    id: item['id'] is int
+                        ? item['id']
+                        : int.tryParse(item['id'].toString()) ?? 0,
+                    companyName: item['company_name'] as String? ?? '',
+                    addressLine1: item['address_line_1'] as String? ?? '',
+                    addressLine2: item['address_line_2'] as String? ?? '',
+                    contactNumber: item['contact_number'] as String? ?? '',
+                    email: item['email'] as String? ?? '',
+                    customerRate: item['customer_rate'] as String? ?? '',
+                    discountRate: item['discount_rate'] is int
+                        ? item['discount_rate']
+                        : int.tryParse(item['discount_rate'].toString()) ?? 0,
+                  ))
+              .toList();
+        });
+      }
+    } catch (e) {
+      developer.log('Error fetching customers: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCustomers();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,9 +93,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
@@ -68,30 +119,122 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                   ],
                 ),
-                TextFormField(
-                  controller: customerNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter customer/company name',
-                    prefixIcon: Icon(
-                      Icons.person,
-                      color: Color(0xff0175FF),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter customer/company name';
+                const SizedBox(height: 16),
+                // Auto fill customer details widget
+                RawAutocomplete<Customer>(
+                  textEditingController: customerNameController,
+                  focusNode: FocusNode(),
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                    if (textEditingValue.text.isEmpty) {
+                      return const Iterable<Customer>.empty();
                     }
-                    if (value.length > 100) {
-                      return 'Customer/company name cannot exceed 100 characters';
+                    if (customers.isEmpty) {
+                      await _fetchCustomers();
                     }
-                    return null;
+                    return customers.where((customer) {
+                      return customer.companyName
+                          .toLowerCase()
+                          .contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  displayStringForOption: (Customer option) =>
+                      option.companyName,
+                  fieldViewBuilder: (BuildContext context,
+                      TextEditingController textEditingController,
+                      FocusNode focusNode,
+                      VoidCallback onFieldSubmitted) {
+                    return TextFormField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Enter or select customer/company name',
+                        prefixIcon:
+                            Icon(Icons.person, color: Color(0xff0175FF)),
+                        hintText: 'Type to search existing customers',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        // When the input changes, a new search can be triggered if required
+                        if (customers.isEmpty) {
+                          _fetchCustomers();
+                        }
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter customer/company name';
+                        }
+                        if (value.length > 100) {
+                          return 'Customer/company name cannot exceed 100 characters';
+                        }
+                        return null;
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (BuildContext context,
+                      AutocompleteOnSelected<Customer> onSelected,
+                      Iterable<Customer> options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                              maxHeight: 200, maxWidth: 400),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(8.0),
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final Customer option = options.elementAt(index);
+                              return InkWell(
+                                onTap: () {
+                                  onSelected(option);
+                                  // 填充其他字段
+                                  setState(() {
+                                    contactNumberController.text =
+                                        option.contactNumber;
+                                    emailAddressController.text = option.email;
+                                    addressController.text =
+                                        option.addressLine1;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        option.companyName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        option.email,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
                   },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: contactNumberController,
                   decoration: const InputDecoration(
                     labelText: 'Enter contact number',
                     prefixIcon: Icon(Icons.phone, color: Color(0xff0175FF)),
+                    border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
                   inputFormatters: <TextInputFormatter>[
@@ -107,11 +250,13 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: emailAddressController,
                   decoration: const InputDecoration(
                     labelText: 'Enter email address',
                     prefixIcon: Icon(Icons.email, color: Color(0xff0175FF)),
+                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -123,12 +268,14 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: addressController,
                   decoration: const InputDecoration(
                     labelText: 'Enter address',
                     prefixIcon:
                         Icon(Icons.location_on, color: Color(0xff0175FF)),
+                    border: OutlineInputBorder(),
                   ),
                   maxLength: 200,
                   maxLines: 2,
@@ -143,15 +290,17 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24.0),
+                const SizedBox(height: 24),
                 const Text(
                   'Others',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: descriptionController,
                   decoration: const InputDecoration(
                     labelText: 'Description',
+                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value != null && value.isEmpty) {
@@ -163,33 +312,43 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        controller: amountController,
-                        decoration: const InputDecoration(
-                          labelText: 'Predicted sales',
-                          hintText: 'RM',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value != null && value.isEmpty) {
-                            return 'Please enter predicted sales';
-                          }
-                          if (value != null && double.tryParse(value) == null) {
-                            return 'Please enter a valid number';
-                          }
-                          if (value != null && value.length > 50) {
-                            return 'Predicted sales cannot exceed 50 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: amountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Predicted sales',
+                    hintText: 'RM',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  // Only positive numbers and decimal points are allowed
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                   ],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter predicted sales';
+                    }
+                    final double? amount = double.tryParse(value);
+                    if (amount == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (amount < 0) {
+                      return 'Predicted sales cannot be negative';
+                    }
+                    if (value.length > 50) {
+                      return 'Predicted sales cannot exceed 50 characters';
+                    }
+                    if (value.contains('.')) {
+                      String decimals = value.split('.')[1];
+                      if (decimals.length > 2) {
+                        return 'Please enter at most 2 decimal places';
+                      }
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 24.0),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -215,16 +374,6 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        // if (_formKey.currentState!.validate()) {
-                        //   // Call the onCreateLead function with entered values
-                        //   widget.onCreateLead(
-                        //     customerNameController.text,
-                        //     descriptionController.text,
-                        //     amountController.text,
-                        //   );
-                        //   _saveLeadToDatabase();
-                        //   Navigator.pop(context);
-                        // }
                         if (_formKey.currentState!.validate()) {
                           _saveLeadToDatabase();
                         }

@@ -24,17 +24,20 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
   }
 
   Future<List<Map<String, dynamic>>> fetchSalesOrders() async {
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/utility_function/get_sales_orders.php';
+    const String apiUrl =
+        'https://haluansama.com/crm-sales/api/utility_function/get_sales_orders.php';
 
     try {
-      final response = await http.get(Uri.parse('$apiUrl?customer_name=${Uri.encodeComponent(widget.customerName)}'));
+      final response = await http.get(Uri.parse(
+          '$apiUrl?customer_name=${Uri.encodeComponent(widget.customerName)}'));
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
         if (jsonResponse['status'] == 'success') {
           return List<Map<String, dynamic>>.from(jsonResponse['data']);
         } else {
-          developer.log('Error fetching sales orders: ${jsonResponse['message']}');
+          developer
+              .log('Error fetching sales orders: ${jsonResponse['message']}');
           return [];
         }
       } else {
@@ -133,11 +136,13 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
           Expanded(
             child: ListView.separated(
               itemCount: salesOrders.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12.0), // Add space between items
+              separatorBuilder: (context, index) =>
+                  const SizedBox(height: 12.0), // Add space between items
               itemBuilder: (context, index) {
                 final order = salesOrders[index];
                 final cartID = order['id'];
-                final formattedOrderID = 'SO${cartID.toString().padLeft(7, '0')}';
+                final formattedOrderID =
+                    'SO${cartID.toString().padLeft(7, '0')}';
                 final customer = order['customer_company_name'];
                 final createdDate = order['created'];
 
@@ -162,7 +167,8 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                     elevation: 5.0, // Increased elevation for better depth
                     color: const Color(0xffcde5f2),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                      borderRadius:
+                          BorderRadius.circular(12), // Rounded corners
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0), // Increased padding
@@ -182,7 +188,8 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 8.0), // Space between elements
+                              const SizedBox(
+                                  width: 8.0), // Space between elements
                               const Text(
                                 'View Details',
                                 style: TextStyle(
@@ -218,9 +225,11 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xff0069BA),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8), // Rounded button
+                                borderRadius:
+                                    BorderRadius.circular(8), // Rounded button
                               ),
-                              minimumSize: const Size(double.infinity, 40), // Full width button
+                              minimumSize: const Size(
+                                  double.infinity, 40), // Full width button
                             ),
                             child: const Text(
                               'Select',
@@ -245,7 +254,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
       return '';
     }
     DateTime parsedDate = DateTime.parse(dateString);
-    DateFormat formatter = DateFormat('dd MMM yyyy'); // More readable date format
+    DateFormat formatter = DateFormat('dd MMM yyyy hh:mm a');
     return formatter.format(parsedDate);
   }
 }
