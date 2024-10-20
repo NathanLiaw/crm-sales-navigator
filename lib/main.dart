@@ -7,6 +7,7 @@ import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/firebase_options.dart';
 import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/model/notification_state.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:sales_navigator/login_page.dart';
 import 'package:sales_navigator/profile_page.dart';
@@ -103,6 +104,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartModel()),
+        ChangeNotifierProvider(create: (_) => NotificationState()),
         // Add other providers here
       ],
       child: const MyApp(),

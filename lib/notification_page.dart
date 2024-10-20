@@ -16,6 +16,24 @@ class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key, this.message});
   static const route = '/notification-page';
 
+  static Future<int> getUnreadCount(int salesmanId) async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/notification_page/get_unread_count.php?salesmanId=$salesmanId');
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          return jsonData['unread_count'];
+        }
+      }
+      return 0;
+    } catch (e) {
+      developer.log('Error getting unread count: $e');
+      return 0;
+    }
+  }
+
   @override
   _NotificationsPageState createState() => _NotificationsPageState();
 }
@@ -123,6 +141,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  // Get unread notifications count
+  static Future<int> getUnreadCount(int salesmanId) async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/notification_page/get_unread_count.php?salesmanId=$salesmanId');
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          return jsonData['unread_count'];
+        }
+      }
+      return 0;
+    } catch (e) {
+      developer.log('Error getting unread count: $e');
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final RemoteMessage? message =
@@ -134,22 +171,27 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
 
     return PopScope(
-      canPop: false,
+      canPop: true,
       onPopInvoked: (didPop) {
         if (didPop) return;
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushNamed('/home');
       },
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color(0xff0175FF),
+          iconTheme: const IconThemeData(
+            color: Colors.white,
+          ),
           title: const Text(
             'Notifications',
             style: TextStyle(color: Colors.white),
           ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
+          // leading: IconButton(
+          //   icon: const Icon(Icons.arrow_back, color: Colors.white),
+          //   onPressed: () {
+          //     Navigator.of(context).pushNamed('/home');
+          //   },
+          // ),
         ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -173,7 +215,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     switch (notificationType) {
       // Navigate to order processing stage
       case 'ORDER_STATUS_CHANGED':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const HomePage(initialIndex: 3),
@@ -213,6 +255,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Delete Notification'),
+              content: const Text(
+                  'Are you sure you want to delete this notification?'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child:
+                      const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+      },
       onDismissed: (direction) {
         _deleteNotification(notification['id']);
       },

@@ -1,12 +1,15 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/main.dart';
+import 'package:sales_navigator/model/notification_state.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:permission_handler/permission_handler.dart'; // For requesting permissions
+import 'package:permission_handler/permission_handler.dart';
+import 'package:sales_navigator/utility_function.dart'; // For requesting permissions
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -45,7 +48,8 @@ class FirebaseApi {
   }
 
   Future<void> initPushNotifications() async {
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -54,9 +58,20 @@ class FirebaseApi {
     FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    FirebaseMessaging.onMessage.listen((message) {
+    FirebaseMessaging.onMessage.listen((message) async {
       final notification = message.notification;
       if (notification == null) return;
+
+      // Update the number of unread messages
+      final salesmanId = await UtilityFunction.getUserId();
+      final unreadCount = await NotificationsPage.getUnreadCount(salesmanId);
+
+      // Update unread count via Provider
+      final notificationState = Provider.of<NotificationState>(
+        navigatorKey.currentContext!,
+        listen: false,
+      );
+      notificationState.setUnreadCount(unreadCount);
 
       // Show local notification if permission is granted
       _localNotifications.show(
@@ -135,11 +150,13 @@ class FirebaseApi {
       },
     );
 
-    final platform = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final platform = _localNotifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
     await platform?.createNotificationChannel(_androidChannel);
   }
 
-  Future<void> sendPushNotification(String salesmanId, String title, String body) async {
+  Future<void> sendPushNotification(
+      String salesmanId, String title, String body) async {
     // Get FCM token
     final fcmToken = await _getFCMTokenForSalesman(salesmanId);
     developer.log('Sending push notification to token: $fcmToken');
@@ -148,7 +165,8 @@ class FirebaseApi {
       Uri.parse('https://fcm.googleapis.com/fcm/send'),
       headers: <String, String>{
         'Content-Type': 'application/json',
-        'Authorization': 'key=AIzaSyCScCknaXQpG_apftYmhGtODr_a11YgtoY', // Firebase server key
+        'Authorization':
+            'key=AIzaSyCScCknaXQpG_apftYmhGtODr_a11YgtoY', // Firebase server key
       },
       body: jsonEncode(
         <String, dynamic>{

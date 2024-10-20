@@ -1,11 +1,13 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_Insights.dart';
+import 'package:sales_navigator/model/notification_state.dart';
 import 'dart:async';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:sales_navigator/sales_lead_closed_widget.dart';
@@ -105,12 +107,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _sortBy = 'created_date';
   bool _sortAscending = true;
   bool _isButtonVisible = true;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
     super.initState();
     _initializeSalesmanId();
     _performanceUpdater = SalesmanPerformanceUpdater();
+    _loadUnreadNotifications();
     // _fetchLeadItems();
     // _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
     Future.delayed(const Duration(seconds: 2), () {
@@ -129,6 +133,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             _tabController.index == 0; // Show button only on first tab
       });
     });
+  }
+
+  Future<void> _loadUnreadNotifications() async {
+    final salesmanId = await UtilityFunction.getUserId();
+    final count = await NotificationsPage.getUnreadCount(salesmanId);
+
+    // Update unread count via Provider
+    if (mounted) {
+      Provider.of<NotificationState>(context, listen: false)
+          .setUnreadCount(count);
+    }
   }
 
   void _initializeSalesmanId() async {
@@ -1848,16 +1863,95 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: _showSortOptions,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const NotificationsPage()),
+                  Consumer<NotificationState>(
+                    builder: (context, notificationState, child) {
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications,
+                                color: Colors.white),
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationsPage(),
+                                ),
+                              );
+                              _loadUnreadNotifications();
+                            },
+                          ),
+                          if (notificationState.unreadCount > 0)
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  notificationState.unreadCount > 99
+                                      ? '99+'
+                                      : notificationState.unreadCount
+                                          .toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
                       );
                     },
                   ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.notifications, color: Colors.white),
+                  //   onPressed: () async {
+                  //     await Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //           builder: (context) => const NotificationsPage()),
+                  //     );
+                  //     // Reload unread count on return
+                  //     _loadUnreadNotifications();
+                  //   },
+                  // ),
+                  if (_unreadNotifications > 0)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 20,
+                          minHeight: 20,
+                        ),
+                        child: Text(
+                          _unreadNotifications > 99
+                              ? '99+'
+                              : _unreadNotifications.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
                   if (kDebugMode)
                     IconButton(
                       icon: const Icon(Icons.refresh, color: Colors.white),
@@ -1877,8 +1971,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         if (salesmanId != null) {
                           // await checkOrderStatusAndNotify(salesmanId);
-                          // await checkTaskDueDatesAndNotify(salesmanId);
-                          await checkNewSalesLeadsAndNotify(salesmanId);
+                          await checkTaskDueDatesAndNotify(salesmanId);
+                          // await checkNewSalesLeadsAndNotify(salesmanId);
 
                           Navigator.of(context).pop();
 
@@ -2178,7 +2272,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   Container(
                     margin: const EdgeInsets.only(left: 18),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
