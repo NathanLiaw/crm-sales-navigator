@@ -578,16 +578,36 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 
   void _editSalesTarget() async {
-    final newSalesTarget = await showDialog(
+    TextEditingController controller = TextEditingController();
+    String formatWithCommas(String input) {
+      if (input.isEmpty) return '';
+      input = input.replaceAll(',', '');
+      double value = double.tryParse(input) ?? 0;
+      return NumberFormat('#,##0').format(value);
+    }
+
+    controller.addListener(() {
+      final currentText = controller.text;
+      final currentSelection = controller.selection;
+      final formattedText = formatWithCommas(currentText);
+      controller.value = controller.value.copyWith(
+        text: formattedText,
+        selection: TextSelection.collapsed(
+          offset:
+              formattedText.length,
+        ),
+      );
+    });
+
+    final newSalesTarget = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        TextEditingController controller = TextEditingController();
         return AlertDialog(
           title: const Text('Edit Sales Target'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(labelText: 'New Sales Target'),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'New Sales Target'),
           ),
           actions: <Widget>[
             TextButton(
@@ -607,12 +627,14 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       },
     );
 
-    if (newSalesTarget != null) {
+    if (newSalesTarget != null && newSalesTarget.isNotEmpty) {
+      String cleanedInput = newSalesTarget.replaceAll(',', '');
+
       setState(() {
-        _salesTarget = _currencyFormat.format(double.parse(newSalesTarget));
+        _salesTarget = _currencyFormat.format(double.parse(cleanedInput));
       });
 
-      await updateSalesTargetInDatabase(double.parse(newSalesTarget));
+      await updateSalesTargetInDatabase(double.parse(cleanedInput));
     }
   }
 

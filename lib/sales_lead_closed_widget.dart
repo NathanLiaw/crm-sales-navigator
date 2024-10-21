@@ -115,7 +115,7 @@ class ClosedLeadItem extends StatelessWidget {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                                fontSize: 14,
                               ),
                             ),
                           ],
@@ -148,7 +148,8 @@ class ClosedLeadItem extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${leadItem.contactNumber}' as Uri)
+                        ? () =>
+                            _launchURL('tel:${leadItem.contactNumber}' as Uri)
                         : null,
                     child: Row(
                       children: [
@@ -165,7 +166,7 @@ class ClosedLeadItem extends StatelessWidget {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -177,7 +178,8 @@ class ClosedLeadItem extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
-                        ? () => _launchURL('mailto:${leadItem.emailAddress}' as Uri)
+                        ? () =>
+                            _launchURL('mailto:${leadItem.emailAddress}' as Uri)
                         : null,
                     child: Row(
                       children: [

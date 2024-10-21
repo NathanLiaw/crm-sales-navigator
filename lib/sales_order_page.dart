@@ -289,8 +289,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Future<void> _showItemSelectionDialog(
       List<Map<String, dynamic>> items) async {
-    List<bool> checkedItems = List<bool>.filled(items.length, false);
-    bool selectAll = false;
+    List<bool> checkedItems = List<bool>.filled(items.length, true);
+    bool selectAll = true;
 
     await showDialog(
       context: context,
@@ -1191,6 +1191,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                         ),
                         const SizedBox(height: 8),
                         // Amount and copy button
+                        // Replace this part inside the _buildSalesOrderItem function
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -1202,11 +1203,33 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.copy),
+                            ElevatedButton.icon(
                               onPressed: () async {
                                 await _showItemSelectionDialog(items);
                               },
+                              icon: const Icon(
+                                Icons.shopping_cart,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Copy Order',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: const Color(0xff0175FF),
+                                elevation: 6,
+                                shadowColor: Colors.grey.withOpacity(0.5),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0, vertical: 6.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                minimumSize: const Size(98, 32),
+                              ),
                             ),
                           ],
                         ),

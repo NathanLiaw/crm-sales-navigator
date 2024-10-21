@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
 import 'package:workmanager/workmanager.dart';
@@ -179,16 +180,74 @@ class _ProfilePageState extends State<ProfilePage> {
       margin: const EdgeInsets.only(left: 100, right: 100),
       width: double.infinity,
       child: ElevatedButton(
+        // onPressed: () async {
+        //   // Cancel all background tasks
+        //   await Workmanager().cancelAll();
+
+        //   // Clearing data in SharedPreferences
+        //   SharedPreferences prefs = await SharedPreferences.getInstance();
+        //   await prefs.clear();
+
+        //   // Navigate to the login page
+        //   Navigator.pushReplacementNamed(context, '/login');
+        // },
         onPressed: () async {
-          // Cancel all background tasks
-          await Workmanager().cancelAll();
+          // 在这里添加确认对话框
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Confirm Logout'),
+                content: const Text('Are you sure you want to logout?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Logout'),
+                    onPressed: () async {
+                      Navigator.of(context).pop();
 
-          // Clearing data in SharedPreferences
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
+                      try {
+                        // Cancel all background tasks
+                        await Workmanager().cancelAll();
 
-          // Navigate to the login page
-          Navigator.pushReplacementNamed(context, '/login');
+                        // Remove all SharedPreferences
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        await prefs.clear();
+
+                        // Remove image cache
+                        imageCache.clear();
+                        imageCache.clearLiveImages();
+
+                        // Remove any temporary files
+                        final tempDir = await getTemporaryDirectory();
+                        if (await tempDir.exists()) {
+                          await tempDir.delete(recursive: true);
+                        }
+
+                        // Navigate to login page
+                        Navigator.pushReplacementNamed(context, '/login');
+                      } catch (e) {
+                        debugPrint('Error during logout: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Error occurred during logout. Please try again.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              );
+            },
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
