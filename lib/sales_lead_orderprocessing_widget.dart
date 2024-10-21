@@ -190,7 +190,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -219,7 +219,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,

@@ -587,7 +587,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -617,7 +617,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
