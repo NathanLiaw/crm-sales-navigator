@@ -1,7 +1,7 @@
 name: sales_navigator
 description: "Sales Navigator - Customer Relationship Management (CRM) Sales Management"
 publish_to: 'none'
-version: 0.1.0
+version: 0.5.0
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -55,7 +55,6 @@ flutter:
     - asset/icon/
     - asset/icons/
     - .env
-
 
 flutter_launcher_icons:
   android: "launcher_icon"
