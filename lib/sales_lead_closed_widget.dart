@@ -21,11 +21,48 @@ class ClosedLeadItem extends StatelessWidget {
     required this.quantity,
   });
 
-  Future<void> _launchURL(Uri url) async {
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      throw 'Could not launch $url';
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (await canLaunchUrl(url)) {
+        // Add LaunchMode
+        await launchUrl(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
+    }
+  }
+
+  Future<void> _launchPhone(String phone) async {
+    // Make sure the phone number is formatted correctly
+    final Uri phoneUri = Uri(
+      scheme: 'tel',
+      path: phone.replaceAll(
+          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+    );
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching phone: $e');
+    }
+  }
+
+  Future<void> _launchEmail(String email) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: email.trim(), // Clear spaces
+    );
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching email: $e');
     }
   }
 
@@ -115,7 +152,7 @@ class ClosedLeadItem extends StatelessWidget {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -148,8 +185,7 @@ class ClosedLeadItem extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: leadItem.contactNumber.isNotEmpty
-                        ? () =>
-                            _launchURL('tel:${leadItem.contactNumber}' as Uri)
+                        ? () => _launchPhone('tel:${leadItem.contactNumber}')
                         : null,
                     child: Row(
                       children: [
@@ -178,8 +214,7 @@ class ClosedLeadItem extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
-                        ? () =>
-                            _launchURL('mailto:${leadItem.emailAddress}' as Uri)
+                        ? () => _launchEmail('mailto:${leadItem.emailAddress}')
                         : null,
                     child: Row(
                       children: [
@@ -196,7 +231,7 @@ class ClosedLeadItem extends StatelessWidget {
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
