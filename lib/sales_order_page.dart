@@ -19,26 +19,6 @@ import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sales Order',
-      theme: ThemeData(
-        primaryColor: const Color(0xff0175FF),
-        hintColor: const Color(0xff0175FF),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white),
-        ),
-      ),
-      home: const SalesOrderPage(),
-    );
-  }
-}
 
 class SalesOrderPage extends StatefulWidget {
   const SalesOrderPage({super.key});

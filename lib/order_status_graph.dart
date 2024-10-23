@@ -6,61 +6,6 @@ import 'order_status_report_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: Scaffold(
-        appBar: AppBar(),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Sales Orders Status',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const OrderStatusWidget(),
-              ),
-              const SizedBox(height: 32),
-              const InProgressOrdersWidget(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class OrderStatusWidget extends StatelessWidget {
   const OrderStatusWidget({super.key});
