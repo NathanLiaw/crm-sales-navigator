@@ -121,87 +121,88 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                 ),
                 const SizedBox(height: 16),
                 // Auto fill customer details widget
-                RawAutocomplete<Customer>(
-                  textEditingController: customerNameController,
-                  focusNode: FocusNode(),
-                  optionsBuilder: (TextEditingValue textEditingValue) async {
-                    if (textEditingValue.text.isEmpty) {
-                      return const Iterable<Customer>.empty();
-                    }
-                    if (customers.isEmpty) {
-                      await _fetchCustomers();
-                    }
-                    return customers.where((customer) {
-                      return customer.companyName
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase());
-                    });
-                  },
-                  displayStringForOption: (Customer option) =>
-                      option.companyName,
-                  fieldViewBuilder: (BuildContext context,
-                      TextEditingController textEditingController,
-                      FocusNode focusNode,
-                      VoidCallback onFieldSubmitted) {
-                    return TextFormField(
-                      controller: textEditingController,
-                      focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter or select customer/company name',
-                        prefixIcon:
-                            Icon(Icons.person, color: Color(0xff0175FF)),
-                        hintText: 'Type to search existing customers',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        // When the input changes, a new search can be triggered if required
-                        if (customers.isEmpty) {
-                          _fetchCustomers();
-                        }
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter customer/company name';
-                        }
-                        if (value.length > 100) {
-                          return 'Customer/company name cannot exceed 100 characters';
-                        }
-                        return null;
-                      },
-                    );
-                  },
-                  optionsViewBuilder: (BuildContext context,
-                      AutocompleteOnSelected<Customer> onSelected,
-                      Iterable<Customer> options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4.0,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                              maxHeight: 200, maxWidth: 400),
+              RawAutocomplete<Customer>(
+                textEditingController: customerNameController,
+                focusNode: FocusNode(),
+                optionsBuilder: (TextEditingValue textEditingValue) async {
+                  if (textEditingValue.text.isEmpty) {
+                    return const Iterable<Customer>.empty();
+                  }
+                  if (customers.isEmpty) {
+                    await _fetchCustomers();
+                  }
+                  return customers.where((customer) {
+                    return customer.companyName
+                        .toLowerCase()
+                        .contains(textEditingValue.text.toLowerCase());
+                  });
+                },
+                displayStringForOption: (Customer option) => option.companyName,
+                fieldViewBuilder: (BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted) {
+                  return TextFormField(
+                    controller: textEditingController,
+                    focusNode: focusNode,
+                    decoration: const InputDecoration(
+                      labelText: 'Enter or select customer/company name',
+                      prefixIcon: Icon(Icons.person, color: Color(0xff0175FF)),
+                      hintText: 'Type to search existing customers',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      // When the input changes, a new search can be triggered if required
+                      if (customers.isEmpty) {
+                        _fetchCustomers();
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter customer/company name';
+                      }
+                      if (value.length > 100) {
+                        return 'Customer/company name cannot exceed 100 characters';
+                      }
+                      return null;
+                    },
+                  );
+                },
+                optionsViewBuilder: (BuildContext context,
+                    AutocompleteOnSelected<Customer> onSelected,
+                    Iterable<Customer> options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4.0,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: 200, // Maximum height
+                          maxWidth: MediaQuery.of(context).size.width * 0.92, // Match input field width
+                        ),
+                        child: Scrollbar( // Add scrollbar to ListView
+                          thumbVisibility: true,
                           child: ListView.builder(
+                            controller: ScrollController(), // Attach ScrollController
                             padding: const EdgeInsets.all(8.0),
+                            shrinkWrap: true, // Allows the list to take up the height it needs
                             itemCount: options.length,
                             itemBuilder: (BuildContext context, int index) {
                               final Customer option = options.elementAt(index);
                               return InkWell(
                                 onTap: () {
                                   onSelected(option);
-                                  // 填充其他字段
+                                  // Fill other fields
                                   setState(() {
-                                    contactNumberController.text =
-                                        option.contactNumber;
+                                    contactNumberController.text = option.contactNumber;
                                     emailAddressController.text = option.email;
-                                    addressController.text =
-                                        option.addressLine1;
+                                    addressController.text = option.addressLine1;
                                   });
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         option.companyName,
@@ -225,10 +226,11 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
                 TextFormField(
                   controller: contactNumberController,
                   decoration: const InputDecoration(

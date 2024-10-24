@@ -1034,7 +1034,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           orderNumber: orderId,
           companyName: firstItem['company_name'] ?? 'Unknown Company',
           creationDate: firstItem['created_date'] != null
-              ? DateFormat('dd/MM/yyyy').parse(firstItem['created_date'])
+              ? DateFormat('dd/MM/yyyy HH:mm:ss').parse(firstItem['created_date'])
               : DateTime.now(),
           amount: '${firstItem['final_total']?.toStringAsFixed(3) ?? '0.000'}',
           status: firstItem['status'] ?? 'Unknown Status',
@@ -1163,7 +1163,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                         ),
                         // Creation date
                         Text(
-                          'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                          'Created on: ${DateFormat('dd-MM-yyyy hh:mm a').format(creationDate)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
@@ -1206,7 +1206,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12.0, vertical: 6.0),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(5),
                                 ),
                                 minimumSize: const Size(98, 32),
                               ),
