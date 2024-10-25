@@ -5,26 +5,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class CustomerSalesPrediction extends StatelessWidget {
-  const CustomerSalesPrediction({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Customer Sales Prediction',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.lightBlue,
-          onPrimary: Colors.white,
-          surface: Colors.lightBlue,
-        ),
-        iconTheme: const IconThemeData(color: Colors.lightBlue),
-      ),
-      home: const CustomerSalesPredictionPage(),
-    );
-  }
-}
 
 class CustomerSalesPredictionPage extends StatefulWidget {
   const CustomerSalesPredictionPage({super.key});

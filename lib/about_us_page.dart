@@ -13,14 +13,6 @@ class AboutUs extends StatelessWidget {
           'About Us',
           style: TextStyle(color: Colors.white),
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications),
-        //     onPressed: () {
-        //       // Handle notifications
-        //     },
-        //   ),
-        // ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -39,30 +31,57 @@ class AboutUs extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Our company Fong Yuan Hung Import and Export Sdn. Bhd. was '
-                'established back in 1980, it has been 40 years in the business. '
-                'We specialised in mechanical scales, digital scales, hardware tools, '
-                'power tools, food processing machineries, agriculture tools and equipments, '
-                'industrial tools and machineries, construction tools and materials, '
-                'automotive products etc.',
+                'Increase your sales today.',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Transform the way you manage sales with CRM Sales Navigator, the ultimate app for sales professionals. With AI-powered tools and advanced features, this app is designed to help you close more deals, stay organized, and keep your clients satisfied. Whether you’re managing leads or placing orders on the go, CRM Sales Navigator provides everything you need for sales success, right at your fingertips.',
                 style: TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 16),
               const Text(
-                'We are a major importer, distributor, and wholesaler. Our market '
-                'covers the whole East Malaysia (Sarawak and Sabah). Over the years, '
-                'we have imported products from more than 10 different countries, '
-                'including China, Taiwan, South Korea, Thailand, Vietnam, Philippines, '
-                'India, United Kingdom, Australia, and New Zealand. We import around '
-                '10-15 (20\') containers of goods and products annually.',
+                'Key Features:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '1. Automated Lead Management: Discover the opportunities that matter most with our automated lead creation system. Streamline your sales process by automatically generating leads, allowing you to focus on high-potential opportunities and maximize your efficiency.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '2. Sales Order Tracking: Keep track of all your sales orders in real-time. Get instant updates on order status, so you never miss a beat.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '3. Task Reminders & Notifications: Stay on top of your deadlines and tasks. The app automatically sends reminders and notifications for upcoming tasks, order updates, and lead changes.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '4. Advanced Search & Filters: Quickly find what you need with powerful search and filter tools. Sort through leads, orders, or products by multiple criteria, so you always have the right information at hand.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '5. Product Catalogue: Access the latest products on the go. Browse your product catalog anytime, anywhere, and stay updated with the most current offerings.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '6. Place Orders Instantly: Close deals faster by placing orders on the spot for your clients. No need to wait—submit orders directly through the app, ensuring quick and seamless transactions.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '7. Customer Insights: Gain a deeper understanding of your customers with our robust analytics. Access detailed customer insights to tailor your sales strategy and build stronger relationships.',
                 style: TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 16),
               const Text(
-                'We are continuing to expand our product offerings to further satisfy the '
-                'demand of our market. Feel free to explore our website for the full '
-                'range of products we offer. Potential customers are more than welcome '
-                'to contact us if you are interested in our line of business.',
+                'With CRM Sales Navigator, you have everything you need to manage your leads, track orders, and keep clients happy—all from the convenience of your mobile device. Download today and take your sales game to the next level!',
                 style: TextStyle(fontSize: 14),
               ),
             ],

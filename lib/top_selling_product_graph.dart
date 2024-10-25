@@ -5,20 +5,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Top Selling Products',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const TopSellingProductsPage(),
-    );
-  }
-}
 
 class TopSellingProductsPage extends StatefulWidget {
   const TopSellingProductsPage({super.key});

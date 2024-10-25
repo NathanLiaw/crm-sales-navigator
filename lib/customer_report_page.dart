@@ -6,26 +6,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Customer Report',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.lightBlue,
-          onPrimary: Colors.white,
-          surface: Colors.lightBlue,
-        ),
-        iconTheme: const IconThemeData(color: Colors.lightBlue),
-      ),
-      home: const CustomerReport(),
-    );
-  }
-}
 
 class CustomerReport extends StatefulWidget {
   const CustomerReport({super.key});
