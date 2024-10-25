@@ -192,25 +192,73 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                title: const Text('Created Date'),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Created Date'),
+                    if (_sortBy == 'created_date')
+                      Icon(
+                        _sortAscending
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
+                  ],
+                ),
                 onTap: () {
                   _updateSortCriteria('created_date');
                   Navigator.of(context).pop();
                 },
+                tileColor: _sortBy == 'created_date'
+                    ? Color.fromARGB(255, 202, 227, 255)
+                    : null,
               ),
               ListTile(
-                title: const Text('Predicted Sales'),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Predicted Sales'),
+                    if (_sortBy == 'predicted_sales')
+                      Icon(
+                        _sortAscending
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
+                  ],
+                ),
                 onTap: () {
                   _updateSortCriteria('predicted_sales');
                   Navigator.of(context).pop();
                 },
+                tileColor: _sortBy == 'predicted_sales'
+                    ? Color.fromARGB(255, 202, 227, 255)
+                    : null,
               ),
               ListTile(
-                title: const Text('Customer Name'),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Customer Name'),
+                    if (_sortBy == 'customer_name')
+                      Icon(
+                        _sortAscending
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
+                  ],
+                ),
                 onTap: () {
                   _updateSortCriteria('customer_name');
                   Navigator.of(context).pop();
                 },
+                tileColor: _sortBy == 'customer_name'
+                    ? Color.fromARGB(255, 202, 227, 255)
+                    : null,
               ),
             ],
           ),
@@ -1865,67 +1913,58 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   Consumer<NotificationState>(
                     builder: (context, notificationState, child) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications,
-                                color: Colors.white),
-                            onPressed: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationsPage(),
-                                ),
-                              );
-                              _loadUnreadNotifications();
-                            },
-                          ),
-                          if (notificationState.unreadCount > 0)
-                            Positioned(
-                              right: 2,
-                              top: 2,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 16,
-                                  minHeight: 16,
-                                ),
-                                child: Text(
-                                  notificationState.unreadCount > 99
-                                      ? '99+'
-                                      : notificationState.unreadCount
-                                          .toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 7.0),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications,
+                                  color: Colors.white),
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const NotificationsPage(),
                                   ),
-                                  textAlign: TextAlign.center,
+                                );
+                                _loadUnreadNotifications();
+                              },
+                            ),
+                            if (notificationState.unreadCount > 0)
+                              Positioned(
+                                right: 4,
+                                top: 2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    notificationState.unreadCount > 99
+                                        ? '99+'
+                                        : notificationState.unreadCount
+                                            .toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.notifications, color: Colors.white),
-                  //   onPressed: () async {
-                  //     await Navigator.push(
-                  //       context,
-                  //       MaterialPageRoute(
-                  //           builder: (context) => const NotificationsPage()),
-                  //     );
-                  //     // Reload unread count on return
-                  //     _loadUnreadNotifications();
-                  //   },
-                  // ),
                   if (_unreadNotifications > 0)
                     Positioned(
                       right: -2,
@@ -1952,43 +1991,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                  if (kDebugMode)
-                    IconButton(
-                      icon: const Icon(Icons.refresh, color: Colors.white),
-                      onPressed: () async {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (BuildContext context) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          },
-                        );
+                  // if (kDebugMode)
+                  //   IconButton(
+                  //     icon: const Icon(Icons.refresh, color: Colors.white),
+                  //     onPressed: () async {
+                  //       showDialog(
+                  //         context: context,
+                  //         barrierDismissible: false,
+                  //         builder: (BuildContext context) {
+                  //           return const Center(
+                  //               child: CircularProgressIndicator());
+                  //         },
+                  //       );
 
-                        // Get the salesman ID
-                        int? salesmanId = await _getSalesmanId();
-                        developer.log("Retrieved salesmanId: $salesmanId");
+                  //       // Get the salesman ID
+                  //       int? salesmanId = await _getSalesmanId();
+                  //       developer.log("Retrieved salesmanId: $salesmanId");
 
-                        if (salesmanId != null) {
-                          // await checkOrderStatusAndNotify(salesmanId);
-                          await checkTaskDueDatesAndNotify(salesmanId);
-                          // await checkNewSalesLeadsAndNotify(salesmanId);
+                  //       if (salesmanId != null) {
+                  //         await checkOrderStatusAndNotify(salesmanId);
+                  //         // await checkTaskDueDatesAndNotify(salesmanId);
+                  //         // await checkNewSalesLeadsAndNotify(salesmanId);
 
-                          Navigator.of(context).pop();
+                  //         Navigator.of(context).pop();
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Notification check completed')),
-                          );
-                        } else {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Error: Salesman ID not found')),
-                          );
-                        }
-                      },
-                    ),
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           const SnackBar(
+                  //               content: Text('Notification check completed')),
+                  //         );
+                  //       } else {
+                  //         Navigator.of(context).pop();
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           const SnackBar(
+                  //               content: Text('Error: Salesman ID not found')),
+                  //         );
+                  //       }
+                  //     },
+                  //   ),
                 ],
               ),
               body: Column(

@@ -67,7 +67,7 @@ Future<void> checkOrderStatusAndNotify(int salesmanId) async {
         for (var notification in notifications) {
           await showLocalNotification(
             'Order Status Changed',
-            'Order for ${notification['customer_name']} has changed from ${notification['old_status']} to ${notification['new_status']}.',
+            'Order ${notification['order_id']} for ${notification['customer_name']} has changed from ${notification['old_status']} to ${notification['new_status']}.',
           );
         }
         developer.log('Notifications processed: ${notifications.length}');
@@ -227,7 +227,8 @@ Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
 // }
 
 Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
-  developer.log('Starting checkNewSalesLeadsAndNotify for salesman_id: $salesmanId');
+  developer
+      .log('Starting checkNewSalesLeadsAndNotify for salesman_id: $salesmanId');
 
   try {
     final apiUrl = Uri.parse(
@@ -235,7 +236,8 @@ Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
     developer.log("Calling API with URL: $apiUrl"); // Add this log
     final response = await http.get(apiUrl);
 
-    developer.log("API Response Status Code: ${response.statusCode}"); // Add this log
+    developer.log(
+        "API Response Status Code: ${response.statusCode}"); // Add this log
     developer.log("API Response Body: ${response.body}"); // Add this log
 
     if (response.statusCode == 200) {
@@ -313,8 +315,14 @@ Future<void> _generateNotification(
   const String baseUrl =
       'https://haluansama.com/crm-sales/api/background_tasks/update_notification.php';
 
+  // Check if salesOrderId exists
+  if (leadItem.salesOrderId == null) {
+    return;
+  }
+
   final Map<String, String> queryParameters = {
-    'order_id': leadItem.id.toString(),
+    'order_id': leadItem
+        .salesOrderId!, // Use null safety operator since we checked above
     'salesman_id': leadItem.salesmanId.toString(),
     'customer_name': leadItem.customerName,
     'new_status': newStatus,
@@ -331,11 +339,16 @@ Future<void> _generateNotification(
       if (responseData['status'] == 'success') {
         developer.log('Notification generated successfully');
 
+        // Create notification message with order ID
+        String notificationMessage = leadItem.salesOrderId != null
+            ? 'Order #${leadItem.salesOrderId} for ${leadItem.customerName} has changed from $oldStatus to $newStatus.'
+            : 'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.';
+
         // Show local notification
         await showLocalNotification(
-          'Order Status Changed',
-          'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.',
-        );
+            'Order Status Changed', notificationMessage);
+
+        // Add debug log to check values
       } else {
         throw Exception(responseData['message']);
       }
