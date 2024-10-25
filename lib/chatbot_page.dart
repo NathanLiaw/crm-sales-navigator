@@ -1,11 +1,11 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'product_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -19,6 +19,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
+  String _loggedInUsername = ''; // Add this variable
   final String userId = 'default_user';
   String selectedCategory = '';
   List<String> faqQuestions = [];
@@ -48,6 +49,15 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadSelectedAreaId();
+    _loadUsername(); // Load the username on initialization
+  }
+
+  Future<void> _loadUsername() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _loggedInUsername = prefs.getString('username') ?? '';
+      print('Loaded username: $_loggedInUsername'); // Debug print
+    });
   }
 
   Future<void> _loadSelectedAreaId() async {
@@ -81,6 +91,7 @@ class _ChatScreenState extends State<ChatScreen> {
             'message': message,
             'category': selectedCategory,
             'area_id': selectedAreaId,
+            'username': _loggedInUsername,
           }),
         );
 
@@ -187,6 +198,7 @@ class _ChatScreenState extends State<ChatScreen> {
         body: json.encode({
           'user_id': userId,
           'message': message,
+          'username': _loggedInUsername,
         }),
       );
 
@@ -233,12 +245,12 @@ class _ChatScreenState extends State<ChatScreen> {
   List<String> _getFAQQuestions(String category) {
     if (category == 'general') {
       return [
-        'What products does FYH Online Store offer?',
-        'How long has FYH Online Store been in business?',
-        'Where is FYH Online Store\'s market located?',
-        'From which countries does FYH Online Store import products?',
-        'How can I contact FYH Online Store for more information?',
-        'What is the annual import volume of FYH Online Store?',
+        'What products does Sales Navigator Online Store offer?',
+        'How long has Sales Navigator Online Store been in business?',
+        'Where is Sales Navigator Online Store\'s market located?',
+        'From which countries does Sales Navigator Online Store import products?',
+        'How can I contact Sales Navigator Online Store for more information?',
+        'What is the annual import volume of Sales Navigator Online Store?',
         'What product categories are available?',
         'Can customers create an account on the website?',
         'What should I do if I forgot my password?',
@@ -259,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'How can I check the availability of a specific product?',
         'Do you offer bulk purchase discounts?',
         'Can I get a product demo or sample before purchasing?',
-        'How do I become a distributor for FYH products?',
+        'How do I become a distributor for Sales Navigator products?',
       ];
     }
     return [];
@@ -295,10 +307,10 @@ class _ChatScreenState extends State<ChatScreen> {
     var mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xff004c87),
+        backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
         title: const Text(
-          'F.Y.H Chat Bot',
+          'Sales Navigator Chat Bot',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
@@ -393,7 +405,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 _getCategoryDisplayName(selectedCategory),
                                 style: const TextStyle(fontSize: 18),
                               ),
-                              const Text('F.Y.H Smart Agent',
+                              const Text('Sales Navigator Smart Agent',
                                   style: TextStyle(fontSize: 12)),
                             ],
                           ),
@@ -474,7 +486,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xff004c87)),
+                                          color: Color(0xff0175FF)),
                                     ),
                                   ),
                                 ),
@@ -590,7 +602,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                       SizedBox(width: 10),
-                      Text('F.Y.H Smart Agent is typing...'),
+                      Text('Sales Navigator Smart Agent is typing...'),
                     ],
                   ),
                 ),

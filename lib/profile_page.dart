@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sales_navigator/ai_assistant.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
 import 'package:workmanager/workmanager.dart';
@@ -21,6 +22,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String? salesmanName;
   int currentPageIndex = 4;
+
   @override
   void initState() {
     super.initState();
@@ -54,14 +56,14 @@ class _ProfilePageState extends State<ProfilePage> {
             fontSize: 24,
           ),
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications, color: Colors.white),
-        //     onPressed: () {
-        //       // Handle notifications
-        //     },
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              // Handle notifications
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -95,7 +97,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              // buildProfileOption('Chatbot', Icons.chat, context),
+              buildProfileOption('Chatbot', Icons.chat, context),
+              buildProfileOption('AI Assistant', Icons.assistant, context), // New AI Assistant option
               const SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
@@ -154,12 +157,18 @@ class _ProfilePageState extends State<ProfilePage> {
             MaterialPageRoute(builder: (context) => const AboutUs()),
           );
         }
-        // if (title == 'Chatbot') {
-        //   Navigator.push(
-        //     context,
-        //     MaterialPageRoute(builder: (context) => const ChatScreen()),
-        //   );
-        // }
+        if (title == 'Chatbot') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatScreen()),
+          );
+        }
+        if (title == 'AI Assistant') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SalesPerformancePage()), // Navigate to AI Assistant page
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),
@@ -180,19 +189,8 @@ class _ProfilePageState extends State<ProfilePage> {
       margin: const EdgeInsets.only(left: 100, right: 100),
       width: double.infinity,
       child: ElevatedButton(
-        // onPressed: () async {
-        //   // Cancel all background tasks
-        //   await Workmanager().cancelAll();
-
-        //   // Clearing data in SharedPreferences
-        //   SharedPreferences prefs = await SharedPreferences.getInstance();
-        //   await prefs.clear();
-
-        //   // Navigate to the login page
-        //   Navigator.pushReplacementNamed(context, '/login');
-        // },
         onPressed: () async {
-          // 在这里添加确认对话框
+          // Display confirmation dialog before logout
           showDialog(
             context: context,
             builder: (BuildContext context) {
