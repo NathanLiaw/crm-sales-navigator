@@ -191,77 +191,108 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              ListTile(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Created Date'),
-                    if (_sortBy == 'created_date')
-                      Icon(
-                        _sortAscending
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Created Date'),
+                      if (_sortBy == 'created_date')
+                        Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                          color: const Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'created_date'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'created_date'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _updateSortCriteria('created_date');
+                    Navigator.of(context).pop();
+                  },
                 ),
-                onTap: () {
-                  _updateSortCriteria('created_date');
-                  Navigator.of(context).pop();
-                },
-                tileColor: _sortBy == 'created_date'
-                    ? Color.fromARGB(255, 202, 227, 255)
-                    : null,
               ),
-              ListTile(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Predicted Sales'),
-                    if (_sortBy == 'predicted_sales')
-                      Icon(
-                        _sortAscending
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
-                  ],
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Predicted Sales'),
+                      if (_sortBy == 'predicted_sales')
+                        Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                          color: const Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'predicted_sales'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'predicted_sales'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _updateSortCriteria('predicted_sales');
+                    Navigator.of(context).pop();
+                  },
                 ),
-                onTap: () {
-                  _updateSortCriteria('predicted_sales');
-                  Navigator.of(context).pop();
-                },
-                tileColor: _sortBy == 'predicted_sales'
-                    ? Color.fromARGB(255, 202, 227, 255)
-                    : null,
               ),
-              ListTile(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Customer Name'),
-                    if (_sortBy == 'customer_name')
-                      Icon(
-                        _sortAscending
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
-                  ],
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Customer Name'),
+                      if (_sortBy == 'customer_name')
+                        Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                          color: const Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'customer_name'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'customer_name'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _updateSortCriteria('customer_name');
+                    Navigator.of(context).pop();
+                  },
                 ),
-                onTap: () {
-                  _updateSortCriteria('customer_name');
-                  Navigator.of(context).pop();
-                },
-                tileColor: _sortBy == 'customer_name'
-                    ? Color.fromARGB(255, 202, 227, 255)
-                    : null,
               ),
             ],
           ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         );
       },
     );

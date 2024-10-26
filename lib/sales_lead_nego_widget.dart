@@ -335,29 +335,115 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              ListTile(
-                title: const Text('Creation Date'),
-                onTap: () {
-                  _sortTasks('creation_date');
-                  Navigator.of(context).pop();
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Creation Date'),
+                      if (_sortBy == 'creation_date')
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            _sortOrder == 'ascending'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color: const Color(0xFF0175FF),
+                          ),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'creation_date'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'creation_date'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _sortTasks('creation_date');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Due Date'),
-                onTap: () {
-                  _sortTasks('due_date');
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Due Date'),
+                      if (_sortBy == 'due_date')
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            _sortOrder == 'ascending'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color: const Color(0xFF0175FF),
+                          ),
+                        ),
+                    ],
+                  ),
+                  tileColor:
+                      _sortBy == 'due_date' ? const Color(0xFFF5F8FF) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'due_date'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _sortTasks('due_date');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Title (A-Z)'),
-                onTap: () {
-                  _sortTasks('title');
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Title (A-Z)'),
+                      if (_sortBy == 'title')
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            _sortOrder == 'ascending'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color: const Color(0xFF0175FF),
+                          ),
+                        ),
+                    ],
+                  ),
+                  tileColor:
+                      _sortBy == 'title' ? const Color(0xFFF5F8FF) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'title'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _sortTasks('title');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
             ],
           ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         );
       },
     );
