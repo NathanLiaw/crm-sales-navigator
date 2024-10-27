@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
@@ -210,17 +211,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   void _handleNotificationTap(Map<String, dynamic> notification) {
     String? notificationType = notification['type'];
+    String? description = notification['description'];
     int? relatedId = notification['related_lead_id'];
 
     switch (notificationType) {
       // Navigate to order processing stage
       case 'ORDER_STATUS_CHANGED':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomePage(initialIndex: 3),
-          ),
-        );
+        if (description != null && description.toLowerCase().contains('void')) {
+          // Navigate to sales order page
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SalesOrderPage(),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomePage(initialIndex: 3),
+            ),
+          );
+        }
         break;
       // Navigate to negociation stage
       case 'TASK_DUE_SOON':
