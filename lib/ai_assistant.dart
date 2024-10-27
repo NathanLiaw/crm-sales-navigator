@@ -25,12 +25,25 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   final List<Map<String, dynamic>> _messages = [];
   bool isTyping = false;
   int _interactionStep = 0;
+  List<String> _suggestions = [
+    "What should I focus first",
+    "How to improve my weakness",
+    "How to close deals",
+    "Plan my day"
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadUsername();
     _loadChatFromCache();
+    _controller.addListener(() {
+      if (_controller.text.isNotEmpty && _suggestions.isNotEmpty) {
+        setState(() {
+          _suggestions.clear();
+        });
+      }
+    });
   }
 
   Future<void> _loadUsername() async {
@@ -67,6 +80,12 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       _messages.clear();
       _interactionStep = 0;
       _controller.clear();
+      _suggestions = [
+        "What should I focus first",
+        "How to improve my weakness",
+        "How to close deals",
+        "Plan my day"
+      ];
     });
     await _saveChatToCache();
     _sendInitialSalesOverview();
@@ -159,7 +178,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
             responseData['data'] is List) {
           List<Map<String, dynamic>> leads = List<Map<String, dynamic>>.from(
             responseData['data'].map((lead) {
-
               return {
                 "lead_id": lead['lead_id'] ?? 0,
                 "customer_name": lead['customer_name'] ?? 'N/A',
@@ -197,7 +215,8 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       final status = lead['stage'] ?? '';
       final negotiationStartDate = lead['negotiation_start_date'];
 
-      if (status.toLowerCase() != 'negotiation' || negotiationStartDate.isEmpty) {
+      if (status.toLowerCase() != 'negotiation' ||
+          negotiationStartDate.isEmpty) {
         return false;
       }
 
@@ -212,7 +231,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
 
       return daysStuck > 7;
     }).toList();
-
 
     String initialMessage = "Here's your current sales overview:\n";
     Map<String, dynamic>? highValueLead = _leadsData.isNotEmpty
@@ -238,8 +256,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     _addMessageToChat(initialMessage);
   }
 
-
-
   void _addMessageToChat(String message) {
     setState(() {
       _messages.add({
@@ -250,6 +266,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     });
 
     _saveChatToCache();
+    _scrollToBottom();
   }
 
   List<TextSpan> _getFormattedTextSpans(String message) {
@@ -293,8 +310,10 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     });
 
     _saveChatToCache();
+    _scrollToBottom();
     await _fetchAISuggestions(message);
     await _saveChatToCache();
+
     setState(() {
       isTyping = false;
     });
@@ -321,7 +340,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
         {
           "role": "system",
           "content":
-              "You are a helpful AI Sales Assistant. Your goal is to assist the salesman in advancing leads, resolving stuck negotiations, and prioritizing high-value opportunities. Keep your responses concise, actionable, and supportive. You have 800 tokens, but try to be as efficient as possible while providing value within 400 tokens or less."
+              "You are a helpful AI Sales Assistant. Your goal is to assist the salesman in advancing leads, resolving stuck negotiations, and prioritizing high-value opportunities. Keep your responses concise, actionable, and supportive. You have 800 tokens, but try to be as efficient as possible while providing value within 400 tokens or less. The Values are in this format 'RM 3,000.00'."
         },
         {"role": "assistant", "content": "Sales Lead Data: $leadDataSummary"},
         {"role": "user", "content": prompt}
@@ -355,6 +374,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
         });
 
         await _saveChatToCache();
+        _scrollToBottom();
       } else {
         _showError(
             "Failed to fetch AI response. Status code: ${response.statusCode}");
@@ -394,6 +414,21 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _handleSuggestion(String suggestion) {
+    _controller.text = suggestion;
+    _handleSendMessage(suggestion);
   }
 
   @override
@@ -532,10 +567,44 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     );
   }
 
-
   Widget _buildMessageInputArea() {
     return Column(
       children: [
+        if (_suggestions.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _suggestions.map((suggestion) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _handleSendMessage(suggestion);
+                          _suggestions
+                              .clear();
+                        });
+                      },
+                      child: Text(
+                        suggestion,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
         if (isTyping)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
