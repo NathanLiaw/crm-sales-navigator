@@ -25,6 +25,7 @@ class _ProductsScreenState extends State<ProductsScreen>
     with TickerProviderStateMixin {
   late Map<int, String> area = {};
   static late int selectedAreaId;
+  static String currentAreaName = 'KCH';
   String searchQuery = '';
   int? _selectedSubCategoryId;
   List<int> _selectedSubCategoryIds = [];
@@ -47,6 +48,7 @@ class _ProductsScreenState extends State<ProductsScreen>
     await prefs.setInt('areaId', areaId);
     setState(() {
       selectedAreaId = areaId;
+      currentAreaName = area[selectedAreaId] ?? 'KCH';
     });
   }
 
@@ -63,17 +65,19 @@ class _ProductsScreenState extends State<ProductsScreen>
       // Check if the request was successful
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
+        developer.log('Raw JSON Data: $jsonData'); // Debugging statement
 
         if (jsonData['status'] == 'success') {
           // Parse the area data
-          areaMap = Map.fromEntries(
-              jsonData['data'].map((row) => MapEntry<int, String>(
-                    row['id'],
-                    row['area'] ?? '',
-                  )));
+          areaMap = { for (var item in jsonData['data'])
+            int.tryParse(item['id'].toString()) ?? -1 : item['area'] as String? ?? '' };
 
           setState(() {
             area = areaMap;
+            // Log the first area's name if it exists
+            if (area.isNotEmpty) {
+              developer.log(area.values.first);
+            }
           });
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -91,16 +95,16 @@ class _ProductsScreenState extends State<ProductsScreen>
             });
           }
         } else {
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
         }
       } else {
-        print('Failed to load area data');
+        developer.log('Failed to load area data');
       }
     } catch (e) {
       developer.log('Error fetching area: $e');
     }
   }
-
+  
   void _openFilterCategoriesScreen() async {
     final result = await Navigator.push(
       context,
@@ -178,8 +182,6 @@ class _ProductsScreenState extends State<ProductsScreen>
 
   @override
   Widget build(BuildContext context) {
-    String currentAreaName = area[selectedAreaId] ?? 'Select Area';
-
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
@@ -199,9 +201,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                       child: Column(
                         children: [
                           Container(
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 16,
-                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 16),
                             child: Text(
                               'Select Area',
                               style: GoogleFonts.inter(
@@ -210,7 +210,9 @@ class _ProductsScreenState extends State<ProductsScreen>
                               ),
                             ),
                           ),
-                          AreaSelectPopUp(),
+                          AreaSelectPopUp(
+                            onAreaSelected: setAreaId,
+                          ),
                         ],
                       ),
                     );
@@ -272,19 +274,6 @@ class _ProductsScreenState extends State<ProductsScreen>
               ),
             ),
           ),
-
-          // actions: <Widget>[
-          //   // IconButton(
-          //   //   icon: const Icon(
-          //   //     Icons.notifications,
-          //   //     size: 34,
-          //   //     color: Colors.white,
-          //   //   ),
-          //   //   onPressed: () {
-          //   //     // Add your onPressed logic here
-          //   //   },
-          //   // ),
-          // ],
         ),
       ),
       body: Container(
@@ -313,9 +302,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                               child: Column(
                                 children: [
                                   Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
+                                    margin: const EdgeInsets.symmetric(vertical: 16),
                                     child: Text(
                                       'Sort',
                                       style: GoogleFonts.inter(
@@ -328,13 +315,10 @@ class _ProductsScreenState extends State<ProductsScreen>
                                   SortPopUp(
                                     onSortChanged: (newSortOrder) {
                                       setState(() {
-                                        _currentSortOrder =
-                                            newSortOrder; // Update the sort order
-                                        _tabBarViewKey =
-                                            UniqueKey(); // Change the key to force rebuild
+                                        _currentSortOrder = newSortOrder; // Update the sort order
+                                        _tabBarViewKey = UniqueKey(); // Change the key to force rebuild
                                       });
-                                      Navigator.pop(
-                                          context); // Close the bottom sheet
+                                      Navigator.pop(context); // Close the bottom sheet
                                     },
                                   ),
                                 ],
@@ -366,9 +350,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                       ),
                     ),
                   ),
-                  const VerticalDivider(
-                    color: Colors.white,
-                  ),
+                  const VerticalDivider(color: Colors.white),
                   Expanded(
                     child: InkWell(
                       onTap: () async {

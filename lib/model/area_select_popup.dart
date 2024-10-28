@@ -8,7 +8,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AreaSelectPopUp extends StatefulWidget {
-  const AreaSelectPopUp({super.key});
+  final Function(int) onAreaSelected; // Callback to notify selected area
+
+  const AreaSelectPopUp({super.key, required this.onAreaSelected});
 
   @override
   State<AreaSelectPopUp> createState() => _AreaSelectPopUpState();
@@ -34,55 +36,24 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
       'Area Selection',
       leadId: null,
     );
-  }
 
-  Future<void> showConfirmationDialog(
-      BuildContext context, int newAreaId) async {
-    String newAreaName = area[newAreaId] ?? 'Unknown Area';
-    String currentAreaName = area[selectedAreaId] ?? 'Unknown Area';
+    // Notify the parent widget of the selected area
+    widget.onAreaSelected(areaId); // Call the callback
 
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Confirm Area Change',
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to change your area from "$currentAreaName" to "$newAreaName"?',
-            style: GoogleFonts.inter(),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-            TextButton(
-              child: Text(
-                'Confirm',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              onPressed: () async {
-                await setAreaId(newAreaId);
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pop(); // Close the area selection popup
-              },
-            ),
-          ],
-        );
-      },
+    // Show SnackBar notification
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Area changed to: $selectedAreaName',
+          style: GoogleFonts.inter(),
+        ),
+        duration: const Duration(seconds: 1),
+        backgroundColor: Colors.green,
+      ),
     );
+
+    // Close the pop-up after selection
+    Navigator.of(context).pop();
   }
 
   Future<void> fetchAreaFromDb() async {
@@ -178,9 +149,8 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           value: areaId,
           groupValue: selectedAreaId,
           onChanged: (newAreaId) {
-            if (newAreaId != selectedAreaId) {
-              showConfirmationDialog(context, newAreaId!);
-            }
+            // Call setAreaId directly without confirmation
+            setAreaId(newAreaId!);
           },
         );
       }).toList(),
