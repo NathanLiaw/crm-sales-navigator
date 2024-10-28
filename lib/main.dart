@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sales_navigator/api/firebase_api.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/firebase_options.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/model/notification_state.dart';
@@ -105,6 +106,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => CartModel()),
         ChangeNotifierProvider(create: (_) => NotificationState()),
+        ChangeNotifierProvider(create: (context) => NavigationProvider()),
         // Add other providers here
       ],
       child: const MyApp(),
@@ -167,6 +169,19 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFF8F8F8),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+        primaryColor: const Color(0xFF0175FF),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.black),
+          bodyMedium: TextStyle(color: Colors.black),
+          headlineSmall: TextStyle(color: Colors.black),
+        ),
+      ),
       home: isOffline ? NoInternetScreen() : const StartingPage(),
       routes: {
         '/home': (context) => const HomePage(),

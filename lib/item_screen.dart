@@ -1,6 +1,8 @@
 import "package:flutter/material.dart";
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/item_variations_screen.dart';
 import 'package:sales_navigator/cart_page.dart';
@@ -136,12 +138,8 @@ class _ItemScreenState extends State<ItemScreen> {
                   size: 30,
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CartPage(),
-                    ),
-                  ).then((_) {
+                  Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(3);
+                  Navigator.pushReplacementNamed(context, '/cart').then((_) {
                     // Refresh cart count when returning from cart page
                     fetchCartCount();
                   });
@@ -178,7 +176,7 @@ class _ItemScreenState extends State<ItemScreen> {
         foregroundColor: Colors.white,
         backgroundColor: const Color(0xff0175FF),
       ),
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color.fromARGB(253, 253, 253, 253),
       body: ListView(
         children: [
           Container(

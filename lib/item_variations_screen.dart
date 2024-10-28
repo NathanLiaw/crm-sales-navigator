@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:sales_navigator/cart_item.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/cart_page.dart';
@@ -74,22 +75,22 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.shopping_cart,
-              size: 30,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CartPage(),
+          Consumer<CartModel>(
+            builder: (context, cartModel, child) {
+              return IconButton(
+                icon: const Icon(
+                  Icons.shopping_cart,
+                  size: 30,
+                  color: Colors.white,
                 ),
+                onPressed: () {
+                  Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(3);
+                  Navigator.pushReplacementNamed(context, '/cart');
+                },
               );
             },
           ),
-          const SizedBox(width: 8), // Add some padding on the right
+          const SizedBox(width: 8),
         ],
         backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(
@@ -109,8 +110,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 10),
-                margin:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
@@ -177,9 +177,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
+                                const SizedBox(height: 10),
                                 Row(
                                   children: [
                                     IconButton(
@@ -187,35 +185,32 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       onPressed: isUnavailable
                                           ? null
                                           : () {
-                                              // Decrement quantity when minus button is pressed
-                                              if (currentQuantity > 1) {
-                                                setState(() {
-                                                  quantityMap[uom] =
-                                                      currentQuantity - 1;
-                                                  textController.text =
-                                                      quantityMap[uom]
-                                                          .toString();
-                                                });
-                                              }
-                                            },
+                                        if (currentQuantity > 1) {
+                                          setState(() {
+                                            quantityMap[uom] = currentQuantity - 1;
+                                            textController.text = quantityMap[uom].toString();
+                                          });
+                                        }
+                                      },
                                       icon: const Icon(Icons.remove),
                                     ),
                                     SizedBox(
-                                      width:
-                                          60, // Adjust the width of the TextField container
+                                      width: 60,
                                       child: TextField(
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.number,
                                         controller: textController,
                                         onChanged: (value) {
                                           final newValue = int.tryParse(value);
-                                          if (newValue != null &&
-                                              newValue > 0) {
+                                          if (value.isEmpty) {
+                                            setState(() {
+                                              quantityMap[uom] = 0;
+                                            });
+                                          } else if (newValue != null && newValue > 0) {
                                             setState(() {
                                               quantityMap[uom] = newValue;
                                             });
                                           } else {
-                                            // If the value is not a positive integer or is null, reset it to 1
                                             setState(() {
                                               textController.text = '1';
                                               quantityMap[uom] = 1;
@@ -229,21 +224,18 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       onPressed: isUnavailable
                                           ? null
                                           : () {
-                                              // Increment quantity when plus button is pressed
-                                              setState(() {
-                                                quantityMap[uom] =
-                                                    currentQuantity + 1;
-                                                textController.text =
-                                                    quantityMap[uom].toString();
-                                              });
-                                            },
+                                        setState(() {
+                                          quantityMap[uom] = currentQuantity + 1;
+                                          textController.text = quantityMap[uom].toString();
+                                        });
+                                      },
                                       icon: const Icon(Icons.add),
                                     ),
                                   ],
                                 )
                               ],
                             ),
-                          )
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -252,79 +244,75 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              isUnavailable
-                                  ? 'RM0.000'
-                                  : 'RM ${(price! * currentQuantity).toStringAsFixed(3)}',
-                              style: GoogleFonts.inter(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                isUnavailable
+                                    ? 'RM 0.000'
+                                    : 'RM ${(price! * (currentQuantity > 0 ? currentQuantity : 1)).toStringAsFixed(3)}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis, // Enable ellipsis overflow
+                                maxLines: 1, // Limit to 1 line
                               ),
                             ),
                             ElevatedButton(
-                              onPressed: isUnavailable
-                                  ? null
+                              onPressed: isUnavailable || quantityMap[uom] == 0
+                                  ? null // Disable button if unavailable or quantity is 0
                                   : () async {
-                                      // Create CartItem with current quantity and uom
-                                      final cartItem = CartItem(
-                                        buyerId:
-                                            await UtilityFunction.getUserId(),
-                                        productId: widget.productId,
-                                        productName: widget.productName,
-                                        uom: uom,
-                                        quantity: currentQuantity,
-                                        discount: 0,
-                                        originalUnitPrice: price,
-                                        unitPrice: price,
-                                        total: price * currentQuantity,
-                                        cancel: null,
-                                        remark: null,
-                                        status: 'in progress',
-                                        created: DateTime.now(),
-                                        modified: DateTime.now(),
-                                      );
+                                final cartItem = CartItem(
+                                  buyerId: await UtilityFunction.getUserId(),
+                                  productId: widget.productId,
+                                  productName: widget.productName,
+                                  uom: uom,
+                                  quantity: currentQuantity,
+                                  discount: 0,
+                                  originalUnitPrice: price,
+                                  unitPrice: price,
+                                  total: price * currentQuantity,
+                                  cancel: null,
+                                  remark: null,
+                                  status: 'in progress',
+                                  created: DateTime.now(),
+                                  modified: DateTime.now(),
+                                );
 
-                                      // Insert CartItem into database
-                                      await insertItemIntoCart(cartItem);
+                                await insertItemIntoCart(cartItem);
 
-                                      // Show success dialog
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => const AlertDialog(
-                                          backgroundColor: Colors.green,
-                                          title: Row(
-                                            children: [
-                                              SizedBox(width: 20),
-                                              Icon(
-                                                Icons.check_circle,
-                                                color: Colors.white,
-                                              ),
-                                              SizedBox(width: 8),
-                                              Text(
-                                                'Item added to cart',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                            ],
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => const AlertDialog(
+                                    backgroundColor: Colors.green,
+                                    title: Row(
+                                      children: [
+                                        SizedBox(width: 20),
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Item added to cart',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
                                           ),
                                         ),
-                                      );
+                                      ],
+                                    ),
+                                  ),
+                                );
 
-                                      // Automatically close dialog after 1 second
-                                      Future.delayed(const Duration(seconds: 1),
-                                          () {
-                                        Navigator.pop(context);
-                                        updateCartCountInNavBar();
-                                      });
-
-                                      // Update cart count in the navigation bar
-                                    },
+                                Future.delayed(const Duration(seconds: 1), () {
+                                  Navigator.pop(context);
+                                  updateCartCountInNavBar();
+                                  Navigator.pop(context);
+                                });
+                              },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 20),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                 backgroundColor: const Color(0xff0175FF),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -342,9 +330,7 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(
-                        height: 4,
-                      ),
+                      const SizedBox(height: 4),
                     ],
                   ),
                 ),

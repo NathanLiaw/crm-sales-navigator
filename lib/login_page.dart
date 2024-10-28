@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/background_tasks.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:workmanager/workmanager.dart';
 import 'home_page.dart';
 import 'dart:convert';
@@ -68,11 +70,8 @@ class LoginPage extends StatelessWidget {
         await _initializeBackgroundTasks();
 
         // Navigate to HomePage
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomePage(),
-            ));
+        Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
         // Show an error message if login fails
         ScaffoldMessenger.of(context).showSnackBar(
