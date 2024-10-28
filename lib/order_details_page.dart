@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
@@ -12,7 +13,11 @@ class OrderDetailsPage extends StatefulWidget {
   final bool fromOrderConfirmation;
   final bool fromSalesOrder;
 
-  const OrderDetailsPage({super.key, required this.cartID, required this.fromOrderConfirmation, required this.fromSalesOrder});
+  const OrderDetailsPage(
+      {super.key,
+      required this.cartID,
+      required this.fromOrderConfirmation,
+      required this.fromSalesOrder});
 
   @override
   _OrderDetailsPageState createState() => _OrderDetailsPageState();
@@ -33,7 +38,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   late int salesmanId;
 
-  // Tax Section
   double gst = 0;
   double sst = 0;
 
@@ -57,7 +61,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://haluansama.com/crm-sales/api/cart/get_order_details.php?cartId=$cartId'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/cart/get_order_details.php?cartId=$cartId'),
       );
 
       if (response.statusCode == 200) {
@@ -73,33 +78,38 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             salesmanName = orderDetails['salesman_name'];
             createdDate = orderDetails['created_date'];
             salesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
+            total = double.tryParse(orderDetails['final_total']) ?? 0.0;
+            subtotal = double.tryParse(orderDetails['total']) ?? 0.0;
 
             orderItems = [];
+          });
 
-            // Loop through each cart item to fetch its photo
-            cartItems.forEach((item) async {
-              final productId = item['product_id'];
-              final productName = item['product_name'];
+          // Use a for loop to await each fetchProductPhoto call
+          for (var item in cartItems) {
+            final productId = item['product_id'];
+            final productName = item['product_name'];
 
-              // Fetch the product photo for each item
-              final photoPath = await fetchProductPhoto(productId);
+            // Fetch the product photo for each item
+            final photoPath = await fetchProductPhoto(productId);
 
+            setState(() {
               orderItems.add(OrderItem(
                 productId: productId,
                 productName: productName,
-                unitPrice: item['unit_price'] ?? '0.00',
+                unitPrice: (item['unit_price'] != null
+                    ? double.parse(item['unit_price']).toStringAsFixed(2)
+                    : '0.00'),
                 qty: item['qty']?.toString() ?? '0',
                 status: item['status'] ?? '',
-                total: item['total'] ?? '0.00',
+                total: (item['total'] != null
+                    ? double.parse(item['total']).toStringAsFixed(2)
+                    : '0.00'),
                 photoPath: photoPath,
               ));
-
-              // Calculate subtotal
-              subtotal = orderItems.fold(0.0, (sum, item) => sum + double.parse(item.total));
-
-              calculateTotalAndSubTotal();
             });
-          });
+          }
+          subtotal = orderItems.fold(
+              0.0, (sum, item) => sum + double.parse(item.total));
         } else {
           developer.log('Failed to fetch order details: ${data['message']}');
         }
@@ -114,13 +124,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Future<String> fetchProductPhoto(int productId) async {
     try {
       final response = await http.get(
-        Uri.parse('https://haluansama.com/crm-sales/api/product/get_prod_photo_by_prod_id.php?productId=$productId'),
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/product/get_prod_photo_by_prod_id.php?productId=$productId'),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          // Extract photo1 from the response
           final photos = List<Map<String, dynamic>>.from(data['photos']);
           if (photos.isNotEmpty && photos[0]['photo1'] != null) {
             String photoPath = photos[0]['photo1'];
@@ -131,7 +141,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           }
         }
       }
-      return 'asset/no_image.jpg';  // Default image if no photo found
+      return 'asset/no_image.jpg';
     } catch (e) {
       developer.log('Error fetching product photo: $e', error: e);
       return 'asset/no_image.jpg';
@@ -139,7 +149,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Future<void> voidOrder() async {
-    const url = 'https://haluansama.com/crm-sales/api/order_details/void_order.php';
+    const url =
+        'https://haluansama.com/crm-sales/api/order_details/void_order.php';
 
     try {
       final response = await http.post(
@@ -157,7 +168,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           developer.log('Error voiding order: ${responseData['message']}');
         }
       } else {
-        developer.log('Failed to void order. Status code: ${response.statusCode}');
+        developer
+            .log('Failed to void order. Status code: ${response.statusCode}');
       }
 
       setState(() {
@@ -176,14 +188,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     } catch (e) {
       developer.log('Error voiding order: $e');
     }
-  }
-
-  Future<void> calculateTotalAndSubTotal() async {
-    double finalTotal = subtotal * (1 + gst + sst);
-
-    setState(() {
-      total = finalTotal;
-    });
   }
 
   Future<void> getTax() async {
@@ -244,24 +248,21 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             if (widget.fromOrderConfirmation) {
-              // Navigate to Sales Order Page if from OrderConfirmationPage
-              Navigator.pushReplacement(context,
+              Navigator.pushReplacement(
+                context,
                 MaterialPageRoute(
                   builder: (context) => const CartPage(),
                 ),
               );
-            }
-            else if (widget.fromSalesOrder) {
-              // Navigate to Sales Order Page if from SalesOrderPage
-              Navigator.pushReplacement(context,
+            } else if (widget.fromSalesOrder) {
+              Navigator.pushReplacement(
+                context,
                 MaterialPageRoute(
                   builder: (context) => const SalesOrderPage(),
                 ),
               );
-            }
-            else {
-              // Otherwise, pop to previous page
-              Navigator.pop(context);
+            } else {
+              Navigator.pop(context, true);
             }
           },
         ),
@@ -356,6 +357,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildOrderSummary() {
+    final formatter =
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formattedSubtotal = formatter.format(subtotal);
+    final formattedGST = formatter.format(gst * subtotal);
+    final formattedSST = formatter.format(sst * subtotal);
+    final formattedTotal = formatter.format(total);
+
     return Column(
       children: [
         Row(
@@ -366,17 +374,42 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              'RM${subtotal.toStringAsFixed(3)}',
+              formattedSubtotal,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('GST', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              formattedGST,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('SST', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              formattedSST,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('RM${total.toStringAsFixed(3)}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              formattedTotal,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         const Divider(),
@@ -416,7 +449,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             color: Colors.red, fontWeight: FontWeight.bold),
                       ),
               ),
-            )
+            ),
           ],
         ),
       ],

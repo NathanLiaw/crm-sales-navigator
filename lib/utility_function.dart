@@ -1,5 +1,4 @@
 import 'dart:core';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class UtilityFunction{
   static String calculateExpirationDate() {
@@ -30,34 +31,37 @@ class UtilityFunction{
 
   static Future<double> retrieveTax(String taxType) async {
     double defaultTaxInPercent = 0.0; // Default tax percentage (0.0 = 0%)
+    const String apiUrl = 'https://haluansama.com/crm-sales/api/utility_function/get_tax.php';
 
     try {
-      MySqlConnection conn = await connectToDatabase();
+      // Prepare the API request
+      final Uri apiUri = Uri.parse('$apiUrl?tax_type=$taxType');
+      final response = await http.get(apiUri);
 
-      // Query tax table to retrieve tax_in_percent based on taxType and status=1
-      final results = await readData(
-        conn,
-        'tax',
-        "tax_title = '$taxType' AND status = 1",
-        '',
-        'tax_in_percent',
-      );
+      if (response.statusCode == 200) {
+        // Parse the response body
+        final data = json.decode(response.body);
 
-      await conn.close();
+        if (data['status'] == 'success') {
+          // Retrieve tax_in_percent from the response
+          int taxInPercent = data['tax_in_percent'] ?? 0;
 
-      if (results.isNotEmpty) {
-        // Retrieve tax_in_percent from the first row
-        int taxInPercent = results[0]['tax_in_percent'];
+          // Calculate final tax percentage (divide taxInPercent by 100)
+          double finalTaxPercent = taxInPercent / 100.0;
 
-        // Calculate final tax percentage (divide taxInPercent by 100)
-        double finalTaxPercent = taxInPercent / 100.0;
-
-        return finalTaxPercent;
+          return finalTaxPercent;
+        } else {
+          // If no tax data found, return the default tax percentage
+          developer.log('Error retrieving tax: ${data['message']}');
+          return defaultTaxInPercent;
+        }
       } else {
-        // If no tax data found, return the default tax percentage
+        // Handle non-200 status codes
+        developer.log('Failed to retrieve tax, status code: ${response.statusCode}');
         return defaultTaxInPercent;
       }
     } catch (e, stackTrace) {
+      // Log the error if something goes wrong
       developer.log('Error retrieving tax: $e', error: e, stackTrace: stackTrace);
       return defaultTaxInPercent;
     }
@@ -79,24 +83,33 @@ class UtilityFunction{
     return formattedDateTime;
   }
 
-  static Future<String> getAreaNameById(int id) async{
+  // Function to retrieve area name by ID from the API
+  static Future<String> getAreaNameById(int id) async {
     String areaName = '';
+    const String apiUrl = 'https://haluansama.com/crm-sales/api/utility_function/get_area.php';
+
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readData(
-        conn,
-        'area',
-        "id='$id' AND status = 1",
-        '',
-        'area',
-      );
-      await conn.close();
+      // Prepare the API request
+      final Uri apiUri = Uri.parse('$apiUrl?id=$id');
+      final response = await http.get(apiUri);
 
-      for (var row in results){
-        areaName = row['area'];
+      if (response.statusCode == 200) {
+        // Parse the response body
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'success') {
+          // Retrieve area name from the response
+          areaName = data['area'];
+        } else {
+          // Log error message if area not found
+          developer.log('Error retrieving area name: ${data['message']}');
+        }
+      } else {
+        // Handle non-200 status codes
+        developer.log('Failed to retrieve area name, status code: ${response.statusCode}');
       }
-
     } catch (e, stackTrace) {
+      // Log the error if something goes wrong
       developer.log('Error retrieving area name: $e', error: e, stackTrace: stackTrace);
     }
 

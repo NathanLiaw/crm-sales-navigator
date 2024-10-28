@@ -1,16 +1,15 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_navigator/customer_insights.dart';
+import 'package:sales_navigator/customer_Insights.dart';
+import 'package:sales_navigator/model/notification_state.dart';
 import 'dart:async';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/notification_page.dart';
-import 'package:sales_navigator/event_logger.dart';
 import 'package:sales_navigator/sales_lead_closed_widget.dart';
 import 'package:sales_navigator/sales_lead_eng_widget.dart';
 import 'package:sales_navigator/sales_lead_nego_widget.dart';
@@ -23,6 +22,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -49,14 +49,33 @@ class SalesmanPerformanceUpdater {
   }
 
   Future<void> _updateSalesmanPerformance(int salesmanId) async {
-    MySqlConnection conn = await connectToDatabase();
+    final String apiUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_salesman_performance.php?salesman_id=$salesmanId';
+
     try {
-      await conn.query(
-          'CALL update_salesman_performance(?, CURDATE())', [salesmanId]);
+      // Make the POST request to the API with the salesmanId
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {'salesman_id': salesmanId.toString()},
+      );
+
+      // Check if the response status is successful
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == 'success') {
+          developer.log('Salesman performance updated successfully.');
+        } else {
+          developer
+              .log('Failed to update performance: ${jsonResponse['message']}');
+        }
+      } else {
+        developer.log('Server error: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error updating salesman performance: $e');
-    } finally {
-      await conn.close();
     }
   }
 }
@@ -88,14 +107,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _sortBy = 'created_date';
   bool _sortAscending = true;
   bool _isButtonVisible = true;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
     super.initState();
     _initializeSalesmanId();
     _performanceUpdater = SalesmanPerformanceUpdater();
+    _loadUnreadNotifications();
     // _fetchLeadItems();
-    _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
+    // _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
     Future.delayed(const Duration(seconds: 2), () {
       setState(() {
         _isLoading = false; // Set loading state to false when data is loaded
@@ -108,17 +129,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
     _tabController.addListener(() {
       setState(() {
-        _isButtonVisible = _tabController.index == 0; // Show button only on first tab
+        _isButtonVisible =
+            _tabController.index == 0; // Show button only on first tab
       });
     });
   }
 
+  Future<void> _loadUnreadNotifications() async {
+    final salesmanId = await UtilityFunction.getUserId();
+    final count = await NotificationsPage.getUnreadCount(salesmanId);
+
+    // Update unread count via Provider
+    if (mounted) {
+      Provider.of<NotificationState>(context, listen: false)
+          .setUnreadCount(count);
+    }
+  }
+
   void _initializeSalesmanId() async {
     final id = await UtilityFunction.getUserId();
+    developer.log('Initialized salesmanId: $id');
     setState(() {
       salesmanId = id;
     });
     _performanceUpdater.startPeriodicUpdate(salesmanId);
+    await _cleanAndValidateLeadData();
+    await _fetchLeadItems();
   }
 
   void _sortLeads(List<LeadItem> leads) {
@@ -155,29 +191,108 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              ListTile(
-                title: const Text('Created Date'),
-                onTap: () {
-                  _updateSortCriteria('created_date');
-                  Navigator.of(context).pop();
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Created Date'),
+                      if (_sortBy == 'created_date')
+                        Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                          color: const Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'created_date'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'created_date'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _updateSortCriteria('created_date');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Predicted Sales'),
-                onTap: () {
-                  _updateSortCriteria('predicted_sales');
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Predicted Sales'),
+                      if (_sortBy == 'predicted_sales')
+                        Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                          color: const Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'predicted_sales'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'predicted_sales'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _updateSortCriteria('predicted_sales');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Customer Name'),
-                onTap: () {
-                  _updateSortCriteria('customer_name');
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Customer Name'),
+                      if (_sortBy == 'customer_name')
+                        Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                          color: const Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'customer_name'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'customer_name'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _updateSortCriteria('customer_name');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
             ],
           ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         );
       },
     );
@@ -208,61 +323,106 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   // Update salesman performance by calling the sql Stored Procedure
   Future<void> _updateSalesmanPerformance(int salesmanId) async {
-    MySqlConnection conn = await connectToDatabase();
+    final String apiUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_salesman_performance.php?salesman_id=$salesmanId';
+
     try {
-      await conn.query(
-          'CALL update_salesman_performance(?, CURDATE())', [salesmanId]);
+      // Make the POST request to the API with the salesmanId
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {'salesman_id': salesmanId.toString()},
+      );
+
+      // Check if the response status is successful
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == 'success') {
+          developer.log('Salesman performance updated successfully.');
+        } else {
+          developer
+              .log('Failed to update performance: ${jsonResponse['message']}');
+        }
+      } else {
+        developer.log('Server error: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error updating salesman performance: $e');
-    } finally {
-      await conn.close();
     }
   }
 
   // Get average closed value by calling the sql function
   Future<double> _getAverageClosedValue(
       int salesmanId, String startDate, String endDate) async {
-    MySqlConnection conn = await connectToDatabase();
+    final String apiUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/get_average_closed_value.php?salesman_id=$salesmanId&start_date=$startDate&end_date=$endDate';
+
     try {
-      var result = await conn.query(
-          'SELECT calculate_average_closed_value(?, ?, ?)',
-          [salesmanId, startDate, endDate]);
-      return (result.first.values!.first as num).toDouble();
+      // Make the POST request to the API with the salesmanId, startDate, and endDate
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'salesman_id': salesmanId.toString(),
+          'start_date': startDate,
+          'end_date': endDate,
+        },
+      );
+
+      // Check if the response status is successful
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == 'success') {
+          return jsonResponse['averageClosedValue'];
+        } else {
+          developer.log(
+              'Failed to get average closed value: ${jsonResponse['message']}');
+          return 0;
+        }
+      } else {
+        developer.log('Server error: ${response.statusCode}');
+        return 0;
+      }
     } catch (e) {
       developer.log('Error getting average closed value: $e');
       return 0;
-    } finally {
-      await conn.close();
     }
   }
 
-  // Get stage duration by calling the sql function
-  Future<int> getStageDuration(int leadId, String stage) async {
-    MySqlConnection conn = await connectToDatabase();
-    try {
-      var results = await conn.query(
-          'SELECT calculate_stage_duration(?, ?) AS duration', [leadId, stage]);
-      if (results.isNotEmpty) {
-        return results.first['duration'] as int;
-      }
-      return 0;
-    } catch (e) {
-      developer.log('Error calculating stage duration: $e');
-      return 0;
-    } finally {
-      await conn.close();
-    }
-  }
+  // // Get stage duration by calling the sql function
+  // Future<int> getStageDuration(int leadId, String stage) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     var results = await conn.query(
+  //         'SELECT calculate_stage_duration(?, ?) AS duration', [leadId, stage]);
+  //     if (results.isNotEmpty) {
+  //       return results.first['duration'] as int;
+  //     }
+  //     return 0;
+  //   } catch (e) {
+  //     developer.log('Error calculating stage duration: $e');
+  //     return 0;
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<void> _cleanAndValidateLeadData() async {
+    developer
+        .log('Starting _cleanAndValidateLeadData for salesman_id: $salesmanId');
     final url = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=3');
+        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
 
     try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
+        developer.log('_cleanAndValidateLeadData response: ${response.body}');
         if (data['status'] == 'success') {
           developer.log('Lead data cleaned and validated successfully.');
         } else {
@@ -277,132 +437,85 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  // Future<void> _cleanAndValidateLeadData() async {
+  //   final url = Uri.parse(
+  //       'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
+
+  //   try {
+  //     final response = await http.get(url);
+
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> data = jsonDecode(response.body);
+  //       if (data['status'] == 'success') {
+  //         developer.log('Lead data cleaned and validated successfully.');
+  //       } else {
+  //         developer.log('Error: ${data['message']}');
+  //       }
+  //     } else {
+  //       developer
+  //           .log('Failed to load data. Status code: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error making API call: $e');
+  //   }
+  // }
+
   // Auto generate lead item from cart
   Future<void> _fetchLeadItems() async {
     if (!mounted) return;
-    // developer.log("Starting _fetchLeadItems");
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse(
+        '$apiUrl/sales_lead/get_sales_lead_automatically.php?salesman_id=$salesmanId');
+
     try {
-      Results results =
-          await conn.query('SELECT * FROM cart WHERE buyer_id = $salesmanId');
-      await _fetchCreateLeadItems();
+      final response = await http.get(url);
 
-      for (var row in results) {
-        var modifiedDate = row['modified'] as DateTime;
-        var customerId = row['customer_id'] as int;
-        var total = row['total'] as double;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-        if (!latestModifiedDates.containsKey(customerId) ||
-            modifiedDate.isAfter(latestModifiedDates[customerId]!)) {
-          latestModifiedDates[customerId] = modifiedDate;
-          latestTotals[customerId] = total;
-        }
-      }
+        if (data['status'] == 'success') {
+          final leads = data['leads'] as List;
 
-      DateTime currentDate = DateTime.now();
-      for (var entry in latestModifiedDates.entries) {
-        var customerId = entry.key;
-        var modifiedDate = entry.value;
-        var difference = currentDate.difference(modifiedDate).inDays;
-        // developer.log("Customer $customerId last purchase: $difference days ago");
-        if (difference >= 30) {
-          var customerName = await _fetchCustomerName(conn, customerId);
-          // developer.log("Checking lead for customer: $customerName");
-          var total = latestTotals[customerId]!;
-          var description = "Hasn't purchased since 30 days ago";
-          var createdDate = DateFormat('yyyy-MM-dd').format(currentDate);
+          for (var lead in leads) {
+            var customerName = lead['customer_name'];
+            var description = lead['description'];
+            var total = double.parse(lead['total']);
+            var createdDate = lead['created_date'];
+            var contactNumber = lead['contact_number'] ?? '';
+            var emailAddress = lead['email_address'] ?? '';
+            var addressLine1 = lead['address'] ?? '';
 
-          // Query the customer table for information based on customer_name.
-          Results customerResults = await conn.query(
-            'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
-            [customerName],
-          );
+            // If the INSERT operation is successful, add the leadItem to the list
+            setState(() {
+              leadItems.add(LeadItem(
+                id: lead['id'],
+                salesmanId: salesmanId,
+                customerName: customerName,
+                description: description,
+                createdDate: createdDate,
+                amount: 'RM${total.toStringAsFixed(2)}',
+                contactNumber: contactNumber,
+                emailAddress: emailAddress,
+                stage: 'Opportunities',
+                addressLine1: addressLine1,
+                salesOrderId: '',
+              ));
+            });
 
-          String contactNumber = '';
-          String emailAddress = '';
-          String addressLine1 = '';
-          if (customerResults.isNotEmpty) {
-            var customerRow = customerResults.first;
-            contactNumber = customerRow['contact_number'].toString();
-            emailAddress = customerRow['email'].toString();
-            addressLine1 = customerRow['address_line_1'].toString();
+            developer.log("Created new lead for customer: $customerName");
           }
-
-          // Check if the customer already exists in the sales_lead table
-          Results existingLeadResults = await conn.query(
-            // 'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = $salesmanId',
-            // [customerName],
-            'SELECT * FROM sales_lead WHERE customer_name = ? AND salesman_id = ? AND stage != ?',
-            [customerName, salesmanId, 'Closed'],
-          );
-
-          // If the customer does not exist in the sales_lead table or exists but the stage is 'Closed',
-          // save it to the sales_lead table and add it to the list of leadItems.
-          if (existingLeadResults.isEmpty) {
-            developer.log("Creating new lead for customer: $customerName");
-            try {
-              // Save the lead item to the sales_lead table
-              var insertResult = await conn.query(
-                'INSERT INTO sales_lead (salesman_id, customer_name, description, created_date, predicted_sales, contact_number, email_address, address, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [
-                  salesmanId,
-                  customerName,
-                  description,
-                  createdDate,
-                  total,
-                  contactNumber,
-                  emailAddress,
-                  addressLine1,
-                  'Opportunities',
-                ],
-              );
-
-              int newLeadId = insertResult.insertId!;
-
-              // Log the event for the new lead
-              await EventLogger.logEvent(salesmanId,
-                  'Created new lead for customer: $customerName', 'Create Lead',
-                  leadId: newLeadId);
-
-              // If the INSERT operation is successful, add the leadItem to the list
-              setState(() {
-                leadItems.add(LeadItem(
-                  id: newLeadId,
-                  salesmanId: salesmanId,
-                  customerName: customerName,
-                  description: description,
-                  createdDate: createdDate,
-                  amount: 'RM${total.toStringAsFixed(2)}',
-                  contactNumber: contactNumber,
-                  emailAddress: emailAddress,
-                  stage: 'Opportunities',
-                  addressLine1: addressLine1,
-                  salesOrderId: '',
-                ));
-              });
-            } catch (e) {
-              developer
-                  .log('Error inserting lead item into sales_lead table: $e');
-              developer.log('Lead item details:');
-              developer.log('customerName: $customerName');
-              developer.log('description: $description');
-              developer.log('createdDate: $createdDate');
-              developer.log('amount: RM${total.toStringAsFixed(2)}');
-              developer.log('contactNumber: $contactNumber');
-              developer.log('emailAddress: $emailAddress');
-              developer.log('addressLine1: $addressLine1');
-              developer.log('stage: Opportunities');
-            }
-          } else {
-            developer.log("Lead already exists for customer: $customerName");
-          }
+        } else {
+          developer.log('Error fetching lead items: ${data['message']}');
         }
+      } else {
+        developer.log('Error fetching lead items: HTTP ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching lead items: $e');
-    } finally {
-      await conn.close();
     }
+
+    await _fetchCreateLeadItems();
+
     _sortLeads(leadItems);
     _sortLeads(engagementLeads);
     _sortLeads(negotiationLeads);
@@ -550,15 +663,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //   }
   // }
 
-  Future<String> _fetchCustomerName(
-      MySqlConnection connection, int customerId) async {
+  Future<String> _fetchCustomerName(int customerId) async {
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse(
+        '$apiUrl/sales_lead/get_customer_name.php?customer_id=$customerId');
+
     try {
-      Results results = await connection.query(
-          'SELECT id, company_name FROM customer WHERE id = ?', [customerId]);
-      if (results.isNotEmpty) {
-        var row = results.first;
-        return row['company_name'];
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 'success') {
+          return data['company_name'];
+        } else {
+          developer.log('Error fetching customer name: ${data['message']}');
+          return 'Unknown';
+        }
       } else {
+        developer
+            .log('Error fetching customer name: HTTP ${response.statusCode}');
         return 'Unknown';
       }
     } catch (e) {
@@ -569,131 +693,285 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _updateSalesOrderId(
       LeadItem leadItem, String salesOrderId) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse('$apiUrl/sales_lead/update_sales_order_id.php');
+
     try {
-      await conn.query(
-        'UPDATE sales_lead SET so_id = ? WHERE id = ?',
-        [salesOrderId, leadItem.id],
+      final response = await http.post(
+        url,
+        body: {
+          'lead_id': leadItem.id.toString(),
+          'sales_order_id': salesOrderId,
+        },
       );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 'success') {
+          developer.log('Sales order ID updated successfully');
+        } else {
+          developer.log('Error updating sales order ID: ${data['message']}');
+        }
+      } else {
+        developer
+            .log('Error updating sales order ID: HTTP ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error updating sales order ID: $e');
-    } finally {
-      await conn.close();
     }
   }
 
   Future<void> _moveFromNegotiationToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    setState(() {
-      negotiationLeads.remove(leadItem);
-      leadItem.salesOrderId = salesOrderId;
-      leadItem.quantity = quantity;
-    });
-    await _updateLeadStage(leadItem, 'Order Processing');
-    await _updateSalesOrderId(leadItem, salesOrderId);
-    await _updateSalesmanPerformance(salesmanId);
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_negotiation_to_order_processing.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'sales_order_id': salesOrderId,
+      'quantity': quantity?.toString() ?? '',
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            negotiationLeads.remove(leadItem);
+            leadItem.salesOrderId = salesOrderId;
+            leadItem.quantity = quantity;
+            // leadItem.stage = 'Order Processing';
+            // leadItem.previousStage = responseData['previous_stage'];
+            // orderProcessingLeads.add(leadItem);
+          });
+
+          // Call other update functions
+          await _updateLeadStage(leadItem, 'Negotiation');
+          await _updateSalesOrderId(leadItem, salesOrderId);
+          await _updateSalesmanPerformance(salesmanId);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('Successfully moved lead to Order Processing stage')),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to move lead: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error moving lead to Order Processing: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error moving lead to Order Processing: $e')),
+      );
+    }
   }
 
+  // Future<void> _moveFromNegotiationToOrderProcessing(
+  //     LeadItem leadItem, String salesOrderId, int? quantity) async {
+  //   setState(() {
+  //     negotiationLeads.remove(leadItem);
+  //     leadItem.salesOrderId = salesOrderId;
+  //     leadItem.quantity = quantity;
+  //   });
+  // // Log the event
+  //   await EventLogger.logEvent(
+  //       salesmanId,
+  //       'Moved lead from Negotiation stage to Order Processing stage',
+  //       'Stage Movement',
+  //       leadId: leadItem.id);
+  //   await _updateLeadStage(leadItem, 'Order Processing');
+  //   await _updateSalesOrderId(leadItem, salesOrderId);
+  //   await _updateSalesmanPerformance(salesmanId);
+  // }
+
   Future<void> _moveToEngagement(LeadItem leadItem) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse(
+        '$apiUrl/sales_lead/update_sales_lead_to_engagement.php?lead_id=${leadItem.id}&salesman_id=$salesmanId');
+
     try {
-      await conn.query(
-          'UPDATE sales_lead SET stage = ?, engagement_start_date = NOW() WHERE id = ?',
-          ['Engagement', leadItem.id]);
-      Results results = await conn.query(
-        'SELECT contact_number, email_address FROM sales_lead WHERE id = ?',
-        [leadItem.id],
-      );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        leadItem.contactNumber = row['contact_number'];
-        leadItem.emailAddress = row['email_address'];
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 'success') {
+          leadItem.contactNumber = data['contact_number'];
+          leadItem.emailAddress = data['email_address'];
+
+          setState(() {
+            leadItems.remove(leadItem);
+            engagementLeads.add(leadItem);
+          });
+
+          await _updateLeadStage(leadItem, 'Engagement');
+          await _updateSalesmanPerformance(salesmanId);
+
+          developer.log('Lead moved to Engagement stage successfully');
+        } else {
+          developer
+              .log('Error moving lead to Engagement stage: ${data['message']}');
+        }
+      } else {
+        developer.log(
+            'Error moving lead to Engagement stage: HTTP ${response.statusCode}');
       }
-      await _updateSalesmanPerformance(salesmanId);
     } catch (e) {
-      developer.log('Error fetching contact number and email address: $e');
-    } finally {
-      await conn.close();
+      developer.log('Error moving lead to Engagement stage: $e');
     }
-
-    // Log the event
-    await EventLogger.logEvent(
-        salesmanId,
-        'Moved lead from Opportunities stage to Engagement stage',
-        'Stage Movement',
-        leadId: leadItem.id);
-
-    setState(() {
-      leadItems.remove(leadItem);
-      engagementLeads.add(leadItem);
-    });
-    await _updateLeadStage(leadItem, 'Engagement');
   }
 
   Future<void> _moveToNegotiation(LeadItem leadItem) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse(
+        '$apiUrl/sales_lead/update_sales_lead_to_negotiation.php?lead_id=${leadItem.id}&salesman_id=$salesmanId');
+
     try {
-      await conn.query(
-          'UPDATE sales_lead SET stage = ?, negotiation_start_date = NOW() WHERE id = ?',
-          ['Negotiation', leadItem.id]);
-      Results results = await conn.query(
-        'SELECT contact_number, email_address FROM sales_lead WHERE id = ?',
-        [leadItem.id],
-      );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        leadItem.contactNumber = row['contact_number'];
-        leadItem.emailAddress = row['email_address'];
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 'success') {
+          leadItem.contactNumber = data['contact_number'];
+          leadItem.emailAddress = data['email_address'];
+
+          setState(() {
+            leadItems.remove(leadItem);
+            negotiationLeads.add(leadItem);
+          });
+
+          await _updateLeadStage(leadItem, 'Negotiation');
+          await _updateSalesmanPerformance(salesmanId);
+
+          developer.log('Lead moved to Negotiation stage successfully');
+        } else {
+          developer.log(
+              'Error moving lead to Negotiation stage: ${data['message']}');
+        }
+      } else {
+        developer.log(
+            'Error moving lead to Negotiation stage: HTTP ${response.statusCode}');
       }
-      await _updateSalesmanPerformance(salesmanId);
     } catch (e) {
-      developer.log('Error fetching contact number and email address: $e');
-    } finally {
-      await conn.close();
+      developer.log('Error moving lead to Negotiation stage: $e');
     }
-
-    // Log the event
-    await EventLogger.logEvent(
-        salesmanId,
-        'Moved lead from Opportunities stage to Negotiation stage',
-        'Stage Movement',
-        leadId: leadItem.id);
-
-    setState(() {
-      leadItems.remove(leadItem);
-      negotiationLeads.add(leadItem);
-    });
-    await _updateLeadStage(leadItem, 'Negotiation');
   }
 
   Future<void> _moveFromEngagementToNegotiation(LeadItem leadItem) async {
-    setState(() {
-      engagementLeads.remove(leadItem);
-      negotiationLeads.add(leadItem);
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse(
+            '$apiUrl/sales_lead/update_sales_lead_from_engagement_to_negotiation.php')
+        .replace(queryParameters: {
+      'lead_id': leadItem.id.toString(),
+      'salesman_id': salesmanId.toString(),
     });
-    // Log the event
-    await EventLogger.logEvent(
-        salesmanId,
-        'Moved lead from Engagement stage to Negotiation stage',
-        'Stage Movement',
-        leadId: leadItem.id);
-    await _updateLeadStage(leadItem, 'Negotiation');
-    await _updateSalesmanPerformance(salesmanId);
+
+    try {
+      // Call the main API to move the lead
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 'success') {
+          // If successful, update the local state
+          setState(() {
+            engagementLeads.remove(leadItem);
+            negotiationLeads.add(leadItem);
+          });
+
+          // Call other APIs
+          await _updateLeadStage(leadItem, 'Negotiation');
+          await _updateSalesmanPerformance(salesmanId);
+
+          developer.log('Successfully moved lead to Negotiation stage');
+        } else {
+          developer.log(
+              'Error moving lead to Negotiation stage: ${data['message']}');
+        }
+      } else {
+        developer.log(
+            'Error moving lead to Negotiation stage: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error moving lead to Negotiation stage: $e');
+    }
   }
 
+  // Future<void> _moveFromOrderProcessingToClosed(LeadItem leadItem) async {
+  //   setState(() {
+  //     orderProcessingLeads.remove(leadItem);
+  //     closedLeads.add(leadItem);
+  //   });
+  //   // Log the event
+  //   await EventLogger.logEvent(
+  //       salesmanId,
+  //       'Moved lead from Order Processing stage to Closed stage',
+  //       'Stage Movement',
+  //       leadId: leadItem.id);
+  //   await _updateLeadStage(leadItem, 'Closed');
+  //   await _updateSalesmanPerformance(salesmanId);
+  // }
+
   Future<void> _moveFromOrderProcessingToClosed(LeadItem leadItem) async {
-    setState(() {
-      orderProcessingLeads.remove(leadItem);
-      closedLeads.add(leadItem);
-    });
-    // Log the event
-    await EventLogger.logEvent(
-        salesmanId,
-        'Moved lead from Order Processing stage to Closed stage',
-        'Stage Movement',
-        leadId: leadItem.id);
-    await _updateLeadStage(leadItem, 'Closed');
-    await _updateSalesmanPerformance(salesmanId);
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_order_processing_to_closed.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            orderProcessingLeads.remove(leadItem);
+            leadItem.stage = 'Closed';
+            leadItem.previousStage = responseData['previous_stage'];
+            closedLeads.add(leadItem);
+          });
+
+          // Update salesman performance
+          await _updateSalesmanPerformance(salesmanId);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Successfully moved lead to Closed stage')),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to move lead: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error moving lead to Closed stage: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error moving lead to Closed stage: $e')),
+      );
+    }
   }
 
   // Future<void> _updateLeadStage(LeadItem leadItem, String stage) async {
@@ -705,51 +983,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _updateLeadStage(LeadItem leadItem, String stage) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = dotenv.env['API_URL'];
+    final url = Uri.parse(
+        '$apiUrl/sales_lead/update_lead_stage.php?lead_id=${leadItem.id}&stage=$stage');
+
     try {
-      String query;
-      List<Object> params;
+      final response = await http.get(url);
 
-      if (stage == 'Negotiation' && leadItem.negotiationStartDate == null) {
-        query = '''
-        UPDATE sales_lead 
-        SET stage = ?, previous_stage = ?, negotiation_start_date = NOW() 
-        WHERE id = ?
-      ''';
-        params = [stage, leadItem.stage, leadItem.id];
-      } else if (stage == 'Engagement' &&
-          leadItem.engagementStartDate == null) {
-        query = '''
-        UPDATE sales_lead 
-        SET stage = ?, previous_stage = ?, engagement_start_date = NOW() 
-        WHERE id = ?
-      ''';
-        params = [stage, leadItem.stage, leadItem.id];
-      } else {
-        query =
-            'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
-        params = [stage, leadItem.stage, leadItem.id];
-      }
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      await conn.query(query, params);
+        if (data['status'] == 'success') {
+          setState(() {
+            leadItem.previousStage = leadItem.stage;
+            leadItem.stage = stage;
+            if (stage == 'Negotiation' &&
+                leadItem.negotiationStartDate == null) {
+              leadItem.negotiationStartDate = DateTime.now();
+            } else if (stage == 'Engagement' &&
+                leadItem.engagementStartDate == null) {
+              leadItem.engagementStartDate = DateTime.now();
+            }
+          });
 
-      setState(() {
-        leadItem.previousStage = leadItem.stage;
-        leadItem.stage = stage;
-        if (stage == 'Negotiation' && leadItem.negotiationStartDate == null) {
-          leadItem.negotiationStartDate = DateTime.now();
-        } else if (stage == 'Engagement' &&
-            leadItem.engagementStartDate == null) {
-          leadItem.engagementStartDate = DateTime.now();
+          developer.log(
+              'Successfully updated lead stage to $stage for lead ${leadItem.id}');
+        } else {
+          developer.log('Error updating stage: ${data['message']}');
         }
-      });
-
-      developer.log(
-          'Successfully updated lead stage to $stage for lead ${leadItem.id}');
+      } else {
+        developer.log('Error updating stage: HTTP ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error updating stage: $e');
-    } finally {
-      await conn.close();
     }
   }
 
@@ -812,16 +1078,75 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  // Future<void> _moveFromOpportunitiesToOrderProcessing(
+  //     LeadItem leadItem, String salesOrderId, int? quantity) async {
+  //   setState(() {
+  //     leadItems.remove(leadItem);
+  //     leadItem.salesOrderId = salesOrderId;
+  //     leadItem.quantity = quantity;
+  //   });
+  //   // Log the event
+  //   await EventLogger.logEvent(
+  //       salesmanId,
+  //       'Moved lead from Opportunities stage to Order Processing stage',
+  //       'Stage Movement',
+  //       leadId: leadItem.id);
+  //   await _updateLeadStage(leadItem, 'Order Processing');
+  //   await _updateSalesOrderId(leadItem, salesOrderId);
+  //   await _updateSalesmanPerformance(salesmanId);
+  // }
+
   Future<void> _moveFromOpportunitiesToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    setState(() {
-      leadItems.remove(leadItem);
-      leadItem.salesOrderId = salesOrderId;
-      leadItem.quantity = quantity;
-    });
-    await _updateLeadStage(leadItem, 'Order Processing');
-    await _updateSalesOrderId(leadItem, salesOrderId);
-    await _updateSalesmanPerformance(salesmanId);
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_opportunities_to_order_processing.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'sales_order_id': salesOrderId,
+      'quantity': quantity?.toString() ?? '',
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            leadItems.remove(leadItem);
+            leadItem.salesOrderId = salesOrderId;
+            leadItem.quantity = quantity;
+            leadItem.stage = 'Order Processing';
+            leadItem.previousStage = responseData['previous_stage'];
+          });
+
+          // Update salesman performance
+          await _updateSalesmanPerformance(salesmanId);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('Successfully moved lead to Order Processing stage')),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to move lead: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error moving lead to Order Processing: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error moving lead to Order Processing: $e')),
+      );
+    }
   }
 
   // Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
@@ -838,118 +1163,213 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //   }
   // }
 
-  Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
-    MySqlConnection conn = await connectToDatabase();
-    try {
-      String query;
-      List<Object> params;
+  // Future<void> _updateLeadStageInDatabase(LeadItem leadItem) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     String query;
+  //     List<Object> params;
+  //
+  //     if (leadItem.stage == 'Negotiation') {
+  //       query = '''
+  //       UPDATE sales_lead
+  //       SET stage = ?, previous_stage = ?, negotiation_start_date = NOW()
+  //       WHERE id = ?
+  //     ''';
+  //       params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+  //     } else if (leadItem.stage == 'Engagement') {
+  //       query = '''
+  //       UPDATE sales_lead
+  //       SET stage = ?, previous_stage = ?, engagement_start_date = NOW()
+  //       WHERE id = ?
+  //     ''';
+  //       params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+  //     } else {
+  //       query =
+  //           'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
+  //       params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
+  //     }
+  //
+  //     await conn.query(query, params);
+  //
+  //     developer.log(
+  //         'Successfully updated lead stage to ${leadItem.stage} for lead ${leadItem.id}');
+  //   } catch (e) {
+  //     developer.log('Error updating stage: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
-      if (leadItem.stage == 'Negotiation') {
-        query = '''
-        UPDATE sales_lead 
-        SET stage = ?, previous_stage = ?, negotiation_start_date = NOW() 
-        WHERE id = ?
-      ''';
-        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
-      } else if (leadItem.stage == 'Engagement') {
-        query = '''
-        UPDATE sales_lead 
-        SET stage = ?, previous_stage = ?, engagement_start_date = NOW() 
-        WHERE id = ?
-      ''';
-        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
-      } else {
-        query =
-            'UPDATE sales_lead SET stage = ?, previous_stage = ? WHERE id = ?';
-        params = [leadItem.stage, leadItem.previousStage ?? '', leadItem.id];
-      }
+  // Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.transaction((ctx) async {
+  //       // Delete related tasks
+  //       await ctx.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
 
-      await conn.query(query, params);
+  //       // Delete related notifications
+  //       await ctx.query('DELETE FROM notifications WHERE related_lead_id = ?',
+  //           [leadItem.id]);
 
-      developer.log(
-          'Successfully updated lead stage to ${leadItem.stage} for lead ${leadItem.id}');
-    } catch (e) {
-      developer.log('Error updating stage: $e');
-    } finally {
-      await conn.close();
-    }
-  }
+  //       // Delete the sales_lead record
+  //       await ctx.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+
+  //       // Delete the corresponding record in the event_log table
+  //       await ctx
+  //           .query('DELETE FROM event_log WHERE lead_id = ?', [leadItem.id]);
+
+  //       // Logging a new "Lead Deleted" event
+  //       await ctx.query(
+  //           'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+  //           [salesmanId, 'Deleted Engagement lead', 'Lead Deleted']);
+  //     });
+
+  //     setState(() {
+  //       engagementLeads.remove(leadItem);
+  //     });
+
+  //     // Call _updateSalesmanPerformance function
+  //     await _updateSalesmanPerformance(salesmanId);
+
+  //     developer.log('Engagement lead deleted and event logged successfully');
+  //   } catch (e) {
+  //     developer.log('Error deleting engagement lead: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
-    MySqlConnection conn = await connectToDatabase();
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/delete_engagement_lead.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      await conn.transaction((ctx) async {
-        // Delete related tasks
-        await ctx.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+      final response = await http.get(uri);
 
-        // Delete related notifications
-        await ctx.query('DELETE FROM notifications WHERE related_lead_id = ?',
-            [leadItem.id]);
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            engagementLeads.remove(leadItem);
+          });
 
-        // Delete the sales_lead record
-        await ctx.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+          // Call _updateSalesmanPerformance API
+          await _updateSalesmanPerformance(salesmanId);
 
-        // Delete the corresponding record in the event_log table
-        await ctx
-            .query('DELETE FROM event_log WHERE lead_id = ?', [leadItem.id]);
-
-        // Logging a new "Lead Deleted" event
-        await ctx.query(
-            'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
-            [salesmanId, 'Deleted Engagement lead', 'Lead Deleted']);
-      });
-
-      setState(() {
-        engagementLeads.remove(leadItem);
-      });
-
-      // Call _updateSalesmanPerformance function
-      await _updateSalesmanPerformance(salesmanId);
-
-      developer.log('Engagement lead deleted and event logged successfully');
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Successfully deleted Engagement lead')),
+          );
+          developer
+              .log('Engagement lead deleted and event logged successfully');
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to delete lead: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error deleting engagement lead: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting Engagement lead: $e')),
+      );
     }
   }
 
+  // Future<void> _onDeleteNegotiationLead(LeadItem leadItem) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.transaction((ctx) async {
+  //       // Delete related tasks
+  //       await ctx.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+
+  //       // Delete related notifications
+  //       await ctx.query('DELETE FROM notifications WHERE related_lead_id = ?',
+  //           [leadItem.id]);
+
+  //       // Delete the sales_lead record
+  //       await ctx.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+
+  //       // Delete the corresponding record in the event_log table
+  //       await ctx
+  //           .query('DELETE FROM event_log WHERE lead_id = ?', [leadItem.id]);
+
+  //       // Logging a new "Lead Deleted" event
+  //       await ctx.query(
+  //           'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+  //           [salesmanId, 'Deleted Negotiation lead', 'Lead Deleted']);
+  //     });
+
+  //     setState(() {
+  //       negotiationLeads.remove(leadItem);
+  //     });
+
+  //     // Call _updateSalesmanPerformance function
+  //     await _updateSalesmanPerformance(salesmanId);
+
+  //     developer.log('Negotiation lead deleted and event logged successfully');
+  //   } catch (e) {
+  //     developer.log('Error deleting negotiation lead: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
+
   Future<void> _onDeleteNegotiationLead(LeadItem leadItem) async {
-    MySqlConnection conn = await connectToDatabase();
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/delete_negotiation_lead.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      await conn.transaction((ctx) async {
-        // Delete related tasks
-        await ctx.query('DELETE FROM tasks WHERE lead_id = ?', [leadItem.id]);
+      final response = await http.get(uri);
 
-        // Delete related notifications
-        await ctx.query('DELETE FROM notifications WHERE related_lead_id = ?',
-            [leadItem.id]);
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            negotiationLeads.remove(leadItem);
+          });
 
-        // Delete the sales_lead record
-        await ctx.query('DELETE FROM sales_lead WHERE id = ?', [leadItem.id]);
+          // Call _updateSalesmanPerformance function
+          await _updateSalesmanPerformance(salesmanId);
 
-        // Delete the corresponding record in the event_log table
-        await ctx
-            .query('DELETE FROM event_log WHERE lead_id = ?', [leadItem.id]);
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Successfully deleted Negotiation lead')),
+          );
 
-        // Logging a new "Lead Deleted" event
-        await ctx.query(
-            'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
-            [salesmanId, 'Deleted Negotiation lead', 'Lead Deleted']);
-      });
-
-      setState(() {
-        negotiationLeads.remove(leadItem);
-      });
-
-      // Call _updateSalesmanPerformance function
-      await _updateSalesmanPerformance(salesmanId);
-
-      developer.log('Negotiation lead deleted and event logged successfully');
+          developer
+              .log('Negotiation lead deleted and event logged successfully');
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to delete lead: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error deleting negotiation lead: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting Negotiation lead: $e')),
+      );
     }
   }
 
@@ -975,69 +1395,184 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _onUndoEngagementLead(
       LeadItem leadItem, String previousStage) async {
-    MySqlConnection conn = await connectToDatabase();
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_engagement_to_previous_stage.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'previous_stage': previousStage,
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      await conn.query(
-          'UPDATE sales_lead SET stage = ?, previous_stage = NULL, engagement_start_date = NULL WHERE id = ?',
-          [previousStage, leadItem.id]);
+      final response = await http.get(uri);
 
-      setState(() {
-        engagementLeads.remove(leadItem);
-        leadItem.stage = previousStage;
-        leadItem.previousStage = null;
-        leadItem.engagementStartDate = null;
-        if (previousStage == 'Opportunities') {
-          leadItems.add(leadItem);
-        } else if (previousStage == 'Negotiation') {
-          negotiationLeads.add(leadItem);
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            engagementLeads.remove(leadItem);
+            leadItem.stage = previousStage;
+            leadItem.previousStage = null;
+            leadItem.engagementStartDate = null;
+            if (previousStage == 'Opportunities') {
+              leadItems.add(leadItem);
+            } else if (previousStage == 'Negotiation') {
+              negotiationLeads.add(leadItem);
+            }
+          });
+
+          // Call _updateSalesmanPerformance function
+          await _updateSalesmanPerformance(salesmanId);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Successfully undone Engagement lead')),
+          );
+
+          developer.log('Engagement lead undone and event logged successfully');
+        } else {
+          throw Exception(responseData['message']);
         }
-      });
-
-      // Log the event
-      await EventLogger.logEvent(
-          salesmanId, 'Undo Engagement lead', 'Lead Undo',
-          leadId: leadItem.id);
-
-      await _updateSalesmanPerformance(salesmanId);
+      } else {
+        throw Exception('Failed to undo lead: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error undoing engagement lead: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error undoing Engagement lead: $e')),
+      );
     }
   }
+
+  // Future<void> _onUndoEngagementLead(
+  //     LeadItem leadItem, String previousStage) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query(
+  //         'UPDATE sales_lead SET stage = ?, previous_stage = NULL, engagement_start_date = NULL WHERE id = ?',
+  //         [previousStage, leadItem.id]);
+
+  //     setState(() {
+  //       engagementLeads.remove(leadItem);
+  //       leadItem.stage = previousStage;
+  //       leadItem.previousStage = null;
+  //       leadItem.engagementStartDate = null;
+  //       if (previousStage == 'Opportunities') {
+  //         leadItems.add(leadItem);
+  //       } else if (previousStage == 'Negotiation') {
+  //         negotiationLeads.add(leadItem);
+  //       }
+  //     });
+
+  //     // Log the event
+  //     await EventLogger.logEvent(
+  //         salesmanId, 'Undo Engagement lead', 'Lead Undo',
+  //         leadId: leadItem.id);
+
+  //     await _updateSalesmanPerformance(salesmanId);
+  //   } catch (e) {
+  //     developer.log('Error undoing engagement lead: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   Future<void> _onUndoNegotiationLead(
       LeadItem leadItem, String previousStage) async {
-    MySqlConnection conn = await connectToDatabase();
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_negotiation_to_previous_stage.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'previous_stage': previousStage,
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      await conn.query(
-          'UPDATE sales_lead SET stage = ?, previous_stage = NULL, negotiation_start_date = NULL WHERE id = ?',
-          [previousStage, leadItem.id]);
+      final response = await http.get(uri);
 
-      setState(() {
-        negotiationLeads.remove(leadItem);
-        leadItem.stage = previousStage;
-        leadItem.previousStage = null;
-        leadItem.negotiationStartDate = null;
-        if (previousStage == 'Opportunities') {
-          leadItems.add(leadItem);
-        } else if (previousStage == 'Engagement') {
-          engagementLeads.add(leadItem);
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            negotiationLeads.remove(leadItem);
+            leadItem.stage = previousStage;
+            leadItem.previousStage = null;
+            leadItem.negotiationStartDate = null;
+            if (previousStage == 'Opportunities') {
+              leadItems.add(leadItem);
+            } else if (previousStage == 'Engagement') {
+              engagementLeads.add(leadItem);
+            }
+          });
+
+          // Call _updateSalesmanPerformance function
+          await _updateSalesmanPerformance(salesmanId);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Successfully undone Negotiation lead')),
+          );
+
+          developer
+              .log('Negotiation lead undone and event logged successfully');
+        } else {
+          throw Exception(responseData['message']);
         }
-      });
-
-      // Log the event
-      await EventLogger.logEvent(
-          salesmanId, 'Undo Negotiation lead', 'Lead Undo',
-          leadId: leadItem.id);
-
-      await _updateSalesmanPerformance(salesmanId);
+      } else {
+        throw Exception('Failed to undo lead: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error undoing negotiation lead: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error undoing Negotiation lead: $e')),
+      );
     }
   }
+
+  // Future<void> _onUndoNegotiationLead(
+  //     LeadItem leadItem, String previousStage) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query(
+  //         'UPDATE sales_lead SET stage = ?, previous_stage = NULL, negotiation_start_date = NULL WHERE id = ?',
+  //         [previousStage, leadItem.id]);
+
+  //     setState(() {
+  //       negotiationLeads.remove(leadItem);
+  //       leadItem.stage = previousStage;
+  //       leadItem.previousStage = null;
+  //       leadItem.negotiationStartDate = null;
+  //       if (previousStage == 'Opportunities') {
+  //         leadItems.add(leadItem);
+  //       } else if (previousStage == 'Engagement') {
+  //         engagementLeads.add(leadItem);
+  //       }
+  //     });
+
+  //     // Log the event
+  //     await EventLogger.logEvent(
+  //         salesmanId, 'Undo Negotiation lead', 'Lead Undo',
+  //         leadId: leadItem.id);
+
+  //     await _updateSalesmanPerformance(salesmanId);
+  //   } catch (e) {
+  //     developer.log('Error undoing negotiation lead: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
 
   // Future<void> _createLead(
   //     String customerName, String description, String amount) async {
@@ -1100,48 +1635,101 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _createLead(
       String customerName, String description, String amount) async {
-    LeadItem leadItem = LeadItem(
-      id: 0,
-      salesmanId: salesmanId,
-      customerName: customerName,
-      description: description,
-      createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
-      amount: 'RM$amount',
-      contactNumber: '',
-      emailAddress: '',
-      stage: 'Opportunities',
-      addressLine1: '',
-      salesOrderId: '',
-    );
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead.php';
 
-    MySqlConnection conn = await connectToDatabase();
+    final Map<String, String> queryParameters = {
+      'customer_name': customerName,
+      'description': description,
+      'amount': amount,
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      Results customerResults = await conn.query(
-        'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
-        [customerName],
-      );
-      if (customerResults.isNotEmpty) {
-        var customerRow = customerResults.first;
-        leadItem.contactNumber = customerRow['contact_number'].toString();
-        leadItem.emailAddress = customerRow['email'].toString();
-        leadItem.addressLine1 = customerRow['address_line_1'].toString();
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          LeadItem leadItem = LeadItem(
+            id: responseData['lead_id'],
+            salesmanId: salesmanId,
+            customerName: customerName,
+            description: description,
+            createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+            amount: 'RM$amount',
+            contactNumber: responseData['contact_number'],
+            emailAddress: responseData['email_address'],
+            stage: 'Opportunities',
+            addressLine1: responseData['address_line_1'],
+            salesOrderId: '',
+          );
+
+          setState(() {
+            leadItems.add(leadItem);
+          });
+
+          await _updateSalesmanPerformance(salesmanId);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to create lead: ${response.statusCode}');
       }
     } catch (e) {
-      developer.log('Error fetching customer details: $e');
-    } finally {
-      await conn.close();
+      developer.log('Error creating lead: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create lead: $e')),
+      );
     }
-
-    // // Log the event
-    // await EventLogger.logEvent(salesmanId,
-    //     'Created new lead for customer: $customerName', 'Lead Accepted',
-    //     leadId: leadItem.id);
-
-    setState(() {
-      leadItems.add(leadItem);
-    });
-    await _updateSalesmanPerformance(salesmanId);
   }
+
+  // Future<void> _createLead(
+  //     String customerName, String description, String amount) async {
+  //   LeadItem leadItem = LeadItem(
+  //     id: 0,
+  //     salesmanId: salesmanId,
+  //     customerName: customerName,
+  //     description: description,
+  //     createdDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+  //     amount: 'RM$amount',
+  //     contactNumber: '',
+  //     emailAddress: '',
+  //     stage: 'Opportunities',
+  //     addressLine1: '',
+  //     salesOrderId: '',
+  //   );
+
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     Results customerResults = await conn.query(
+  //       'SELECT company_name, address_line_1, contact_number, email FROM customer WHERE company_name = ?',
+  //       [customerName],
+  //     );
+  //     if (customerResults.isNotEmpty) {
+  //       var customerRow = customerResults.first;
+  //       leadItem.contactNumber = customerRow['contact_number'].toString();
+  //       leadItem.emailAddress = customerRow['email'].toString();
+  //       leadItem.addressLine1 = customerRow['address_line_1'].toString();
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching customer details: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+
+  //   setState(() {
+  //     leadItems.add(leadItem);
+  //   });
+  //   await _updateSalesmanPerformance(salesmanId);
+  // }
 
   Future<void> _handleIgnore(LeadItem leadItem) async {
     bool confirmDelete = await showDialog(
@@ -1170,49 +1758,136 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     if (confirmDelete == true) {
-      MySqlConnection conn = await connectToDatabase();
+      const String baseUrl =
+          'https://haluansama.com/crm-sales/api/sales_lead/delete_opportunities_lead.php';
+
+      final Map<String, String> queryParameters = {
+        'lead_id': leadItem.id.toString(),
+        'salesman_id': salesmanId.toString(),
+      };
+
+      final Uri uri =
+          Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
       try {
-        await conn.transaction((ctx) async {
-          // Delete the related event_log records
-          await ctx.query(
-            'DELETE FROM event_log WHERE lead_id = ?',
-            [leadItem.id],
-          );
+        final response = await http.get(uri);
 
-          // Delete the sales_lead record
-          var result = await ctx.query(
-            'DELETE FROM sales_lead WHERE id = ?',
-            [leadItem.id],
-          );
-
-          if (result.affectedRows! > 0) {
-            // If the deletion is successful, a new event log is inserted
-            await ctx.query(
-              'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
-              [salesmanId, 'Ignored lead', 'Lead Ignored'],
-            );
-
+        if (response.statusCode == 200) {
+          final responseData = json.decode(response.body);
+          if (responseData['status'] == 'success') {
             setState(() {
               leadItems.remove(leadItem);
             });
+
             await _updateSalesmanPerformance(salesmanId);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Lead successfully deleted')),
+              SnackBar(content: Text(responseData['message'])),
             );
           } else {
-            throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
+            throw Exception(responseData['message']);
           }
-        });
+        } else {
+          throw Exception('Failed to delete lead: ${response.statusCode}');
+        }
       } catch (e) {
-        developer.log('Error during transaction: $e');
+        developer.log('Error deleting lead: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete lead: $e')),
         );
-      } finally {
-        await conn.close();
       }
     }
+  }
+
+  // Future<void> _handleIgnore(LeadItem leadItem) async {
+  //   bool confirmDelete = await showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text('Confirm Delete'),
+  //         content:
+  //             const Text('Are you sure you want to delete this sales lead?'),
+  //         actions: [
+  //           TextButton(
+  //             child: const Text('Cancel'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop(false);
+  //             },
+  //           ),
+  //           TextButton(
+  //             child: const Text('Confirm'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop(true);
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+
+  //   if (confirmDelete == true) {
+  //     MySqlConnection conn = await connectToDatabase();
+  //     try {
+  //       await conn.transaction((ctx) async {
+  //         // Delete the related event_log records
+  //         await ctx.query(
+  //           'DELETE FROM event_log WHERE lead_id = ?',
+  //           [leadItem.id],
+  //         );
+
+  //         // Delete the sales_lead record
+  //         var result = await ctx.query(
+  //           'DELETE FROM sales_lead WHERE id = ?',
+  //           [leadItem.id],
+  //         );
+
+  //         if (result.affectedRows! > 0) {
+  //           // If the deletion is successful, a new event log is inserted
+  //           await ctx.query(
+  //             'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), NULL)',
+  //             [salesmanId, 'Ignored lead', 'Lead Ignored'],
+  //           );
+
+  //           setState(() {
+  //             leadItems.remove(leadItem);
+  //           });
+  //           await _updateSalesmanPerformance(salesmanId);
+
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text('Lead successfully deleted')),
+  //           );
+  //         } else {
+  //           throw Exception('No rows deleted for leadItem id: ${leadItem.id}');
+  //         }
+  //       });
+  //     } catch (e) {
+  //       developer.log('Error during transaction: $e');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Failed to delete lead: $e')),
+  //       );
+  //     } finally {
+  //       await conn.close();
+  //     }
+  //   }
+  // }
+
+  void _addNewLead(LeadItem newLead) {
+    setState(() {
+      leadItems.add(newLead);
+    });
+  }
+
+  void _handleRemoveOrderProcessingLead(LeadItem leadItem) {
+    setState(() {
+      orderProcessingLeads.remove(leadItem);
+    });
+  }
+
+  Future<int?> _getSalesmanId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? id = prefs.getInt('id');
+    developer.log("_getSalesmanId returned: $id"); // Add this log
+    return id;
   }
 
   @override
@@ -1267,44 +1942,123 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: _showSortOptions,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const NotificationsPage()),
+                  Consumer<NotificationState>(
+                    builder: (context, notificationState, child) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 7.0),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications,
+                                  color: Colors.white),
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const NotificationsPage(),
+                                  ),
+                                );
+                                _loadUnreadNotifications();
+                              },
+                            ),
+                            if (notificationState.unreadCount > 0)
+                              Positioned(
+                                right: 4,
+                                top: 2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    notificationState.unreadCount > 99
+                                        ? '99+'
+                                        : notificationState.unreadCount
+                                            .toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       );
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                    onPressed: () async {
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        },
-                      );
+                  if (_unreadNotifications > 0)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 20,
+                          minHeight: 20,
+                        ),
+                        child: Text(
+                          _unreadNotifications > 99
+                              ? '99+'
+                              : _unreadNotifications.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  // if (kDebugMode)
+                  //   IconButton(
+                  //     icon: const Icon(Icons.refresh, color: Colors.white),
+                  //     onPressed: () async {
+                  //       showDialog(
+                  //         context: context,
+                  //         barrierDismissible: false,
+                  //         builder: (BuildContext context) {
+                  //           return const Center(
+                  //               child: CircularProgressIndicator());
+                  //         },
+                  //       );
 
-                      // Trigger notification check
-                      // await checkOrderStatusAndNotify();
-                      await checkTaskDueDatesAndNotify();
-                      // await checkNewSalesLeadsAndNotify();
+                  //       // Get the salesman ID
+                  //       int? salesmanId = await _getSalesmanId();
+                  //       developer.log("Retrieved salesmanId: $salesmanId");
 
-                      // Close the loading indicator
-                      Navigator.of(context).pop();
+                  //       if (salesmanId != null) {
+                  //         await checkOrderStatusAndNotify(salesmanId);
+                  //         // await checkTaskDueDatesAndNotify(salesmanId);
+                  //         // await checkNewSalesLeadsAndNotify(salesmanId);
 
-                      // Show completion message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Notification check completed')),
-                      );
-                    },
-                  ),
+                  //         Navigator.of(context).pop();
+
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           const SnackBar(
+                  //               content: Text('Notification check completed')),
+                  //         );
+                  //       } else {
+                  //         Navigator.of(context).pop();
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           const SnackBar(
+                  //               content: Text('Error: Salesman ID not found')),
+                  //         );
+                  //       }
+                  //     },
+                  //   ),
                 ],
               ),
               body: Column(
@@ -1380,10 +2134,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               bottomNavigationBar: const CustomNavigationBar(),
-              floatingActionButton: _isButtonVisible
-                  ? _buildFloatingActionButton(context)
-                  : null, // Use null to hide the button
-
+              floatingActionButton:
+                  _isButtonVisible ? _buildFloatingActionButton(context) : null,
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.endFloat,
             );
@@ -1463,10 +2215,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     MaterialPageRoute(
                       builder: (context) => CreateLeadPage(
                         salesmanId: salesmanId,
-                        onCreateLead: _createLead,
+                        onCreateLead: (LeadItem newLead) {
+                          setState(() {
+                            leadItems.add(newLead);
+                          });
+                        },
                       ),
                     ),
-                  );
+                  ).then((_) {
+                    // Refresh the data when returning from CreateLeadPage
+                    setState(() {
+                      _fetchLeadItems();
+                    });
+                  });
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
                 shape: const RoundedRectangleBorder(
@@ -1486,20 +2247,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildOpportunitiesTab() {
-    return ListView.builder(
-      itemCount: leadItems.length,
-      itemBuilder: (context, index) {
-        return Column(
+    if (leadItems.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildLeadItem(leadItems[index]),
-            // Check if it's the last item
-            if (index == leadItems.length - 1)
-              // Add additional padding for the last item
-              const SizedBox(height: 80),
+            Icon(
+              Icons.person_search_outlined,
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No Sales Leads created yet,\ncreate one now!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
           ],
-        );
-      },
-    );
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: leadItems.length,
+        itemBuilder: (context, index) {
+          return Column(
+            children: [
+              _buildLeadItem(leadItems[index]),
+              // Check if it's the last item
+              if (index == leadItems.length - 1)
+                // Add additional padding for the last item
+                const SizedBox(height: 80),
+            ],
+          );
+        },
+      );
+    }
   }
 
   Widget _buildLeadItem(LeadItem leadItem) {
@@ -1515,7 +2300,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
       },
       child: Container(
-        height: 220,
+        height: 200,
         decoration: BoxDecoration(
             image: const DecorationImage(
               image: ResizeImage(AssetImage('asset/bttm_start.png'),
@@ -1540,24 +2325,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Text(
-                  //   leadItem.customerName.length > 20
-                  //       ? '${leadItem.customerName.substring(0, 20)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //       fontWeight: FontWeight.bold, fontSize: 18),
-                  //   maxLines: 2,
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
-                  SizedBox(
-                    width: 200,
+                  Flexible(
                     child: Text(
                       leadItem.customerName,
                       style: GoogleFonts.inter(
                         textStyle: const TextStyle(letterSpacing: -0.8),
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: const Color.fromARGB(255, 25, 23, 49),
                       ),
@@ -1565,7 +2340,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
                   Container(
                     margin: const EdgeInsets.only(left: 18),
                     padding:
@@ -1574,56 +2348,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       color: const Color.fromARGB(71, 148, 255, 223),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(
-                      leadItem.formattedAmount,
-                      style: const TextStyle(
-                        color: Color(0xff008A64),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        leadItem.formattedAmount,
+                        style: const TextStyle(
+                          color: Color(0xff008A64),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ),
-                  // const Spacer(),
-                  // DropdownButtonHideUnderline(
-                  //   child: DropdownButton2<String>(
-                  //     isExpanded: true,
-                  //     hint: const Text(
-                  //       'Opportunities',
-                  //       style: TextStyle(fontSize: 12, color: Colors.black),
-                  //     ),
-                  //     items: tabbarNames
-                  //         .skip(1)
-                  //         .map((item) => DropdownMenuItem<String>(
-                  //               value: item,
-                  //               child: Text(
-                  //                 item,
-                  //                 style: const TextStyle(fontSize: 12),
-                  //               ),
-                  //             ))
-                  //         .toList(),
-                  //     value: leadItem.selectedValue,
-                  //     onChanged: (String? value) {
-                  //       if (value == 'Engagement') {
-                  //         _moveToEngagement(leadItem);
-                  //       } else if (value == 'Negotiation') {
-                  //         _moveToNegotiation(leadItem);
-                  //       } else if (value == 'Closed') {
-                  //         _moveToCreateTaskPage(context, leadItem);
-                  //       } else if (value == 'Order Processing') {
-                  //         _navigateToCreateTaskPage(context, leadItem, false);
-                  //       }
-                  //     },
-                  //     buttonStyleData: const ButtonStyleData(
-                  //       padding: EdgeInsets.symmetric(horizontal: 16),
-                  //       height: 32,
-                  //       width: 140,
-                  //       decoration: BoxDecoration(color: Colors.white),
-                  //     ),
-                  //     menuItemStyleData: const MenuItemStyleData(
-                  //       height: 30,
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1680,8 +2416,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         padding: EdgeInsets.symmetric(horizontal: 14),
                         height: 24,
                         width: 136,
-                        decoration:
-                            BoxDecoration(color: Color(0xff0175FF)),
+                        decoration: BoxDecoration(color: Color(0xff0175FF)),
                       ),
                       menuItemStyleData: const MenuItemStyleData(
                         height: 30,
@@ -1690,7 +2425,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              // const SizedBox(height: 8),
               // Text(leadItem.description),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1698,42 +2433,107 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Text(
                     leadItem.createdDate,
                     style: const TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.w600,
-                    ),
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontWeight: FontWeight.w600),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 40, // Match the height with the "Accept" button
-                        width: 40,  // Square width for the icon button
-                        child: IconButton(
-                          icon: const Icon(Icons.delete, size: 24), // Adjust the icon size
-                          color: Colors.red, // Icon color
-                          onPressed: () {
-                            _handleIgnore(leadItem);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12), // Add spacing between buttons
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff33b249), // Set background color
-                          foregroundColor: Colors.white, // Set text color to white
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0, vertical: 10.0), // Match padding
-                          textStyle: const TextStyle(fontSize: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25.0), // Decrease the radius
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     _handleIgnore(leadItem);
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: Colors.white,
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(5),
+                        //       side:
+                        //           const BorderSide(color: Colors.red, width: 2),
+                        //     ),
+                        //     minimumSize: const Size(50, 35),
+                        //   ),
+                        //   child: const Text('Ignore',
+                        //       style: TextStyle(color: Colors.red)),
+                        // ),
+                        SizedBox(
+                          height: 30,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding: const WidgetStatePropertyAll(
+                                  EdgeInsets.all(1.0)),
+                              shape: WidgetStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side:
+                                          const BorderSide(color: Colors.red))),
+                              backgroundColor: WidgetStateProperty.all<Color>(
+                                  const Color(0xffF01C54)),
+                              foregroundColor: WidgetStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _handleIgnore(leadItem);
+                            },
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
+                            ),
                           ),
                         ),
-                        onPressed: () {
-                          _moveToEngagement(leadItem);
-                        },
-                        child: const Text('Accept'), // The button text
-                      ),
-                    ],
+
+                        const SizedBox(
+                          width: 12,
+                        ),
+                        // const SizedBox(width: 8),
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     _moveToEngagement(leadItem);
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: const Color(0xff0069BA),
+                        //     shape: RoundedRectangleBorder(
+                        //       borderRadius: BorderRadius.circular(5),
+                        //     ),
+                        //     minimumSize: const Size(50, 35),
+                        //   ),
+                        //   child: const Text('Accept',
+                        //       style: TextStyle(color: Colors.white)),
+                        // ),
+                        SizedBox(
+                          height: 30,
+                          width: 80,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              padding: const WidgetStatePropertyAll(
+                                  EdgeInsets.all(1.0)),
+                              shape: WidgetStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      side: const BorderSide(
+                                          color: Color(0xff4566DD)))),
+                              backgroundColor: WidgetStateProperty.all<Color>(
+                                  const Color(0xff4566DD)),
+                              foregroundColor: WidgetStateProperty.all<Color>(
+                                  const Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            onPressed: () {
+                              _moveToEngagement(leadItem);
+                            },
+                            child: const Text(
+                              'Accept',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w300),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1745,198 +2545,318 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEngagementTab() {
-    return ListView.builder(
-      itemCount: engagementLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = engagementLeads[index];
-        return EngagementLeadItem(
-          leadItem: leadItem,
-          onMoveToNegotiation: () => _moveFromEngagementToNegotiation(leadItem),
-          onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
-            // Log the event
-            await EventLogger.logEvent(
-                salesmanId,
-                'Moved lead from Engagement stage to Order Processing stage',
-                'Stage Movement',
-                leadId: leadItem.id);
-            await _updateSalesmanPerformance(salesmanId);
-            await _moveFromEngagementToOrderProcessing(
-                leadItem, salesOrderId, quantity);
-            setState(() {
-              engagementLeads.remove(leadItem);
-              orderProcessingLeads.add(leadItem);
-            });
-          },
-          onDeleteLead: _onDeleteEngagementLead,
-          onUndoLead: _onUndoEngagementLead,
-          onComplete: (leadItem) async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CreateTaskPage(
-                  id: leadItem.id,
-                  customerName: leadItem.customerName,
-                  contactNumber: leadItem.contactNumber,
-                  emailAddress: leadItem.emailAddress,
-                  address: leadItem.addressLine1,
-                  lastPurchasedAmount: leadItem.amount,
-                  showTaskDetails: false,
-                ),
+    if (engagementLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.handshake_outlined,
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No Engagement Leads yet,\nstart building relationships!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
               ),
-            );
-            if (result != null && result['salesOrderId'] != null) {
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: engagementLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = engagementLeads[index];
+          return EngagementLeadItem(
+            leadItem: leadItem,
+            onMoveToNegotiation: () =>
+                _moveFromEngagementToNegotiation(leadItem),
+            onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
+              await _updateSalesmanPerformance(salesmanId);
+              await _moveFromEngagementToOrderProcessing(
+                  leadItem, salesOrderId, quantity);
               setState(() {
                 engagementLeads.remove(leadItem);
-                leadItem.salesOrderId = result['salesOrderId'];
-                leadItem.quantity = result['quantity'];
-                closedLeads.add(leadItem);
+                orderProcessingLeads.add(leadItem);
               });
-              await _updateLeadStage(leadItem, 'Closed');
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _moveFromEngagementToOrderProcessing(
-      LeadItem leadItem, String salesOrderId, int? quantity) async {
-    setState(() {
-      engagementLeads.remove(leadItem);
-      leadItem.salesOrderId = salesOrderId;
-      leadItem.quantity = quantity;
-    });
-    await _updateLeadStage(leadItem, 'Order Processing');
-    await _updateSalesOrderId(leadItem, salesOrderId);
-  }
-
-  Widget _buildNegotiationTab() {
-    return ListView.builder(
-      itemCount: negotiationLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = negotiationLeads[index];
-        return NegotiationLeadItem(
-          leadItem: leadItem,
-          onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
-            // Log the event
-            await EventLogger.logEvent(
-                salesmanId,
-                'Moved lead from Negotiation stage to Order Processing stage',
-                'Stage Movement',
-                leadId: leadItem.id);
-            await _moveFromNegotiationToOrderProcessing(
-                leadItem, salesOrderId, quantity);
-            await _updateSalesmanPerformance(salesmanId);
-            setState(() {
-              negotiationLeads.remove(leadItem);
-              orderProcessingLeads.add(leadItem);
-            });
-          },
-          onDeleteLead: _onDeleteNegotiationLead,
-          onUndoLead: _onUndoNegotiationLead,
-          onComplete: (leadItem) async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CreateTaskPage(
-                  id: leadItem.id,
-                  customerName: leadItem.customerName,
-                  contactNumber: leadItem.contactNumber,
-                  emailAddress: leadItem.emailAddress,
-                  address: leadItem.addressLine1,
-                  lastPurchasedAmount: leadItem.amount,
-                  // existingTitle: leadItem.title,
-                  // existingDescription: leadItem.description,
-                  // existingDueDate: leadItem.dueDate,
-                  showTaskDetails: false,
-                ),
-              ),
-            );
-            if (result != null && result['salesOrderId'] != null) {
-              setState(() {
-                negotiationLeads.remove(leadItem);
-                leadItem.salesOrderId = result['salesOrderId'];
-                leadItem.quantity = result['quantity'];
-                closedLeads.add(leadItem);
-              });
-              await _updateLeadStage(leadItem, 'Closed');
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildOrderProcessingTab() {
-    return ListView.builder(
-      itemCount: orderProcessingLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = orderProcessingLeads[index];
-        if (leadItem.salesOrderId == null) {
-          return OrderProcessingLeadItem(
-            leadItem: leadItem,
-            status: 'Unknown',
-            onMoveToClosed: _moveFromOrderProcessingToClosed,
-          );
-        } else {
-          return FutureBuilder<String>(
-            future: _fetchSalesOrderStatus(leadItem.salesOrderId!),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 2.0, horizontal: 8.0),
-                    child: Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 200.0,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Container(
-                              width: double.infinity,
-                              height: 24.0,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(height: 8.0),
-                            Container(
-                              width: double.infinity,
-                              height: 24.0,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+            },
+            onDeleteLead: _onDeleteEngagementLead,
+            onUndoLead: _onUndoEngagementLead,
+            onComplete: (leadItem) async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateTaskPage(
+                    id: leadItem.id,
+                    customerName: leadItem.customerName,
+                    contactNumber: leadItem.contactNumber,
+                    emailAddress: leadItem.emailAddress,
+                    address: leadItem.addressLine1,
+                    lastPurchasedAmount: leadItem.amount,
+                    showTaskDetails: false,
                   ),
-                );
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else {
-                String status = snapshot.data ?? 'Unknown';
-                return OrderProcessingLeadItem(
-                  leadItem: leadItem,
-                  status: status,
-                  onMoveToClosed: _moveFromOrderProcessingToClosed,
-                );
+                ),
+              );
+              if (result != null && result['salesOrderId'] != null) {
+                setState(() {
+                  engagementLeads.remove(leadItem);
+                  leadItem.salesOrderId = result['salesOrderId'];
+                  leadItem.quantity = result['quantity'];
+                  closedLeads.add(leadItem);
+                });
+                await _updateLeadStage(leadItem, 'Closed');
               }
             },
           );
+        },
+      );
+    }
+  }
+
+  // Future<void> _moveFromEngagementToOrderProcessing(
+  //     LeadItem leadItem, String salesOrderId, int? quantity) async {
+  //   setState(() {
+  //     engagementLeads.remove(leadItem);
+  //     leadItem.salesOrderId = salesOrderId;
+  //     leadItem.quantity = quantity;
+  //   });
+  //   // Log the event
+  //   await EventLogger.logEvent(
+  //       salesmanId,
+  //       'Moved lead from Engagement stage to Order Processing stage',
+  //       'Stage Movement',
+  //       leadId: leadItem.id);
+  //   await _updateLeadStage(leadItem, 'Order Processing');
+  //   await _updateSalesOrderId(leadItem, salesOrderId);
+  // }
+
+  Future<void> _moveFromEngagementToOrderProcessing(
+      LeadItem leadItem, String salesOrderId, int? quantity) async {
+    const String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_engagement_to_order_processing.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': leadItem.id.toString(),
+      'sales_order_id': salesOrderId,
+      'quantity': quantity?.toString() ?? '',
+      'salesman_id': salesmanId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          // Update local state
+          setState(() {
+            engagementLeads.remove(leadItem);
+            leadItem.salesOrderId = salesOrderId;
+            leadItem.quantity = quantity;
+            leadItem.stage = 'Order Processing';
+            leadItem.previousStage = responseData['previous_stage'];
+            // orderProcessingLeads.add(leadItem);
+          });
+
+          // Update salesman performance
+          await _updateSalesmanPerformance(salesmanId);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('Successfully moved lead to Order Processing stage')),
+          );
+        } else {
+          throw Exception(responseData['message']);
         }
-      },
-    );
+      } else {
+        throw Exception('Failed to move lead: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error moving lead to Order Processing: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error moving lead to Order Processing: $e')),
+      );
+    }
+  }
+
+  Widget _buildNegotiationTab() {
+    if (negotiationLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.gavel, // Represents negotiations and decision-making
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No leads in negotiation,\nstart negotiating with your leads!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: negotiationLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = negotiationLeads[index];
+          return NegotiationLeadItem(
+            leadItem: leadItem,
+            onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
+              await _moveFromNegotiationToOrderProcessing(
+                  leadItem, salesOrderId, quantity);
+              await _updateSalesmanPerformance(salesmanId);
+              setState(() {
+                negotiationLeads.remove(leadItem);
+                orderProcessingLeads.add(leadItem);
+              });
+            },
+            onDeleteLead: _onDeleteNegotiationLead,
+            onUndoLead: _onUndoNegotiationLead,
+            onComplete: (leadItem) async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateTaskPage(
+                    id: leadItem.id,
+                    customerName: leadItem.customerName,
+                    contactNumber: leadItem.contactNumber,
+                    emailAddress: leadItem.emailAddress,
+                    address: leadItem.addressLine1,
+                    lastPurchasedAmount: leadItem.amount,
+                    showTaskDetails: false,
+                  ),
+                ),
+              );
+              if (result != null && result['salesOrderId'] != null) {
+                setState(() {
+                  negotiationLeads.remove(leadItem);
+                  leadItem.salesOrderId = result['salesOrderId'];
+                  leadItem.quantity = result['quantity'];
+                  closedLeads.add(leadItem);
+                });
+                await _updateLeadStage(leadItem, 'Closed');
+              }
+            },
+          );
+        },
+      );
+    }
+  }
+
+  Widget _buildOrderProcessingTab() {
+    if (orderProcessingLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.fact_check, // Represents order processing and verification
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No orders are being processed yet,\nstart managing your sales orders!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: orderProcessingLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = orderProcessingLeads[index];
+          if (leadItem.salesOrderId == null) {
+            return OrderProcessingLeadItem(
+              leadItem: leadItem,
+              status: 'Unknown',
+              onMoveToClosed: _moveFromOrderProcessingToClosed,
+              onRemoveLead: _handleRemoveOrderProcessingLead,
+            );
+          } else {
+            return FutureBuilder<String>(
+              future: _fetchSalesOrderStatus(leadItem.salesOrderId!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 2.0, horizontal: 8.0),
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 200.0,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: 8.0),
+                              Container(
+                                width: double.infinity,
+                                height: 24.0,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: 8.0),
+                              Container(
+                                width: double.infinity,
+                                height: 24.0,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  String status = snapshot.data ?? 'Unknown';
+                  return OrderProcessingLeadItem(
+                    leadItem: leadItem,
+                    status: status,
+                    onMoveToClosed: _moveFromOrderProcessingToClosed,
+                    onRemoveLead: _handleRemoveOrderProcessingLead,
+                  );
+                }
+              },
+            );
+          }
+        },
+      );
+    }
   }
 
   // Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
@@ -1964,55 +2884,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<String> _fetchSalesOrderStatus(String salesOrderId) async {
-    int salesOrderIdInt = int.parse(salesOrderId);
     try {
-      MySqlConnection conn = await connectToDatabase();
-      Results results = await conn.query(
-        'SELECT status, created, expiration_date, total FROM cart WHERE id = ?',
-        [salesOrderIdInt],
-      );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        String newStatus = row['status'].toString();
-        String createdDate = row['created'].toString();
-        String expirationDate = row['expiration_date'].toString();
-        String total = row['total'].toString();
+      // Replace with your actual PHP API URL
+      final String apiUrl =
+          'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_status.php?salesOrderId=$salesOrderId';
 
-        // Check if status has changed from 'Pending' to 'Confirm'
-        LeadItem leadItem = orderProcessingLeads.firstWhere(
-          (item) => item.salesOrderId == salesOrderId,
-          orElse: () => LeadItem(
-            id: -1,
-            salesmanId: -1,
-            customerName: '',
-            description: '',
-            createdDate: '',
-            amount: '',
-            contactNumber: '',
-            emailAddress: '',
-            stage: '',
-            addressLine1: '',
-            salesOrderId: '',
-            status: '',
-          ),
-        );
+      // Send the GET request to the PHP API
+      final response = await http.get(Uri.parse(apiUrl));
 
-        // if (leadItem.id != -1 &&
-        //     leadItem.status == 'Pending' &&
-        //     newStatus == 'Confirm') {
-        //   await _generateNotification(leadItem, newStatus);
-        //   setState(() {
-        //     leadItem.status = newStatus;
-        //   });
-        // }
+      // Check the response status
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-        // Update the lead item status
-        if (leadItem.id != -1) {
-          leadItem.status = newStatus;
+        // Check if the API returned a success status
+        if (jsonResponse['status'] == 'success') {
+          var data = jsonResponse['data'];
+          String newStatus = data['status'].toString();
+          String createdDate = data['created'].toString();
+          String expirationDate = data['expiration_date'].toString();
+          String total = data['total'].toString();
+
+          // Return the concatenated result
+          return '$newStatus|$createdDate|$expirationDate|$total';
+        } else {
+          developer.log('Error: ${jsonResponse['message']}');
+          return 'Unknown|Unknown|Unknown|Unknown';
         }
-
-        return '$newStatus|$createdDate|$expirationDate|$total';
       } else {
+        developer.log(
+            'Error: Failed to fetch data from API with status code ${response.statusCode}');
         return 'Unknown|Unknown|Unknown|Unknown';
       }
     } catch (e) {
@@ -2057,32 +2957,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<Map<String, String>> _fetchSalesOrderDetails(
       String salesOrderId) async {
     try {
-      MySqlConnection conn = await connectToDatabase();
-      Results results = await conn.query(
-        'SELECT created, expiration_date, total, session FROM cart WHERE id = ?',
-        [int.parse(salesOrderId)],
+      final response = await http.get(
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_details.php?id=$salesOrderId'),
+        headers: {'Content-Type': 'application/json'},
       );
-      if (results.isNotEmpty) {
-        var row = results.first;
-        String createdDate = row['created'].toString();
-        String expirationDate = row['expiration_date'].toString();
-        String total = row['total'].toString();
-        String session = row['session'].toString();
 
-        Results quantityResults = await conn.query(
-          'SELECT CAST(SUM(qty) AS UNSIGNED) AS total_qty FROM cart_item WHERE session = ?',
-          [session],
-        );
-        String totalQuantity = quantityResults.first['total_qty'].toString();
-
-        String formattedCreatedDate = _formatDate(createdDate);
-        return {
-          'formattedCreatedDate': formattedCreatedDate,
-          'expirationDate': expirationDate,
-          'total': total,
-          'quantity': totalQuantity,
-        };
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          return {
+            'formattedCreatedDate':
+                responseData['data']['formattedCreatedDate'].toString(),
+            'expirationDate': responseData['data']['expirationDate'].toString(),
+            'total': responseData['data']['total'].toString(),
+            'quantity': responseData['data']['quantity'].toString(),
+          };
+        } else {
+          developer.log('Error: ${responseData['message']}');
+          return {};
+        }
       } else {
+        developer
+            .log('HTTP request failed with status: ${response.statusCode}');
         return {};
       }
     } catch (e) {
@@ -2101,32 +2998,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildClosedTab() {
-    return ListView.builder(
-      itemCount: closedLeads.length,
-      itemBuilder: (context, index) {
-        LeadItem leadItem = closedLeads[index];
-        return FutureBuilder<Map<String, String>>(
-          future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildShimmerCard();
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            } else {
-              Map<String, String> salesOrderDetails = snapshot.data ?? {};
-              return ClosedLeadItem(
-                leadItem: leadItem,
-                formattedCreatedDate:
-                    salesOrderDetails['formattedCreatedDate'] ?? '',
-                expirationDate: salesOrderDetails['expirationDate'] ?? '',
-                total: salesOrderDetails['total'] ?? '',
-                quantity: salesOrderDetails['quantity'] ?? 'Unknown',
-              );
-            }
-          },
-        );
-      },
-    );
+    if (closedLeads.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.done_all, // Represents that all leads are closed
+              size: 100,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No leads are closed yet,\nkeep working towards your goals!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: closedLeads.length,
+        itemBuilder: (context, index) {
+          LeadItem leadItem = closedLeads[index];
+          return FutureBuilder<Map<String, String>>(
+            future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildShimmerCard();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else {
+                Map<String, String> salesOrderDetails = snapshot.data ?? {};
+                return ClosedLeadItem(
+                  leadItem: leadItem,
+                  formattedCreatedDate:
+                      salesOrderDetails['formattedCreatedDate'] ?? '',
+                  expirationDate: salesOrderDetails['expirationDate'] ?? '',
+                  total: salesOrderDetails['total'] ?? '',
+                  quantity: salesOrderDetails['quantity'] ?? 'Unknown',
+                );
+              }
+            },
+          );
+        },
+      );
+    }
   }
 }
 

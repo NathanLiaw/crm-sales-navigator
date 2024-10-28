@@ -1,32 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'db_connection.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sales Report',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.lightBlue,
-          onPrimary: Colors.white,
-          surface: Colors.lightBlue,
-        ),
-        iconTheme: const IconThemeData(color: Colors.lightBlue),
-      ),
-      home: const SalesReport(),
-    );
-  }
-}
 
 class SalesReport extends StatefulWidget {
   const SalesReport({super.key});
@@ -126,7 +106,7 @@ class _SalesReportState extends State<SalesReport> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching sales data: $e');
+      developer.log('Error fetching sales data: $e');
       return [];
     }
   }
@@ -145,24 +125,24 @@ class _SalesReportState extends State<SalesReport> {
         });
       },
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),

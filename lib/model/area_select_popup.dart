@@ -124,6 +124,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           groupValue: selectedAreaId,
           onChanged: (selectedAreaId) {
             setAreaId(selectedAreaId!);
+            Navigator.of(context).pop();
           },
         );
       }).toList(),

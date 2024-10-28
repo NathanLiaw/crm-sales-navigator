@@ -1,42 +1,24 @@
-// ignore_for_file: unused_element, use_build_context_synchronously, library_private_types_in_public_api, depend_on_referenced_packages
+// ignore_for_file: unused_import, unused_element, use_build_context_synchronously, library_private_types_in_public_api, depend_on_referenced_packages
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
+import 'package:sales_navigator/customer_list.dart';
 import 'package:sales_navigator/db_sqlite.dart';
-import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'customer.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:sales_navigator/customer_list.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sales Order',
-      theme: ThemeData(
-        primaryColor: const Color(0xff0175FF),
-        hintColor: const Color(0xff0175FF),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white),
-        ),
-      ),
-      home: const OrderStatusReportPage(),
-    );
-  }
-}
 
 class OrderStatusReportPage extends StatefulWidget {
   const OrderStatusReportPage({super.key});
@@ -51,10 +33,12 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   DateTimeRange? dateRange;
   int? selectedDays;
   int selectedButtonIndex = 3;
-  bool isSortedAscending = false; // Set to false for descending order
+  bool isSortedAscending = false;
   String loggedInUsername = '';
   Customer? selectedCustomer;
-
+  int currentPageIndex = 1;
+  String searchQuery = '';
+  List<Map<String, dynamic>> filteredOrders = [];
   final List<String> _sortingMethods = [
     'By Creation Date (Ascending)',
     'By Creation Date (Descending)',
@@ -62,8 +46,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     'By Amount (High to Low)',
   ];
 
-  String _selectedMethod =
-      'By Creation Date (Descending)'; // Default to descending
+  String _selectedMethod = 'By Creation Date (Descending)';
 
   final Map<String, bool> _statusFilters = {
     'Void': false,
@@ -218,13 +201,11 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         queryParams['status_filters'] = statusFilters;
       }
 
-      // Add sorting method (creation date or price) and direction (ascending/descending)
       String sortField = _getOrderByField();
       String sortMethod = isSortedAscending ? 'ASC' : 'DESC';
       queryParams['sort_field'] = sortField;
       queryParams['sort_method'] = sortMethod;
 
-      // Append query parameters to the URL
       apiUrl = apiUrl.replace(queryParameters: queryParams);
 
       final response = await http.get(apiUrl);
@@ -238,6 +219,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
           setState(() {
             orders = fetchedOrders;
+            filteredOrders = orders;
             developer.log('Loaded ${orders.length} orders');
           });
         } else {
@@ -286,8 +268,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
   Future<void> _showItemSelectionDialog(
       List<Map<String, dynamic>> items) async {
-    List<bool> checkedItems = List<bool>.filled(items.length, false);
-    bool selectAll = false;
+    List<bool> checkedItems = List<bool>.filled(items.length, true);
+    bool selectAll = true;
 
     await showDialog(
       context: context,
@@ -803,18 +785,18 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         const SizedBox(width: 16.0),
         // Select customer icon only on the right, always blue
         InkWell(
-          onTap: _selectCustomer, // Allow user to select customer when tapped
+          onTap: _selectCustomer,
           child: Container(
             height: 50.0,
             width: 50.0,
             decoration: BoxDecoration(
-              color: const Color(0xff0175FF), // Always blue
+              color: const Color(0xff0175FF),
               borderRadius: BorderRadius.circular(8.0),
               border: Border.all(color: Colors.grey),
             ),
             child: const Icon(
               Icons.person,
-              color: Colors.white, // Always white icon
+              color: Colors.white,
             ),
           ),
         ),
@@ -822,6 +804,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     );
   }
 
+  final TextEditingController _searchController = TextEditingController();
   Widget _buildSearchBar() {
     return Container(
       height: 50.0,
@@ -831,41 +814,64 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(color: Colors.grey),
       ),
-      child: TextField(
-        decoration: const InputDecoration(
-          hintText: 'Search Sales Order',
-          border: InputBorder.none,
-          icon: Icon(Icons.search, color: Colors.grey),
-        ),
-        onChanged: (value) {
-          _filterSalesOrders(
-              value);
-        },
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: Colors.grey),
+          const SizedBox(width: 8.0),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Search Sales Order',
+                border: InputBorder.none,
+              ),
+              onChanged: (value) {
+                _filterSalesOrders(value);
+              },
+            ),
+          ),
+
+          // The clear button is now at the end of the search bar
+          if (_searchController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear, color: Colors.grey),
+              onPressed: () {
+                _searchController.clear();
+                _filterSalesOrders('');
+                setState(() {});
+              },
+            ),
+        ],
       ),
     );
   }
 
   void _filterSalesOrders(String query) {
     setState(() {
-      if (query.isEmpty) {
-        _loadSalesOrders();
-      } else {
-        orders = orders.where((order) {
-          String orderId = order['id'].toString();
-          String formattedOrderId = 'S${orderId.padLeft(7, '0')}';
-          String creationDate = '';
-          if (order['created_date'] != null) {
-            DateTime dateTime =
-                DateFormat('dd/MM/yyyy').parse(order['created_date']);
-            creationDate = DateFormat('dd-MM-yyyy').format(dateTime);
-          }
-          String companyName = order['company_name']?.toString() ?? '';
-          return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
-              orderId.contains(query) ||
-              companyName.toLowerCase().contains(query.toLowerCase()) ||
-              creationDate.contains(query);
-        }).toList();
-      }
+      searchQuery = query;
+
+      // Filter orders based on the query
+      filteredOrders = orders.where((order) {
+        String orderId = order['id'].toString();
+        String formattedOrderId = 'S${orderId.padLeft(7, '0')}';
+        String creationDate = '';
+
+        // Check if order has 'created_date'
+        if (order['created_date'] != null) {
+          DateTime dateTime =
+              DateFormat('dd/MM/yyyy').parse(order['created_date']);
+          creationDate = DateFormat('dd-MM-yyyy').format(dateTime);
+        }
+
+        // Company name and other fields to filter
+        String companyName = order['company_name']?.toString() ?? '';
+
+        // Return true if any of the fields match the query
+        return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
+            orderId.contains(query) ||
+            companyName.toLowerCase().contains(query.toLowerCase()) ||
+            creationDate.contains(query);
+      }).toList();
     });
   }
 
@@ -1001,7 +1007,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (orders.isEmpty) {
+    if (filteredOrders.isEmpty) {
       return const Center(
         child: Text(
           'No data found',
@@ -1011,7 +1017,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     }
 
     Map<String, List<Map<String, dynamic>>> groupedOrders = {};
-    for (final item in orders) {
+    for (final item in filteredOrders) {
       String orderId = item['id'].toString();
       if (!groupedOrders.containsKey(orderId)) {
         groupedOrders[orderId] = [];
@@ -1102,7 +1108,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     if (orderId == null) {
       // Handle invalid number, log an error or show a fallback UI
       developer.log('Invalid order number: $orderNumber');
-      return Container(); // Fallback widget to avoid crashes
+      return Container();
     }
 
     return GestureDetector(
@@ -1110,7 +1116,11 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         bool? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(cartID: orderId, fromOrderConfirmation: false, fromSalesOrder: false,),
+            builder: (context) => OrderDetailsPage(
+              cartID: orderId,
+              fromOrderConfirmation: false,
+              fromSalesOrder: false,
+            ),
           ),
         );
         if (result == true) {
@@ -1177,11 +1187,33 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.copy),
+                            ElevatedButton.icon(
                               onPressed: () async {
                                 await _showItemSelectionDialog(items);
                               },
+                              icon: const Icon(
+                                Icons.shopping_cart,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Copy Order',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: const Color(0xff0175FF),
+                                elevation: 6,
+                                shadowColor: Colors.grey.withOpacity(0.5),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0, vertical: 6.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                minimumSize: const Size(98, 32),
+                              ),
                             ),
                           ],
                         ),
@@ -1199,7 +1231,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                 Card(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                  elevation: 4, // Adds a shadow effect for depth
+                  elevation: 4,
                   color: const Color(0xFFFFFFFF),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -1210,15 +1242,14 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                     ),
                     tilePadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                    iconColor: Colors.blueAccent, // Icon color when expanded
-                    collapsedIconColor:
-                        Colors.grey, // Icon color when collapsed
+                    iconColor: Colors.blueAccent,
+                    collapsedIconColor: Colors.grey,
                     title: const Text(
                       'Items',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black, // Darker title color
+                        color: Colors.black,
                       ),
                     ),
                     children: items.map((item) {
@@ -1241,8 +1272,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 16,
-                                          color: Colors
-                                              .black87, // Darker product name color
+                                          color: Colors.black87,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1257,8 +1287,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 16,
-                                              color: Colors
-                                                  .black54, // Softer text color
+                                              color: Colors.black54,
                                             ),
                                           ),
                                           Expanded(
@@ -1266,8 +1295,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                               item['uom'] ?? 'N/A',
                                               style: const TextStyle(
                                                 fontSize: 14,
-                                                color: Colors
-                                                    .black54, // Softer text color
+                                                color: Colors.black54,
                                               ),
                                             ),
                                           ),
@@ -1280,8 +1308,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 16,
-                                              color: Colors
-                                                  .black54, // Softer text color
+                                              color: Colors.black54,
                                             ),
                                           ),
                                           Text(
@@ -1289,8 +1316,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 14,
-                                              color: Colors
-                                                  .black87,
+                                              color: Colors.black87,
                                             ),
                                           ),
                                         ],

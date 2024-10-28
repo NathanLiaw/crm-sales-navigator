@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/item_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
 import 'package:shimmer/shimmer.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RecentOrder extends StatefulWidget {
   const RecentOrder({
@@ -439,51 +440,55 @@ class _RecentOrderState extends State<RecentOrder> {
   }
 
   void _navigateToItemScreen(String selectedProductName) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/recent_order_page/get_product_details.php?productName=$selectedProductName');
 
     try {
-      final productData = await readData(
-        conn,
-        'product',
-        "status = 1 AND product_name = '$selectedProductName'",
-        '',
-        'id, product_name, photo1, photo2, photo3, description, sub_category, price_by_uom',
-      );
+      final response = await http.get(apiUrl);
 
-      if (productData.isNotEmpty) {
-        Map<String, dynamic> product = productData.first;
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
 
-        int productId = product['id'];
-        String productName = product['product_name'];
-        List<String> itemAssetNames = [
-          'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
-          'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
-          'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
-        ];
-        Blob description = stringToBlob(product['description']);
-        String priceByUom = product['price_by_uom'];
+        if (jsonData['status'] == 'success') {
+          final product = jsonData['data'][0];
 
-        // Navigate to ItemScreen and pass necessary parameters
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ItemScreen(
-              productId: productId,
-              productName: productName,
-              itemAssetNames: itemAssetNames,
-              itemDescription: description,
-              priceByUom: priceByUom,
+          int productId = product['id'];
+          String productName = product['product_name'];
+          List<String> itemAssetNames = [
+            'https://haluansama.com/crm-sales/${product['photo1']}',
+            'https://haluansama.com/crm-sales/${product['photo2']}',
+            'https://haluansama.com/crm-sales/${product['photo3']}',
+          ];
+
+          // Convert the String description into Blob
+          String descriptionString =
+              product['description']; // Assuming it's a String from the API
+          Blob descriptionBlob =
+              Blob.fromString(descriptionString); // Convert to Blob
+
+          String priceByUom = product['price_by_uom'];
+
+          // Navigate to ItemScreen and pass the Blob instead of String
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ItemScreen(
+                productId: productId,
+                productName: productName,
+                itemAssetNames: itemAssetNames,
+                itemDescription: descriptionBlob, // Pass as Blob
+                priceByUom: priceByUom,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          print('Error: ${jsonData['message']}');
+        }
       } else {
-        developer.log('Product not found for name: $selectedProductName',
-            level: 1);
+        print('Failed to load product data');
       }
     } catch (e) {
-      developer.log('Error fetching product details: $e', error: e);
-    } finally {
-      await conn.close();
+      print('Error fetching product data: $e');
     }
   }
 
@@ -496,48 +501,39 @@ class _RecentOrderState extends State<RecentOrder> {
 
   Future<List<Map<String, dynamic>>> _fetchRecentOrders() async {
     if (_fetchedData != null) {
-      // If we already have the data, return it
       return _fetchedData!;
     }
 
+    // Constructing the API URL to pass correct parameters
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/recent_order_page/get_recent_orders.php?userId=$_userId&customerId=${widget.customerId}');
+
+    print(apiUrl); // To check if the URL is correctly constructed
+
     try {
-      MySqlConnection conn = await connectToDatabase();
-      String condition =
-          "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' GROUP BY "
-          "ci.product_name, ci.product_id";
-      if (widget.customerId > 0) {
-        condition =
-            "ci.buyer_id = $_userId AND c.buyer_user_group = 'salesman' "
-            "AND ci.customer_id = ${widget.customerId} GROUP BY ci.product_name, ci.product_id";
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['status'] == 'success') {
+          _fetchedData = List<Map<String, dynamic>>.from(jsonData['data']);
+          setState(() {
+            numberOfItems = _fetchedData!.length;
+          });
+          _sortResults(_fetchedData!); // Ensure sorting happens
+          return _fetchedData!;
+        } else {
+          print('Error: ${jsonData['message']}');
+        }
+      } else {
+        print('Failed to load recent orders');
       }
-      final results = await readData(
-        conn,
-        'cart c JOIN cart_item ci ON ci.session = c.session OR ci.cart_id = c.id',
-        condition,
-        '',
-        'ci.product_id, ci.product_name, SUM(ci.total) AS total',
-      );
-
-      await conn.close();
-
-      // Cache the fetched data
-      _fetchedData = results;
-
-      // Update the numberOfItems
-      if (mounted) {
-        setState(() {
-          numberOfItems = results.length;
-        });
-      }
-
-      // Sort the results based on the selected method
-      _sortResults(results);
-
-      return results;
     } catch (e) {
-      developer.log('Error fetching recent orders: $e', error: e);
-      return [];
+      print('Error fetching recent orders: $e');
     }
+
+    return [];
   }
 
   void _sortResults(List<Map<String, dynamic>> results) {
@@ -593,30 +589,42 @@ class _RecentOrderState extends State<RecentOrder> {
   }
 
   Future<String> _fetchProductPhoto(String productName) async {
+    // Construct the API URL to pass the product name
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/recent_order_page/get_product_photo.php?productName=$productName');
+
+    print(apiUrl); // Print URL to check if it's correct
+
     try {
-      MySqlConnection conn = await connectToDatabase();
-      final results = await readData(
-        conn,
-        'product',
-        "product_name = '$productName'",
-        '',
-        'photo1',
-      );
-      await conn.close();
-      if (results.isNotEmpty && results[0]['photo1'] != null) {
-        // Ensure photo1 is not null and has a value
-        String photoPath = results[0]['photo1'];
-        // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
-        if (photoPath.startsWith('photo/')) {
-          photoPath =
-              'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
+      final response = await http.get(apiUrl);
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        // Check if the API returned success status
+        if (jsonData['status'] == 'success' && jsonData['photo1'] != null) {
+          String photoPath = jsonData['photo1'];
+
+          // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
+          if (photoPath.startsWith('photo/')) {
+            photoPath =
+                'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
+          }
+
+          return photoPath;
+        } else {
+          // If no photo found or an error occurred, return the default image path
+          print('Error: ${jsonData['message']}');
+          return 'asset/no_image.jpg';
         }
-        return photoPath;
       } else {
-        // Return a default placeholder image path if no photo found or photo1 is null
+        // If the request failed, log the error and return the default image path
+        print('Failed to load product photo');
         return 'asset/no_image.jpg';
       }
     } catch (e) {
+      // Log any exceptions that occur
       developer.log('Error fetching product photo: $e', error: e);
       return 'asset/no_image.jpg';
     }

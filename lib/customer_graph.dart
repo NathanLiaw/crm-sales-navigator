@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class CustomersGraph extends StatefulWidget {
   const CustomersGraph({super.key});
@@ -57,7 +58,7 @@ class _CustomersGraphState extends State<CustomersGraph> {
         throw Exception('Failed to load customers');
       }
     } catch (e) {
-      print('Error fetching customers: $e');
+      developer.log('Error fetching customers: $e');
       return [];
     }
   }
@@ -86,7 +87,14 @@ class _CustomersGraphState extends State<CustomersGraph> {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
-            } else if (snapshot.hasData) {
+            } else {
+              // If no data or an empty list is returned, we show 5 placeholder customers
+              final customerData =
+                  (snapshot.data == null || snapshot.data!.isEmpty)
+                      ? List.generate(
+                          5, (index) => Customer('No Customer', 0.0, 0.0))
+                      : snapshot.data!;
+
               return Container(
                 padding:
                     const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -105,15 +113,13 @@ class _CustomersGraphState extends State<CustomersGraph> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ...snapshot.data!.map((customer) => Padding(
+                    ...customerData.map((customer) => Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: CustomerBar(customer: customer),
                         )),
                   ],
                 ),
               );
-            } else {
-              return const Text('No data');
             }
           },
         ),
@@ -129,6 +135,7 @@ class CustomerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate the percentage (ensure it's valid, or set to 0)
     double percentage = customer.percentageOfTotal.isNaN ||
             customer.percentageOfTotal.isInfinite
         ? 0
@@ -141,6 +148,7 @@ class CustomerBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Customer name: Shows "No Customer" for placeholder
               Text(
                 customer.name,
                 style: const TextStyle(
@@ -149,8 +157,10 @@ class CustomerBar extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
+              // Display "RM 0" if no data
               Text(
-                customer.totalSalesDisplay,
+                customer
+                    .totalSalesDisplay, // Will display RM 0 for placeholders
                 style: const TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.w500,
@@ -160,6 +170,7 @@ class CustomerBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
+          // The progress bar for percentage
           Stack(
             children: [
               Container(
@@ -170,7 +181,7 @@ class CustomerBar extends StatelessWidget {
                 ),
               ),
               FractionallySizedBox(
-                widthFactor: percentage,
+                widthFactor: percentage, // 0 if no valid percentage
                 child: Container(
                   height: 10,
                   decoration: BoxDecoration(

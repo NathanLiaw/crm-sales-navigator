@@ -1,13 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:sales_navigator/customer.dart';
 import 'package:sales_navigator/customer_details_page.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'package:sales_navigator/home_page.dart';
 
 class CreateLeadPage extends StatefulWidget {
-  final Function(String, String, String) onCreateLead;
+  final Function(LeadItem) onCreateLead;
   final int salesmanId;
 
   const CreateLeadPage(
@@ -27,6 +30,58 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
 
   final _formKey = GlobalKey<FormState>();
 
+  List<Customer> customers = [];
+  bool isLoading = false;
+
+  Future<void> _fetchCustomers() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final String apiUrl =
+        'https://haluansama.com/crm-sales/api/customer/get_customers.php?limit=1000&offset=0';
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic> customerList = responseData['customers'] ?? [];
+
+        setState(() {
+          customers = customerList
+              .map((item) => Customer(
+                    id: item['id'] is int
+                        ? item['id']
+                        : int.tryParse(item['id'].toString()) ?? 0,
+                    companyName: item['company_name'] as String? ?? '',
+                    addressLine1: item['address_line_1'] as String? ?? '',
+                    addressLine2: item['address_line_2'] as String? ?? '',
+                    contactNumber: item['contact_number'] as String? ?? '',
+                    email: item['email'] as String? ?? '',
+                    customerRate: item['customer_rate'] as String? ?? '',
+                    discountRate: item['discount_rate'] is int
+                        ? item['discount_rate']
+                        : int.tryParse(item['discount_rate'].toString()) ?? 0,
+                  ))
+              .toList();
+        });
+      }
+    } catch (e) {
+      developer.log('Error fetching customers: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCustomers();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,9 +93,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
@@ -66,30 +119,124 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ),
                   ],
                 ),
-                TextFormField(
-                  controller: customerNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter customer/company name',
-                    prefixIcon: Icon(
-                      Icons.person,
-                      color: Color(0xff0175FF),
+                const SizedBox(height: 16),
+                // Auto fill customer details widget
+              RawAutocomplete<Customer>(
+                textEditingController: customerNameController,
+                focusNode: FocusNode(),
+                optionsBuilder: (TextEditingValue textEditingValue) async {
+                  if (textEditingValue.text.isEmpty) {
+                    return const Iterable<Customer>.empty();
+                  }
+                  if (customers.isEmpty) {
+                    await _fetchCustomers();
+                  }
+                  return customers.where((customer) {
+                    return customer.companyName
+                        .toLowerCase()
+                        .contains(textEditingValue.text.toLowerCase());
+                  });
+                },
+                displayStringForOption: (Customer option) => option.companyName,
+                fieldViewBuilder: (BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted) {
+                  return TextFormField(
+                    controller: textEditingController,
+                    focusNode: focusNode,
+                    decoration: const InputDecoration(
+                      labelText: 'Enter or select customer/company name',
+                      prefixIcon: Icon(Icons.person, color: Color(0xff0175FF)),
+                      hintText: 'Type to search existing customers',
+                      border: OutlineInputBorder(),
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter customer/company name';
-                    }
-                    if (value.length > 100) {
-                      return 'Customer/company name cannot exceed 100 characters';
-                    }
-                    return null;
-                  },
-                ),
+                    onChanged: (value) {
+                      // When the input changes, a new search can be triggered if required
+                      if (customers.isEmpty) {
+                        _fetchCustomers();
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter customer/company name';
+                      }
+                      if (value.length > 100) {
+                        return 'Customer/company name cannot exceed 100 characters';
+                      }
+                      return null;
+                    },
+                  );
+                },
+                optionsViewBuilder: (BuildContext context,
+                    AutocompleteOnSelected<Customer> onSelected,
+                    Iterable<Customer> options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4.0,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: 200, // Maximum height
+                          maxWidth: MediaQuery.of(context).size.width * 0.92, // Match input field width
+                        ),
+                        child: Scrollbar( // Add scrollbar to ListView
+                          thumbVisibility: true,
+                          child: ListView.builder(
+                            controller: ScrollController(), // Attach ScrollController
+                            padding: const EdgeInsets.all(8.0),
+                            shrinkWrap: true, // Allows the list to take up the height it needs
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final Customer option = options.elementAt(index);
+                              return InkWell(
+                                onTap: () {
+                                  onSelected(option);
+                                  // Fill other fields
+                                  setState(() {
+                                    contactNumberController.text = option.contactNumber;
+                                    emailAddressController.text = option.email;
+                                    addressController.text = option.addressLine1;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        option.companyName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        option.email,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
                 TextFormField(
                   controller: contactNumberController,
                   decoration: const InputDecoration(
                     labelText: 'Enter contact number',
                     prefixIcon: Icon(Icons.phone, color: Color(0xff0175FF)),
+                    border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
                   inputFormatters: <TextInputFormatter>[
@@ -105,11 +252,13 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: emailAddressController,
                   decoration: const InputDecoration(
                     labelText: 'Enter email address',
                     prefixIcon: Icon(Icons.email, color: Color(0xff0175FF)),
+                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -121,12 +270,14 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: addressController,
                   decoration: const InputDecoration(
                     labelText: 'Enter address',
                     prefixIcon:
                         Icon(Icons.location_on, color: Color(0xff0175FF)),
+                    border: OutlineInputBorder(),
                   ),
                   maxLength: 200,
                   maxLines: 2,
@@ -141,15 +292,17 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24.0),
+                const SizedBox(height: 24),
                 const Text(
                   'Others',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: descriptionController,
                   decoration: const InputDecoration(
                     labelText: 'Description',
+                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value != null && value.isEmpty) {
@@ -161,33 +314,43 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     return null;
                   },
                 ),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        controller: amountController,
-                        decoration: const InputDecoration(
-                          labelText: 'Predicted sales',
-                          hintText: 'RM',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value != null && value.isEmpty) {
-                            return 'Please enter predicted sales';
-                          }
-                          if (value != null && double.tryParse(value) == null) {
-                            return 'Please enter a valid number';
-                          }
-                          if (value != null && value.length > 50) {
-                            return 'Predicted sales cannot exceed 50 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: amountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Predicted sales',
+                    hintText: 'RM',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  // Only positive numbers and decimal points are allowed
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                   ],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter predicted sales';
+                    }
+                    final double? amount = double.tryParse(value);
+                    if (amount == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (amount < 0) {
+                      return 'Predicted sales cannot be negative';
+                    }
+                    if (value.length > 50) {
+                      return 'Predicted sales cannot exceed 50 characters';
+                    }
+                    if (value.contains('.')) {
+                      String decimals = value.split('.')[1];
+                      if (decimals.length > 2) {
+                        return 'Please enter at most 2 decimal places';
+                      }
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 24.0),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -214,14 +377,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          // Call the onCreateLead function with entered values
-                          widget.onCreateLead(
-                            customerNameController.text,
-                            descriptionController.text,
-                            amountController.text,
-                          );
                           _saveLeadToDatabase();
-                          Navigator.pop(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -261,65 +417,131 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
     }
   }
 
-  Future<void> _saveLeadToDatabase() async {
-    MySqlConnection conn = await connectToDatabase();
+  // Future<void> _saveLeadToDatabase() async {
+  //   MySqlConnection conn = await connectToDatabase();
 
-    Map<String, dynamic> leadData = {
-      'salesman_id': widget.salesmanId,
+  //   Map<String, dynamic> leadData = {
+  //     'salesman_id': widget.salesmanId,
+  //     'customer_name': customerNameController.text,
+  //     'contact_number': contactNumberController.text,
+  //     'email_address': emailAddressController.text,
+  //     'address': addressController.text,
+  //     'description': descriptionController.text,
+  //     'predicted_sales': amountController.text,
+  //     'stage': 'Opportunities',
+  //     'previous_stage': 'Opportunities',
+  //     'so_id': null,
+  //     'created_date': DateTime.now().toString(), // Current date as created_date
+  //   };
+
+  //   if (leadData['description'].length > 255) {
+  //     developer.log('The description cannot exceed 255 characters.');
+  //     return;
+  //   }
+
+  //   // Save data to database
+  //   var result = await conn.query(
+  //       'INSERT INTO sales_lead (salesman_id, customer_name, contact_number, email_address, address, description, predicted_sales, stage, previous_stage, so_id, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  //       [
+  //         leadData['salesman_id'],
+  //         leadData['customer_name'],
+  //         leadData['contact_number'],
+  //         leadData['email_address'],
+  //         leadData['address'],
+  //         leadData['description'],
+  //         leadData['predicted_sales'],
+  //         leadData['stage'],
+  //         leadData['previous_stage'],
+  //         leadData['so_id'],
+  //         leadData['created_date']
+  //       ]);
+
+  //   if (result.affectedRows == 1) {
+  //     int? leadId = result.insertId; // Get new inserted lead_id
+  //     developer.log('Lead data saved successfully,lead_id: $leadId');
+
+  //     // Log the event
+  //     await conn.query(
+  //         'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, ?, ?)',
+  //         [
+  //           leadData['salesman_id'],
+  //           'Created new lead for customer: ${leadData['customer_name']}',
+  //           'Create Lead',
+  //           DateTime.now().toString(),
+  //           leadId
+  //         ]);
+  //     developer.log('Event Logging Successful,lead_id: $leadId');
+  //   } else {
+  //     developer.log('Failure to save lead data');
+  //   }
+
+  //   await conn.close();
+  // }
+
+  Future<void> _saveLeadToDatabase() async {
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead_to_database.php';
+
+    final Map<String, String> queryParameters = {
+      'salesman_id': widget.salesmanId.toString(),
       'customer_name': customerNameController.text,
       'contact_number': contactNumberController.text,
       'email_address': emailAddressController.text,
       'address': addressController.text,
       'description': descriptionController.text,
       'predicted_sales': amountController.text,
-      'stage': 'Opportunities',
-      'previous_stage': 'Opportunities',
-      'so_id': null,
-      'created_date': DateTime.now().toString(), // Current date as created_date
     };
 
-    if (leadData['description'].length > 255) {
-      developer.log('The description cannot exceed 255 characters.');
-      return;
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          int leadId = responseData['lead_id'];
+          developer.log('Lead data saved successfully, lead_id: $leadId');
+
+          // You might want to update your local state or navigate to a different screen here
+
+          // Create a new LeadItem
+          LeadItem newLead = LeadItem(
+            id: leadId,
+            salesmanId: widget.salesmanId,
+            customerName: customerNameController.text,
+            description: descriptionController.text,
+            createdDate: DateTime.now().toString(),
+            amount: 'RM${amountController.text}',
+            contactNumber: contactNumberController.text,
+            emailAddress: emailAddressController.text,
+            stage: 'Opportunities',
+            addressLine1: addressController.text,
+            salesOrderId: '',
+          );
+
+          // Call the onCreateLead callback with the new LeadItem
+          widget.onCreateLead(newLead);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+
+          // Return to HomePage
+          Navigator.pop(context);
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to save lead: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error saving lead data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save lead: $e')),
+      );
     }
-
-    // Save data to database
-    var result = await conn.query(
-        'INSERT INTO sales_lead (salesman_id, customer_name, contact_number, email_address, address, description, predicted_sales, stage, previous_stage, so_id, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-          leadData['salesman_id'],
-          leadData['customer_name'],
-          leadData['contact_number'],
-          leadData['email_address'],
-          leadData['address'],
-          leadData['description'],
-          leadData['predicted_sales'],
-          leadData['stage'],
-          leadData['previous_stage'],
-          leadData['so_id'],
-          leadData['created_date']
-        ]);
-
-    if (result.affectedRows == 1) {
-      int? leadId = result.insertId; // Get new inserted lead_id
-      developer.log('Lead data saved successfully,lead_id: $leadId');
-
-      // Log the event
-      await conn.query(
-          'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, ?, ?)',
-          [
-            leadData['salesman_id'],
-            'Created new lead for customer: ${leadData['customer_name']}',
-            'Create Lead',
-            DateTime.now().toString(),
-            leadId
-          ]);
-      developer.log('Event Logging Successful,lead_id: $leadId');
-    } else {
-      developer.log('Failure to save lead data');
-    }
-
-    await conn.close();
   }
 
   // Future<void> _saveLeadToDatabase() async {

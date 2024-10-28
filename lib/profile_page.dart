@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sales_navigator/ai_assistant.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:workmanager/workmanager.dart';
 import 'about_us_page.dart';
 import 'account_setting_page.dart';
 import 'contact_us_page.dart';
@@ -19,6 +22,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String? salesmanName;
   int currentPageIndex = 4;
+
   @override
   void initState() {
     super.initState();
@@ -52,14 +56,14 @@ class _ProfilePageState extends State<ProfilePage> {
             fontSize: 24,
           ),
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications, color: Colors.white),
-        //     onPressed: () {
-        //       // Handle notifications
-        //     },
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              // Handle notifications
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -94,6 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
               buildProfileOption('Chatbot', Icons.chat, context),
+              buildProfileOption('AI Assistant', Icons.assistant, context), // New AI Assistant option
               const SizedBox(height: 20),
               buildLogoutButton(), // add Logout button
             ],
@@ -158,6 +163,12 @@ class _ProfilePageState extends State<ProfilePage> {
             MaterialPageRoute(builder: (context) => const ChatScreen()),
           );
         }
+        if (title == 'AI Assistant') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SalesPerformancePage()), // Navigate to AI Assistant page
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),
@@ -179,12 +190,62 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
-          // Clearing data in SharedPreferences
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
+          // Display confirmation dialog before logout
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Confirm Logout'),
+                content: const Text('Are you sure you want to logout?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Logout'),
+                    onPressed: () async {
+                      Navigator.of(context).pop();
 
-          // Navigate to the login page
-          Navigator.pushReplacementNamed(context, '/login');
+                      try {
+                        // Cancel all background tasks
+                        await Workmanager().cancelAll();
+
+                        // Remove all SharedPreferences
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        await prefs.clear();
+
+                        // Remove image cache
+                        imageCache.clear();
+                        imageCache.clearLiveImages();
+
+                        // Remove any temporary files
+                        final tempDir = await getTemporaryDirectory();
+                        if (await tempDir.exists()) {
+                          await tempDir.delete(recursive: true);
+                        }
+
+                        // Navigate to login page
+                        Navigator.pushReplacementNamed(context, '/login');
+                      } catch (e) {
+                        debugPrint('Error during logout: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Error occurred during logout. Please try again.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              );
+            },
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,

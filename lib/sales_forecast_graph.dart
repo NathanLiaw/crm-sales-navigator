@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'db_connection.dart';
-import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 class SalesForecastGraph extends StatefulWidget {
   const SalesForecastGraph({super.key});
@@ -17,6 +16,9 @@ class SalesForecastGraph extends StatefulWidget {
 class _SalesForecastGraphState extends State<SalesForecastGraph> {
   Future<List<SalesForecast>>? salesForecasts;
   String loggedInUsername = '';
+  double salesConversionRate = 0.0;
+  double averageOrderValue = 0.0;
+  double prevAverageOrderValue = 0.0;
 
   @override
   void initState() {
@@ -24,10 +26,37 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     _loadUserDetails().then((_) {
       if (mounted) {
         setState(() {
+          // Call the API to update the sales target before fetching data
+          updateSalesTargetsInDatabase(); // Add this function call
           salesForecasts = fetchSalesForecasts();
+          fetchSalesConversionRate();
+          fetchAverageOrderValue();
         });
       }
     });
+  }
+
+  Future<void> updateSalesTargetsInDatabase() async {
+    final apiUrl = Uri.parse(
+      'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target_table.php?username=$loggedInUsername',
+    );
+
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          developer.log('Sales targets updated successfully');
+        } else {
+          developer
+              .log('Failed to update sales targets: ${jsonData['message']}');
+        }
+      } else {
+        developer.log('Error: Failed to update sales targets');
+      }
+    } catch (e) {
+      developer.log('Error updating sales targets: $e');
+    }
   }
 
   Future<void> _loadUserDetails() async {
@@ -45,7 +74,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 
     try {
       final response = await http.get(apiUrl);
-
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
@@ -72,16 +100,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
             );
           }).toList();
 
-          double predictedTarget = 0.0;
-          int stockNeeded = 0;
-
-          if (forecasts.length == 2) {
-            predictedTarget =
-                (forecasts[0].totalSales + forecasts[1].totalSales) / 2;
-            stockNeeded =
-                ((forecasts[0].cartQuantity + forecasts[1].cartQuantity) / 2)
-                    .round();
-          }
+          await createNewMonthRow();
 
           if (forecasts.isNotEmpty) {
             forecasts[0] = SalesForecast(
@@ -95,8 +114,6 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                   forecasts.length > 1 ? forecasts[1].totalSales : 0.0,
               previousCartQuantity:
                   forecasts.length > 1 ? forecasts[1].cartQuantity : 0,
-              predictedTarget: predictedTarget,
-              stockNeeded: stockNeeded,
             );
           }
 
@@ -108,8 +125,87 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching sales forecasts: $e');
+      developer.log('Error fetching sales forecasts: $e');
       return [];
+    }
+  }
+
+  Future<void> createNewMonthRow() async {
+    final now = DateTime.now();
+    final currentMonth = now.month;
+    final currentYear = now.year;
+
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_new_month_row.php?username=$loggedInUsername&currentMonth=$currentMonth&currentYear=$currentYear');
+
+    try {
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          developer.log('New month row created successfully.');
+        } else {
+          developer
+              .log('Failed to create new month row: ${jsonData['message']}');
+        }
+      } else {
+        developer.log('Failed to create new month row.');
+      }
+    } catch (e) {
+      developer.log('Error creating new month row: $e');
+    }
+  }
+
+  // Fetch Sales Conversion Rate from the new API
+  Future<void> fetchSalesConversionRate() async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_conversation_rate.php?username=$loggedInUsername');
+
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          setState(() {
+            salesConversionRate =
+                double.parse(jsonData['data']['conversion_rate'].toString());
+          });
+        } else {
+          developer.log('Failed to fetch conversion rate');
+        }
+      } else {
+        developer.log('Error: Failed to fetch conversion rate');
+      }
+    } catch (e) {
+      developer.log('Error fetching conversion rate: $e');
+    }
+  }
+
+// Fetch Average Order Value (AOV) from the new API
+  Future<void> fetchAverageOrderValue() async {
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_average_order_value.php?username=$loggedInUsername');
+
+    try {
+      final response = await http.get(apiUrl);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['status'] == 'success') {
+          setState(() {
+            averageOrderValue =
+                double.parse(jsonData['data']['avg_order_value'].toString());
+            prevAverageOrderValue = double.parse(
+                jsonData['data']['prev_avg_order_value'].toString());
+          });
+        } else {
+          developer.log('Failed to fetch AOV');
+        }
+      } else {
+        developer.log('Error: Failed to fetch AOV');
+      }
+    } catch (e) {
+      developer.log('Error fetching AOV: $e');
     }
   }
 
@@ -129,46 +225,49 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
-                  } else if (snapshot.hasData) {
-                    if (snapshot.data == null || snapshot.data!.isEmpty) {
-                      return const Center(
-                          child: Text('No sales forecast data available.'));
-                    }
+                  } else {
+                    // Even if snapshot has no data, we will still render the UI with default values
+                    final data = snapshot.data ??
+                        [
+                          SalesForecast(
+                            salesmanId: 0,
+                            salesmanName: 'No Data',
+                            purchaseMonth: DateTime.now().month,
+                            purchaseYear: DateTime.now().year,
+                            totalSales: 0.0,
+                            cartQuantity: 0,
+                            previousMonthSales: 0.0,
+                            previousCartQuantity: 0,
+                          )
+                        ];
 
-                    if (snapshot.data!.length < 2) {
-                      return const Center(
-                          child: Text('Not enough data for prediction.'));
-                    }
-
-                    final currentMonthData = snapshot.data!.firstWhere(
+                    // If there's no data, or data contains zero values, we show default values in the UI
+                    final currentMonthData = data.firstWhere(
                       (forecast) =>
                           forecast.purchaseMonth == DateTime.now().month,
                       orElse: () => SalesForecast(
                         salesmanId: 0,
-                        salesmanName: '',
+                        salesmanName: 'No Data',
                         purchaseMonth: DateTime.now().month,
                         purchaseYear: DateTime.now().year,
                         totalSales: 0.0,
                         cartQuantity: 0,
                         previousMonthSales: 0.0,
                         previousCartQuantity: 0,
-                        predictedTarget: 0.0,
-                        stockNeeded: 0,
                       ),
                     );
-
                     return EditableSalesTargetCard(
                       currentSales: currentMonthData.totalSales,
-                      predictedTarget: currentMonthData.predictedTarget,
+                      predictedTarget: salesConversionRate,
                       cartQuantity: currentMonthData.cartQuantity,
-                      stockNeeded: currentMonthData.stockNeeded,
+                      stockNeeded: averageOrderValue.toInt(),
                       previousMonthSales: currentMonthData.previousMonthSales,
                       previousCartQuantity:
                           currentMonthData.previousCartQuantity,
                       loggedInUsername: loggedInUsername,
+                      averageOrderValue: averageOrderValue,
+                      prevAverageOrderValue: prevAverageOrderValue,
                     );
-                  } else {
-                    return const Center(child: CircularProgressIndicator());
                   }
                 },
               ),
@@ -188,6 +287,8 @@ class EditableSalesTargetCard extends StatefulWidget {
   final double previousMonthSales;
   final int previousCartQuantity;
   final String loggedInUsername;
+  final double averageOrderValue;
+  final double prevAverageOrderValue;
 
   const EditableSalesTargetCard({
     super.key,
@@ -198,6 +299,8 @@ class EditableSalesTargetCard extends StatefulWidget {
     required this.previousMonthSales,
     required this.previousCartQuantity,
     required this.loggedInUsername,
+    required this.averageOrderValue,
+    required this.prevAverageOrderValue,
   });
 
   @override
@@ -219,27 +322,41 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 
   Future<void> _fetchSalesTarget() async {
-    var db = await connectToDatabase();
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
 
-    var results = await db.query('''
-      SELECT sales_target
-      FROM sales_targets
-      WHERE username = ?
-      AND purchase_month = ?
-      AND purchase_year = ?
-    ''', [widget.loggedInUsername, currentMonth, currentYear]);
+    // Construct the API URL with the necessary parameters
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_target.php?username=${widget.loggedInUsername}&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
-    if (results.isNotEmpty) {
-      final salesTarget = results.first['sales_target'] as double;
-      setState(() {
-        _salesTarget = _currencyFormat.format(salesTarget);
-      });
+    try {
+      // Make a GET request to fetch the sales target from the API
+      final response = await http.get(apiUrl);
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        // Check if the response is successful and contains the sales target
+        if (jsonData['status'] == 'success') {
+          final salesTarget = double.parse(jsonData['sales_target'].toString());
+          setState(() {
+            _salesTarget = _currencyFormat.format(salesTarget);
+          });
+        } else {
+          // Handle case where no sales target is found
+          developer.log('Error: ${jsonData['message']}');
+        }
+      } else {
+        // Handle unsuccessful responses (e.g., server issues, 404, etc.)
+        developer.log(
+            'Failed to load sales target, status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the API call
+      developer.log('Error fetching sales target: $e');
     }
-
-    await db.close();
   }
 
   @override
@@ -264,7 +381,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       children: [
         Center(
           child: SizedBox(
-            height: 220,
+            height: 240,
             width: MediaQuery.of(context).size.width * 0.95,
             child: Container(
               decoration: BoxDecoration(
@@ -410,8 +527,8 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   fromLastMonthTextColor: Colors.black87,
                 ),
                 InfoBox(
-                  label: 'Predicted Target',
-                  value: _currencyFormat.format(widget.predictedTarget),
+                  label: 'Sales Conversion Rate',
+                  value: '${widget.predictedTarget.toStringAsFixed(1)}%',
                   currentValue: widget.predictedTarget,
                   previousValue: widget.previousMonthSales,
                   isUp: widget.predictedTarget >= widget.previousMonthSales,
@@ -436,12 +553,16 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                   fromLastMonthTextColor: Colors.black,
                 ),
                 InfoBox(
-                  label: 'Predicted Stock',
-                  value: '${widget.stockNeeded}',
-                  currentValue: widget.stockNeeded.toDouble(),
-                  previousValue: widget.previousCartQuantity.toDouble(),
-                  isUp: widget.stockNeeded >= widget.previousCartQuantity,
-                  isDown: widget.stockNeeded < widget.previousCartQuantity,
+                  label: 'Average Order Value (AOV)',
+                  value: NumberFormat.currency(
+                          locale: 'en_MY', symbol: 'RM', decimalDigits: 2)
+                      .format(widget.averageOrderValue),
+                  currentValue: widget.averageOrderValue,
+                  previousValue: widget.prevAverageOrderValue,
+                  isUp:
+                      widget.averageOrderValue >= widget.prevAverageOrderValue,
+                  isDown:
+                      widget.averageOrderValue < widget.prevAverageOrderValue,
                   backgroundColor1: const Color(0x30D563E3),
                   backgroundColor2: const Color(0xFFFFFFFF),
                   borderColor: const Color(0xFFD563E3),
@@ -457,16 +578,36 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
   }
 
   void _editSalesTarget() async {
-    final newSalesTarget = await showDialog(
+    TextEditingController controller = TextEditingController();
+    String formatWithCommas(String input) {
+      if (input.isEmpty) return '';
+      input = input.replaceAll(',', '');
+      double value = double.tryParse(input) ?? 0;
+      return NumberFormat('#,##0').format(value);
+    }
+
+    controller.addListener(() {
+      final currentText = controller.text;
+      final currentSelection = controller.selection;
+      final formattedText = formatWithCommas(currentText);
+      controller.value = controller.value.copyWith(
+        text: formattedText,
+        selection: TextSelection.collapsed(
+          offset:
+              formattedText.length,
+        ),
+      );
+    });
+
+    final newSalesTarget = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        TextEditingController controller = TextEditingController();
         return AlertDialog(
           title: const Text('Edit Sales Target'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(labelText: 'New Sales Target'),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'New Sales Target'),
           ),
           actions: <Widget>[
             TextButton(
@@ -486,30 +627,45 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       },
     );
 
-    if (newSalesTarget != null) {
+    if (newSalesTarget != null && newSalesTarget.isNotEmpty) {
+      String cleanedInput = newSalesTarget.replaceAll(',', '');
+
       setState(() {
-        _salesTarget = _currencyFormat.format(double.parse(newSalesTarget));
+        _salesTarget = _currencyFormat.format(double.parse(cleanedInput));
       });
 
-      await updateSalesTargetInDatabase(double.parse(newSalesTarget));
+      await updateSalesTargetInDatabase(double.parse(cleanedInput));
     }
   }
 
   Future<void> updateSalesTargetInDatabase(double newSalesTarget) async {
-    var db = await connectToDatabase();
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target.php'
+        '?username=${widget.loggedInUsername}&newSalesTarget=$newSalesTarget&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
-    await db.query('''
-      UPDATE sales_targets
-      SET sales_target = ?
-      WHERE username = ?
-      AND purchase_month = ?
-      AND purchase_year = ?
-    ''', [newSalesTarget, widget.loggedInUsername, currentMonth, currentYear]);
+    try {
+      // Make the HTTP GET request
+      final response = await http.get(apiUrl);
 
-    await db.close();
+      // Check the status code of the response
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        // Check if the API returned a success status
+        if (jsonData['status'] == 'success') {
+          developer.log('Sales target updated successfully');
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to update sales target');
+      }
+    } catch (e) {
+      developer.log('Error updating sales target: $e');
+    }
   }
 }
 
@@ -518,6 +674,7 @@ class InfoBox extends StatelessWidget {
   final String value;
   final double currentValue;
   final double? previousValue;
+  final double? previousPrediction;
   final bool isUp;
   final bool isDown;
   final Color backgroundColor1;
@@ -532,6 +689,7 @@ class InfoBox extends StatelessWidget {
     required this.value,
     required this.currentValue,
     this.previousValue,
+    this.previousPrediction,
     this.isUp = false,
     this.isDown = false,
     required this.backgroundColor1,
@@ -543,50 +701,52 @@ class InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double previousSales = previousValue ?? 0.0;
+    double previous = previousValue ?? 0.0;
+    double prediction = previousPrediction ?? 0.0;
     double change = 0.0;
 
-    if (!currentValue.isNaN && !previousSales.isNaN && previousSales != 0.0) {
-      change = ((currentValue - previousSales) / previousSales) * 100;
-    } else {
-      change = 0.0;
+    if (label == 'Monthly Revenue') {
+      if (previous != 0.0) {
+        change = ((currentValue - previous) / previous) * 100;
+      }
+    } else if (label == 'Stock Sold') {
+      if (previous != 0.0) {
+        change = ((currentValue - previous) / previous) * 100;
+      }
     }
 
     change = change.clamp(-100.0, 100.0);
-
     bool isIncrease = change >= 0;
 
-    Color increaseColor;
-    if (label == 'Stock Sold' || label == 'Predicted Stock') {
-      increaseColor = const Color.fromARGB(255, 0, 117, 6);
-    } else {
-      increaseColor = const Color.fromARGB(255, 0, 117, 6);
-    }
+    Color increaseColor = isIncrease
+        ? const Color.fromARGB(255, 0, 117, 6)
+        : const Color.fromARGB(255, 255, 0, 0);
 
     Widget icon;
     switch (label) {
       case 'Monthly Revenue':
         icon = const Icon(Icons.monetization_on, color: Colors.black);
         break;
-      case 'Predicted Target':
+      case 'Sales Conversion Rate':
         icon = const Icon(Icons.gps_fixed, color: Colors.black);
         break;
       case 'Stock Sold':
         icon = const Icon(Icons.outbox, color: Colors.black);
         break;
-      case 'Predicted Stock':
+      case 'Average Order Value (AOV)':
         icon = const Icon(Icons.inbox, color: Colors.black);
         break;
       default:
         icon = const SizedBox.shrink();
     }
+
     return Container(
       height: 120,
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: borderColor, // Color for top border
-            width: 4, // Setting width to 0 makes the top border invisible
+            color: borderColor,
+            width: 4,
           ),
         ),
         gradient: LinearGradient(
@@ -614,31 +774,59 @@ class InfoBox extends StatelessWidget {
               const SizedBox(
                 width: 8,
               ),
-              Text(label,
+              Expanded(
+                child: Text(
+                  label,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  softWrap: true,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(value,
+          Expanded(
+            child: Text(
+              value,
               style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+              softWrap: true,
+            ),
+          ),
           const SizedBox(height: 6),
-          if (isUp || isDown) ...[
-            Text(
-              '${isIncrease ? '▲' : '▼'} ${change.abs().toStringAsFixed(1)}%',
-              style: TextStyle(
+          if ((label == 'Monthly Revenue' &&
+                  currentValue != 0 &&
+                  previous != 0) ||
+              (label == 'Stock Sold' &&
+                  currentValue != 0 &&
+                  previous != 0)) ...[
+            Expanded(
+              child: Text(
+                '${isIncrease ? '▲' : '▼'} ${change.abs().toStringAsFixed(1)}%',
+                style: TextStyle(
                   color: isIncrease ? increaseColor : Colors.red,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20),
+                  fontSize: 20,
+                ),
+                softWrap: true,
+              ),
             ),
             const SizedBox(height: 3),
-            Text(
-              'From Last Month',
-              style: TextStyle(
+            Expanded(
+              child: Text(
+                'From Last Month',
+                style: TextStyle(
                   color: fromLastMonthTextColor,
                   fontSize: 13,
-                  fontWeight: FontWeight.w500),
+                  fontWeight: FontWeight.w500,
+                ),
+                softWrap: true,
+              ),
             ),
           ],
         ],

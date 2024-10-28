@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/item_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 class SearchScreen extends StatefulWidget {
@@ -16,63 +17,26 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> _searchResults = [];
 
   Future<void> _performSearch(String query) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = Uri.parse('https://haluansama.com/crm-sales/api/search_screen/get_search_products.php?query=$query');
 
     try {
-      // Initialize the list of query conditions
-      List<String> conditions = [];
+      final response = await http.get(apiUrl);
 
-      // Step 1: Check if the search query matches any subcategory name
-      final subCategoryResults = await conn.query(
-        'SELECT id FROM sub_category WHERE sub_category LIKE ?',
-        ['%$query%'],
-      );
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
 
-      if (subCategoryResults.isNotEmpty) {
-        final subCategoryId = subCategoryResults.first.fields['id'] as int;
-        conditions.add('p.sub_category = $subCategoryId');
+        if (jsonData['status'] == 'success') {
+          setState(() {
+            _searchResults = List<String>.from(jsonData['data'].map((item) => item['product_name']));
+          });
+        } else {
+          throw Exception('API Error: ${jsonData['message']}');
+        }
+      } else {
+        throw Exception('Failed to search products');
       }
-
-      // Step 2: Check if the search query matches any brand name
-      final brandResults = await conn.query(
-        'SELECT id FROM brand WHERE brand LIKE ?',
-        ['%$query%'],
-      );
-
-      if (brandResults.isNotEmpty) {
-        final brandId = brandResults.first.fields['id'] as int;
-        conditions.add('p.brand = $brandId');
-
-        // Add an additional condition to prioritize specific brand products
-        // containing the search term
-        conditions.add('p.product_name LIKE \'%$query%\'');
-      }
-
-      // Construct the WHERE clause based on the conditions
-      String whereClause = conditions.isNotEmpty ? 'WHERE ${conditions.join(' OR ')}': '';
-
-      // Step 3: Execute the final query based on the constructed conditions
-      final results = await conn.query(
-        '''
-      SELECT p.product_name
-      FROM product p
-      $whereClause
-      ORDER BY 
-        CASE 
-          WHEN p.product_name LIKE '$query%' THEN 1 
-          ELSE 2
-        END
-      ''',
-      );
-
-      setState(() {
-        _searchResults =
-            results.map((result) => result['product_name'] as String).toList();
-      });
     } catch (e) {
-      developer.log('Error performing search: $e', error: e);
-    } finally {
-      await conn.close();
+      developer.log('Error performing search: $e');
     }
   }
 
@@ -85,88 +49,54 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _navigateToItemScreen(String selectedProductName) async {
-    MySqlConnection conn = await connectToDatabase();
+    final apiUrl = Uri.parse('https://haluansama.com/crm-sales/api/search_screen/get_product_details.php?productName=$selectedProductName');
 
     try {
-      final productData = await readData(
-        conn,
-        'product',
-        "status = 1 AND product_name = '$selectedProductName'",
-        '',
-        'id, product_name, photo1, photo2, photo3, description, sub_category, '
-            'price_by_uom',
-      );
+      final response = await http.get(apiUrl);
 
-      if (productData.isNotEmpty) {
-        Map<String, dynamic> product = productData.first;
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
 
-        int productId = product['id'];
-        String productName = product['product_name'];
-        String itemAssetName1 = product['photo1'];
-        String? itemAssetName2 = product['photo2'];
-        String? itemAssetName3 = product['photo3'];
-        Blob description = stringToBlob(product['description']);
-        String priceByUom = product['price_by_uom'];
+        if (jsonData['status'] == 'success') {
+          final product = jsonData['data'];
 
-        final photoUrl1 = "https://haluansama.com/crm-sales/$itemAssetName1";
-        final photoUrl2 = "https://haluansama.com/crm-sales/$itemAssetName2";
-        final photoUrl3 = "https://haluansama.com/crm-sales/$itemAssetName3";
+          // Convert the description String to a Blob object
+          Blob descriptionBlob = stringToBlob(product['description']);
 
-        // Navigate to ItemScreen and pass necessary parameters
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ItemScreen(
-              productId: productId,
-              productName: productName,
-              itemAssetNames: [photoUrl1, photoUrl2, photoUrl3],
-              itemDescription: description,
-              priceByUom: priceByUom,
+          // Navigate to ItemScreen with product details
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ItemScreen(
+                productId: product['id'],
+                productName: product['product_name'],
+                itemAssetNames: [
+                  'https://haluansama.com/crm-sales/${product['photo1']}',
+                  'https://haluansama.com/crm-sales/${product['photo2']}',
+                  'https://haluansama.com/crm-sales/${product['photo3']}',
+                ],
+                itemDescription: descriptionBlob,  // Pass Blob instead of String
+                priceByUom: product['price_by_uom'],
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          developer.log('Product not found for name: $selectedProductName');
+        }
       } else {
-        developer.log('Product not found for name: $selectedProductName', level: 1);
+        throw Exception('Failed to fetch product details');
       }
     } catch (e) {
       developer.log('Error fetching product details: $e', error: e);
-    } finally {
-      await conn.close();
     }
   }
 
+  // Convert the String description into a Blob object using Blob.fromString
   Blob stringToBlob(String data) {
-    // Create a Blob instance from the string using Blob.fromString
-    Blob blob = Blob.fromString(data);
-
-    return blob;
+    return Blob.fromString(data);
   }
 
-  Future<List<Map<String, dynamic>>> getProductData(String searchQuery) async {
-    try {
-      final conn = await connectToDatabase();
-      final results = await conn.query(
-        'SELECT id, product_name, photo1, description, sub_category, '
-            'price_by_uom FROM product WHERE status = 1 AND product_name LIKE ?',
-        ['%$searchQuery%'],
-      );
-      await conn.close();
 
-      return results.map((row) {
-        return {
-          'id': row['id'],
-          'product_name': row['product_name'],
-          'photo1': row['photo1'],
-          'description': row['description'],
-          'sub_category': row['sub_category'],
-          'price_by_uom': row['price_by_uom'],
-        };
-      }).toList();
-    } catch (e) {
-      developer.log('Error fetching product details: $e', error: e);
-      return [];
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

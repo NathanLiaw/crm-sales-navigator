@@ -1,29 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_Insights.dart';
-import 'package:sales_navigator/customer_insight.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:developer' as developer;
 
 class OrderProcessingLeadItem extends StatelessWidget {
   final LeadItem leadItem;
   final String status;
   final Function(LeadItem) onMoveToClosed;
+  final Function(LeadItem) onRemoveLead;
 
   const OrderProcessingLeadItem({
     super.key,
     required this.leadItem,
     required this.status,
     required this.onMoveToClosed,
+    required this.onRemoveLead,
   });
 
   Future<void> _launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      throw 'Could not launch $url';
+    try {
+      if (await canLaunchUrl(url)) {
+        // Add LaunchMode
+        await launchUrl(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
+    }
+  }
+
+  Future<void> _launchPhone(String phone) async {
+    // Make sure the phone number is formatted correctly
+    final Uri phoneUri = Uri(
+      scheme: 'tel',
+      path: phone.replaceAll(
+          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+    );
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching phone: $e');
+    }
+  }
+
+  Future<void> _launchEmail(String email) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: email.trim(), // Clear spaces
+    );
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching email: $e');
     }
   }
 
@@ -33,6 +74,79 @@ class OrderProcessingLeadItem extends StatelessWidget {
     }
     final formatter = NumberFormat("#,##0.00", "en_US");
     return formatter.format(double.parse(amount));
+  }
+
+  Future<void> _removeOrder(BuildContext context) async {
+    // Show confirmation dialog before deleting the order
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text('Are you sure you want to delete this order?'),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(false), // User pressed Cancel
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(true), // User pressed Confirm
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      onRemoveLead(leadItem);
+      final response = await http.get(
+        Uri.parse(
+            'https://haluansama.com/crm-sales/api/sales_lead/void_sales_order.php?id=${leadItem.id}&salesman_id=${leadItem.salesmanId}'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          developer.log('Order deleted successfully');
+
+          // Show Snackbar for successful deletion
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sales lead deleted successfully!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          // Optionally, you can add logic here to update your UI or notify the user
+        } else {
+          developer.log('Failed to delete order: ${responseData['message']}');
+
+          // Show Snackbar for failure
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text('Failed to delete order: ${responseData['message']}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        developer
+            .log('HTTP request failed with status: ${response.statusCode}');
+
+        // Show Snackbar for HTTP request failure
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to delete order. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -62,20 +176,18 @@ class OrderProcessingLeadItem extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(2),
-            boxShadow: const [
-              BoxShadow(
-                blurStyle: BlurStyle.normal,
-                color: Color.fromARGB(75, 117, 117, 117),
-                spreadRadius: 0.1,
-                blurRadius: 4,
-                offset: Offset(0, 1),
-              ),
-            ]),
-        /* color: orderStatus == 'Pending'
-            ? const Color.fromARGB(255, 255, 237, 188)
-            : const Color.fromARGB(255, 205, 229, 242), */
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: const [
+            BoxShadow(
+              blurStyle: BlurStyle.normal,
+              color: Color.fromARGB(75, 117, 117, 117),
+              spreadRadius: 0.1,
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
         margin: const EdgeInsets.only(left: 8, right: 8, top: 10),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -85,23 +197,16 @@ class OrderProcessingLeadItem extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Text(
-                  //   leadItem.customerName.length > 24
-                  //       ? '${leadItem.customerName.substring(0, 24)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 20,
-                  //   ),
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
-                  Container(
-                    width: 250,
+                  Flexible(
                     child: Text(
                       leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                      maxLines: 3,
+                      style: GoogleFonts.inter(
+                        textStyle: const TextStyle(letterSpacing: -0.8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -111,12 +216,14 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: orderStatus == 'Pending'
                           ? const Color.fromARGB(255, 255, 195, 31)
-                          : Colors.green,
+                          : orderStatus == 'Void'
+                              ? Colors.red
+                              : Colors.green,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       orderStatus,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -127,21 +234,21 @@ class OrderProcessingLeadItem extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: leadItem.contactNumber.isNotEmpty
-                        ? () => _launchURL('tel:${leadItem.contactNumber}')
+                        ? () => _launchPhone('tel:${leadItem.contactNumber}')
                         : null,
                     child: Row(
                       children: [
                         const Icon(
                           Icons.phone,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
-                          width: 100,
+                        SizedBox(
+                          width: 90,
                           child: Text(
                             leadItem.contactNumber.isNotEmpty
                                 ? leadItem.contactNumber
@@ -158,20 +265,19 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
                   GestureDetector(
                     onTap: leadItem.emailAddress.isNotEmpty
-                        ? () => _launchURL('mailto:${leadItem.emailAddress}')
+                        ? () => _launchEmail('mailto:${leadItem.emailAddress}')
                         : null,
                     child: Row(
                       children: [
                         const Icon(
                           Icons.email,
-                          color: const Color(0xff0175FF),
+                          color: Color(0xff0175FF),
                         ),
                         const SizedBox(width: 8),
-                        Container(
-                          width: 150,
+                        SizedBox(
+                          width: 140,
                           child: Text(
                             leadItem.emailAddress.isNotEmpty
                                 ? leadItem.emailAddress
@@ -196,21 +302,35 @@ class OrderProcessingLeadItem extends StatelessWidget {
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
-                    color: const Color(0xff0175FF)),
+                    color: Color(0xff0175FF)),
               ),
-              const SizedBox(
-                height: 8,
-              ),
+              const SizedBox(height: 8),
               Text('Created date: $formattedCreatedDate'),
               Text('Expiry date: $expirationDate'),
               const SizedBox(height: 8),
-              Text(
-                leadItem.quantity != null
-                    ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
-                    : 'Quantity: Unknown      Total: RM$formattedTotal',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    leadItem.quantity != null
+                        ? 'Quantity: ${leadItem.quantity} items      Total: RM$formattedTotal'
+                        : 'Quantity: Unknown      Total: RM$formattedTotal',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  // Delete icon for removing the order
+                  Visibility(
+                    visible: orderStatus == 'Void',
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
+                        size: 32,
+                      ),
+                      onPressed: () => _removeOrder(context),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -251,8 +371,8 @@ class OrderProcessingLeadItem extends StatelessWidget {
                       'View Order',
                       style: TextStyle(
                         decoration: TextDecoration.underline,
-                        decorationColor: const Color(0xff0175FF),
-                        color: const Color(0xff0175FF),
+                        decorationColor: Color(0xff0175FF),
+                        color: Color(0xff0175FF),
                         fontSize: 14,
                       ),
                     ),

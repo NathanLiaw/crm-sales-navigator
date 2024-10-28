@@ -1,9 +1,11 @@
-import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'package:sales_navigator/home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:permission_handler/permission_handler.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -11,260 +13,485 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // Get the logged-in salesman_id
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? salesmanId = prefs.getInt('id');
+
+    if (salesmanId == null) {
+      // If no salesman is logged in, don't process any tasks
+      return Future.value(true);
+    }
+
     switch (task) {
       case "fetchSalesOrderStatus":
-        await checkOrderStatusAndNotify();
+        await checkOrderStatusAndNotify(salesmanId);
         break;
       case "checkTaskDueDates":
-        await checkTaskDueDatesAndNotify();
+        await checkTaskDueDatesAndNotify(salesmanId);
         break;
       case "checkNewSalesLeads":
-        await checkNewSalesLeadsAndNotify();
+        await checkNewSalesLeadsAndNotify(salesmanId);
         break;
     }
     return Future.value(true);
   });
 }
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) async {
+//     switch (task) {
+//       case "fetchSalesOrderStatus":
+//         await checkOrderStatusAndNotify();
+//         break;
+//       case "checkTaskDueDates":
+//         await checkTaskDueDatesAndNotify();
+//         break;
+//       case "checkNewSalesLeads":
+//         await checkNewSalesLeadsAndNotify();
+//         break;
+//     }
+//     return Future.value(true);
+//   });
+// }
 
-Future<void> checkOrderStatusAndNotify() async {
-  MySqlConnection? conn;
-  developer.log('Starting checkOrderStatusAndNotify');
+Future<void> checkOrderStatusAndNotify(int salesmanId) async {
+  final String baseUrl =
+      'https://haluansama.com/crm-sales/api/background_tasks/get_order_status.php?salesman_id=$salesmanId';
+
   try {
-    conn = await connectToDatabase();
-    var results = await conn.query('''
-  SELECT id, customer_company_name, buyer_id, status, last_checked_status 
-  FROM cart 
-  WHERE id IS NOT NULL 
-    AND customer_company_name IS NOT NULL 
-    AND status IS NOT NULL 
-    AND last_checked_status IS NOT NULL
-''');
-    developer.log('Found ${results.length} cart items');
+    final response = await http.get(Uri.parse(baseUrl));
 
-    for (var row in results) {
-      // developer.log('Raw row data: $row');
-      var orderId = row['id'];
-      var customerName = row['customer_company_name'] as String?;
-      var salesmanId = row['buyer_id'] as int?;
-      var currentStatus = row['status'];
-      var lastCheckedStatus = row['last_checked_status'];
-
-      // developer.log(
-      //     'Processing order: $orderId, Current status: $currentStatus, Last checked status: $lastCheckedStatus');
-      // developer.log('orderId: $orderId, type: ${orderId.runtimeType}');
-      // developer.log('salesmanId: $salesmanId, type: ${salesmanId.runtimeType}');
-
-      if (orderId == null ||
-          customerName == null ||
-          currentStatus == null ||
-          lastCheckedStatus == null) {
-        developer.log('Skipping row due to null values');
-        continue;
-      }
-
-      developer.log(
-          'Processing order: $orderId, Current status: $currentStatus, Last checked status: $lastCheckedStatus');
-
-      if (currentStatus != lastCheckedStatus) {
-        developer.log(
-            'Status changed from $lastCheckedStatus to $currentStatus for order $orderId');
-        await _generateNotification(
-            conn,
-            LeadItem(
-              id: orderId as int,
-              salesmanId: salesmanId,
-              customerName: customerName,
-              description: '',
-              createdDate: DateTime.now().toString(),
-              amount: '',
-              contactNumber: '',
-              emailAddress: '',
-              stage: '',
-              addressLine1: '',
-              status: currentStatus,
-            ),
-            currentStatus,
-            lastCheckedStatus);
-
-        // Update last_checked_status
-        await conn.query('UPDATE cart SET last_checked_status = ? WHERE id = ?',
-            [currentStatus, orderId]);
-        developer.log('Updated last_checked_status in database for order $orderId');
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      if (responseData['status'] == 'success') {
+        final notifications = responseData['notifications'] as List;
+        for (var notification in notifications) {
+          await showLocalNotification(
+            'Order Status Changed',
+            'Order ${notification['order_id']} for ${notification['customer_name']} has changed from ${notification['old_status']} to ${notification['new_status']}.',
+          );
+        }
+        developer.log('Notifications processed: ${notifications.length}');
       } else {
-        developer.log('No status change for order $orderId');
+        throw Exception(responseData['message']);
       }
+    } else {
+      throw Exception('Failed to check order status: ${response.statusCode}');
     }
   } catch (e) {
-    developer.log('Error in checkOrderStatusAndNotify: $e');
-  } finally {
-    if (conn != null) {
-      await conn.close();
-    }
+    developer.log('Error checking order status and notifying: $e');
   }
-  developer.log('Finished checkOrderStatusAndNotify');
 }
 
-Future<void> checkTaskDueDatesAndNotify() async {
-  MySqlConnection? conn;
+// Future<void> checkOrderStatusAndNotify() async {
+//   developer.log('Starting checkOrderStatusAndNotify');
+
+//   try {
+//     final apiUrl = Uri.parse(
+//         'https://haluansama.com/crm-sales/api/background_tasks/get_order_status.php');
+//     final response = await http.get(apiUrl);
+
+//     if (response.statusCode == 200) {
+//       final jsonData = json.decode(response.body);
+//       if (jsonData['status'] == 'success') {
+//         for (var row in jsonData['data']) {
+//           var orderId = row['id'];
+//           var customerName = row['customer_company_name'];
+//           var salesmanId = row['buyer_id'];
+//           var currentStatus = row['status'];
+//           var lastCheckedStatus = row['last_checked_status'];
+
+//           if (orderId == null ||
+//               customerName == null ||
+//               currentStatus == null ||
+//               lastCheckedStatus == null) {
+//             developer.log('Skipping row due to null values');
+//             continue;
+//           }
+
+//           if (currentStatus != lastCheckedStatus) {
+//             developer.log(
+//                 'Status changed from $lastCheckedStatus to $currentStatus for order $orderId');
+//             await _generateNotification(
+//                 LeadItem(
+//                   id: orderId,
+//                   salesmanId: salesmanId,
+//                   customerName: customerName,
+//                   description: '',
+//                   createdDate: DateTime.now().toString(),
+//                   amount: '',
+//                   contactNumber: '',
+//                   emailAddress: '',
+//                   stage: '',
+//                   addressLine1: '',
+//                   status: currentStatus,
+//                 ),
+//                 currentStatus, // newStatus
+//                 lastCheckedStatus // oldStatus
+//                 );
+//           } else {
+//             developer.log('No status change for order $orderId');
+//           }
+//         }
+//       } else {
+//         developer.log('Error: ${jsonData['message']}');
+//       }
+//     } else {
+//       developer.log('Failed to load order status');
+//     }
+//   } catch (e) {
+//     developer.log('Error in checkOrderStatusAndNotify: $e');
+//   }
+//   developer.log('Finished checkOrderStatusAndNotify');
+// }
+
+Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
   developer.log('Starting checkTaskDueDatesAndNotify');
+
   try {
-    conn = await connectToDatabase();
-    developer.log('Connected to database');
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/background_tasks/get_task_due_dates.php?salesman_id=$salesmanId');
+    final response = await http.get(apiUrl);
 
-    var results = await conn.query('''
-      SELECT t.id, t.title, t.due_date, t.lead_id, sl.salesman_id, sl.customer_name
-      FROM tasks t
-      JOIN sales_lead sl ON t.lead_id = sl.id
-      WHERE t.creation_date >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-        AND t.due_date <= DATE_ADD(NOW(), INTERVAL 24 HOUR)
-        AND t.due_date > NOW()
-    ''');
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      if (jsonData['status'] == 'success') {
+        for (var row in jsonData['data']) {
+          var taskTitle = row['title'];
+          var dueDate = DateTime.parse(row['due_date']);
+          var leadId = row['lead_id'].toString();
+          var salesmanId = row['salesman_id'].toString();
+          var customerName = row['customer_name'];
 
-    developer.log('Found ${results.length} tasks with upcoming due dates');
+          var notificationTitle = 'Task Due Soon';
+          var notificationBody =
+              'Task "$taskTitle" for $customerName is due on ${dueDate.toString().split(' ')[0]}';
 
-    for (var row in results) {
-      var taskTitle = row['title'] as String;
-      var dueDate = row['due_date'] as DateTime;
-      var leadId = row['lead_id'] as int;
-      var salesmanId = row['salesman_id'] as int;
-      var customerName = row['customer_name'] as String;
-
-      var notificationTitle = 'Task Due Soon';
-      var notificationBody =
-          'Task "$taskTitle" for $customerName is due on ${dueDate.toString().split(' ')[0]}';
-
-      await _generateTaskandSalesLeadNotification(conn, salesmanId,
-          notificationTitle, notificationBody, leadId, 'TASK_DUE_SOON');
+          await _generateTaskandSalesLeadNotification(
+              int.parse(salesmanId),
+              notificationTitle,
+              notificationBody,
+              int.parse(leadId),
+              'TASK_DUE_SOON');
+        }
+      } else {
+        developer.log('Error: ${jsonData['message']}');
+      }
+    } else {
+      throw Exception('Failed to load task due dates: ${response.statusCode}');
     }
   } catch (e) {
     developer.log('Error in checkTaskDueDatesAndNotify: $e');
-  } finally {
-    if (conn != null) {
-      await conn.close();
-    }
   }
   developer.log('Finished checkTaskDueDatesAndNotify');
 }
 
-Future<void> checkNewSalesLeadsAndNotify() async {
-  MySqlConnection? conn;
-  developer.log('Starting checkNewSalesLeadsAndNotify');
+// Future<void> checkTaskDueDatesAndNotify() async {
+//   developer.log('Starting checkTaskDueDatesAndNotify');
+
+//   try {
+//     final apiUrl = Uri.parse(
+//         'https://haluansama.com/crm-sales/api/background_tasks/get_task_due_dates.php');
+//     final response = await http.get(apiUrl);
+
+//     if (response.statusCode == 200) {
+//       final jsonData = json.decode(response.body);
+//       if (jsonData['status'] == 'success') {
+//         for (var row in jsonData['data']) {
+//           var taskTitle = row['title'];
+//           var dueDate = DateTime.parse(row['due_date']);
+//           var leadId = row['lead_id'];
+//           var salesmanId = row['salesman_id'];
+//           var customerName = row['customer_name'];
+
+//           var notificationTitle = 'Task Due Soon';
+//           var notificationBody =
+//               'Task "$taskTitle" for $customerName is due on ${dueDate.toString().split(' ')[0]}';
+
+//           await _generateTaskandSalesLeadNotification(
+//               salesmanId,
+//               'Task Due Soon',
+//               'Task "$taskTitle" for $customerName is due on ${dueDate.toString().split(' ')[0]}',
+//               leadId,
+//               'TASK_DUE_SOON');
+//         }
+//       } else {
+//         developer.log('Error: ${jsonData['message']}');
+//       }
+//     } else {
+//       developer.log('Failed to load task due dates');
+//     }
+//   } catch (e) {
+//     developer.log('Error in checkTaskDueDatesAndNotify: $e');
+//   }
+//   developer.log('Finished checkTaskDueDatesAndNotify');
+// }
+
+Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
+  developer
+      .log('Starting checkNewSalesLeadsAndNotify for salesman_id: $salesmanId');
+
   try {
-    conn = await connectToDatabase();
-    developer.log('Connected to database');
+    final apiUrl = Uri.parse(
+        'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php?salesman_id=$salesmanId');
+    developer.log("Calling API with URL: $apiUrl"); // Add this log
+    final response = await http.get(apiUrl);
 
-    var results = await conn.query('''
-      SELECT id, customer_name, salesman_id
-      FROM sales_lead
-      WHERE DATE(created_date) = CURDATE()
-    ''');
+    developer.log(
+        "API Response Status Code: ${response.statusCode}"); // Add this log
+    developer.log("API Response Body: ${response.body}"); // Add this log
 
-    developer.log('Found ${results.length} new sales leads today');
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      if (jsonData['status'] == 'success') {
+        developer.log('Found ${jsonData['data'].length} new sales leads today');
 
-    for (var row in results) {
-      var leadId = row['id'] as int;
-      var customerName = row['customer_name'] as String;
-      var salesmanId = row['salesman_id'] as int;
+        for (var lead in jsonData['data']) {
+          // Convert string IDs to integers
+          var leadId = lead['id'].toString();
+          var customerName = lead['customer_name'];
+          var salesmanId = lead['salesman_id'].toString();
 
-      var notificationTitle = 'New Sales Lead';
-      var notificationBody =
-          'A new sales lead for $customerName has been created today.';
+          var notificationTitle = 'New Sales Lead';
+          var notificationBody =
+              'A new sales lead for $customerName has been created today.';
 
-      await _generateTaskandSalesLeadNotification(conn, salesmanId,
-          notificationTitle, notificationBody, leadId, 'NEW_SALES_LEAD');
+          await _generateTaskandSalesLeadNotification(
+              int.parse(salesmanId),
+              notificationTitle,
+              notificationBody,
+              int.parse(leadId),
+              'NEW_SALES_LEAD');
+        }
+      } else {
+        developer.log('Error: ${jsonData['message']}');
+      }
+    } else {
+      throw Exception('Failed to load new sales leads: ${response.statusCode}');
     }
   } catch (e) {
     developer.log('Error in checkNewSalesLeadsAndNotify: $e');
-  } finally {
-    if (conn != null) {
-      await conn.close();
-    }
   }
   developer.log('Finished checkNewSalesLeadsAndNotify');
 }
 
+// Future<void> checkNewSalesLeadsAndNotify() async {
+//   developer.log('Starting checkNewSalesLeadsAndNotify');
+
+//   try {
+//     final apiUrl = Uri.parse(
+//         'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php');
+//     final response = await http.get(apiUrl);
+
+//     if (response.statusCode == 200) {
+//       final jsonData = json.decode(response.body);
+//       if (jsonData['status'] == 'success') {
+//         for (var row in jsonData['data']) {
+//           var leadId = row['id'];
+//           var customerName = row['customer_name'];
+//           var salesmanId = row['salesman_id'];
+
+//           var notificationTitle = 'New Sales Lead';
+//           var notificationBody =
+//               'A new sales lead for $customerName has been created today.';
+
+//           await _generateTaskandSalesLeadNotification(salesmanId,
+//               notificationTitle, notificationBody, leadId, 'NEW_SALES_LEAD');
+//         }
+//       } else {
+//         developer.log('Error: ${jsonData['message']}');
+//       }
+//     } else {
+//       developer.log('Failed to load new sales leads');
+//     }
+//   } catch (e) {
+//     developer.log('Error in checkNewSalesLeadsAndNotify: $e');
+//   }
+//   developer.log('Finished checkNewSalesLeadsAndNotify');
+// }
+
 // Generate status change notification
-Future<void> _generateNotification(MySqlConnection conn, LeadItem leadItem,
-    String newStatus, String oldStatus) async {
+Future<void> _generateNotification(
+    LeadItem leadItem, String newStatus, String oldStatus) async {
+  const String baseUrl =
+      'https://haluansama.com/crm-sales/api/background_tasks/update_notification.php';
+
+  // Check if salesOrderId exists
+  if (leadItem.salesOrderId == null) {
+    return;
+  }
+
+  final Map<String, String> queryParameters = {
+    'order_id': leadItem
+        .salesOrderId!, // Use null safety operator since we checked above
+    'salesman_id': leadItem.salesmanId.toString(),
+    'customer_name': leadItem.customerName,
+    'new_status': newStatus,
+    'old_status': oldStatus,
+  };
+
+  final Uri uri = Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
   try {
-    // Find the corresponding record in the sales_lead table
-    var salesLeadResults = await conn.query(
-      'SELECT id FROM sales_lead WHERE so_id = ?',
-      [leadItem.id], // Use orderId (leadItem.id) to find
-    );
+    final response = await http.get(uri);
 
-    int? salesLeadId;
-    if (salesLeadResults.isNotEmpty) {
-      salesLeadId = salesLeadResults.first['id'] as int;
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      if (responseData['status'] == 'success') {
+        developer.log('Notification generated successfully');
+
+        // Create notification message with order ID
+        String notificationMessage = leadItem.salesOrderId != null
+            ? 'Order #${leadItem.salesOrderId} for ${leadItem.customerName} has changed from $oldStatus to $newStatus.'
+            : 'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.';
+
+        // Show local notification
+        await showLocalNotification(
+            'Order Status Changed', notificationMessage);
+
+        // Add debug log to check values
+      } else {
+        throw Exception(responseData['message']);
+      }
     } else {
-      // If it is not found, an error is reported,
-      throw Exception('No sales_lead record found for order ${leadItem.id}');
+      throw Exception(
+          'Failed to generate notification: ${response.statusCode}');
     }
-
-    // Insert data into notifications table
-    var result = await conn.query(
-      'INSERT INTO notifications (salesman_id, title, description, related_lead_id, type) VALUES (?, ?, ?, ?, ?)',
-      [
-        leadItem.salesmanId ?? 0,
-        'Order Status Changed',
-        'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.',
-        salesLeadId,
-        'ORDER_STATUS_CHANGED',
-      ],
-    );
-    developer.log(
-        'Inserted notification into database. Affected rows: ${result.affectedRows}');
-
-    await showLocalNotification(
-      'Order Status Changed',
-      'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.',
-    );
-    developer.log('Local notification sent');
   } catch (e) {
     developer.log('Error generating notification: $e');
   }
 }
 
-// Generate task due date and new sales lead notification
-Future<void> _generateTaskandSalesLeadNotification(
-    MySqlConnection conn,
-    int salesmanId,
-    String title,
-    String description,
-    int leadId,
-    String type) async {
-  try {
-    // Insert data into notifications table
-    var result = await conn.query(
-      'INSERT INTO notifications (salesman_id, title, description, related_lead_id, type) VALUES (?, ?, ?, ?, ?)',
-      [salesmanId, title, description, leadId, type],
-    );
-    developer.log(
-        'Inserted notification into database. Affected rows: ${result.affectedRows}');
+// Future<void> _generateNotification(
+//     LeadItem leadItem, String newStatus, String oldStatus) async {
+//   try {
+//     // API URL for generating notifications
+//     final apiUrl = Uri.parse(
+//         'https://haluansama.com/crm-sales/api/background_tasks/update_notification.php');
 
-    await showLocalNotification(title, description);
-    developer.log('Local notification sent');
+//     // Prepare the POST request
+//     final response = await http.post(apiUrl, body: {
+//       'salesmanId': leadItem.salesmanId.toString(),
+//       'title': 'Order Status Changed',
+//       'description':
+//           'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.',
+//       'relatedLeadId': leadItem.id.toString(),
+//       'type': 'ORDER_STATUS_CHANGED',
+//     });
+
+//     // Handle the response
+//     if (response.statusCode == 200) {
+//       final jsonData = json.decode(response.body);
+//       if (jsonData['status'] == 'success') {
+//         await showLocalNotification(
+//           'Order Status Changed',
+//           'Order for ${leadItem.customerName} has changed from $oldStatus to $newStatus.',
+//         );
+//         developer.log('Notification sent: ${jsonData['message']}');
+//       } else {
+//         developer.log('Error generating notification: ${jsonData['message']}');
+//       }
+//     } else {
+//       developer.log('Failed to generate notification');
+//     }
+//   } catch (e) {
+//     developer.log('Error generating notification: $e');
+//   }
+// }
+
+Future<void> _generateTaskandSalesLeadNotification(int salesmanId, String title,
+    String description, int leadId, String type) async {
+  const String baseUrl =
+      'https://haluansama.com/crm-sales/api/background_tasks/update_task_lead_notification.php';
+
+  final Map<String, String> queryParameters = {
+    'salesman_id': salesmanId.toString(),
+    'title': title,
+    'description': description,
+    'lead_id': leadId.toString(),
+    'type': type,
+  };
+
+  final Uri uri = Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+  try {
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      if (responseData['status'] == 'success') {
+        developer.log('Notification generated successfully');
+
+        // Show local notification
+        await showLocalNotification(title, description);
+      } else {
+        throw Exception(responseData['message']);
+      }
+    } else {
+      throw Exception(
+          'Failed to generate notification: ${response.statusCode}');
+    }
   } catch (e) {
     developer.log('Error generating task notification: $e');
   }
 }
 
+// Future<void> _generateTaskandSalesLeadNotification(int salesmanId, String title,
+//     String description, int leadId, String type) async {
+//   try {
+//     // API URL for generating task/lead notifications
+//     final apiUrl = Uri.parse(
+//         'https://haluansama.com/crm-sales/api/background_tasks/update_task_lead_notification.php');
+
+//     // Prepare the POST request
+//     final response = await http.post(apiUrl, body: {
+//       'salesmanId': salesmanId.toString(),
+//       'title': title,
+//       'description': description,
+//       'leadId': leadId.toString(),
+//       'type': type,
+//     });
+
+//     // Handle the response
+//     if (response.statusCode == 200) {
+//       final jsonData = json.decode(response.body);
+//       if (jsonData['status'] == 'success') {
+//         await showLocalNotification(title, description);
+//         developer.log('Notification sent: ${jsonData['message']}');
+//       } else {
+//         developer.log('Error generating notification: ${jsonData['message']}');
+//       }
+//     } else {
+//       developer.log('Failed to generate notification');
+//     }
+//   } catch (e) {
+//     developer.log('Error generating task/lead notification: $e');
+//   }
+// }
 
 Future<void> showLocalNotification(String title, String body) async {
-  const AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails(
-    'your_channel_id',
-    'your_channel_name',
-    importance: Importance.max,
-    priority: Priority.high,
-  );
-  const NotificationDetails platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    title,
-    body,
-    platformChannelSpecifics,
-    payload: 'notification',
-  );
+  // Check if notification permission is granted
+  if (await Permission.notification.isGranted) {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'sales_navigator_notifications', // channelId
+      'Sales Navigator Notifications', // channelName
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    // Show notification
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      platformChannelSpecifics,
+      payload: 'notification',
+    );
+  } else {
+    // Request permission if not granted
+    await Permission.notification.request();
+    developer.log('Notification permission was requested.');
+  }
 }

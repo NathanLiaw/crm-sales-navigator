@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/widgets.dart';
+import 'package:sales_navigator/background_tasks.dart';
+import 'package:workmanager/workmanager.dart';
 import 'home_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +45,8 @@ class LoginPage extends StatelessWidget {
         // Save salesman data to shared preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setInt('id', salesman['id']);
+        print(
+            "Saved salesman_id to SharedPreferences: ${salesman['id']}"); // Add this log
         prefs.setInt('area', salesman['area']);
         prefs.setString('salesmanName', salesman['salesman_name']);
         prefs.setString('username', salesman['username']);
@@ -60,6 +63,9 @@ class LoginPage extends StatelessWidget {
             DateTime.now()
                 .add(const Duration(days: 31))
                 .millisecondsSinceEpoch);
+
+        // Initialize Workmanager and register tasks
+        await _initializeBackgroundTasks();
 
         // Navigate to HomePage
         Navigator.pushReplacement(
@@ -81,6 +87,37 @@ class LoginPage extends StatelessWidget {
         ),
       );
     }
+  }
+
+  Future<void> _initializeBackgroundTasks() async {
+    await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+
+    await Workmanager().registerPeriodicTask(
+      "1",
+      "fetchSalesOrderStatus",
+      frequency: const Duration(minutes: 15),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
+
+    await Workmanager().registerPeriodicTask(
+      "2",
+      "checkTaskDueDates",
+      frequency: const Duration(days: 1),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
+
+    await Workmanager().registerPeriodicTask(
+      "3",
+      "checkNewSalesLeads",
+      frequency: const Duration(days: 1),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
   }
 
   Future<bool> checkLoginStatus() async {

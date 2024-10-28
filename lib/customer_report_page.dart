@@ -6,26 +6,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Customer Report',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.lightBlue,
-          onPrimary: Colors.white,
-          surface: Colors.lightBlue,
-        ),
-        iconTheme: const IconThemeData(color: Colors.lightBlue),
-      ),
-      home: const CustomerReport(),
-    );
-  }
-}
 
 class CustomerReport extends StatefulWidget {
   const CustomerReport({super.key});
@@ -356,14 +336,14 @@ class _CustomerReportState extends State<CustomerReport> {
                 ),
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
                     (Set<MaterialState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
@@ -371,7 +351,7 @@ class _CustomerReportState extends State<CustomerReport> {
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -414,19 +394,19 @@ class _CustomerReportState extends State<CustomerReport> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             side: const BorderSide(color: Color(0xFF999999)),
             borderRadius: BorderRadius.circular(50),
@@ -502,16 +482,25 @@ class _CustomerReportState extends State<CustomerReport> {
                                   Text(
                                     '${customer.serialNumber}. ',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
-                                      customer.companyName,
+                                      customer
+                                          .companyName, // Here is the customer company name
                                       style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      softWrap:
+                                          true, // Enables wrapping of long text
+                                      maxLines:
+                                          2, // Limits to 2 lines before truncating
+                                      overflow: TextOverflow
+                                          .ellipsis, // Adds "..." if text is too long
                                     ),
                                   ),
                                 ],
@@ -524,17 +513,19 @@ class _CustomerReportState extends State<CustomerReport> {
                                     Text(
                                       '     Total Sales: ${customer.totalSalesDisplay}',
                                       style: const TextStyle(
-                                          color: Color(0xFF0175FF),
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w500),
+                                        color: Color(0xFF0175FF),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       '      Total Quantity: ${customer.totalQuantityDisplay}',
                                       style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400),
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                      ),
                                     ),
                                   ],
                                 ),

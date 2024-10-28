@@ -1,11 +1,15 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/main.dart';
+import 'package:sales_navigator/model/notification_state.dart';
 import 'package:sales_navigator/notification_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:sales_navigator/utility_function.dart'; // For requesting permissions
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -18,11 +22,29 @@ class FirebaseApi {
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
   Future<void> initNotifications() async {
-    await _firebaseMessaging.requestPermission();
+    // Check and request notification permission
+    await _checkNotificationPermission();
+
     final fCMToken = await _firebaseMessaging.getToken();
     developer.log('FCM Token: $fCMToken');
+
     await initPushNotifications();
     await initLocalNotifications();
+  }
+
+  // Function to check and request notification permission
+  Future<void> _checkNotificationPermission() async {
+    // Check if notification permission is already granted
+    if (!await Permission.notification.isGranted) {
+      // Request permission if not granted
+      PermissionStatus status = await Permission.notification.request();
+
+      if (status.isGranted) {
+        developer.log('Notification permission granted');
+      } else {
+        developer.log('Notification permission denied');
+      }
+    }
   }
 
   Future<void> initPushNotifications() async {
@@ -36,9 +58,22 @@ class FirebaseApi {
     FirebaseMessaging.instance.getInitialMessage().then(handleMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    FirebaseMessaging.onMessage.listen((message) {
+    FirebaseMessaging.onMessage.listen((message) async {
       final notification = message.notification;
       if (notification == null) return;
+
+      // Update the number of unread messages
+      final salesmanId = await UtilityFunction.getUserId();
+      final unreadCount = await NotificationsPage.getUnreadCount(salesmanId);
+
+      // Update unread count via Provider
+      final notificationState = Provider.of<NotificationState>(
+        navigatorKey.currentContext!,
+        listen: false,
+      );
+      notificationState.setUnreadCount(unreadCount);
+
+      // Show local notification if permission is granted
       _localNotifications.show(
         notification.hashCode,
         notification.title,
@@ -53,7 +88,8 @@ class FirebaseApi {
         ),
         payload: jsonEncode(message.toMap()),
       );
-      // Display a dialog box that lets the user choose whether or not to view the notification
+
+      // Display a dialog box to allow the user to choose to view the notification
       showDialog(
         context: navigatorKey.currentContext!,
         builder: (_) => AlertDialog(
@@ -61,11 +97,11 @@ class FirebaseApi {
           content: Text(notification.body ?? ''),
           actions: [
             TextButton(
-              child: Text('Close'),
+              child: const Text('Close'),
               onPressed: () => Navigator.of(navigatorKey.currentContext!).pop(),
             ),
             TextButton(
-              child: Text('View'),
+              child: const Text('View'),
               onPressed: () {
                 Navigator.of(navigatorKey.currentContext!).pop();
                 handleMessage(message);
@@ -74,7 +110,6 @@ class FirebaseApi {
           ],
         ),
       );
-      // handleMessage(message);
     });
   }
 
@@ -101,7 +136,7 @@ class FirebaseApi {
     await _localNotifications.initialize(
       settings,
       onSelectNotification: (payload) {
-        print("Local notification selected: $payload");
+        developer.log("Local notification selected: $payload");
         if (payload != null) {
           final data = jsonDecode(payload);
           handleMessage(RemoteMessage(
@@ -119,25 +154,6 @@ class FirebaseApi {
         AndroidFlutterLocalNotificationsPlugin>();
     await platform?.createNotificationChannel(_androidChannel);
   }
-
-  // void handleMessage(RemoteMessage? message) {
-  //   if (message == null) return;
-  //   navigatorkey.currentState?.pushNamed(
-  //     NotificationsPage.route,
-  //     arguments: message,
-  //   );
-  // }
-
-  // void handleMessage(RemoteMessage? message) {
-  //   if (message == null) return;
-
-  //   Future.delayed(Duration.zero, () {
-  //     navigatorKey.currentState?.pushNamed(
-  //       NotificationsPage.route,
-  //       arguments: message,
-  //     );
-  //   });
-  // }
 
   Future<void> sendPushNotification(
       String salesmanId, String title, String body) async {
@@ -178,7 +194,7 @@ class FirebaseApi {
 
   // Function to get FCM token
   Future<String> _getFCMTokenForSalesman(String salesmanId) async {
-    // May need to change in the future
+    // Replace with actual logic to fetch FCM token for the salesman
     return "salesmanFCMToken";
   }
 
@@ -208,5 +224,5 @@ class FirebaseApi {
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   developer.log("Handling a background message: ${message.messageId}");
-  // can process the message here if needed
+  // Process the message here if needed
 }

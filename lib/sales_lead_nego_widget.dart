@@ -1,13 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_navigator/customer_insights.dart';
 import 'package:sales_navigator/home_page.dart';
-import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_connection.dart';
 import 'dart:developer' as developer;
-
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class NegotiationLeadItem extends StatefulWidget {
@@ -37,6 +37,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   List<Map<String, dynamic>> tasks = [];
   String _sortBy = 'creation_date'; // 新添加的状态变量
   String _sortOrder = 'descending';
+  bool _isTasksExpanded = false; // New state variable for expansion
 
   @override
   void initState() {
@@ -46,40 +47,120 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
 
   Future<void> _launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      throw 'Could not launch $url';
+    try {
+      if (await canLaunchUrl(url)) {
+        // Add LaunchMode
+        await launchUrl(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
     }
   }
 
-  Future<void> _fetchTaskDetails() async {
-    MySqlConnection conn = await connectToDatabase();
+  Future<void> _launchPhone(String phone) async {
+    // Make sure the phone number is formatted correctly
+    final Uri phoneUri = Uri(
+      scheme: 'tel',
+      path: phone.replaceAll(
+          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+    );
     try {
-      Results results = await conn.query(
-        'SELECT t.id, t.title, t.description, t.due_date, t.creation_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
-        [widget.leadItem.id],
-      );
-      if (results.isNotEmpty && mounted) {
-        setState(() {
-          tasks = results.map((row) {
-            return {
-              'title': row['title'],
-              'description': row['description'],
-              'due_date': row['due_date'],
-              'creation_date': row['creation_date'],
-              'id': row['id'],
-            };
-          }).toList();
-          // 默认按创建日期排序
-          tasks
-              .sort((a, b) => b['creation_date'].compareTo(a['creation_date']));
-        });
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching phone: $e');
+    }
+  }
+
+  Future<void> _launchEmail(String email) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: email.trim(), // Clear spaces
+    );
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching email: $e');
+    }
+  }
+
+  // Future<void> _fetchTaskDetails() async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     Results results = await conn.query(
+  //       'SELECT t.id, t.title, t.description, t.due_date, t.creation_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
+  //       [widget.leadItem.id],
+  //     );
+  //     if (results.isNotEmpty && mounted) {
+  //       setState(() {
+  //         tasks = results.map((row) {
+  //           return {
+  //             'title': row['title'],
+  //             'description': row['description'],
+  //             'due_date': row['due_date'],
+  //             'creation_date': row['creation_date'],
+  //             'id': row['id'],
+  //           };
+  //         }).toList();
+  //         // 默认按创建日期排序
+  //         tasks
+  //             .sort((a, b) => b['creation_date'].compareTo(a['creation_date']));
+  //       });
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching task details: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
+
+  Future<void> _fetchTaskDetails() async {
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/get_task_details.php';
+
+    final Map<String, String> queryParameters = {
+      'lead_id': widget.leadItem.id.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          if (mounted) {
+            setState(() {
+              tasks = (responseData['tasks'] as List).map((task) {
+                return {
+                  'id': task['id'],
+                  'title': task['title'],
+                  'description': task['description'],
+                  'due_date': DateTime.parse(task['due_date']),
+                  'creation_date': DateTime.parse(task['creation_date']),
+                };
+              }).toList();
+            });
+          }
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to fetch task details: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching task details: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch task details: $e')),
+      );
     }
   }
 
@@ -167,17 +248,54 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     _fetchTaskDetails();
   }
 
+  // Future<void> _deleteTask(int taskId) async {
+  //   MySqlConnection conn = await connectToDatabase();
+  //   try {
+  //     await conn.query('DELETE FROM tasks WHERE id = ?', [taskId]);
+  //     setState(() {
+  //       tasks.removeWhere((task) => task['id'] == taskId);
+  //     });
+  //   } catch (e) {
+  //     developer.log('Error deleting task: $e');
+  //   } finally {
+  //     await conn.close();
+  //   }
+  // }
+
   Future<void> _deleteTask(int taskId) async {
-    MySqlConnection conn = await connectToDatabase();
+    final String baseUrl =
+        'https://haluansama.com/crm-sales/api/sales_lead/delete_task.php';
+
+    final Map<String, String> queryParameters = {
+      'task_id': taskId.toString(),
+    };
+
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+
     try {
-      await conn.query('DELETE FROM tasks WHERE id = ?', [taskId]);
-      setState(() {
-        tasks.removeWhere((task) => task['id'] == taskId);
-      });
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          setState(() {
+            tasks.removeWhere((task) => task['id'] == taskId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+        } else {
+          throw Exception(responseData['message']);
+        }
+      } else {
+        throw Exception('Failed to delete task: ${response.statusCode}');
+      }
     } catch (e) {
       developer.log('Error deleting task: $e');
-    } finally {
-      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete task: $e')),
+      );
     }
   }
 
@@ -217,29 +335,115 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              ListTile(
-                title: const Text('Creation Date'),
-                onTap: () {
-                  _sortTasks('creation_date');
-                  Navigator.of(context).pop();
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Creation Date'),
+                      if (_sortBy == 'creation_date')
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            _sortOrder == 'ascending'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color: const Color(0xFF0175FF),
+                          ),
+                        ),
+                    ],
+                  ),
+                  tileColor: _sortBy == 'creation_date'
+                      ? const Color(0xFFF5F8FF)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'creation_date'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _sortTasks('creation_date');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Due Date'),
-                onTap: () {
-                  _sortTasks('due_date');
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Due Date'),
+                      if (_sortBy == 'due_date')
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            _sortOrder == 'ascending'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color: const Color(0xFF0175FF),
+                          ),
+                        ),
+                    ],
+                  ),
+                  tileColor:
+                      _sortBy == 'due_date' ? const Color(0xFFF5F8FF) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'due_date'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _sortTasks('due_date');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Title (A-Z)'),
-                onTap: () {
-                  _sortTasks('title');
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Title (A-Z)'),
+                      if (_sortBy == 'title')
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            _sortOrder == 'ascending'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color: const Color(0xFF0175FF),
+                          ),
+                        ),
+                    ],
+                  ),
+                  tileColor:
+                      _sortBy == 'title' ? const Color(0xFFF5F8FF) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _sortBy == 'title'
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    _sortTasks('title');
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
             ],
           ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         );
       },
     );
@@ -332,13 +536,16 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: 170,
+                  Flexible(
                     child: Text(
                       widget.leadItem.customerName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18),
-                      maxLines: 3,
+                      style: GoogleFonts.inter(
+                        textStyle: const TextStyle(letterSpacing: -0.8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 25, 23, 49),
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -433,31 +640,36 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                             value: 'undo',
                             child: const Text('Undo'),
                             onTap: () async {
-                              MySqlConnection conn = await connectToDatabase();
-                              try {
-                                Results results = await conn.query(
-                                  'SELECT previous_stage FROM sales_lead WHERE id = ?',
-                                  [widget.leadItem.id],
-                                );
-                                if (results.isNotEmpty) {
-                                  String? previousStage =
-                                      results.first['previous_stage'];
-                                  if (previousStage != null &&
-                                      previousStage.isNotEmpty) {
-                                    widget.onUndoLead(
-                                        widget.leadItem, previousStage);
-                                    widget.leadItem.stage = previousStage;
-                                    await conn.query(
-                                      'UPDATE sales_lead SET previous_stage = NULL WHERE id = ?',
-                                      [widget.leadItem.id],
-                                    );
-                                  }
+                              if (widget.leadItem.previousStage != null &&
+                                  widget.leadItem.previousStage!.isNotEmpty) {
+                                try {
+                                  await widget.onUndoLead(widget.leadItem,
+                                      widget.leadItem.previousStage!);
+                                  setState(() {
+                                    widget.leadItem.stage =
+                                        widget.leadItem.previousStage!;
+                                    widget.leadItem.previousStage = null;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Successfully undone Negotiation lead')),
+                                  );
+                                } catch (e) {
+                                  developer.log(
+                                      'Error undoing negotiation lead: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Error undoing Negotiation lead: $e')),
+                                  );
                                 }
-                              } catch (e) {
-                                developer
-                                    .log('Error checking previous stage: $e');
-                              } finally {
-                                await conn.close();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Cannot undo: No previous stage available')),
+                                );
                               }
                             },
                           ),
@@ -475,12 +687,12 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: widget.leadItem.contactNumber.isNotEmpty
                         ? () =>
-                            _launchURL('tel:${widget.leadItem.contactNumber}')
+                            _launchPhone('tel:${widget.leadItem.contactNumber}')
                         : null,
                     child: Row(
                       children: [
@@ -490,14 +702,14 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 100,
+                          width: 90,
                           child: Text(
                             widget.leadItem.contactNumber.isNotEmpty
                                 ? widget.leadItem.contactNumber
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -507,11 +719,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: widget.leadItem.emailAddress.isNotEmpty
-                        ? () =>
-                            _launchURL('mailto:${widget.leadItem.emailAddress}')
+                        ? () => _launchEmail(
+                            'mailto:${widget.leadItem.emailAddress}')
                         : null,
                     child: Row(
                       children: [
@@ -521,14 +732,14 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 160,
+                          width: 140,
                           child: Text(
                             widget.leadItem.emailAddress.isNotEmpty
                                 ? widget.leadItem.emailAddress
                                 : 'Unavailable',
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 12,
+                              fontSize: 14,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 2,
@@ -546,96 +757,239 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Tasks',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _isTasksExpanded = !_isTasksExpanded;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F8FF), // 浅蓝色背景
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF0175FF), // 蓝色边框
+                            width: 1,
                           ),
                         ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: _showSortOptions,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.sort, color: Color(0xff0069BA)),
-                              const SizedBox(width: 4),
-                              Text(_getSortButtonText(),
-                                  style: const TextStyle(color: Color(0xff0069BA))),
-                            ],
-                          ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0175FF),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_month_outlined,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Tasks (${tasks.length})',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            if (!_isTasksExpanded)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE6EFFF),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Click to expand',
+                                  style: TextStyle(
+                                    color: Color(0xFF0175FF),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              _isTasksExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              color: const Color(0xFF0175FF),
+                              size: 24,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white, // Background color of the container
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2), // Shadow color
-                            offset: const Offset(0, 1), // Vertical offset
-                            blurRadius: 4, // Blur radius of the shadow
-                            spreadRadius: 1, // Spread radius of the shadow
+                    if (_isTasksExpanded) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5F8FF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF0175FF),
+                                width: 1,
+                              ),
+                            ),
+                            child: InkWell(
+                              onTap: _showSortOptions,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.sort,
+                                    color: Color(0xFF0175FF),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _getSortButtonText(),
+                                    style: const TextStyle(
+                                      color: Color(0xFF0175FF),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      child: SizedBox(
-                        height: 220,
-                        child: Scrollbar( // Add Scrollbar here
-                          child: ListView.builder(
-                            itemCount: tasks.length,
-                            itemBuilder: (context, index) {
-                              final task = tasks[index];
-                              return Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              offset: const Offset(0, 2),
+                              blurRadius: 6,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            height: 220,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: tasks.length,
+                              separatorBuilder: (context, index) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final task = tasks[index];
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
                                   child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            task['title'],
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              task['title'],
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Color(0xFF2C3E50),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(task['description']),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Due Date: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}',
-                                          ),
-                                        ],
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              task['description'],
+                                              style: const TextStyle(
+                                                color: Color(0xFF7F8C8D),
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF5F8FF),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.calendar_today,
+                                                    size: 14,
+                                                    color: Color(0xFF0175FF),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Due: ${DateFormat('dd/MM/yyyy').format(task['due_date'])}',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF0175FF),
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      const Spacer(),
                                       Column(
                                         children: [
                                           IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () => _navigateToEditTaskPage(context, task),
+                                            icon: const Icon(
+                                              Icons.edit_outlined,
+                                              color: Color(0xFF0175FF),
+                                            ),
+                                            onPressed: () =>
+                                                _navigateToEditTaskPage(
+                                                    context, task),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red),
-                                            onPressed: () => _showDeleteConfirmationDialog(task['id']),
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Color(0xFFFF4444),
+                                            ),
+                                            onPressed: () =>
+                                                _showDeleteConfirmationDialog(
+                                                    task['id']),
                                           ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                    )
+                    ],
                   ],
                 )
               else
@@ -743,17 +1097,21 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded( // Wrap the button in Expanded
+                  Expanded(
+                    // Wrap the button in Expanded
                     child: SizedBox(
                       height: 34,
                       child: ElevatedButton(
-                        onPressed: () => _navigateToCreateTaskPage(context, true),
+                        onPressed: () =>
+                            _navigateToCreateTaskPage(context, true),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 62, 147, 252),
+                          backgroundColor:
+                              const Color.fromARGB(255, 62, 147, 252),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
                         ),
                         child: const Text(
                           'Create Task / Select Order ID',
