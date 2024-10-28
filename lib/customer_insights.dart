@@ -1220,6 +1220,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                               height: 156,
                                               child: LineChart(
                                                 LineChartData(
+                                                    lineTouchData:
+                                                        LineTouchData(
+                                                      enabled: false,
+                                                    ),
                                                     gridData:
                                                         FlGridData(show: false),
                                                     borderData: FlBorderData(
@@ -1238,7 +1242,8 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                           ],
                                                           isCurved: true,
                                                           dotData: FlDotData(
-                                                              show: false),
+                                                            show: false,
+                                                          ),
                                                           belowBarData: BarAreaData(
                                                               show: true,
                                                               colors: [

@@ -54,8 +54,8 @@ class _ProductsScreenState extends State<ProductsScreen>
     Map<int, String> areaMap = {};
     try {
       // API URL
-      final apiUrl =
-          Uri.parse('https://haluansama.com/crm-sales/api/product_screen/get_areas.php');
+      final apiUrl = Uri.parse(
+          'https://haluansama.com/crm-sales/api/product_screen/get_areas.php');
 
       // Make the API call
       final response = await http.get(apiUrl);
@@ -163,6 +163,13 @@ class _ProductsScreenState extends State<ProductsScreen>
     setState(() {});
   }
 
+  void refreshScreen() {
+    setState(() {
+      // This will trigger a rebuild of the screen
+      fetchAreaFromDb();
+    });
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -171,20 +178,18 @@ class _ProductsScreenState extends State<ProductsScreen>
 
   @override
   Widget build(BuildContext context) {
+    String currentAreaName = area[selectedAreaId] ?? 'Select Area';
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor: const Color(0xff0175FF),
+          leadingWidth: 80, // Width for the column layout
           leading: Padding(
             padding: const EdgeInsets.only(left: 10.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.location_on,
-                size: 34,
-                color: Colors.white,
-              ),
-              onPressed: () {
+            child: GestureDetector(
+              onTap: () {
                 showModalBottomSheet(
                   context: context,
                   builder: (BuildContext context) {
@@ -205,13 +210,34 @@ class _ProductsScreenState extends State<ProductsScreen>
                               ),
                             ),
                           ),
-                          const AreaSelectPopUp(),
+                          AreaSelectPopUp(),
                         ],
                       ),
                     );
                   },
                 );
               },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    size: 28,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    currentAreaName,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
+              ),
             ),
           ),
           title: GestureDetector(
@@ -246,6 +272,7 @@ class _ProductsScreenState extends State<ProductsScreen>
               ),
             ),
           ),
+
           // actions: <Widget>[
           //   // IconButton(
           //   //   icon: const Icon(

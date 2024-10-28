@@ -36,9 +36,59 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
     );
   }
 
+  Future<void> showConfirmationDialog(
+      BuildContext context, int newAreaId) async {
+    String newAreaName = area[newAreaId] ?? 'Unknown Area';
+    String currentAreaName = area[selectedAreaId] ?? 'Unknown Area';
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Confirm Area Change',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to change your area from "$currentAreaName" to "$newAreaName"?',
+            style: GoogleFonts.inter(),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Confirm',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              onPressed: () async {
+                await setAreaId(newAreaId);
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); // Close the area selection popup
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> fetchAreaFromDb() async {
     Map<int, String> areaMap = {};
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/area/get_area.php';
+    const String apiUrl =
+        'https://haluansama.com/crm-sales/api/area/get_area.php';
     try {
       // Call the API to fetch areas
       final response = await http.get(Uri.parse('$apiUrl?status=1'));
@@ -49,15 +99,18 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           // Ensure the data is in the expected format
           if (data['data'] is List) {
             for (var row in data['data']) {
-              if (row is Map<String, dynamic>) { // Ensure row is of correct type
-                int id = row['id'] is int ? row['id'] : int.tryParse(row['id'].toString()) ?? 0;
+              if (row is Map<String, dynamic>) {
+                // Ensure row is of correct type
+                int id = row['id'] is int
+                    ? row['id']
+                    : int.tryParse(row['id'].toString()) ?? 0;
                 String area = row['area'] is String ? row['area'] : '';
                 areaMap[id] = area;
               }
             }
 
             setState(() {
-              area = areaMap; // Assuming 'area' is defined in your state
+              area = areaMap;
             });
 
             // Retrieve the currently selected areaId from preferences
@@ -67,7 +120,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
             // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
             if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
               setState(() {
-                selectedAreaId = storedAreaId; // Assuming 'selectedAreaId' is defined in your state
+                selectedAreaId = storedAreaId;
               });
             } else if (areaMap.isNotEmpty) {
               setState(() {
@@ -77,14 +130,16 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
               });
             }
           } else {
-            developer.log('Error: data["data"] is not a List', error: 'Expected a list but got ${data['data']}');
+            developer.log('Error: data["data"] is not a List',
+                error: 'Expected a list but got ${data['data']}');
           }
         } else {
           // Handle error case
           developer.log('Error: ${data['message']}', error: data['message']);
         }
       } else {
-        developer.log('Failed to load areas: ${response.statusCode}', error: response.body);
+        developer.log('Failed to load areas: ${response.statusCode}',
+            error: response.body);
       }
     } catch (e) {
       developer.log('Error fetching area: $e', error: e);
@@ -122,9 +177,10 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           ),
           value: areaId,
           groupValue: selectedAreaId,
-          onChanged: (selectedAreaId) {
-            setAreaId(selectedAreaId!);
-            Navigator.of(context).pop();
+          onChanged: (newAreaId) {
+            if (newAreaId != selectedAreaId) {
+              showConfirmationDialog(context, newAreaId!);
+            }
           },
         );
       }).toList(),

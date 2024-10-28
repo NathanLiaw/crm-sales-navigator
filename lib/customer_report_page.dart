@@ -336,14 +336,14 @@ class _CustomerReportState extends State<CustomerReport> {
                 ),
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<WidgetState> states) {
+                    (Set<MaterialState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
                     (Set<MaterialState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
@@ -351,7 +351,7 @@ class _CustomerReportState extends State<CustomerReport> {
                       return Colors.black;
                     },
                   ),
-                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -394,19 +394,19 @@ class _CustomerReportState extends State<CustomerReport> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith<Color>(
-          (Set<WidgetState> states) {
+        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>(
-          (Set<WidgetState> states) {
+        foregroundColor: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             side: const BorderSide(color: Color(0xFF999999)),
             borderRadius: BorderRadius.circular(50),

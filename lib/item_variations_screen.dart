@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
+import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 import 'package:provider/provider.dart';
@@ -27,7 +28,6 @@ class ItemVariationsScreen extends StatefulWidget {
   @override
   State<ItemVariationsScreen> createState() => _ItemVariationsScreenState();
 }
-
 
 class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   late Map<String, dynamic> priceData;
@@ -73,6 +73,24 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.shopping_cart,
+              size: 30,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CartPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8), // Add some padding on the right
+        ],
         backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(
           color: Colors.white,
@@ -393,10 +411,8 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
 
       // Use the CartModel to update the cart count
       Provider.of<CartModel>(context, listen: false).initializeCartCount();
-
     } catch (e) {
       developer.log('Error inserting or updating cart item: $e', error: e);
     }
   }
-
 }
