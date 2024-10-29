@@ -26,14 +26,11 @@ class _AccountSettingState extends State<AccountSetting> {
     getSalesmanInfo();
   }
 
-  // Get salesman information from shared preferences at initialization time
   void getSalesmanInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String name = prefs.getString('salesmanName') ?? '';
     String phoneNumber = prefs.getString('contactNumber') ?? '';
     String email = prefs.getString('email') ?? '';
-
-    // Retrieve salesman ID from SharedPreferences
     int id = prefs.getInt('id') ?? 0;
 
     setState(() {
@@ -44,17 +41,13 @@ class _AccountSettingState extends State<AccountSetting> {
     });
   }
 
-  // The function used to update salesman info in database
   Future<void> updateSalesmanDetailsInDatabase() async {
     String newName = nameController.text;
     String newPhoneNumber = phoneNumberController.text;
     String newEmail = emailController.text;
 
     try {
-      // Prepare API URL
       final url = Uri.parse('https://haluansama.com/crm-sales/api/salesman/update_salesman_details.php');
-
-      // Make POST request to API with salesman details
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -66,21 +59,16 @@ class _AccountSettingState extends State<AccountSetting> {
         }),
       );
 
-      // Parse the API response
       final data = jsonDecode(response.body);
 
       if (data['status'] == 'success') {
-        // Save updated details to SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setString('salesmanName', newName);
         prefs.setString('contactNumber', newPhoneNumber);
         prefs.setString('email', newEmail);
 
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Salesman details updated successfully.'),
-          ),
+          const SnackBar(content: Text('Salesman details updated successfully.')),
         );
       } else {
         throw Exception(data['message']);
@@ -88,9 +76,7 @@ class _AccountSettingState extends State<AccountSetting> {
     } catch (e) {
       developer.log('Error updating salesman details: $e', error: e);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update salesman details. Please try again.'),
-        ),
+        const SnackBar(content: Text('Failed to update salesman details. Please try again.')),
       );
     }
     Navigator.pop(context, true);
@@ -102,105 +88,84 @@ class _AccountSettingState extends State<AccountSetting> {
       appBar: AppBar(
         backgroundColor: const Color(0xff0175FF),
         iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
-        title: const Text(
-          'Account Setting',
-          style: TextStyle(color: Colors.white),
-        ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications),
-        //     onPressed: () {
-        //       // Handle notifications
-        //     },
-        //   ),
-        // ],
+        title: const Text('Account Setting', style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Salesman Details',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Salesman Details',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Color(0xff0175FF)),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: phoneNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Cancel button
-                Container(
-                  margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          side: const BorderSide(color: Colors.red, width: 2),
-                        ),
-                        minimumSize: const Size(120, 40)),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                          color: Colors.red, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-
-                // Apply button
-                Container(
-                  margin: const EdgeInsets.only(top: 20, left: 20, right: 20),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      updateSalesmanDetailsInDatabase();
-                    },
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0175FF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        minimumSize: const Size(120, 40)),
-                    child: const Text(
-                      'Apply',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              const SizedBox(height: 20),
+              _buildTextField(nameController, 'Name'),
+              const SizedBox(height: 16),
+              _buildTextField(phoneNumberController, 'Phone Number'),
+              const SizedBox(height: 16),
+              _buildTextField(emailController, 'Email'),
+              const SizedBox(height: 20),
+              _buildActionButtons(),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Color(0xff0175FF), width: 2.0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+              side: const BorderSide(color: Colors.red, width: 2),
+            ),
+            minimumSize: const Size(120, 40),
+          ),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            updateSalesmanDetailsInDatabase();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xff0175FF),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+            ),
+            minimumSize: const Size(120, 40),
+          ),
+          child: const Text(
+            'Apply',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ],
     );
   }
 }

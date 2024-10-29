@@ -13,14 +13,6 @@ class TermsandConditions extends StatelessWidget {
           'Terms and Conditions',
           style: TextStyle(color: Colors.white),
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications, color: Colors.white),
-        //     onPressed: () {
-        //       // Handle notifications
-        //     },
-        //   ),
-        // ],
       ),
       body: const SingleChildScrollView(
         child: Padding(
@@ -30,59 +22,64 @@ class TermsandConditions extends StatelessWidget {
             children: [
               SizedBox(height: 16),
               Text(
-                'Welcome to FYH Online Store',
+                'Welcome to Sales Navigator',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xff0175FF),
                 ),
               ),
+              const SizedBox(height: 8),
               Text(
-                'Terms and conditions stated below apply to all visitors and users '
-                'of FYH Online Store website. You are bound by these terms and '
-                'conditions as long as you are on fyhstore.com.my.',
+                'The following terms and conditions apply to all visitors and users '
+                    'of the Sales Navigator application. By using the app, you agree to be '
+                    'bound by these terms as long as you are utilizing Sales Navigator.',
+                style: TextStyle(fontSize: 16),
               ),
               Divider(
                 color: Colors.grey,
                 thickness: 1.0,
                 height: 20.0,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'General',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xff0175FF),
                 ),
               ),
+              const SizedBox(height: 8),
               Text(
-                'The content of terms and conditions may be changed, moved, or '
-                'deleted at any time. Please be informed that Fong Yuan Hung '
-                'Imp & Exp Sdn Bhd has the rights to change contents of the '
-                'terms without any notice. Immediate actions against '
-                'offender(s) for violating or breaching any rules & regulations '
-                'stated in the terms.',
+                'The content of these terms and conditions may be updated, modified, or '
+                    'removed at any time. Please note that Sales Navigator reserves the right '
+                    'to alter these terms without prior notice. Immediate action may be taken '
+                    'against any user who violates or breaches the rules and regulations outlined herein.',
+                style: TextStyle(fontSize: 16),
               ),
               Divider(
                 color: Colors.grey,
                 thickness: 1.0,
                 height: 20.0,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
-                'Site Contents & Copyrights',
+                'App Contents & Copyrights',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xff0175FF),
                 ),
               ),
+              const SizedBox(height: 8),
               Text(
-                'Unless otherwise stated, all materials including images, '
-                'illustrations, designs, icons, photographs, video clips, '
-                'written materials, and other materials that appear as part '
-                'of this site (in other words, "Contents of Site") are '
-                'copyrights, trademarks, trade dress, or other intellectual '
-                'properties owned, controlled, or licensed by Fong Yuan Hung '
-                'Imp & Exp Sdn Bhd.',
+                'Unless otherwise stated, all materials including images, illustrations, '
+                    'designs, icons, photographs, video clips, written materials, and other content '
+                    'that appear as part of this application (collectively referred to as "Contents") are '
+                    'copyrighted, trademarked, or otherwise protected intellectual properties owned, '
+                    'controlled, or licensed by Sales Navigator.',
+                style: TextStyle(fontSize: 16),
               ),
             ],
           ),

@@ -34,9 +34,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   List<Map<String, dynamic>> productRecommendations = [];
   late Completer<bool> _isLoadedCompleter;
   late Future<bool> isLoaded;
-  String recency = 'High';
+  String recency = 'Low';
   String nextVisit = '0';
-  String totalSpendGroup = 'High';
+  String totalSpendGroup = 'Low';
+  String clusterLabel = 'Low';
   List<dynamic> customerData = [];
   Map<String, dynamic>? relevantCustomer;
   bool _customerFound = true;
@@ -331,35 +332,38 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   }
 
   Future<void> fetchCustomerSegmentation() async {
-    const String apiUrl = 'http://18.142.14.144:5000/api/customer-segmentation';
+    const String apiUrl = 'http://haluansama.com/crm-sales/api/customer_segmentation/customer_segmentation_api.php';
 
     try {
-      final response =
-          await http.get(Uri.parse(apiUrl)).timeout(Duration(seconds: 10));
+      final response = await http.get(Uri.parse(apiUrl)).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         // Parse the JSON response
-        customerData = json.decode(response.body);
+        final customerData = json.decode(response.body)['data'];
 
         int currentCustomerId = customerId;
 
         // Filter the data to find the relevant customer
         relevantCustomer = customerData.firstWhere(
-          (customer) => customer['customer_id'] == currentCustomerId,
+              (customer) => customer['customer_id'].toString() == currentCustomerId.toString(),
           orElse: () => null, // Return null if not found
         );
 
         // If relevant customer data is found, classify recency
         if (relevantCustomer != null) {
+          // developer.log("test ${relevantCustomer!['days_since_last_purchase']}");
+          // developer.log("test ${relevantCustomer!['total_spend_group']}");
+
           relevantCustomer!['recency_category'] =
-              categorizeRecency(relevantCustomer!['recency']);
-          relevantCustomer!['total_spend_group'] =
-              categoriseTotalSpentGroup(relevantCustomer!['Segment']);
+              categorizeRecency(relevantCustomer!['days_since_last_purchase']);
+          // relevantCustomer!['total_spend_group'] =
+          //     categoriseTotalSpentGroup(relevantCustomer!['total_spend_group']);
+          relevantCustomer!['Cluster_Label'] =
+              categoriseTotalSpentGroup(relevantCustomer!['Cluster_Label']);
           developer.log('Relevant Customer Data: $relevantCustomer');
         }
       } else {
-        throw Exception(
-            'Failed to load customer segmentation: ${response.statusCode}');
+        throw Exception('Failed to load customer segmentation: ${response.statusCode}');
       }
     } catch (error) {
       developer.log('Error fetching data: $error');
@@ -367,14 +371,17 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   }
 
   String categoriseTotalSpentGroup(String totalSpentGroup) {
-    if (totalSpentGroup == "Low Value") {
+    if (totalSpentGroup == "Low") {
       this.totalSpendGroup = 'Low';
+      this.clusterLabel = 'Low';
       return 'Low';
-    } else if (totalSpentGroup == "Mid Value") {
+    } else if (totalSpentGroup == "Mid") {
       this.totalSpendGroup = 'Mid';
+      this.clusterLabel = 'Mid';
       return 'Mid';
     } else {
       this.totalSpendGroup = 'High';
+      this.clusterLabel = 'High';
       return 'High';
     }
   }
@@ -463,8 +470,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         final jsonResponse = json.decode(response.body);
 
         setState(() {
-          // Assuming the API returns a number in the JSON response
-          totalSpendGroup = jsonResponse.toDouble();
+          totalSpendGroup = jsonResponse;
         });
 
         // Print totalSpendGroup to debug
@@ -748,7 +754,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
-                                        '$totalSpendGroup Value',
+                                        '$clusterLabel Value',
                                         style: TextStyle(
                                           color: spendGroupTextColor,
                                           fontWeight: FontWeight.bold,

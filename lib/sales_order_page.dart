@@ -7,6 +7,8 @@ import 'package:sales_navigator/Components/navigation_bar.dart';
 import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/customer_list.dart';
 import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/model/notification_state.dart';
+import 'package:sales_navigator/notification_page.dart';
 import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -723,6 +725,60 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         ),
         backgroundColor: const Color(0xff0175FF),
         automaticallyImplyLeading: false,
+        actions: [
+          Consumer<NotificationState>(
+            builder: (context, notificationState, child) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 7.0),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications, color: Colors.white),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsPage(),
+                          ),
+                        );
+                        // Optionally, reload notifications after returning
+                        // _loadUnreadNotifications(); // Uncomment if needed
+                      },
+                    ),
+                    if (notificationState.unreadCount > 0)
+                      Positioned(
+                        right: 4,
+                        top: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            notificationState.unreadCount > 99
+                                ? '99+'
+                                : notificationState.unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: <Widget>[
