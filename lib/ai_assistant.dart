@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:intl/intl.dart';
 
 class SalesPerformancePage extends StatefulWidget {
   const SalesPerformancePage({super.key});
@@ -349,14 +348,25 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       "messages": [
         {
           "role": "system",
-          "content":
-              "You are a helpful AI Sales Assistant. Your goal is to assist the salesman in advancing leads, resolving stuck negotiations, and prioritizing high-value opportunities.You should only answer questions related to sales leads, advancing leads, resolving stuck negotiations, or prioritizing high-value opportunities. If the user asks about topics unrelated to Sales Navigator or the sales database, respond with: 'Please ask about things related to Sales Navigator. Keep your responses concise, actionable, and supportive. You have 800 tokens, but try to be as efficient as possible while providing value within 400 tokens or less. The Values are in this format 'RM 3,000.00'."
+          "content": "You are a specialized AI Sales Assistant designed to help with sales-related tasks only. "
+              "Your main goals are to assist in advancing sales leads, resolving stuck negotiations, prioritizing high-value opportunities, and creating daily sales plans. "
+              "Respond specifically to the following requests: "
+              "1. **'What should I focus first'**: Identify the most critical sales task based on the current leads' status, such as high-value leads, stuck negotiations, or upcoming tasks. "
+              "2. **'How to improve my weakness'**: Provide tips to improve common sales weaknesses like objection handling, communication skills, or closing strategies. "
+              "3. **'How to close deals'**: Offer clear, actionable strategies for closing deals, such as negotiation tactics, creating urgency, or offering limited-time incentives. "
+              "4. **'Plan my day'**: Create a prioritized daily schedule based on the most urgent tasks, high-value leads, or follow-ups required for advancing negotiations. "
+              "If the user asks about topics unrelated to the sales database, sales leads, negotiations, or task planning within the app, respond with: "
+              "'Please ask about topics related to sales leads, negotiations, or task planning within the app.' "
+              "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
         },
-        {"role": "assistant", "content": "Sales Lead Data: $leadDataSummary"},
+        {
+          "role": "assistant",
+          "content": "Sales Lead Data: ${_getLeadDataSummary()}"
+        },
         {"role": "user", "content": prompt}
       ],
-      "max_tokens": 800,
-      "temperature": 0.3,
+      "max_tokens": 600,
+      "temperature": 0.2
     });
 
     try {
@@ -440,7 +450,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     _controller.text = suggestion;
     _handleSendMessage(suggestion);
     setState(() {
-      _suggestions.remove(suggestion); // Remove only the clicked suggestion
+      // Suggestions are not removed
     });
   }
 
@@ -601,8 +611,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
                         ),
                       ),
                       onPressed: () {
-                        _handleSuggestion(
-                            suggestion); // Handle suggestion click
+                        _handleSuggestion(suggestion);
                       },
                       child: Text(
                         suggestion,
