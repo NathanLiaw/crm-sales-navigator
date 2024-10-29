@@ -1,8 +1,11 @@
 import "package:flutter/material.dart";
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/item_variations_screen.dart';
+import 'package:sales_navigator/cart_page.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -90,7 +93,8 @@ class _ItemScreenState extends State<ItemScreen> {
 
   // Function to fetch the cart count from the database
   Future<void> fetchCartCount() async {
-    final count = await DatabaseHelper.getCartItemCount(); // Replace with your logic
+    final count =
+        await DatabaseHelper.getCartItemCount(); // Replace with your logic
     setState(() {
       cartCount = count; // Update the state variable
     });
@@ -125,10 +129,54 @@ class _ItemScreenState extends State<ItemScreen> {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.shopping_cart,
+                  size: 30,
+                ),
+                onPressed: () {
+                  Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(3);
+                  Navigator.pushReplacementNamed(context, '/cart').then((_) {
+                    // Refresh cart count when returning from cart page
+                    fetchCartCount();
+                  });
+                },
+              ),
+              if (cartCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    child: Text(
+                      cartCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8), // Add some padding on the right
+        ],
         foregroundColor: Colors.white,
         backgroundColor: const Color(0xff0175FF),
       ),
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color.fromARGB(253, 253, 253, 253),
       body: ListView(
         children: [
           Container(
@@ -250,6 +298,7 @@ class _ItemScreenState extends State<ItemScreen> {
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
             child: Card(
+              elevation: 4,
               color: Colors.white,
               clipBehavior: Clip.hardEdge,
               child: InkWell(

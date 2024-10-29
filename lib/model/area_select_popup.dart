@@ -8,7 +8,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AreaSelectPopUp extends StatefulWidget {
-  const AreaSelectPopUp({super.key});
+  final Function(int) onAreaSelected; // Callback to notify selected area
+
+  const AreaSelectPopUp({super.key, required this.onAreaSelected});
 
   @override
   State<AreaSelectPopUp> createState() => _AreaSelectPopUpState();
@@ -34,11 +36,30 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
       'Area Selection',
       leadId: null,
     );
+
+    // Notify the parent widget of the selected area
+    widget.onAreaSelected(areaId); // Call the callback
+
+    // Show SnackBar notification
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Area changed to: $selectedAreaName',
+          style: GoogleFonts.inter(),
+        ),
+        duration: const Duration(seconds: 1),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // Close the pop-up after selection
+    Navigator.of(context).pop();
   }
 
   Future<void> fetchAreaFromDb() async {
     Map<int, String> areaMap = {};
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/area/get_area.php';
+    const String apiUrl =
+        'https://haluansama.com/crm-sales/api/area/get_area.php';
     try {
       // Call the API to fetch areas
       final response = await http.get(Uri.parse('$apiUrl?status=1'));
@@ -49,15 +70,18 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           // Ensure the data is in the expected format
           if (data['data'] is List) {
             for (var row in data['data']) {
-              if (row is Map<String, dynamic>) { // Ensure row is of correct type
-                int id = row['id'] is int ? row['id'] : int.tryParse(row['id'].toString()) ?? 0;
+              if (row is Map<String, dynamic>) {
+                // Ensure row is of correct type
+                int id = row['id'] is int
+                    ? row['id']
+                    : int.tryParse(row['id'].toString()) ?? 0;
                 String area = row['area'] is String ? row['area'] : '';
                 areaMap[id] = area;
               }
             }
 
             setState(() {
-              area = areaMap; // Assuming 'area' is defined in your state
+              area = areaMap;
             });
 
             // Retrieve the currently selected areaId from preferences
@@ -67,7 +91,7 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
             // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
             if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
               setState(() {
-                selectedAreaId = storedAreaId; // Assuming 'selectedAreaId' is defined in your state
+                selectedAreaId = storedAreaId;
               });
             } else if (areaMap.isNotEmpty) {
               setState(() {
@@ -77,14 +101,16 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
               });
             }
           } else {
-            developer.log('Error: data["data"] is not a List', error: 'Expected a list but got ${data['data']}');
+            developer.log('Error: data["data"] is not a List',
+                error: 'Expected a list but got ${data['data']}');
           }
         } else {
           // Handle error case
           developer.log('Error: ${data['message']}', error: data['message']);
         }
       } else {
-        developer.log('Failed to load areas: ${response.statusCode}', error: response.body);
+        developer.log('Failed to load areas: ${response.statusCode}',
+            error: response.body);
       }
     } catch (e) {
       developer.log('Error fetching area: $e', error: e);
@@ -122,9 +148,9 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           ),
           value: areaId,
           groupValue: selectedAreaId,
-          onChanged: (selectedAreaId) {
-            setAreaId(selectedAreaId!);
-            Navigator.of(context).pop();
+          onChanged: (newAreaId) {
+            // Call setAreaId directly without confirmation
+            setAreaId(newAreaId!);
           },
         );
       }).toList(),

@@ -96,8 +96,6 @@ class _SearchScreenState extends State<SearchScreen> {
     return Blob.fromString(data);
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

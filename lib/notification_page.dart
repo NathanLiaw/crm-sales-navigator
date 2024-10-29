@@ -4,6 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/home_page.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
@@ -219,12 +221,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
       case 'ORDER_STATUS_CHANGED':
         if (description != null && description.toLowerCase().contains('void')) {
           // Navigate to sales order page
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SalesOrderPage(),
-            ),
-          );
+          Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(1);
+          Navigator.pushReplacementNamed(context, '/sales');
         } else {
           Navigator.push(
             context,

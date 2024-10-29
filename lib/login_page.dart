@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
+import 'package:provider/provider.dart';
 import 'package:sales_navigator/background_tasks.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:workmanager/workmanager.dart';
 import 'home_page.dart';
 import 'dart:convert';
@@ -68,11 +70,8 @@ class LoginPage extends StatelessWidget {
         await _initializeBackgroundTasks();
 
         // Navigate to HomePage
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomePage(),
-            ));
+        Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
         // Show an error message if login fails
         ScaffoldMessenger.of(context).showSnackBar(
@@ -172,139 +171,139 @@ class LoginPage extends StatelessWidget {
       future: checkLoginStatus(),
       builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // Show a loading indicator while checking login status
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
             ),
           );
         } else if (snapshot.hasData && snapshot.data!) {
-          // If logged in, navigate to HomePage
           return const HomePage();
         } else {
-          // If not logged in, show the login page
           return Scaffold(
             body: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.only(
-                      left: 18,
-                      top: 50,
-                      bottom: 20,
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: Image.asset('asset/logo/logo_fyh.png',
-                        width: 200, height: 100),
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(
-                      left: 20,
-                      bottom: 24,
-                    ),
-                    child: const Text(
-                      'Control your Sales\ntoday.',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
-                    ),
-                  ),
-
-                  // Email input field
-                  const SizedBox(height: 10),
-                  Container(
-                    margin: const EdgeInsets.only(
-                        top: 10, bottom: 10, left: 20, right: 20),
-                    child: TextFormField(
-                      controller: usernameController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Username',
-                        // hintText: 'fyh@mail.com',
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(
+                        left: 18,
+                        top: 50,
+                        bottom: 20,
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: Image.asset(
+                        'asset/logo/logo_fyh.png',
+                        width: 200,
+                        height: 100,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                  ),
-
-                  // Password input field
-                  const SizedBox(height: 10),
-                  Container(
-                    margin: const EdgeInsets.only(top: 10, left: 20, right: 20),
-                    child: TextFormField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Password',
-                      ),
-                    ),
-                  ),
-
-                  // Sign in button
-                  const SizedBox(height: 10),
-                  Container(
-                    padding:
-                        const EdgeInsets.only(top: 10, left: 80, right: 80),
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Call the sign in method
-                        signIn(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 7, 148, 255),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        bottom: 24,
                       ),
                       child: const Text(
-                        'Sign In',
+                        'Control your Sales\ntoday.',
                         style: TextStyle(
-                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
-                  ),
-
-                  // Forgot password button
-                  const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: () {
-                      // Show pop up window
-                      showContactInfoDialog(context);
-                    },
-                    child: const Text(
-                      'Forgot Password',
-                      style: TextStyle(
-                        color: Colors.black,
-                        decoration: TextDecoration.underline,
-                        decorationThickness: 2.0,
-                      ),
-                    ),
-                  ),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 800, // Set your desired width
-                        child: Image.asset(
-                          'asset/SN_ELEMENTS_CENTER.png',
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: TextFormField(
+                        controller: usernameController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Username',
                         ),
                       ),
-                      Positioned(
-                        top: 10,
-                        // Adjust the position of the new image as needed
-                        child: SizedBox(
-                          width:
-                              200, // Set your desired width for the new image
-                          child: Image.asset(
-                            'asset/chart_illu.png',
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: TextFormField(
+                        controller: passwordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Password',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 80),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => signIn(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 7, 148, 255),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: const Text(
+                            'Sign In',
+                            style: TextStyle(color: Colors.white),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    TextButton(
+                      onPressed: () => showContactInfoDialog(context),
+                      child: const Text(
+                        'Forgot Password',
+                        style: TextStyle(
+                          color: Colors.black,
+                          decoration: TextDecoration.underline,
+                          decorationThickness: 2.0,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 244, // Fixed height for the image container
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Positioned(
+                            top: -100,
+                            left: 0,
+                            right: 0,
+                            child: Image.asset(
+                              'asset/SN_ELEMENTS_CENTER.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          Positioned(
+                            top: 20,
+                            left: 0,
+                            right: 0,
+                            child: SizedBox(
+                              width: 40,
+                              child: Image.asset(
+                                width: 150,
+                                height: 150,
+                                'asset/chart_illu.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );

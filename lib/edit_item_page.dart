@@ -326,15 +326,15 @@ class _EditItemPageState extends State<EditItemPage> {
                     });
                   },
                   style: ButtonStyle(
-                    padding:WidgetStateProperty.all<EdgeInsets>(
+                    padding: MaterialStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
-                    minimumSize: WidgetStateProperty.all<Size>(
+                    minimumSize: MaterialStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
                     backgroundColor:
-                        WidgetStateProperty.all<Color>(Colors.white),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                        MaterialStateProperty.all<Color>(Colors.white),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                         side: const BorderSide(color: Colors.red),
@@ -355,16 +355,16 @@ class _EditItemPageState extends State<EditItemPage> {
                     updatePriceAndAuthority();
                   },
                   style: ButtonStyle(
-                    padding: WidgetStateProperty.all<EdgeInsets>(
+                    padding: MaterialStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0),
                     ),
-                    minimumSize: WidgetStateProperty.all<Size>(
+                    minimumSize: MaterialStateProperty.all<Size>(
                       const Size(120.0, 40.0),
                     ),
-                    backgroundColor: WidgetStateProperty.all<Color>(
+                    backgroundColor: MaterialStateProperty.all<Color>(
                       const Color(0xff0175FF),
                     ),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       ),

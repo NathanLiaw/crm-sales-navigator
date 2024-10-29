@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:sales_navigator/event_logger.dart';
@@ -30,6 +34,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   late String salesmanName = '';
   late String salesOrderId = '';
   late String createdDate = '';
+  late String status = '';
   late List<OrderItem> orderItems = [];
   double subtotal = 0.0;
   double total = 0.0;
@@ -76,6 +81,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             companyName = orderDetails['company_name'];
             address = orderDetails['address_line_1'];
             salesmanName = orderDetails['salesman_name'];
+            status = orderDetails['status'];
             createdDate = orderDetails['created_date'];
             salesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
             total = double.tryParse(orderDetails['final_total']) ?? 0.0;
@@ -105,6 +111,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ? double.parse(item['total']).toStringAsFixed(2)
                     : '0.00'),
                 photoPath: photoPath,
+                uom: item['uom'] ?? '',
               ));
             });
           }
@@ -195,6 +202,47 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     sst = await UtilityFunction.retrieveTax('SST');
   }
 
+  Future<void> insertItemIntoCart(CartItem cartItem) async {
+    int itemId = cartItem.productId;
+    String uom = cartItem.uom;
+
+    try {
+      const tableName = 'cart_item';
+      final condition =
+          "product_id = $itemId AND uom = '$uom' AND status = 'in progress'";
+      const order = '';
+      const field = '*';
+
+      final db = await DatabaseHelper.database;
+      final result = await DatabaseHelper.readData(
+        db,
+        tableName,
+        condition,
+        order,
+        field,
+      );
+
+      if (result.isNotEmpty) {
+        final existingItem = result.first;
+        final updatedQuantity = existingItem['qty'] + cartItem.quantity;
+        final data = {
+          'id': existingItem['id'],
+          'qty': updatedQuantity,
+          'modified': UtilityFunction.getCurrentDateTime(),
+        };
+
+        await DatabaseHelper.updateData(data, tableName);
+        developer.log('Cart item quantity updated successfully');
+      } else {
+        final cartItemMap = cartItem.toMap(excludeId: true);
+        await DatabaseHelper.insertData(cartItemMap, tableName);
+        developer.log('New cart item inserted successfully');
+      }
+    } catch (e) {
+      developer.log('Error inserting or updating cart item: $e', error: e);
+    }
+  }
+
   Future<void> showVoidConfirmationDialog() async {
     return showDialog<void>(
       context: context,
@@ -281,7 +329,44 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildExpandableOrderInfo(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Order Status Bubble
+                      getStatusLabel(status),
+
+                      // Copy Order Button
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await _showItemSelectionDialog(orderItems);
+                        },
+                        icon: const Icon(
+                          Icons.shopping_cart,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Copy Order',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white, // White text
+                          backgroundColor: const Color(0xff0175FF), // Blue background
+                          elevation: 6, // Add elevation
+                          shadowColor: Colors.grey.withOpacity(0.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          minimumSize: const Size(98, 32),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Expanded(
                     child: Scrollbar(
                       thumbVisibility: true,
@@ -300,6 +385,49 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               );
             }
           },
+        ),
+      ),
+    );
+  }
+
+  Color getStatusColor(String displayStatus) {
+    switch (displayStatus) {
+      case 'Confirm':
+        return const Color(0xFF33B44F);
+      case 'Pending':
+        return const Color.fromARGB(255, 255, 194, 82);
+      case 'Void':
+        return const Color(0xFFE81717);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String getDisplayStatus(String status) {
+    if (status == 'in progress') {
+      return 'Pending';
+    }
+    return status;
+  }
+
+  Widget getStatusLabel(String status) {
+    String displayStatus = getDisplayStatus(status);
+
+    return Container(
+      alignment: Alignment.center,
+      height: 32,
+      width: 98,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: getStatusColor(displayStatus),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        displayStatus,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
         ),
       ),
     );
@@ -332,6 +460,310 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           });
         },
       ),
+    );
+  }
+
+  Future<void> _showItemSelectionDialog(
+      List<OrderItem> items) async {
+    List<bool> checkedItems = List<bool>.filled(items.length, true);
+    bool selectAll = true;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            var mediaQuery = MediaQuery.of(context);
+            var screenHeight = mediaQuery.size.height;
+            var screenWidth = mediaQuery.size.width;
+
+            int selectedCount = checkedItems.where((item) => item).length;
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                width: screenWidth * 0.95,
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.9,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Copy Items To Cart',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const Divider(color: Colors.grey, height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '   Select Items: $selectedCount',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF004072),
+                          ),
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: Colors.blue,
+                          ),
+                          child: Text(
+                            selectAll ? 'Unselect All' : 'Select All',
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              selectAll = !selectAll;
+                              for (int i = 0; i < checkedItems.length; i++) {
+                                checkedItems[i] = selectAll;
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    if (items.length == 1)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Padding(
+                          padding: const EdgeInsets.only(left: 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                items[0].productName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: screenWidth * 0.045,
+                                ),
+                              ),
+                              SizedBox(height: screenHeight * 0.005),
+                              Text(
+                                'UOM: ${items[0].uom}',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: screenHeight * 0.005),
+                              Text(
+                                'Qty: ${items[0].qty}',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        leading: Checkbox(
+                          value: checkedItems[0],
+                          onChanged: (bool? value) {
+                            if (mounted) {
+                              setState(() {
+                                checkedItems[0] = value!;
+                                if (!value) selectAll = false;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    if (items.length > 1)
+                      Flexible(
+                        child: SizedBox(
+                          height: items.length <= 3 ? null : screenHeight * 0.5,
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Column(
+                                  children: items.asMap().entries.map((entry) {
+                                    int index = entry.key;
+                                    var item = entry.value;
+                                    return Column(
+                                      children: [
+                                        CheckboxListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          controlAffinity:
+                                          ListTileControlAffinity.leading,
+                                          title: Padding(
+                                            padding:
+                                            const EdgeInsets.only(left: 0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item.productName,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize:
+                                                    screenWidth * 0.045,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                    height:
+                                                    screenHeight * 0.005),
+                                                Text(
+                                                  'UOM: ${item.uom}',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                    screenWidth * 0.04,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                    height:
+                                                    screenHeight * 0.005),
+                                                Text(
+                                                  'Qty: ${item.qty}',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                    screenWidth * 0.04,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          value: checkedItems[index],
+                                          onChanged: (bool? value) {
+                                            if (mounted) {
+                                              setState(() {
+                                                checkedItems[index] = value!;
+                                                if (!value) selectAll = false;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                        if (index != items.length - 1)
+                                          const Divider(color: Colors.grey),
+                                      ],
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    SizedBox(height: screenHeight * 0.015),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 24,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 24,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: const Color(0xFF33B44F),
+                          ),
+                          child: const Text(
+                            'Copy to cart',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                          onPressed: () async {
+                            for (int i = 0; i < items.length; i++) {
+                              if (checkedItems[i]) {
+                                final item = items[i];
+                                final oriUnitPrice = double.tryParse(item.unitPrice.toString()) ?? 0.0;
+                                final qty = int.tryParse(item.qty.toString()) ?? 0;
+                                final total = oriUnitPrice * qty;
+
+                                final cartItem = CartItem(
+                                  buyerId: await UtilityFunction.getUserId(),
+                                  productId: item.productId,
+                                  productName: item.productName,
+                                  uom: item.uom,
+                                  quantity: qty,
+                                  discount: 0,
+                                  originalUnitPrice: oriUnitPrice,
+                                  unitPrice: oriUnitPrice,
+                                  total: total,
+                                  cancel: null,
+                                  remark: null,
+                                  status: 'in progress',
+                                  created: DateTime.now(),
+                                  modified: DateTime.now(),
+                                );
+                                await insertItemIntoCart(cartItem);
+                              }
+                            }
+
+                            Provider.of<CartModel>(context, listen: false)
+                                .initializeCartCount();
+
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Selected items copied to cart',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                duration: Duration(seconds: 3),
+                                backgroundColor: Color(0xFF487C08),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -423,33 +855,28 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ),
             ),
             Opacity(
-              opacity:
-                  (isVoidButtonDisabled || shouldHideVoidButton()) ? 0.0 : 1.0,
+              opacity: (isVoidButtonDisabled || shouldHideVoidButton()) ? 0.0 : 1.0,
               child: ElevatedButton(
-                onPressed: shouldHideVoidButton()
-                    ? null
-                    : () => showVoidConfirmationDialog(),
+                onPressed: shouldHideVoidButton() ? null : () => showVoidConfirmationDialog(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: shouldHideVoidButton()
-                      ? Colors.transparent
-                      : Colors.white,
-                  shape: shouldHideVoidButton()
-                      ? null
-                      : RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          side: const BorderSide(color: Colors.red, width: 2),
-                        ),
+                  backgroundColor: shouldHideVoidButton() ? Colors.transparent : Colors.red,
+                  foregroundColor: Colors.white,
+                  elevation: shouldHideVoidButton() ? 0 : 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
                   minimumSize: const Size(120, 40),
                 ),
                 child: shouldHideVoidButton()
                     ? const SizedBox.shrink()
                     : const Text(
-                        'Void',
-                        style: TextStyle(
-                            color: Colors.red, fontWeight: FontWeight.bold),
-                      ),
+                  'Void',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
+            )
           ],
         ),
       ],
@@ -545,6 +972,7 @@ class OrderItem {
   final String status;
   final String total;
   final String photoPath;
+  final String uom;
 
   OrderItem({
     required this.productId,
@@ -554,5 +982,6 @@ class OrderItem {
     required this.status,
     required this.total,
     required this.photoPath,
+    required this.uom,
   });
 }
