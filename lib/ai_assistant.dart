@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 
 class SalesPerformancePage extends StatefulWidget {
   const SalesPerformancePage({super.key});
@@ -37,13 +38,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     super.initState();
     _loadUsername();
     _loadChatFromCache();
-    _controller.addListener(() {
-      if (_controller.text.isNotEmpty && _suggestions.isNotEmpty) {
-        setState(() {
-          _suggestions.clear();
-        });
-      }
-    });
   }
 
   Future<void> _loadUsername() async {
@@ -210,7 +204,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     }
   }
 
-  void _sendInitialSalesOverview() {
+  void _sendInitialSalesOverview({bool refresh = false}) {
     List<Map<String, dynamic>> stuckNegotiations = _leadsData.where((lead) {
       final status = lead['stage'] ?? '';
       final negotiationStartDate = lead['negotiation_start_date'];
@@ -228,7 +222,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       }
 
       final daysStuck = DateTime.now().difference(startDate).inDays;
-
       return daysStuck > 7;
     }).toList();
 
@@ -239,8 +232,14 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
         : null;
 
     if (highValueLead != null) {
+      final formattedSales = NumberFormat.currency(
+        locale: 'en_MY',
+        symbol: 'RM ',
+        decimalDigits: 2,
+      ).format(highValueLead['predicted_sales']);
+
       initialMessage +=
-          "Highest Predicted Sale: RM ${highValueLead['predicted_sales'].toStringAsFixed(2)} with ${highValueLead['customer_name']}.\n";
+          "Highest Predicted Sale: $formattedSales with ${highValueLead['customer_name']}.\n";
     } else {
       initialMessage += "No high-value leads found.\n";
     }
@@ -253,7 +252,18 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
           "No negotiations have been stuck for over 7 days. Would you like to focus on high-value opportunities?";
     }
 
-    _addMessageToChat(initialMessage);
+    if (refresh) {
+      setState(() {
+        _messages.removeWhere((msg) => msg['isUser'] == false);
+        _messages.add({
+          "message": initialMessage,
+          "isUser": false,
+          "timestamp": _getCurrentTime(),
+        });
+      });
+    } else {
+      _addMessageToChat(initialMessage);
+    }
   }
 
   void _addMessageToChat(String message) {
@@ -340,7 +350,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
         {
           "role": "system",
           "content":
-              "You are a helpful AI Sales Assistant. Your goal is to assist the salesman in advancing leads, resolving stuck negotiations, and prioritizing high-value opportunities. Keep your responses concise, actionable, and supportive. You have 800 tokens, but try to be as efficient as possible while providing value within 400 tokens or less. The Values are in this format 'RM 3,000.00'."
+              "You are a helpful AI Sales Assistant. Your goal is to assist the salesman in advancing leads, resolving stuck negotiations, and prioritizing high-value opportunities.You should only answer questions related to sales leads, advancing leads, resolving stuck negotiations, or prioritizing high-value opportunities. If the user asks about topics unrelated to Sales Navigator or the sales database, respond with: 'Please ask about things related to Sales Navigator. Keep your responses concise, actionable, and supportive. You have 800 tokens, but try to be as efficient as possible while providing value within 400 tokens or less. The Values are in this format 'RM 3,000.00'."
         },
         {"role": "assistant", "content": "Sales Lead Data: $leadDataSummary"},
         {"role": "user", "content": prompt}
@@ -429,6 +439,9 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   void _handleSuggestion(String suggestion) {
     _controller.text = suggestion;
     _handleSendMessage(suggestion);
+    setState(() {
+      _suggestions.remove(suggestion); // Remove only the clicked suggestion
+    });
   }
 
   @override
@@ -588,11 +601,8 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
                         ),
                       ),
                       onPressed: () {
-                        setState(() {
-                          _handleSendMessage(suggestion);
-                          _suggestions
-                              .clear();
-                        });
+                        _handleSuggestion(
+                            suggestion); // Handle suggestion click
                       },
                       child: Text(
                         suggestion,
@@ -615,9 +625,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
                 SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2.0),
                 ),
                 SizedBox(width: 10),
                 Text('Sales Navigator Smart Agent is typing...'),
