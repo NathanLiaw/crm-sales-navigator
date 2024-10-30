@@ -20,7 +20,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   Map<String, dynamic> _performanceData = {};
   List<Map<String, dynamic>> _leadsData = [];
   bool _isLoading = true;
-  bool _isInitialLoadDone = false;
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
@@ -45,10 +44,8 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     setState(() {
       _loggedInUsername = prefs.getString('username') ?? '';
     });
-     _fetchSalesPerformance();
-    await _fetchSalesLeads();
-    _sendInitialSalesOverview(
-        refresh: true); // Add this line to refresh when the page loads
+    _fetchSalesPerformance();
+    _fetchSalesLeads();
   }
 
   Future<void> _loadChatFromCache() async {
