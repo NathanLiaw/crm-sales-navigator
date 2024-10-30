@@ -20,6 +20,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   Map<String, dynamic> _performanceData = {};
   List<Map<String, dynamic>> _leadsData = [];
   bool _isLoading = true;
+  bool _isInitialLoadDone = false;
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
@@ -44,8 +45,10 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     setState(() {
       _loggedInUsername = prefs.getString('username') ?? '';
     });
-    _fetchSalesPerformance();
-    _fetchSalesLeads();
+     _fetchSalesPerformance();
+    await _fetchSalesLeads();
+    _sendInitialSalesOverview(
+        refresh: true); // Add this line to refresh when the page loads
   }
 
   Future<void> _loadChatFromCache() async {
@@ -225,8 +228,13 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     }).toList();
 
     String initialMessage = "Here's your current sales overview:\n";
-    Map<String, dynamic>? highValueLead = _leadsData.isNotEmpty
-        ? _leadsData.reduce(
+
+    List<Map<String, dynamic>> negotiationLeads = _leadsData.where((lead) {
+      return lead['stage']?.toLowerCase() == 'negotiation';
+    }).toList();
+
+    Map<String, dynamic>? highValueLead = negotiationLeads.isNotEmpty
+        ? negotiationLeads.reduce(
             (a, b) => a['predicted_sales'] > b['predicted_sales'] ? a : b)
         : null;
 
@@ -238,9 +246,9 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       ).format(highValueLead['predicted_sales']);
 
       initialMessage +=
-          "Highest Predicted Sale: $formattedSales with ${highValueLead['customer_name']}.\n";
+          "Highest Predicted Sale in Negotiation: $formattedSales with ${highValueLead['customer_name']}.\n";
     } else {
-      initialMessage += "No high-value leads found.\n";
+      initialMessage += "No high-value leads found in the negotiation stage.\n";
     }
 
     if (stuckNegotiations.isNotEmpty) {
@@ -343,26 +351,30 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     final apiKey = dotenv.env['OPENAI_API_KEY'];
     String leadDataSummary = _getLeadDataSummary();
 
+    String additionalSystemMessage = "If the user asks about their weaknesses, "
+        "Make sure format of the values and total are in this format(RM 5,000.00)"
+        "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
+        "analyze the current sales data and identify potential issues such as low number of leads, "
+        "long-stuck negotiations, or lack of engagement. Provide actionable tips to improve these areas. "
+        "Be supportive, concise, and use relevant data from the database to deliver personalized feedback.";
+
     final requestBody = json.encode({
       "model": "gpt-4o-mini",
       "messages": [
         {
           "role": "system",
           "content": "You are a specialized AI Sales Assistant designed to help with sales-related tasks only. "
+              "Make sure format of the values and total are in this format(RM 5,000.00)"
+              "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
               "Your main goals are to assist in advancing sales leads, resolving stuck negotiations, prioritizing high-value opportunities, and creating daily sales plans. "
               "Respond specifically to the following requests: "
               "1. **'What should I focus first'**: Identify the most critical sales task based on the current leads' status, such as high-value leads, stuck negotiations, or upcoming tasks. "
-              "2. **'How to improve my weakness'**: Provide tips to improve common sales weaknesses like objection handling, communication skills, or closing strategies. "
+              "2. **'How to improve my weakness' or 'Tell me my weakness'**: Analyze the sales data to highlight areas where the user may be lacking, like fewer leads, prolonged negotiations, or lack of engagement. "
               "3. **'How to close deals'**: Offer clear, actionable strategies for closing deals, such as negotiation tactics, creating urgency, or offering limited-time incentives. "
               "4. **'Plan my day'**: Create a prioritized daily schedule based on the most urgent tasks, high-value leads, or follow-ups required for advancing negotiations. "
-              "If the user asks about topics unrelated to the sales database, sales leads, negotiations, or task planning within the app, respond with: "
-              "'Please ask about topics related to sales leads, negotiations, or task planning within the app.' "
-              "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
+              "$additionalSystemMessage"
         },
-        {
-          "role": "assistant",
-          "content": "Sales Lead Data: ${_getLeadDataSummary()}"
-        },
+        {"role": "assistant", "content": "Sales Lead Data: $leadDataSummary"},
         {"role": "user", "content": prompt}
       ],
       "max_tokens": 600,
