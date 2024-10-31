@@ -40,6 +40,8 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   List<dynamic> customerData = [];
   Map<String, dynamic>? relevantCustomer;
   bool _customerFound = true;
+  late Future<Map<String, dynamic>> orderStatsFuture = Future.value({});
+  bool isOrderListExpanded = false;
 
   @override
   void initState() {
@@ -47,6 +49,30 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     _isLoadedCompleter = Completer<bool>();
     isLoaded = _isLoadedCompleter.future;
     customerFuture = fetchCustomer();
+  }
+
+  Future<Map<String, dynamic>> fetchOrderStatistics(int customerId) async {
+    try {
+      final String url =
+          'https://haluansama.com/crm-sales/api/customer_insights/get_order_statistics.php?customer_id=$customerId';
+      developer.log('Fetching order statistics from: $url');
+
+      final response = await http.get(Uri.parse(url));
+
+      developer.log('Response status code: ${response.statusCode}');
+      developer.log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data;
+      } else {
+        throw Exception(
+            'Failed to load order statistics: ${response.statusCode}');
+      }
+    } catch (e) {
+      developer.log('Error fetching order statistics: $e');
+      rethrow;
+    }
   }
 
   Future<Customer.Customer?> fetchCustomer() async {
@@ -65,6 +91,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
           setState(() {
             customerId = data['id'];
             _customerFound = true;
+            orderStatsFuture = fetchOrderStatistics(customerId);
           });
 
           // Initialize all data fetching futures
@@ -549,6 +576,208 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     }
   }
 
+  Widget buildOrderStatistics(Map<String, dynamic> stats) {
+    final numberFormat = NumberFormat("#,##0.000", "en_MY");
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Order Summary',
+            style: GoogleFonts.inter(
+              textStyle: const TextStyle(letterSpacing: -0.8),
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: const Color.fromARGB(255, 0, 0, 0),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              // Void Orders Card
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromARGB(75, 117, 117, 117),
+                        spreadRadius: 0.1,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Void Orders',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '${stats['void_count']}',
+                            style: GoogleFonts.inter(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xffFF5454),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Completed Orders Card
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromARGB(75, 117, 117, 117),
+                        spreadRadius: 0.1,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Completed',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '${stats['completed_count']}',
+                            style: GoogleFonts.inter(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xff29c194),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Pending Orders Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromARGB(75, 117, 117, 117),
+                  spreadRadius: 0.1,
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Pending Orders',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Text(
+                          '${(stats['pending_orders'] as List).length}',
+                          style: GoogleFonts.inter(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xffFFA500),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if ((stats['pending_orders'] as List).isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            isOrderListExpanded = !isOrderListExpanded;
+                          });
+                        },
+                        child: Text(
+                          isOrderListExpanded ? 'Show Less' : 'Show All',
+                          style: const TextStyle(color: Color(0xff0175FF)),
+                        ),
+                      ),
+                  ],
+                ),
+                if (isOrderListExpanded &&
+                    (stats['pending_orders'] as List).isNotEmpty)
+                  Column(
+                    children: [
+                      const Divider(height: 20),
+                      ...List.generate(
+                        (stats['pending_orders'] as List).length,
+                        (index) {
+                          final order = stats['pending_orders'][index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '#${order['id']}',
+                                  style: GoogleFonts.inter(fontSize: 12),
+                                ),
+                                Text(
+                                  'RM ${numberFormat.format(double.parse(order['final_total'].toString()))}',
+                                  style: GoogleFonts.inter(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -967,6 +1196,24 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                   ),
                                 )
                               ]),
+                        ),
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: orderStatsFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return const Center(
+                                  child:
+                                      Text('Error loading order statistics'));
+                            } else if (snapshot.hasData) {
+                              return buildOrderStatistics(snapshot.data!);
+                            } else {
+                              return const SizedBox();
+                            }
+                          },
                         ),
                         Container(
                           alignment: Alignment.centerLeft,
