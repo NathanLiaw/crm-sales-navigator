@@ -633,13 +633,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           ElevatedButton(
             style: ButtonStyle(
               backgroundColor:
-                  WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                  MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
               ),
-              minimumSize: WidgetStateProperty.all<Size>(
+              minimumSize: MaterialStateProperty.all<Size>(
                 const Size(120, 40),
               ),
             ),

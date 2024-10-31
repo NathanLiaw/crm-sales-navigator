@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/cart_item.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';

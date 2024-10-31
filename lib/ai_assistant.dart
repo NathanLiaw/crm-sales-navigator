@@ -25,6 +25,12 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   final List<Map<String, dynamic>> _messages = [];
   bool isTyping = false;
   int _interactionStep = 0;
+  List<String> _suggestions = [
+    "What should I focus first",
+    "How to improve my weakness",
+    "How to close deals",
+    "Plan my day"
+  ];
 
   @override
   void initState() {
@@ -67,6 +73,12 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       _messages.clear();
       _interactionStep = 0;
       _controller.clear();
+      _suggestions = [
+        "What should I focus first",
+        "How to improve my weakness",
+        "How to close deals",
+        "Plan my day"
+      ];
     });
     await _saveChatToCache();
     _sendInitialSalesOverview();
@@ -159,7 +171,6 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
             responseData['data'] is List) {
           List<Map<String, dynamic>> leads = List<Map<String, dynamic>>.from(
             responseData['data'].map((lead) {
-
               return {
                 "lead_id": lead['lead_id'] ?? 0,
                 "customer_name": lead['customer_name'] ?? 'N/A',
@@ -192,12 +203,13 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     }
   }
 
-  void _sendInitialSalesOverview() {
+  void _sendInitialSalesOverview({bool refresh = false}) {
     List<Map<String, dynamic>> stuckNegotiations = _leadsData.where((lead) {
       final status = lead['stage'] ?? '';
       final negotiationStartDate = lead['negotiation_start_date'];
 
-      if (status.toLowerCase() != 'negotiation' || negotiationStartDate.isEmpty) {
+      if (status.toLowerCase() != 'negotiation' ||
+          negotiationStartDate.isEmpty) {
         return false;
       }
 
@@ -209,22 +221,31 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       }
 
       final daysStuck = DateTime.now().difference(startDate).inDays;
-
       return daysStuck > 7;
     }).toList();
 
-
     String initialMessage = "Here's your current sales overview:\n";
-    Map<String, dynamic>? highValueLead = _leadsData.isNotEmpty
-        ? _leadsData.reduce(
+
+    List<Map<String, dynamic>> negotiationLeads = _leadsData.where((lead) {
+      return lead['stage']?.toLowerCase() == 'negotiation';
+    }).toList();
+
+    Map<String, dynamic>? highValueLead = negotiationLeads.isNotEmpty
+        ? negotiationLeads.reduce(
             (a, b) => a['predicted_sales'] > b['predicted_sales'] ? a : b)
         : null;
 
     if (highValueLead != null) {
+      final formattedSales = NumberFormat.currency(
+        locale: 'en_MY',
+        symbol: 'RM ',
+        decimalDigits: 2,
+      ).format(highValueLead['predicted_sales']);
+
       initialMessage +=
-          "Highest Predicted Sale: RM ${highValueLead['predicted_sales'].toStringAsFixed(2)} with ${highValueLead['customer_name']}.\n";
+          "Highest Predicted Sale in Negotiation: $formattedSales with ${highValueLead['customer_name']}.\n";
     } else {
-      initialMessage += "No high-value leads found.\n";
+      initialMessage += "No high-value leads found in the negotiation stage.\n";
     }
 
     if (stuckNegotiations.isNotEmpty) {
@@ -235,10 +256,19 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
           "No negotiations have been stuck for over 7 days. Would you like to focus on high-value opportunities?";
     }
 
-    _addMessageToChat(initialMessage);
+    if (refresh) {
+      setState(() {
+        _messages.removeWhere((msg) => msg['isUser'] == false);
+        _messages.add({
+          "message": initialMessage,
+          "isUser": false,
+          "timestamp": _getCurrentTime(),
+        });
+      });
+    } else {
+      _addMessageToChat(initialMessage);
+    }
   }
-
-
 
   void _addMessageToChat(String message) {
     setState(() {
@@ -250,6 +280,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     });
 
     _saveChatToCache();
+    _scrollToBottom();
   }
 
   List<TextSpan> _getFormattedTextSpans(String message) {
@@ -293,8 +324,10 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     });
 
     _saveChatToCache();
+    _scrollToBottom();
     await _fetchAISuggestions(message);
     await _saveChatToCache();
+
     setState(() {
       isTyping = false;
     });
@@ -315,19 +348,34 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     final apiKey = dotenv.env['OPENAI_API_KEY'];
     String leadDataSummary = _getLeadDataSummary();
 
+    String additionalSystemMessage = "If the user asks about their weaknesses, "
+        "Make sure format of the values and total are in this format(RM 5,000.00)"
+        "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
+        "analyze the current sales data and identify potential issues such as low number of leads, "
+        "long-stuck negotiations, or lack of engagement. Provide actionable tips to improve these areas. "
+        "Be supportive, concise, and use relevant data from the database to deliver personalized feedback.";
+
     final requestBody = json.encode({
       "model": "gpt-4o-mini",
       "messages": [
         {
           "role": "system",
-          "content":
-              "You are a helpful AI Sales Assistant. Your goal is to assist the salesman in advancing leads, resolving stuck negotiations, and prioritizing high-value opportunities. Keep your responses concise, actionable, and supportive. You have 800 tokens, but try to be as efficient as possible while providing value within 400 tokens or less."
+          "content": "You are a specialized AI Sales Assistant designed to help with sales-related tasks only. "
+              "Make sure format of the values and total are in this format(RM 5,000.00)"
+              "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
+              "Your main goals are to assist in advancing sales leads, resolving stuck negotiations, prioritizing high-value opportunities, and creating daily sales plans. "
+              "Respond specifically to the following requests: "
+              "1. **'What should I focus first'**: Identify the most critical sales task based on the current leads' status, such as high-value leads, stuck negotiations, or upcoming tasks. "
+              "2. **'How to improve my weakness' or 'Tell me my weakness'**: Analyze the sales data to highlight areas where the user may be lacking, like fewer leads, prolonged negotiations, or lack of engagement. "
+              "3. **'How to close deals'**: Offer clear, actionable strategies for closing deals, such as negotiation tactics, creating urgency, or offering limited-time incentives. "
+              "4. **'Plan my day'**: Create a prioritized daily schedule based on the most urgent tasks, high-value leads, or follow-ups required for advancing negotiations. "
+              "$additionalSystemMessage"
         },
         {"role": "assistant", "content": "Sales Lead Data: $leadDataSummary"},
         {"role": "user", "content": prompt}
       ],
-      "max_tokens": 800,
-      "temperature": 0.3,
+      "max_tokens": 600,
+      "temperature": 0.2
     });
 
     try {
@@ -355,6 +403,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
         });
 
         await _saveChatToCache();
+        _scrollToBottom();
       } else {
         _showError(
             "Failed to fetch AI response. Status code: ${response.statusCode}");
@@ -394,6 +443,24 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _handleSuggestion(String suggestion) {
+    _controller.text = suggestion;
+    _handleSendMessage(suggestion);
+    setState(() {
+      // Suggestions are not removed
+    });
   }
 
   @override
@@ -532,10 +599,40 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     );
   }
 
-
   Widget _buildMessageInputArea() {
     return Column(
       children: [
+        if (_suggestions.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _suggestions.map((suggestion) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                      ),
+                      onPressed: () {
+                        _handleSuggestion(suggestion);
+                      },
+                      child: Text(
+                        suggestion,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
         if (isTyping)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -546,9 +643,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
                 SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2.0),
                 ),
                 SizedBox(width: 10),
                 Text('Sales Navigator Smart Agent is typing...'),

@@ -5,7 +5,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class PredictedProductsTarget extends StatefulWidget {
   const PredictedProductsTarget({super.key});
 
@@ -38,12 +37,10 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
       return;
     }
 
-    // Prepare API URL
     final apiUrl = Uri.parse(
         'https://haluansama.com/crm-sales/api/predict_product_stock/get_predict_product.php?username=$loggedInUsername');
 
     try {
-      // Fetch data from the API
       final response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -52,20 +49,19 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
         if (jsonData['status'] == 'success') {
           final List<dynamic> productData = jsonData['data'];
 
-          // Map the API data to the existing Product model
           final List<Product> fetchedProducts = productData.map((row) {
             return Product(
               row['product_name'] as String,
               (row['total_qty_sold'] as num).toInt(),
               (row['total_sales'] as num).toDouble(),
-              0, // Predicted sales (to be calculated)
-              0, // Predicted stock (to be calculated)
+              0,
+              0,
             );
           }).toList();
 
           setState(() {
             products = fetchedProducts;
-            predictSalesAndStock();
+            predictSalesAndStockEMA(products, 3);
           });
         } else {
           throw Exception('API Error: ${jsonData['message']}');
@@ -78,59 +74,30 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
     }
   }
 
-  void predictSalesAndStock() {
-    int period = 2; // Define the period for calculation (e.g., 2 months)
+  void predictSalesAndStockEMA(List<Product> data, int windowSize) {
+    if (data.isEmpty || windowSize <= 1) return;
 
-    for (var product in products) {
-      // Calculate the average sales and quantity per month
-      double avgMonthlySales = product.salesOrder / period;
-      double avgMonthlyQuantity = product.quantity / period;
+    double alpha = 2 / (windowSize + 1);
 
-      // Predicted values start with the average sales and stock
-      double predictedSales = avgMonthlySales;
-      double predictedStock = avgMonthlyQuantity;
+    for (var product in data) {
+      double emaSales = product.salesOrder;
+      double emaStock = product.quantity.toDouble();
 
-      // If there is growth in sales
-      if (product.salesOrder > avgMonthlySales) {
-        double growthRate = product.salesOrder / avgMonthlySales;
-
-        // Apply growth rate to predicted sales
-        predictedSales = avgMonthlySales * growthRate;
-
-        // Predict stock needed based on growth rate and a buffer (e.g., 20% more stock)
-        predictedStock = avgMonthlyQuantity * growthRate * 1.2;
-      }
-      // If sales are declining or below average
-      else if (product.salesOrder < avgMonthlySales && product.salesOrder > 0) {
-        double lossRate = avgMonthlySales / product.salesOrder;
-
-        // Apply the loss rate to predicted sales
-        predictedSales = avgMonthlySales / lossRate;
-
-        // Predict stock needed based on the decline and a buffer (e.g., 20% less stock)
-        predictedStock = avgMonthlyQuantity / lossRate * 1.2;
+      for (int i = 1; i < windowSize; i++) {
+        emaSales = (product.salesOrder * alpha) + (emaSales * (1 - alpha));
+        emaStock = (product.quantity * alpha) + (emaStock * (1 - alpha));
       }
 
-      // Handle edge case where sales might be 0 to prevent division by zero
-      if (product.salesOrder == 0) {
-        predictedSales = 0;
-        predictedStock = avgMonthlyQuantity *
-            0.8; // Reduce stock prediction if sales are zero
-      }
-
-      // Assign the predicted values to the product
-      product.predictedSales = predictedSales.round();
-      product.predictedStock = predictedStock.round();
+      product.predictedSales = emaSales.round();
+      product.predictedStock = emaStock > 0 ? emaStock.round() : 1;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Find the maximum quantity for normalization purposes
     final maxQuantity =
         products.fold<int>(0, (max, p) => p.quantity > max ? p.quantity : max);
 
-    // If the products list is empty, create 5 placeholder products
     final displayedProducts = products.isNotEmpty
         ? products
         : List.generate(5, (index) => Product('No Product', 0, 0.0, 0, 0));

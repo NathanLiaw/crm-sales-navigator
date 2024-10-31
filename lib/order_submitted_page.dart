@@ -106,14 +106,14 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all<Color>(
+                    backgroundColor: MaterialStateProperty.all<Color>(
                         const Color(0xff0175FF)),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       ),
                     ),
-                    minimumSize: WidgetStateProperty.all<Size>(
+                    minimumSize: MaterialStateProperty.all<Size>(
                       const Size(130.0, 40.0),
                     ),
                   ),
@@ -141,10 +141,10 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all<Color>(
+                    backgroundColor: MaterialStateProperty.all<Color>(
                       const Color(0xffffffff),
                     ),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                         side: const BorderSide(
@@ -153,7 +153,7 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                         ),
                       ),
                     ),
-                    padding: WidgetStateProperty.all<EdgeInsets>(
+                    padding: MaterialStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     ),
                   ),

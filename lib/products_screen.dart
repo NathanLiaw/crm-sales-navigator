@@ -25,6 +25,7 @@ class _ProductsScreenState extends State<ProductsScreen>
     with TickerProviderStateMixin {
   late Map<int, String> area = {};
   static late int selectedAreaId;
+  static String currentAreaName = 'KCH';
   String searchQuery = '';
   int? _selectedSubCategoryId;
   List<int> _selectedSubCategoryIds = [];
@@ -47,6 +48,7 @@ class _ProductsScreenState extends State<ProductsScreen>
     await prefs.setInt('areaId', areaId);
     setState(() {
       selectedAreaId = areaId;
+      currentAreaName = area[selectedAreaId] ?? 'KCH';
     });
   }
 
@@ -54,8 +56,8 @@ class _ProductsScreenState extends State<ProductsScreen>
     Map<int, String> areaMap = {};
     try {
       // API URL
-      final apiUrl =
-          Uri.parse('https://haluansama.com/crm-sales/api/product_screen/get_areas.php');
+      final apiUrl = Uri.parse(
+          'https://haluansama.com/crm-sales/api/product_screen/get_areas.php');
 
       // Make the API call
       final response = await http.get(apiUrl);
@@ -63,17 +65,19 @@ class _ProductsScreenState extends State<ProductsScreen>
       // Check if the request was successful
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
+        developer.log('Raw JSON Data: $jsonData'); // Debugging statement
 
         if (jsonData['status'] == 'success') {
           // Parse the area data
-          areaMap = Map.fromEntries(
-              jsonData['data'].map((row) => MapEntry<int, String>(
-                    row['id'],
-                    row['area'] ?? '',
-                  )));
+          areaMap = { for (var item in jsonData['data'])
+            int.tryParse(item['id'].toString()) ?? -1 : item['area'] as String? ?? '' };
 
           setState(() {
             area = areaMap;
+            // Log the first area's name if it exists
+            if (area.isNotEmpty) {
+              developer.log(area.values.first);
+            }
           });
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -91,16 +95,16 @@ class _ProductsScreenState extends State<ProductsScreen>
             });
           }
         } else {
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
         }
       } else {
-        print('Failed to load area data');
+        developer.log('Failed to load area data');
       }
     } catch (e) {
       developer.log('Error fetching area: $e');
     }
   }
-
+  
   void _openFilterCategoriesScreen() async {
     final result = await Navigator.push(
       context,
@@ -163,6 +167,13 @@ class _ProductsScreenState extends State<ProductsScreen>
     setState(() {});
   }
 
+  void refreshScreen() {
+    setState(() {
+      // This will trigger a rebuild of the screen
+      fetchAreaFromDb();
+    });
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -176,15 +187,11 @@ class _ProductsScreenState extends State<ProductsScreen>
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor: const Color(0xff0175FF),
+          leadingWidth: 80, // Width for the column layout
           leading: Padding(
             padding: const EdgeInsets.only(left: 10.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.location_on,
-                size: 34,
-                color: Colors.white,
-              ),
-              onPressed: () {
+            child: GestureDetector(
+              onTap: () {
                 showModalBottomSheet(
                   context: context,
                   builder: (BuildContext context) {
@@ -194,9 +201,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                       child: Column(
                         children: [
                           Container(
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 16,
-                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 16),
                             child: Text(
                               'Select Area',
                               style: GoogleFonts.inter(
@@ -205,13 +210,36 @@ class _ProductsScreenState extends State<ProductsScreen>
                               ),
                             ),
                           ),
-                          const AreaSelectPopUp(),
+                          AreaSelectPopUp(
+                            onAreaSelected: setAreaId,
+                          ),
                         ],
                       ),
                     );
                   },
                 );
               },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    size: 28,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    currentAreaName,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
+              ),
             ),
           ),
           title: GestureDetector(
@@ -246,18 +274,6 @@ class _ProductsScreenState extends State<ProductsScreen>
               ),
             ),
           ),
-          // actions: <Widget>[
-          //   // IconButton(
-          //   //   icon: const Icon(
-          //   //     Icons.notifications,
-          //   //     size: 34,
-          //   //     color: Colors.white,
-          //   //   ),
-          //   //   onPressed: () {
-          //   //     // Add your onPressed logic here
-          //   //   },
-          //   // ),
-          // ],
         ),
       ),
       body: Container(
@@ -286,9 +302,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                               child: Column(
                                 children: [
                                   Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
+                                    margin: const EdgeInsets.symmetric(vertical: 16),
                                     child: Text(
                                       'Sort',
                                       style: GoogleFonts.inter(
@@ -301,13 +315,10 @@ class _ProductsScreenState extends State<ProductsScreen>
                                   SortPopUp(
                                     onSortChanged: (newSortOrder) {
                                       setState(() {
-                                        _currentSortOrder =
-                                            newSortOrder; // Update the sort order
-                                        _tabBarViewKey =
-                                            UniqueKey(); // Change the key to force rebuild
+                                        _currentSortOrder = newSortOrder; // Update the sort order
+                                        _tabBarViewKey = UniqueKey(); // Change the key to force rebuild
                                       });
-                                      Navigator.pop(
-                                          context); // Close the bottom sheet
+                                      Navigator.pop(context); // Close the bottom sheet
                                     },
                                   ),
                                 ],
@@ -339,9 +350,7 @@ class _ProductsScreenState extends State<ProductsScreen>
                       ),
                     ),
                   ),
-                  const VerticalDivider(
-                    color: Colors.white,
-                  ),
+                  const VerticalDivider(color: Colors.white),
                   Expanded(
                     child: InkWell(
                       onTap: () async {

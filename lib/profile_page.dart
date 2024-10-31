@@ -3,6 +3,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sales_navigator/ai_assistant.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
+import 'package:sales_navigator/model/notification_state.dart';
+import 'package:sales_navigator/notification_page.dart';
 import 'package:workmanager/workmanager.dart';
 import 'about_us_page.dart';
 import 'account_setting_page.dart';
@@ -11,6 +13,7 @@ import 'package:sales_navigator/recent_order_page.dart';
 import 'terms_and_conditions_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Components/navigation_bar.dart';
+import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -29,7 +32,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _getSalesmanName();
   }
 
-  // Use the didChangeDependencies function to recapture salesperson names
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -41,6 +43,11 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       salesmanName = prefs.getString('salesmanName') ?? '';
     });
+  }
+
+  Future<void> _loadUnreadNotifications() async {
+    // Logic to load unread notifications (you may need to implement this)
+    // Example: setState(() => _unreadNotifications = await fetchUnreadCount());
   }
 
   @override
@@ -57,10 +64,55 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              // Handle notifications
+          Consumer<NotificationState>(
+            builder: (context, notificationState, child) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 7.0),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications, color: Colors.white),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsPage(),
+                          ),
+                        );
+                        _loadUnreadNotifications();
+                      },
+                    ),
+                    if (notificationState.unreadCount > 0)
+                      Positioned(
+                        right: 4,
+                        top: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            notificationState.unreadCount > 99
+                                ? '99+'
+                                : notificationState.unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
             },
           ),
         ],
@@ -77,30 +129,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: const Text(
                   'Welcome,',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              // Display salesman name
+              const SizedBox(height: 8),
               Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$salesmanName',
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  )),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$salesmanName',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               buildProfileOption('Account Setting', Icons.settings, context),
               buildProfileOption('Reports', Icons.analytics, context),
               buildProfileOption('Recent Order', Icons.shopping_bag, context),
-              buildProfileOption(
-                  'Terms & Condition', Icons.description, context),
+              buildProfileOption('Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              buildProfileOption('Chatbot', Icons.chat, context),
-              buildProfileOption('AI Assistant', Icons.assistant, context), // New AI Assistant option
+              buildProfileOption('AI Assistant', Icons.assistant, context),
               const SizedBox(height: 20),
-              buildLogoutButton(), // add Logout button
+              Center(child: buildLogoutButton()),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -112,73 +172,55 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget buildProfileOption(String title, IconData icon, BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // check button title
-        if (title == 'Account Setting') {
-          Navigator.push(
-            // Navigate to account setting page
-            context,
-            MaterialPageRoute(builder: (context) => const AccountSetting()),
-          ).then((value) {
-            if (value == true) {
-              _getSalesmanName();
-            }
-          });
-        }
-        if (title == 'Reports') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const DataAnalyticsPage()),
-          );
-        }
-        if (title == 'Recent Order') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const RecentOrder(
-                      customerId: 0,
-                    )),
-          );
-        }
-        if (title == 'Terms & Condition') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const TermsandConditions()),
-          );
-        }
-        if (title == 'Contact Us') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ContactUs()),
-          );
-        }
-        if (title == 'About Us') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AboutUs()),
-          );
-        }
-        if (title == 'Chatbot') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatScreen()),
-          );
-        }
-        if (title == 'AI Assistant') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SalesPerformancePage()), // Navigate to AI Assistant page
-          );
+        switch (title) {
+          case 'Account Setting':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AccountSetting())).then((value) {
+              if (value == true) {
+                _getSalesmanName();
+              }
+            });
+            break;
+          case 'Reports':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const DataAnalyticsPage()));
+            break;
+          case 'Recent Order':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const RecentOrder(customerId: 0)));
+            break;
+          case 'Terms & Condition':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const TermsandConditions()));
+            break;
+          case 'Contact Us':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactUs()));
+            break;
+          case 'About Us':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutUs()));
+            break;
+          case 'AI Assistant':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SalesPerformancePage()));
+            break;
         }
       },
       child: Container(
         margin: const EdgeInsets.only(top: 10),
-        decoration: const BoxDecoration(),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: ListTile(
           leading: Icon(
             icon,
             color: const Color(0xff0175FF),
           ),
           title: Text(title),
+          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
         ),
       ),
     );
@@ -186,11 +228,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget buildLogoutButton() {
     return Container(
-      margin: const EdgeInsets.only(left: 100, right: 100),
+      margin: const EdgeInsets.symmetric(horizontal: 40),
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
-          // Display confirmation dialog before logout
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -210,32 +251,23 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.of(context).pop();
 
                       try {
-                        // Cancel all background tasks
                         await Workmanager().cancelAll();
-
-                        // Remove all SharedPreferences
-                        SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
                         await prefs.clear();
-
-                        // Remove image cache
                         imageCache.clear();
                         imageCache.clearLiveImages();
 
-                        // Remove any temporary files
                         final tempDir = await getTemporaryDirectory();
                         if (await tempDir.exists()) {
                           await tempDir.delete(recursive: true);
                         }
 
-                        // Navigate to login page
                         Navigator.pushReplacementNamed(context, '/login');
                       } catch (e) {
                         debugPrint('Error during logout: $e');
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                                'Error occurred during logout. Please try again.'),
+                            content: Text('Error occurred during logout. Please try again.'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -248,17 +280,18 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+          elevation: 5,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(5),
-            side: const BorderSide(color: Colors.red, width: 2),
           ),
+          minimumSize: const Size(120, 40),
         ),
-        child: const Padding(
-          padding: EdgeInsets.only(top: 10, bottom: 10),
-          child: Text(
-            'Log Out',
-            style: TextStyle(color: Colors.red),
+        child: const Text(
+          'Log Out',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

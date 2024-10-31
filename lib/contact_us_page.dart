@@ -14,67 +14,96 @@ class ContactUs extends StatelessWidget {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              // Header
+              const Text(
                 'Quest Marketing Kuching',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 24,
+                  color: Color(0xff0175FF),
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
+              const SizedBox(height: 8),
+              const Text(
                 'No. 137, A, Jalan Green,',
                 style: TextStyle(fontSize: 16),
               ),
-              Text(
+              const Text(
                 '93150 Kuching, Sarawak, Malaysia.',
                 style: TextStyle(fontSize: 16),
               ),
-              Divider(
-                color: Colors.grey,
-                thickness: 1.0,
-                height: 20.0,
+              const SizedBox(height: 16),
+
+              // Contact Info Section
+              const Text(
+                'CONTACT US',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xff0175FF),
+                ),
               ),
-              SizedBox(height: 16),
-              Text(
-                'TEL:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('+6082-231 390, +60 16-878 6891'),
-              SizedBox(height: 8),
-              Text(
-                'FAX:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('+6082-231 390'),
-              SizedBox(height: 8),
-              Text(
-                'EMAIL:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('questmarketingkch@gmail.com'),
-              SizedBox(height: 16),
-              Divider(
-                color: Colors.grey,
-                thickness: 1.0,
-                height: 20.0,
-              ),
-              Text(
+              const SizedBox(height: 16),
+              _buildContactInfo(Icons.phone, 'TEL:', '+6082-231 390, +60 16-878 6891'),
+              _buildContactInfo(Icons.fax, 'FAX:', '+6082-231 390'),
+              _buildContactInfo(Icons.email, 'EMAIL:', 'questmarketingkch@gmail.com'),
+              const SizedBox(height: 16),
+
+              // Business Hours Section
+              const Divider(color: Colors.grey),
+              const Text(
                 'BUSINESS HOURS',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xff0175FF),
+                ),
               ),
-              Text('MONDAY - FRIDAY: 8AM - 5PM'),
-              Text('SATURDAY: 8AM - 12.30PM'),
-              Text('SUNDAY: CLOSED'),
-              Text('PUBLIC HOLIDAY: CLOSED'),
+              const SizedBox(height: 8),
+              const Text('MONDAY - FRIDAY: 8AM - 5PM'),
+              const Text('SATURDAY: 8AM - 12.30PM'),
+              const Text('SUNDAY: CLOSED'),
+              const Text('PUBLIC HOLIDAY: CLOSED'),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build contact information section with icons
+  Widget _buildContactInfo(IconData icon, String label, String value) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xff0175FF), size: 28),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(value),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

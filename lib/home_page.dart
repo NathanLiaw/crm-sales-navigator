@@ -2462,17 +2462,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
-                              padding: const WidgetStatePropertyAll(
+                              padding: const MaterialStatePropertyAll(
                                   EdgeInsets.all(1.0)),
-                              shape: WidgetStateProperty.all<
+                              shape: MaterialStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
                                       side:
                                           const BorderSide(color: Colors.red))),
-                              backgroundColor: WidgetStateProperty.all<Color>(
+                              backgroundColor: MaterialStateProperty.all<Color>(
                                   const Color(0xffF01C54)),
-                              foregroundColor: WidgetStateProperty.all<Color>(
+                              foregroundColor: MaterialStateProperty.all<Color>(
                                   const Color.fromARGB(255, 255, 255, 255)),
                             ),
                             onPressed: () {
@@ -2509,17 +2509,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
-                              padding: const WidgetStatePropertyAll(
+                              padding: const MaterialStatePropertyAll(
                                   EdgeInsets.all(1.0)),
-                              shape: WidgetStateProperty.all<
+                              shape: MaterialStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
                                       side: const BorderSide(
                                           color: Color(0xff4566DD)))),
-                              backgroundColor: WidgetStateProperty.all<Color>(
+                              backgroundColor: MaterialStateProperty.all<Color>(
                                   const Color(0xff4566DD)),
-                              foregroundColor: WidgetStateProperty.all<Color>(
+                              foregroundColor: MaterialStateProperty.all<Color>(
                                   const Color.fromARGB(255, 255, 255, 255)),
                             ),
                             onPressed: () {
