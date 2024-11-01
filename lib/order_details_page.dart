@@ -7,6 +7,7 @@ import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
+import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:sales_navigator/pdf_viewer_page.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
@@ -175,6 +176,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
+          // Notify the provider that the order status has changed
+          Provider.of<OrderStatusProvider>(context, listen: false)
+              .triggerRefresh();
           // Successfully voided the order
           developer.log('Order voided successfully');
         } else {
@@ -847,6 +851,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final formattedSST = formatter.format(sst * subtotal);
     final formattedTotal = formatter.format(total);
 
+    final gstPercentage = (gst * 100).toStringAsFixed(1);
+    final sstPercentage = (sst * 100).toStringAsFixed(1);
+
     return Column(
       children: [
         Row(
@@ -866,7 +873,24 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('GST', style: TextStyle(fontWeight: FontWeight.bold)),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  const TextSpan(text: 'GST '),
+                  TextSpan(
+                    text: '($gstPercentage%)',
+                    // style: const TextStyle(
+                    //   color: Colors.grey,
+                    //   fontWeight: FontWeight.normal,
+                    // ),
+                  ),
+                ],
+              ),
+            ),
             Text(
               formattedGST,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -877,7 +901,24 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('SST', style: TextStyle(fontWeight: FontWeight.bold)),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  const TextSpan(text: 'SST '),
+                  TextSpan(
+                    text: '($sstPercentage%)',
+                    // style: const TextStyle(
+                    //   color: Colors.grey,
+                    //   fontWeight: FontWeight.normal,
+                    // ),
+                  ),
+                ],
+              ),
+            ),
             Text(
               formattedSST,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -931,7 +972,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                         ),
                       ),
               ),
-            )
+            ),
           ],
         ),
       ],

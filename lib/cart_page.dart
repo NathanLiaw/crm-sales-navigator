@@ -166,7 +166,8 @@ class _CartPage extends State<CartPage> {
 
   Future<void> cacheCartItems(List<CartItem> cartItems) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> cartItemsJson = cartItems.map((item) => jsonEncode(item.toMap())).toList();
+    List<String> cartItemsJson =
+        cartItems.map((item) => jsonEncode(item.toMap())).toList();
     await prefs.setStringList('cachedCartItems', cartItemsJson);
   }
 
@@ -175,7 +176,9 @@ class _CartPage extends State<CartPage> {
     List<String>? cartItemsJson = prefs.getStringList('cachedCartItems');
 
     if (cartItemsJson != null) {
-      return cartItemsJson.map((json) => CartItem.fromMap(jsonDecode(json))).toList();
+      return cartItemsJson
+          .map((json) => CartItem.fromMap(jsonDecode(json)))
+          .toList();
     }
     developer.log(cartItemsJson.toString());
     return []; // Return an empty list if there are no cached items
@@ -203,10 +206,12 @@ class _CartPage extends State<CartPage> {
         database, cartItemTableName, condition, order, field);
 
     // Initialize text controllers after fetching items
-    textControllers = List.generate(queryResults.length, (index) => TextEditingController());
+    textControllers =
+        List.generate(queryResults.length, (index) => TextEditingController());
 
     // Convert the results to CartItem objects
-    List<CartItem> cartItems = queryResults.map((map) => CartItem.fromMap(map)).toList();
+    List<CartItem> cartItems =
+        queryResults.map((map) => CartItem.fromMap(map)).toList();
 
     // Cache the fetched cart items for future access
     await cacheCartItems(cartItems);
@@ -293,7 +298,8 @@ class _CartPage extends State<CartPage> {
   Future<void> deleteSingleCartItem(int? cartItemId) async {
     try {
       // Delete the selected cart item from the database
-      await DatabaseHelper.deleteData(cartItemId, DatabaseHelper.cartItemTableName);
+      await DatabaseHelper.deleteData(
+          cartItemId, DatabaseHelper.cartItemTableName);
 
       // Log the event (you may want to adjust this based on your logging strategy)
       await EventLogger.logEvent(
@@ -502,7 +508,7 @@ class _CartPage extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     final formatter =
-    NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -750,13 +756,15 @@ class _CartPage extends State<CartPage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(false); // User canceled the action
+                                      Navigator.of(context).pop(
+                                          false); // User canceled the action
                                     },
                                     child: const Text("Cancel"),
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(true); // User confirmed the action
+                                      Navigator.of(context).pop(
+                                          true); // User confirmed the action
                                     },
                                     child: const Text("Remove"),
                                   ),
@@ -771,11 +779,13 @@ class _CartPage extends State<CartPage> {
 
                           // Optionally, you can remove the item from the list here as well
                           setState(() {
-                            cartItems.removeAt(index); // Assuming you have access to the index
-                            selectedCartItems.remove(item); // Remove from selected items if necessary
+                            cartItems.removeAt(
+                                index); // Assuming you have access to the index
+                            selectedCartItems.remove(
+                                item); // Remove from selected items if necessary
                           });
                         },
-                      background: Container(
+                        background: Container(
                           color: Colors.red,
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -873,7 +883,7 @@ class _CartPage extends State<CartPage> {
                                               onPressed: () async {
                                                 final updatedPrice =
                                                     await Navigator.push<
-                                                        double?>(
+                                                        double>(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
@@ -895,7 +905,10 @@ class _CartPage extends State<CartPage> {
                                                   setState(() {
                                                     item.unitPrice =
                                                         updatedPrice;
+                                                    calculateTotalAndSubTotal();
                                                   });
+                                                  // Refresh cart items to update prices and percentages
+                                                  loadCartItemsAndPhotos();
                                                 }
                                               },
                                             ),
@@ -1544,7 +1557,8 @@ class _CartPage extends State<CartPage> {
           decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color.fromARGB(255, 196, 196, 196)),
+              border:
+                  Border.all(color: const Color.fromARGB(255, 196, 196, 196)),
               boxShadow: const [
                 BoxShadow(
                   blurStyle: BlurStyle.normal,

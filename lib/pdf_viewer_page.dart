@@ -120,7 +120,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       }
 
       if (downloadDir != null && downloadDir.existsSync()) {
-        // 获取文件并添加最后修改时间
+        // Get the file and add the last modification time
         final files = downloadDir
             .listSync()
             .where((file) =>
@@ -135,7 +135,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           };
         }).toList();
 
-        // 按修改时间排序（最新的在前面）
+        // Sort by modification time (newest first)
         files.sort((a, b) => (b['modifiedTime'] as DateTime)
             .compareTo(a['modifiedTime'] as DateTime));
 
@@ -196,25 +196,20 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                             fileInfo['modifiedTime'] as DateTime;
                         final fileName = path.basename(file.path);
 
-                        // 格式化时间显示
                         final now = DateTime.now();
                         final difference = now.difference(modifiedTime);
                         String timeDisplay;
 
                         if (difference.inDays == 0) {
-                          // 今天 - 显示具体时间
                           timeDisplay =
                               'Today ${DateFormat('HH:mm').format(modifiedTime)}';
                         } else if (difference.inDays == 1) {
-                          // 昨天
                           timeDisplay =
                               'Yesterday ${DateFormat('HH:mm').format(modifiedTime)}';
                         } else if (difference.inDays < 7) {
-                          // 一周内 - 显示星期几
                           timeDisplay =
                               DateFormat('EEEE HH:mm').format(modifiedTime);
                         } else {
-                          // 超过一周 - 显示完整日期
                           timeDisplay = DateFormat('yyyy-MM-dd HH:mm')
                               .format(modifiedTime);
                         }
@@ -340,7 +335,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
-                  'Page ${currentPage ?? 1} of $totalPages',
+                  'Page ${(currentPage ?? 0) + 1} of $totalPages',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -371,38 +366,49 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: Future.delayed(Duration.zero),
-        builder: (context, snapshot) {
-          if (tempFilePath.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return PDFView(
-            filePath: tempFilePath,
-            enableSwipe: true,
-            swipeHorizontal: false,
-            autoSpacing: true,
-            pageFling: false,
-            pageSnap: false,
-            fitPolicy: FitPolicy.WIDTH,
-            defaultPage: currentPage ?? 0,
-            fitEachPage: true,
-            onRender: (pages) {
-              setState(() {
-                totalPages = pages;
-              });
+      body: Stack(
+        children: [
+          // PDF Viewer
+          FutureBuilder(
+            future: Future.delayed(Duration.zero),
+            builder: (context, snapshot) {
+              if (tempFilePath.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return PDFView(
+                filePath: tempFilePath,
+                enableSwipe: true,
+                swipeHorizontal: false,
+                autoSpacing: false,
+                pageFling: false,
+                pageSnap: false,
+                fitPolicy: FitPolicy.WIDTH,
+                defaultPage: currentPage ?? 0,
+                fitEachPage: true,
+                onRender: (pages) {
+                  setState(() {
+                    totalPages = pages;
+                  });
+                },
+                onPageChanged: (int? page, int? total) {
+                  setState(() {
+                    currentPage = page;
+                    totalPages = total;
+                  });
+                },
+                onError: (error) {
+                  print(error.toString());
+                },
+              );
             },
-            onPageChanged: (int? page, int? total) {
-              setState(() {
-                currentPage = page;
-                totalPages = total;
-              });
-            },
-            onError: (error) {
-              print(error.toString());
-            },
-          );
-        },
+          ),
+          // Page Dividers
+          if (totalPages != null)
+            PageDividers(
+              totalPages: totalPages!,
+              currentPage: currentPage ?? 0,
+            ),
+        ],
       ),
     );
   }
@@ -411,5 +417,53 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   void dispose() {
     File(tempFilePath).delete().ignore();
     super.dispose();
+  }
+}
+
+class PageDividers extends StatelessWidget {
+  final int totalPages;
+  final int currentPage;
+
+  const PageDividers({
+    Key? key,
+    required this.totalPages,
+    required this.currentPage,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ListView.builder(
+        itemCount: totalPages - 1,
+        itemBuilder: (context, index) {
+          final pageHeight = MediaQuery.of(context).size.height -
+              MediaQuery.of(context).padding.top -
+              kToolbarHeight;
+          final dividerPosition = (index + 1) * pageHeight;
+
+          return Positioned(
+            top: dividerPosition,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.grey[400]!,
+                    width: 0.5,
+                  ),
+                  bottom: BorderSide(
+                    color: Colors.grey[400]!,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

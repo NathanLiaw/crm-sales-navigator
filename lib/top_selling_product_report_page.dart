@@ -202,7 +202,9 @@ class _ProductReportState extends State<ProductReport> {
 
     String formattedDate;
     if (selectedButtonIndex == 3) {
-      formattedDate = 'Filter Date';
+      // Modified to show full date range instead of "Filter Date"
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (_selectedDateRange != null) {
       formattedDate =
           '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';

@@ -20,6 +20,7 @@ import 'products_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:developer' as developer;
 import 'package:provider/provider.dart';
+import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -107,6 +108,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CartModel()),
         ChangeNotifierProvider(create: (_) => NotificationState()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => OrderStatusProvider()),
         // Add other providers here
       ],
       child: const MyApp(),

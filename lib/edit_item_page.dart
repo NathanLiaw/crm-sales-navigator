@@ -171,217 +171,224 @@ class _EditItemPageState extends State<EditItemPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xff0175FF),
-        iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
-        title: const Text(
-          'Edit Item',
-          style: TextStyle(color: Color(0xffF8F9FA)),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, widget.itemPrice);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xff0175FF),
+          iconTheme: const IconThemeData(color: Color(0xffF8F9FA)),
+          title: const Text(
+            'Edit Item',
+            style: TextStyle(color: Color(0xffF8F9FA)),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context, widget.itemPrice);
+            },
+          ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context, widget.itemPrice);
-          },
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              color: const Color(0xffcde5f2),
-              elevation: 4.0,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 100.0,
-                          height: 100.0,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(8.0),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                color: const Color(0xffcde5f2),
+                elevation: 4.0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 100.0,
+                            height: 100.0,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: SizedBox(
+                              width: 90,
+                              child: widget.itemPhoto.isNotEmpty
+                                  ? Image.network(
+                                      'https://haluansama.com/crm-sales/${widget.itemPhoto}',
+                                      height: 90,
+                                      width: 90,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.asset(
+                                      'asset/no_image.jpg',
+                                      height: 90,
+                                      width: 90,
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
                           ),
-                          child: SizedBox(
-                            width: 90,
-                            child: widget.itemPhoto.isNotEmpty
-                                ? Image.network(
-                                    'https://haluansama.com/crm-sales/${widget.itemPhoto}',
-                                    height: 90,
-                                    width: 90,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.asset(
-                                    'asset/no_image.jpg',
-                                    height: 90,
-                                    width: 90,
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(width: 16.0),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                width: 200,
-                                child: Text(
-                                  widget.itemName,
-                                  style: const TextStyle(
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.bold,
+                          const SizedBox(width: 16.0),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: Text(
+                                    widget.itemName,
+                                    style: const TextStyle(
+                                      fontSize: 18.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 8.0),
-                              SizedBox(
-                                width: 220,
-                                child: Text(
-                                  widget.itemUom,
-                                  style: const TextStyle(
-                                    fontSize: 14.0,
+                                const SizedBox(height: 8.0),
+                                SizedBox(
+                                  width: 220,
+                                  child: Text(
+                                    widget.itemUom,
+                                    style: const TextStyle(
+                                      fontSize: 14.0,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16.0),
-                    Row(
-                      children: [
-                        const Text(
-                          'Unit Price (RM)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      const SizedBox(height: 16.0),
+                      Row(
+                        children: [
+                          const Text(
+                            'Unit Price (RM)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                          child: SizedBox(
-                            height: 36.0,
-                            child: TextField(
-                              controller: priceController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: (widget.itemPrice).toStringAsFixed(3),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 8.0, horizontal: 12.0),
-                                border: const OutlineInputBorder(),
+                          const SizedBox(width: 8.0),
+                          Expanded(
+                            child: SizedBox(
+                              height: 36.0,
+                              child: TextField(
+                                controller: priceController,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  hintText:
+                                      (widget.itemPrice).toStringAsFixed(3),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 8.0, horizontal: 12.0),
+                                  border: const OutlineInputBorder(),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12.0),
-                    Row(
-                      children: [
-                        const Text(
-                          'Discount',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      const SizedBox(height: 12.0),
+                      Row(
+                        children: [
+                          const Text(
+                            'Discount',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 50.0),
-                        Expanded(
-                          child: SizedBox(
-                            height: 36.0,
-                            child: TextField(
-                              controller: discountController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                hintText: '0%',
-                                contentPadding: EdgeInsets.symmetric(
-                                    vertical: 8.0, horizontal: 12.0),
-                                border: OutlineInputBorder(),
+                          const SizedBox(width: 50.0),
+                          Expanded(
+                            child: SizedBox(
+                              height: 36.0,
+                              child: TextField(
+                                controller: discountController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  hintText: '0%',
+                                  contentPadding: EdgeInsets.symmetric(
+                                      vertical: 8.0, horizontal: 12.0),
+                                  border: OutlineInputBorder(),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      priceController.clear();
-                      discountController.clear();
-                    });
-                  },
-                  style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsets>(
-                      const EdgeInsets.symmetric(horizontal: 20.0),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        priceController.clear();
+                        discountController.clear();
+                      });
+                    },
+                    style: ButtonStyle(
+                      padding: MaterialStateProperty.all<EdgeInsets>(
+                        const EdgeInsets.symmetric(horizontal: 20.0),
+                      ),
+                      minimumSize: MaterialStateProperty.all<Size>(
+                        const Size(120.0, 40.0),
+                      ),
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(Colors.white),
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                      ),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
-                      const Size(120.0, 40.0),
-                    ),
-                    backgroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5.0),
-                        side: const BorderSide(color: Colors.red),
+                    child: const Text(
+                      'Clear',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 16,
                       ),
                     ),
                   ),
-                  child: const Text(
-                    'Clear',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 16,
+                  const SizedBox(width: 46.0),
+                  ElevatedButton(
+                    onPressed: () {
+                      updatePriceAndAuthority();
+                    },
+                    style: ButtonStyle(
+                      padding: MaterialStateProperty.all<EdgeInsets>(
+                        const EdgeInsets.symmetric(horizontal: 20.0),
+                      ),
+                      minimumSize: MaterialStateProperty.all<Size>(
+                        const Size(120.0, 40.0),
+                      ),
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                        const Color(0xff0175FF),
+                      ),
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 46.0),
-                ElevatedButton(
-                  onPressed: () {
-                    updatePriceAndAuthority();
-                  },
-                  style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsets>(
-                      const EdgeInsets.symmetric(horizontal: 20.0),
-                    ),
-                    minimumSize: MaterialStateProperty.all<Size>(
-                      const Size(120.0, 40.0),
-                    ),
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      const Color(0xff0175FF),
-                    ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5.0),
+                    child: const Text(
+                      'Apply',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  child: const Text(
-                    'Apply',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            )
-          ],
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

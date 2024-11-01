@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
@@ -49,191 +50,265 @@ class PdfInvoiceGenerator {
     double sstAmount = subtotal * (sst / 100);
     double total = subtotal + gstAmount + sstAmount;
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
-        header: (pw.Context context) {
-          if (context.pageNumber == 1) {
+    // Convert order items to table data for better handling
+    final List<List<String>> tableData = orderItems.map((item) {
+      return [
+        item.productName,
+        item.uom,
+        item.qty,
+        double.parse(item.unitPrice).toStringAsFixed(3),
+        double.parse(item.total).toStringAsFixed(3),
+      ];
+    }).toList();
+
+    // Calculate number of items per page
+    const int firstPageItems = 10;
+    const int subsequentPageItems = 15;
+
+    // Calculate total pages needed
+    int remainingItems = tableData.length;
+    int totalPages = 1; // Start with 1 for the first page
+    if (remainingItems > firstPageItems) {
+      remainingItems -= firstPageItems;
+      totalPages +=
+          (remainingItems + subsequentPageItems - 1) ~/ subsequentPageItems;
+    }
+
+    // Generate pages
+    for (int pageNum = 0; pageNum < totalPages; pageNum++) {
+      // Calculate start and end indices for current page
+      int startIndex;
+      int endIndex;
+
+      if (pageNum == 0) {
+        // First page
+        startIndex = 0;
+        endIndex = tableData.length < firstPageItems
+            ? tableData.length
+            : firstPageItems;
+      } else {
+        // Follow-up page
+        startIndex = firstPageItems + (pageNum - 1) * subsequentPageItems;
+        endIndex = min(startIndex + subsequentPageItems, tableData.length);
+      }
+
+      List<List<String>> currentPageData =
+          tableData.sublist(startIndex, endIndex);
+
+      final isLastPage = pageNum == totalPages - 1;
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: pageNum == 0
+              ? const pw.EdgeInsets.all(40)
+              : const pw.EdgeInsets.only(
+                  top: 20,
+                  left: 40,
+                  right: 40,
+                  bottom: 40,
+                ),
+          build: (pw.Context context) {
             return pw.Column(
-              children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text('SALES ORDER', style: titleStyle),
-                        pw.SizedBox(height: 10),
-                        pw.Text(companyName, style: headerStyle),
-                        pw.SizedBox(height: 5),
-                        pw.ConstrainedBox(
-                          constraints: const pw.BoxConstraints(maxWidth: 250),
-                          child: pw.Text(address,
-                              style: contentStyle,
-                              maxLines: 3,
-                              overflow: pw.TextOverflow.clip),
-                        ),
-                      ],
-                    ),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text('Order ID: $salesOrderId', style: headerStyle),
-                        pw.SizedBox(height: 5),
-                        pw.Text('Date: $createdDate', style: contentStyle),
-                        pw.SizedBox(height: 5),
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: pw.BoxDecoration(
-                            color: status.toLowerCase() == 'confirm'
-                                ? PdfColors.green200
-                                : status.toLowerCase() == 'void'
-                                    ? PdfColors.red200
-                                    : PdfColors.orange200,
-                            borderRadius: const pw.BorderRadius.all(
-                                pw.Radius.circular(5)),
-                          ),
-                          child: pw.Text(
-                            status.toUpperCase(),
-                            style: pw.TextStyle(
-                              color: status.toLowerCase() == 'confirm'
-                                  ? PdfColors.green900
-                                  : status.toLowerCase() == 'void'
-                                      ? PdfColors.red900
-                                      : PdfColors.orange900,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 20),
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(10),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.grey100,
-                    borderRadius:
-                        const pw.BorderRadius.all(pw.Radius.circular(5)),
-                  ),
-                  child: pw.Row(
-                    children: [
-                      pw.Text('Salesman: ', style: headerStyle),
-                      pw.Text(salesmanName, style: contentStyle),
-                    ],
-                  ),
-                ),
-                pw.SizedBox(height: 20),
-              ],
-            );
-          }
-          return pw.Container();
-        },
-        footer: (pw.Context context) {
-          return pw.Column(
-            children: [
-              pw.Container(
-                decoration: pw.BoxDecoration(
-                  border:
-                      pw.Border(top: pw.BorderSide(color: PdfColors.grey400)),
-                ),
-                padding: const pw.EdgeInsets.only(top: 10),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text('This is not a tax invoice', style: smallStyle),
-                    pw.Text(
-                        'Page ${context.pageNumber} of ${context.pagesCount}',
-                        style: smallStyle),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-        build: (pw.Context context) {
-          return [
-            pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('Order Items', style: headerStyle),
-                pw.SizedBox(height: 10),
-                pw.Table.fromTextArray(
-                  border:
-                      pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-                  headerDecoration: pw.BoxDecoration(color: PdfColors.blue900),
-                  headerHeight: 30,
-                  headerStyle: pw.TextStyle(
-                    color: PdfColors.white,
-                    fontWeight: pw.FontWeight.bold,
+                // First page header
+                if (pageNum == 0) ...[
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('SALES ORDER', style: titleStyle),
+                          pw.SizedBox(height: 10),
+                          pw.Text(companyName, style: headerStyle),
+                          pw.SizedBox(height: 5),
+                          pw.ConstrainedBox(
+                            constraints: const pw.BoxConstraints(maxWidth: 250),
+                            child: pw.Text(
+                              address,
+                              style: contentStyle,
+                              maxLines: 3,
+                              overflow: pw.TextOverflow.clip,
+                            ),
+                          ),
+                        ],
+                      ),
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.end,
+                        children: [
+                          pw.Text('Order ID: $salesOrderId',
+                              style: headerStyle),
+                          pw.SizedBox(height: 5),
+                          pw.Text('Date: $createdDate', style: contentStyle),
+                          pw.SizedBox(height: 5),
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: pw.BoxDecoration(
+                              color: status.toLowerCase() == 'confirm'
+                                  ? PdfColors.green200
+                                  : status.toLowerCase() == 'void'
+                                      ? PdfColors.red200
+                                      : PdfColors.orange200,
+                              borderRadius: const pw.BorderRadius.all(
+                                  pw.Radius.circular(5)),
+                            ),
+                            child: pw.Text(
+                              status.toUpperCase(),
+                              style: pw.TextStyle(
+                                color: status.toLowerCase() == 'confirm'
+                                    ? PdfColors.green900
+                                    : status.toLowerCase() == 'void'
+                                        ? PdfColors.red900
+                                        : PdfColors.orange900,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  headerAlignment: pw.Alignment.centerLeft,
-                  cellAlignment: pw.Alignment.centerLeft,
-                  cellStyle: contentStyle,
-                  cellHeight: 30,
-                  cellAlignments: {
-                    0: pw.Alignment.centerLeft,
-                    1: pw.Alignment.center,
-                    2: pw.Alignment.center,
-                    3: pw.Alignment.centerRight,
-                    4: pw.Alignment.centerRight,
-                  },
-                  headers: [
-                    'Product Name',
-                    'UOM',
-                    'Qty',
-                    'Unit Price',
-                    'Total'
-                  ],
-                  data: orderItems.map((item) {
-                    return [
-                      item.productName,
-                      item.uom,
-                      item.qty,
-                      'RM ${item.unitPrice}',
-                      'RM ${item.total}',
-                    ];
-                  }).toList(),
-                ),
-              ],
-            ),
-            // 使用 pw.SizedBox.shrink() 作为分隔
-            pw.SizedBox.shrink(),
-            // 将Summary和Company Details放在同一个Container中以保持它们在同一页
-            pw.Container(
-              child: pw.Column(
-                children: [
-                  // Summary Section
+                  pw.SizedBox(height: 10),
+                  pw.Container(
+                    // padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.grey100,
+                      borderRadius:
+                          const pw.BorderRadius.all(pw.Radius.circular(5)),
+                    ),
+                    child: pw.Row(
+                      children: [
+                        pw.Text('Salesman: ', style: headerStyle),
+                        pw.Text(salesmanName, style: contentStyle),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                ] else ...[
+                  // Continuation header for subsequent pages
+                  pw.Container(
+                    padding: const pw.EdgeInsets.only(bottom: 5),
+                    decoration: const pw.BoxDecoration(
+                      border: pw.Border(
+                        bottom: pw.BorderSide(
+                          color: PdfColors.grey300,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('Order ID: $salesOrderId', style: smallStyle),
+                        pw.Text('Continued', style: smallStyle),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Table header text
+                if (pageNum == 0) ...[
+                  pw.Text('Order Items', style: headerStyle),
+                  pw.SizedBox(height: 5),
+                ],
+
+                // Table
+                pageNum == 0
+                    ? pw.Table.fromTextArray(
+                        border: pw.TableBorder.all(
+                            color: PdfColors.grey400, width: 0.5),
+                        headerDecoration:
+                            pw.BoxDecoration(color: PdfColors.blue900),
+                        headerHeight: 30,
+                        headerStyle: pw.TextStyle(
+                          color: PdfColors.white,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                        headerAlignment: pw.Alignment.centerLeft,
+                        cellAlignment: pw.Alignment.centerLeft,
+                        cellStyle: contentStyle,
+                        cellHeight: 30,
+                        columnWidths: {
+                          0: const pw.FlexColumnWidth(3),
+                          1: const pw.FlexColumnWidth(1),
+                          2: const pw.FlexColumnWidth(1),
+                          3: const pw.FlexColumnWidth(1.5),
+                          4: const pw.FlexColumnWidth(1.5),
+                        },
+                        cellAlignments: {
+                          0: pw.Alignment.centerLeft,
+                          1: pw.Alignment.center,
+                          2: pw.Alignment.center,
+                          3: pw.Alignment.centerRight,
+                          4: pw.Alignment.centerRight,
+                        },
+                        headers: [
+                          'Product Name',
+                          'UOM',
+                          'Qty',
+                          'Unit Price',
+                          'Total (RM)'
+                        ],
+                        data: currentPageData,
+                      )
+                    : pw.Padding(
+                        padding: const pw.EdgeInsets.only(top: 5),
+                        child: pw.Table.fromTextArray(
+                          border: pw.TableBorder.all(
+                              color: PdfColors.grey400, width: 0.5),
+                          headerHeight: 30,
+                          cellAlignment: pw.Alignment.centerLeft,
+                          cellStyle: contentStyle,
+                          cellHeight: 30,
+                          columnWidths: {
+                            0: const pw.FlexColumnWidth(3),
+                            1: const pw.FlexColumnWidth(1),
+                            2: const pw.FlexColumnWidth(1),
+                            3: const pw.FlexColumnWidth(1.5),
+                            4: const pw.FlexColumnWidth(1.5),
+                          },
+                          cellAlignments: {
+                            0: pw.Alignment.centerLeft,
+                            1: pw.Alignment.center,
+                            2: pw.Alignment.center,
+                            3: pw.Alignment.centerRight,
+                            4: pw.Alignment.centerRight,
+                          },
+                          headers: null,
+                          data: currentPageData,
+                        ),
+                      ),
+
+                // Summary and company details for last page
+                if (isLastPage) ...[
+                  pw.SizedBox(height: 20),
                   pw.Container(
                     alignment: pw.Alignment.centerRight,
-                    margin: const pw.EdgeInsets.symmetric(vertical: 20),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
                         _buildSummaryRow('Subtotal:',
-                            subtotal.toStringAsFixed(2), contentStyle),
+                            subtotal.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
                         _buildSummaryRow('GST (${gst.toStringAsFixed(2)}%):',
-                            gstAmount.toStringAsFixed(2), contentStyle),
+                            gstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
                         _buildSummaryRow('SST (${sst.toStringAsFixed(2)}%):',
-                            sstAmount.toStringAsFixed(2), contentStyle),
+                            sstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
                         pw.Divider(color: PdfColors.grey400),
                         _buildSummaryRow(
-                            'Total:', total.toStringAsFixed(2), headerStyle),
+                            'Total:', total.toStringAsFixed(3), headerStyle),
                       ],
                     ),
                   ),
-                  // 添加固定间距
-                  pw.SizedBox(height: 40),
-                  // Company Details
+                  pw.SizedBox(height: 20),
                   pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
+                    // padding: const pw.EdgeInsets.all(10),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.grey100,
                       borderRadius:
@@ -256,12 +331,31 @@ class PdfInvoiceGenerator {
                     ),
                   ),
                 ],
-              ),
-            ),
-          ];
-        },
-      ),
-    );
+
+                pw.Expanded(child: pw.Container()),
+
+                // Footer
+                pw.Container(
+                  decoration: pw.BoxDecoration(
+                    border:
+                        pw.Border(top: pw.BorderSide(color: PdfColors.grey400)),
+                  ),
+                  padding: const pw.EdgeInsets.only(top: 10),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('This is not a tax invoice', style: smallStyle),
+                      pw.Text('Page ${pageNum + 1} of $totalPages',
+                          style: smallStyle),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     return pdf.save();
   }
@@ -287,10 +381,7 @@ class PdfInvoiceGenerator {
   pw.Row _buildContactRow(String label, String value, pw.TextStyle style) {
     return pw.Row(
       children: [
-        pw.Text(
-          label,
-          style: style.copyWith(fontWeight: pw.FontWeight.bold),
-        ),
+        pw.Text(label, style: style.copyWith(fontWeight: pw.FontWeight.bold)),
         pw.Text(value, style: style),
       ],
     );

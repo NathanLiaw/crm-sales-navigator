@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-
 class SalesReportPage extends StatefulWidget {
   const SalesReportPage({super.key});
 
@@ -185,7 +184,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
 
     String formattedDate;
     if (selectedButtonIndex == 3) {
-      formattedDate = 'Filter Date';
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (_selectedDateRange != null) {
       formattedDate =
           '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}';
