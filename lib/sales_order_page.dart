@@ -21,7 +21,6 @@ import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 
-
 class SalesOrderPage extends StatefulWidget {
   const SalesOrderPage({super.key});
 
@@ -734,7 +733,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                   clipBehavior: Clip.none,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.notifications, color: Colors.white),
+                      icon:
+                          const Icon(Icons.notifications, color: Colors.white),
                       onPressed: () async {
                         await Navigator.push(
                           context,
@@ -928,24 +928,39 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   Widget _buildQuickAccessDateButtons() {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          _buildDateButton('All', null, 3),
-          const SizedBox(width: 10),
-          _buildDateButton('Last 7 days', 7, 0),
-          const SizedBox(width: 10),
-          _buildDateButton('Last 30 days', 30, 1),
-          const SizedBox(width: 10),
-          _buildDateButton('Last 90 days', 90, 2),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildDateButton('All', null, 3),
+            const SizedBox(width: 10),
+            _buildDateButton('Last 7 days', 7, 0),
+            const SizedBox(width: 10),
+            _buildDateButton('Last 30 days', 30, 1),
+            const SizedBox(width: 10),
+            _buildDateButton('Last 90 days', 90, 2),
+            const SizedBox(width: 6),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDateRangePicker() {
     final bool isCustomRangeSelected = dateRange != null;
+    String formattedDate;
+    if (selectedButtonIndex == 3) {
+      // Show full date range for "All" selection
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
+    } else if (isCustomRangeSelected) {
+      formattedDate =
+          '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}';
+    } else {
+      formattedDate = 'Filter Date';
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -961,16 +976,14 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             onPressed: () => _selectDateRange(context),
             icon: Icon(
               Icons.calendar_today,
-              color: isCustomRangeSelected
+              color: isCustomRangeSelected || selectedButtonIndex == 3
                   ? Colors.black
                   : Theme.of(context).iconTheme.color,
             ),
             label: Text(
-              isCustomRangeSelected
-                  ? '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}'
-                  : 'Filter Date',
+              formattedDate,
               style: TextStyle(
-                color: isCustomRangeSelected
+                color: isCustomRangeSelected || selectedButtonIndex == 3
                     ? Colors.black
                     : Theme.of(context).textTheme.bodyMedium!.color,
               ),
@@ -1090,7 +1103,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           orderNumber: orderId,
           companyName: firstItem['company_name'] ?? 'Unknown Company',
           creationDate: firstItem['created_date'] != null
-              ? DateFormat('dd/MM/yyyy HH:mm:ss').parse(firstItem['created_date'])
+              ? DateFormat('dd/MM/yyyy HH:mm:ss')
+                  .parse(firstItem['created_date'])
               : DateTime.now(),
           amount: '${firstItem['final_total']?.toStringAsFixed(3) ?? '0.000'}',
           status: firstItem['status'] ?? 'Unknown Status',

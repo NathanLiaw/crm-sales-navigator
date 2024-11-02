@@ -1,58 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import 'order_status_report_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
-class OrderStatusWidget extends StatelessWidget {
+class OrderStatusWidget extends StatefulWidget {
   const OrderStatusWidget({super.key});
 
   @override
+  _OrderStatusWidgetState createState() => _OrderStatusWidgetState();
+}
+
+class _OrderStatusWidgetState extends State<OrderStatusWidget> {
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 12.0, left: 16.0),
-          child: Text(
-            'Order Status',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const OrderStatusReportPage()),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+    return Consumer<OrderStatusProvider>(
+      builder: (context, orderStatusProvider, child) {
+        if (orderStatusProvider.shouldRefresh) {
+          // Reset the refresh flag
+          orderStatusProvider.resetRefresh();
+          // Refresh data after one frame delay
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                // Reload data
+                _OrderStatusIndicatorState.instance?.loadUsernameAndFetchData();
+              });
+            }
+          });
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 12.0, left: 16.0),
+              child: Text(
+                'Order Status',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-              ],
+              ),
             ),
-            child: const OrderStatusIndicator(),
-          ),
-        ),
-      ],
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const OrderStatusReportPage()),
+                );
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const OrderStatusIndicator(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -73,11 +98,21 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
     end: DateTime.now(),
   );
   String loggedInUsername = '';
+  static _OrderStatusIndicatorState? instance;
 
   @override
   void initState() {
     super.initState();
+    instance = this;
     loadUsernameAndFetchData();
+  }
+
+  @override
+  void dispose() {
+    if (instance == this) {
+      instance = null;
+    }
+    super.dispose();
   }
 
   Future<void> loadUsernameAndFetchData() async {

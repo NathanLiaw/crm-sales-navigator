@@ -212,67 +212,65 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FutureBuilder<List<SalesForecast>>(
-                future: salesForecasts,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    // Even if snapshot has no data, we will still render the UI with default values
-                    final data = snapshot.data ??
-                        [
-                          SalesForecast(
-                            salesmanId: 0,
-                            salesmanName: 'No Data',
-                            purchaseMonth: DateTime.now().month,
-                            purchaseYear: DateTime.now().year,
-                            totalSales: 0.0,
-                            cartQuantity: 0,
-                            previousMonthSales: 0.0,
-                            previousCartQuantity: 0,
-                          )
-                        ];
+      body: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FutureBuilder<List<SalesForecast>>(
+              future: salesForecasts,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  final data = snapshot.data ??
+                      [
+                        SalesForecast(
+                          salesmanId: 0,
+                          salesmanName: 'No Data',
+                          purchaseMonth: DateTime.now().month,
+                          purchaseYear: DateTime.now().year,
+                          totalSales: 0.0,
+                          cartQuantity: 0,
+                          previousMonthSales: 0.0,
+                          previousCartQuantity: 0,
+                        )
+                      ];
 
-                    // If there's no data, or data contains zero values, we show default values in the UI
-                    final currentMonthData = data.firstWhere(
-                      (forecast) =>
-                          forecast.purchaseMonth == DateTime.now().month,
-                      orElse: () => SalesForecast(
-                        salesmanId: 0,
-                        salesmanName: 'No Data',
-                        purchaseMonth: DateTime.now().month,
-                        purchaseYear: DateTime.now().year,
-                        totalSales: 0.0,
-                        cartQuantity: 0,
-                        previousMonthSales: 0.0,
-                        previousCartQuantity: 0,
-                      ),
-                    );
-                    return EditableSalesTargetCard(
-                      currentSales: currentMonthData.totalSales,
-                      predictedTarget: salesConversionRate,
-                      cartQuantity: currentMonthData.cartQuantity,
-                      stockNeeded: averageOrderValue.toInt(),
-                      previousMonthSales: currentMonthData.previousMonthSales,
-                      previousCartQuantity:
-                          currentMonthData.previousCartQuantity,
-                      loggedInUsername: loggedInUsername,
-                      averageOrderValue: averageOrderValue,
-                      prevAverageOrderValue: prevAverageOrderValue,
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
+                  final currentMonthData = data.firstWhere(
+                    (forecast) =>
+                        forecast.purchaseMonth == DateTime.now().month,
+                    orElse: () => SalesForecast(
+                      salesmanId: 0,
+                      salesmanName: 'No Data',
+                      purchaseMonth: DateTime.now().month,
+                      purchaseYear: DateTime.now().year,
+                      totalSales: 0.0,
+                      cartQuantity: 0,
+                      previousMonthSales: 0.0,
+                      previousCartQuantity: 0,
+                    ),
+                  );
+
+                  return EditableSalesTargetCard(
+                    currentSales: currentMonthData.totalSales,
+                    predictedTarget: salesConversionRate,
+                    cartQuantity: currentMonthData.cartQuantity,
+                    stockNeeded: averageOrderValue.toInt(),
+                    previousMonthSales: currentMonthData.previousMonthSales,
+                    previousCartQuantity: currentMonthData.previousCartQuantity,
+                    loggedInUsername: loggedInUsername,
+                    averageOrderValue: averageOrderValue,
+                    prevAverageOrderValue: prevAverageOrderValue,
+                  );
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -593,8 +591,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
       controller.value = controller.value.copyWith(
         text: formattedText,
         selection: TextSelection.collapsed(
-          offset:
-              formattedText.length,
+          offset: formattedText.length,
         ),
       );
     });

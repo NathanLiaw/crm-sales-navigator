@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/cart_item.dart';
+import 'package:provider/provider.dart';
+import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
+import 'package:sales_navigator/model/order_status_provider.dart';
+import 'package:sales_navigator/pdf_viewer_page.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:sales_navigator/pdf_generator.dart';
+import 'package:open_file/open_file.dart';
 
 class OrderDetailsPage extends StatefulWidget {
   final int cartID;
@@ -40,6 +46,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   double total = 0.0;
   bool isVoidButtonDisabled = false;
   bool _isExpanded = false;
+  final PdfInvoiceGenerator pdfGenerator = PdfInvoiceGenerator();
 
   late int salesmanId;
 
@@ -169,6 +176,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
+          // Notify the provider that the order status has changed
+          Provider.of<OrderStatusProvider>(context, listen: false)
+              .triggerRefresh();
           // Successfully voided the order
           developer.log('Order voided successfully');
         } else {
@@ -333,8 +343,49 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Order Status Bubble
-                      getStatusLabel(status),
+                      // Order Status and Download Icon
+                      Row(
+                        children: [
+                          // Order Status Bubble
+                          getStatusLabel(status),
+
+                          const SizedBox(width: 8),
+
+                          // View PDF Button
+                          IconButton(
+                            icon: const Icon(Icons.visibility,
+                                color: Color(0xff0175FF)),
+                            tooltip: 'View Invoice',
+                            onPressed: () async {
+                              final pdfData =
+                                  await pdfGenerator.generateInvoicePdf(
+                                companyName: companyName,
+                                address: address,
+                                salesmanName: salesmanName,
+                                salesOrderId: salesOrderId,
+                                createdDate: createdDate,
+                                status: status,
+                                orderItems: orderItems,
+                                gst: gst,
+                                sst: sst,
+                              );
+
+                              if (!mounted) return;
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PDFViewerPage(
+                                    pdfData: pdfData,
+                                    salesOrderId: salesOrderId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          // Text('Download PDF'),
+                        ],
+                      ),
 
                       // Copy Order Button
                       ElevatedButton.icon(
@@ -354,10 +405,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                         ),
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white, // White text
-                          backgroundColor: const Color(0xff0175FF), // Blue background
+                          backgroundColor:
+                              const Color(0xff0175FF), // Blue background
                           elevation: 6, // Add elevation
                           shadowColor: Colors.grey.withOpacity(0.5),
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 6.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -463,8 +516,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  Future<void> _showItemSelectionDialog(
-      List<OrderItem> items) async {
+  Future<void> _showItemSelectionDialog(List<OrderItem> items) async {
     List<bool> checkedItems = List<bool>.filled(items.length, true);
     bool selectAll = true;
 
@@ -599,7 +651,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             child: SingleChildScrollView(
                               child: Padding(
                                 padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Column(
                                   children: items.asMap().entries.map((entry) {
                                     int index = entry.key;
@@ -609,41 +661,41 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                         CheckboxListTile(
                                           contentPadding: EdgeInsets.zero,
                                           controlAffinity:
-                                          ListTileControlAffinity.leading,
+                                              ListTileControlAffinity.leading,
                                           title: Padding(
                                             padding:
-                                            const EdgeInsets.only(left: 0),
+                                                const EdgeInsets.only(left: 0),
                                             child: Column(
                                               crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   item.productName,
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize:
-                                                    screenWidth * 0.045,
+                                                        screenWidth * 0.045,
                                                   ),
                                                 ),
                                                 SizedBox(
                                                     height:
-                                                    screenHeight * 0.005),
+                                                        screenHeight * 0.005),
                                                 Text(
                                                   'UOM: ${item.uom}',
                                                   style: TextStyle(
                                                     fontSize:
-                                                    screenWidth * 0.04,
+                                                        screenWidth * 0.04,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
                                                 SizedBox(
                                                     height:
-                                                    screenHeight * 0.005),
+                                                        screenHeight * 0.005),
                                                 Text(
                                                   'Qty: ${item.qty}',
                                                   style: TextStyle(
                                                     fontSize:
-                                                    screenWidth * 0.04,
+                                                        screenWidth * 0.04,
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -713,8 +765,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             for (int i = 0; i < items.length; i++) {
                               if (checkedItems[i]) {
                                 final item = items[i];
-                                final oriUnitPrice = double.tryParse(item.unitPrice.toString()) ?? 0.0;
-                                final qty = int.tryParse(item.qty.toString()) ?? 0;
+                                final oriUnitPrice = double.tryParse(
+                                        item.unitPrice.toString()) ??
+                                    0.0;
+                                final qty =
+                                    int.tryParse(item.qty.toString()) ?? 0;
                                 final total = oriUnitPrice * qty;
 
                                 final cartItem = CartItem(
@@ -796,6 +851,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final formattedSST = formatter.format(sst * subtotal);
     final formattedTotal = formatter.format(total);
 
+    final gstPercentage = (gst * 100).toStringAsFixed(1);
+    final sstPercentage = (sst * 100).toStringAsFixed(1);
+
     return Column(
       children: [
         Row(
@@ -815,7 +873,24 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('GST', style: TextStyle(fontWeight: FontWeight.bold)),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  const TextSpan(text: 'GST '),
+                  TextSpan(
+                    text: '($gstPercentage%)',
+                    // style: const TextStyle(
+                    //   color: Colors.grey,
+                    //   fontWeight: FontWeight.normal,
+                    // ),
+                  ),
+                ],
+              ),
+            ),
             Text(
               formattedGST,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -826,7 +901,24 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('SST', style: TextStyle(fontWeight: FontWeight.bold)),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  const TextSpan(text: 'SST '),
+                  TextSpan(
+                    text: '($sstPercentage%)',
+                    // style: const TextStyle(
+                    //   color: Colors.grey,
+                    //   fontWeight: FontWeight.normal,
+                    // ),
+                  ),
+                ],
+              ),
+            ),
             Text(
               formattedSST,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -855,11 +947,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ),
             ),
             Opacity(
-              opacity: (isVoidButtonDisabled || shouldHideVoidButton()) ? 0.0 : 1.0,
+              opacity:
+                  (isVoidButtonDisabled || shouldHideVoidButton()) ? 0.0 : 1.0,
               child: ElevatedButton(
-                onPressed: shouldHideVoidButton() ? null : () => showVoidConfirmationDialog(),
+                onPressed: shouldHideVoidButton()
+                    ? null
+                    : () => showVoidConfirmationDialog(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: shouldHideVoidButton() ? Colors.transparent : Colors.red,
+                  backgroundColor:
+                      shouldHideVoidButton() ? Colors.transparent : Colors.red,
                   foregroundColor: Colors.white,
                   elevation: shouldHideVoidButton() ? 0 : 5,
                   shape: RoundedRectangleBorder(
@@ -870,13 +966,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 child: shouldHideVoidButton()
                     ? const SizedBox.shrink()
                     : const Text(
-                  'Void',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                        'Void',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
-            )
+            ),
           ],
         ),
       ],
