@@ -897,6 +897,7 @@ class _CartPage extends State<CartPage> {
                                                               ? itemPhotos[0]
                                                               : '',
                                                       itemPrice: item.unitPrice,
+                                                      priceByUom: '',
                                                     ),
                                                   ),
                                                 );

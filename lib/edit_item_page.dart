@@ -3,11 +3,14 @@ import 'package:sales_navigator/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
+import 'package:sqflite/sqflite.dart';
+
 class EditItemPage extends StatefulWidget {
   final int? itemId;
   final String itemName;
   final String itemUom;
   final String itemPhoto;
+  final String priceByUom;
   double itemPrice;
 
   EditItemPage({
@@ -17,6 +20,7 @@ class EditItemPage extends StatefulWidget {
     required this.itemUom,
     required this.itemPhoto,
     required this.itemPrice,
+    required this.priceByUom,
   });
 
   @override
@@ -29,11 +33,93 @@ class _EditItemPageState extends State<EditItemPage> {
   TextEditingController discountController = TextEditingController();
   bool repriceAuthority = false;
   bool discountAuthority = false;
+  double resetPrice = 0.0;
+  bool showResetButton = false;
 
   @override
   void initState() {
     super.initState();
+    resetPrice = double.tryParse(widget.priceByUom) ?? widget.itemPrice;
     checkRepricingAuthority();
+
+    priceController.addListener(_updateResetButtonVisibility);
+    discountController.addListener(_updateResetButtonVisibility);
+  }
+
+  @override
+  void dispose() {
+    priceController.removeListener(_updateResetButtonVisibility);
+    discountController.removeListener(_updateResetButtonVisibility);
+    priceController.dispose();
+    discountController.dispose();
+    super.dispose();
+  }
+
+  void _updateResetButtonVisibility() {
+    final bool shouldShow =
+        priceController.text.isNotEmpty || discountController.text.isNotEmpty;
+    if (shouldShow != showResetButton) {
+      setState(() {
+        showResetButton = shouldShow;
+      });
+    }
+  }
+
+  // Future<void> fetchOriginalCartPrice() async {
+  //   try {
+  //     Database database = await DatabaseHelper.database;
+  //     List<Map<String, dynamic>> result = await database.rawQuery('''
+  //     SELECT unit_price
+  //     FROM cart_item
+  //     WHERE id = ?
+  //     ORDER BY created ASC
+  //     LIMIT 1
+  //     ''', [widget.itemId]);
+
+  //     if (result.isNotEmpty) {
+  //       setState(() {
+  //         cartOriginalPrice = result.first['unit_price'];
+  //         print('Original cart price: $cartOriginalPrice');
+  //       });
+  //     } else {
+  //       developer.log('No price record found for item ${widget.itemId}');
+  //     }
+  //   } catch (e) {
+  //     developer.log('Error fetching original cart price: $e', error: e);
+  //   }
+  // }
+
+  Future<void> resetPriceToOriginal() async {
+    try {
+      int itemId = widget.itemId ?? 0;
+
+      Map<String, dynamic> updateData = {
+        'id': itemId,
+        'unit_price': resetPrice,
+        'discount': 0.0,
+      };
+
+      developer.log('Resetting price to: $resetPrice');
+
+      int rowsAffected =
+          await DatabaseHelper.updateData(updateData, 'cart_item');
+      if (rowsAffected > 0) {
+        setState(() {
+          widget.itemPrice = resetPrice;
+          discountPercentage = 0.0;
+          priceController.clear();
+          discountController.clear();
+        });
+
+        showAlertDialog('Price reset to previous price', Colors.green);
+      } else {
+        developer.log('Failed to reset item price');
+        showAlertDialog('Failed to reset price', Colors.red);
+      }
+    } catch (e) {
+      developer.log('Error resetting item price: $e', error: e);
+      showAlertDialog('Error resetting price', Colors.red);
+    }
   }
 
   void calculateDiscountedPrice() async {
@@ -278,8 +364,7 @@ class _EditItemPageState extends State<EditItemPage> {
                                 controller: priceController,
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
-                                  hintText:
-                                      (widget.itemPrice).toStringAsFixed(3),
+                                  hintText: widget.itemPrice.toStringAsFixed(3),
                                   contentPadding: const EdgeInsets.symmetric(
                                       vertical: 8.0, horizontal: 12.0),
                                   border: const OutlineInputBorder(),
@@ -316,77 +401,105 @@ class _EditItemPageState extends State<EditItemPage> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16.0),
+                      AnimatedOpacity(
+                        opacity: showResetButton ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: showResetButton
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: resetPriceToOriginal,
+                                    icon: const Icon(
+                                      Icons.restore,
+                                      color: Color(0xFFFF9800),
+                                    ),
+                                    label: const Text(
+                                      'Reset to Previous Price',
+                                      style: TextStyle(
+                                        color: Color(0xFFFF9800),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        priceController.clear();
-                        discountController.clear();
-                      });
-                    },
-                    style: ButtonStyle(
-                      padding: MaterialStateProperty.all<EdgeInsets>(
-                        const EdgeInsets.symmetric(horizontal: 20.0),
-                      ),
-                      minimumSize: MaterialStateProperty.all<Size>(
-                        const Size(120.0, 40.0),
-                      ),
-                      backgroundColor:
-                          MaterialStateProperty.all<Color>(Colors.white),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                          side: const BorderSide(color: Colors.red),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4.0, vertical: 16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            priceController.clear();
+                            discountController.clear();
+                          });
+                        },
+                        style: ButtonStyle(
+                          minimumSize: MaterialStateProperty.all<Size>(
+                            const Size.fromHeight(40.0),
+                          ),
+                          backgroundColor:
+                              MaterialStateProperty.all<Color>(Colors.white),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5.0),
+                              side: const BorderSide(color: Colors.red),
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Clear',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                    child: const Text(
-                      'Clear',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 46.0),
-                  ElevatedButton(
-                    onPressed: () {
-                      updatePriceAndAuthority();
-                    },
-                    style: ButtonStyle(
-                      padding: MaterialStateProperty.all<EdgeInsets>(
-                        const EdgeInsets.symmetric(horizontal: 20.0),
-                      ),
-                      minimumSize: MaterialStateProperty.all<Size>(
-                        const Size(120.0, 40.0),
-                      ),
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                        const Color(0xff0175FF),
-                      ),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
+                    const SizedBox(width: 8.0),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          updatePriceAndAuthority();
+                        },
+                        style: ButtonStyle(
+                          minimumSize: MaterialStateProperty.all<Size>(
+                            const Size.fromHeight(40.0),
+                          ),
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            const Color(0xff0175FF),
+                          ),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5.0),
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apply',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                    child: const Text(
-                      'Apply',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              )
+                  ],
+                ),
+              ),
             ],
           ),
         ),
