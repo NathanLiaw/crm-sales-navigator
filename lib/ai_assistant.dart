@@ -662,6 +662,8 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                 ),
               ),

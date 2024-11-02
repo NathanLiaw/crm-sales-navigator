@@ -648,6 +648,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
+                                filled: true,
+                                fillColor: Colors.white,
                               ),
                             ),
                           ),
