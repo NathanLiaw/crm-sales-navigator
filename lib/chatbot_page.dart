@@ -644,7 +644,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: TextField(
                               controller: _controller,
                               decoration: InputDecoration(
-                                hintText: 'Write a message',
+                                hintText: 'Type your message...',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),

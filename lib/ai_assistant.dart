@@ -22,11 +22,12 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   bool _isLoading = true;
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final EdgeInsets _uniformPadding = const EdgeInsets.all(16.0);
   final List<Map<String, dynamic>> _messages = [];
   bool isTyping = false;
   int _interactionStep = 0;
   List<String> _suggestions = [
-    "What should I focus first",
+    "Which leads should I prioritize",
     "How to improve my weakness",
     "How to close deals",
     "Plan my day"
@@ -74,7 +75,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       _interactionStep = 0;
       _controller.clear();
       _suggestions = [
-        "What should I focus first",
+        "Which leads should I prioritize",
         "How to improve my weakness",
         "How to close deals",
         "Plan my day"
@@ -119,7 +120,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
 
   Widget _buildChatBubble(String message, {String? boldText}) {
     return Container(
-      padding: const EdgeInsets.all(12.0),
+      padding: _uniformPadding,
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -365,7 +366,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
               "Ensure responses are concise, actionable, and supportive, within 400 tokens or less."
               "Your main goals are to assist in advancing sales leads, resolving stuck negotiations, prioritizing high-value opportunities, and creating daily sales plans. "
               "Respond specifically to the following requests: "
-              "1. **'What should I focus first'**: Identify the most critical sales task based on the current leads' status, such as high-value leads, stuck negotiations, or upcoming tasks. "
+              "1. **'Which leads should I prioritize'**: Identify the most critical sales task based on the current leads' status, such as high-value leads, stuck negotiations, or upcoming tasks. "
               "2. **'How to improve my weakness' or 'Tell me my weakness'**: Analyze the sales data to highlight areas where the user may be lacking, like fewer leads, prolonged negotiations, or lack of engagement. "
               "3. **'How to close deals'**: Offer clear, actionable strategies for closing deals, such as negotiation tactics, creating urgency, or offering limited-time incentives. "
               "4. **'Plan my day'**: Create a prioritized daily schedule based on the most urgent tasks, high-value leads, or follow-ups required for advancing negotiations. "
@@ -517,18 +518,22 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildChatBubble('Welcome back, ',
-                                boldText: _salesmanName),
-                            const SizedBox(height: 10),
                             _buildChatBubble(
-                                'Here’s your current sales status:'),
-                            const SizedBox(height: 20),
+                              'Welcome back, ',
+                              boldText: _salesmanName,
+                            ),
+                            const SizedBox(height: 5),
+                            _buildChatBubble(
+                              'Here’s your current sales status:',
+                            ),
+                            const SizedBox(height: 10),
                             _buildPerformanceWidgets(),
-                            const SizedBox(height: 30),
+                            const SizedBox(height: 20),
                             _buildChatInterface(),
                           ],
                         ),
@@ -555,7 +560,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
           alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-            padding: const EdgeInsets.all(12.0),
+            padding: _uniformPadding,
             decoration: BoxDecoration(
               color: isUser ? const Color(0xff0175FF) : Colors.white,
               borderRadius: BorderRadius.circular(15),
@@ -604,7 +609,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       children: [
         if (_suggestions.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            padding: _uniformPadding,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -650,7 +655,8 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
               ],
             ),
           ),
-        Padding(
+        Container(
+          color: Colors.white,
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
@@ -765,7 +771,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
       String title, dynamic value, Color color, IconData icon) {
     final displayValue = value != null ? value.toString() : '0';
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      padding: _uniformPadding,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [color.withOpacity(0.8), color.withOpacity(0.5)],
