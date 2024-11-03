@@ -14,7 +14,6 @@ import 'package:sales_navigator/login_page.dart';
 import 'package:sales_navigator/profile_page.dart';
 import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/starting_page.dart';
-import 'package:workmanager/workmanager.dart';
 import 'db_sqlite.dart';
 import 'products_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -24,6 +23,7 @@ import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -32,6 +32,9 @@ void main() async {
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initNotifications();
+
+  // Request storage permission at startup
+  await requestStoragePermission();
 
   // Initialize local notifications
   const AndroidInitializationSettings initializationSettingsAndroid =
@@ -114,6 +117,19 @@ void main() async {
       child: const MyApp(),
     ),
   );
+}
+
+// Permission handling for storage permission
+Future<void> requestStoragePermission() async {
+  final status = await Permission.storage.status;
+  if (status.isDenied || status.isPermanentlyDenied) {
+    await Permission.storage.request();
+  }
+  if (await Permission.storage.isGranted) {
+    developer.log("Storage permission granted.");
+  } else {
+    developer.log("Storage permission denied.");
+  }
 }
 
 // Permission handling functions for Android 14+

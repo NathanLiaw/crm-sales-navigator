@@ -1,12 +1,9 @@
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'order_details_page.dart';
-import 'package:open_file/open_file.dart';
+import 'package:intl/intl.dart';
 
 class PdfInvoiceGenerator {
   Future<Uint8List> generateInvoicePdf({
@@ -21,6 +18,10 @@ class PdfInvoiceGenerator {
     required double sst,
   }) async {
     final pdf = pw.Document();
+
+    // Date formatting with time
+    final DateFormat dateTimeFormat = DateFormat('dd MMM yyyy hh:mm a');
+    final formattedDate = dateTimeFormat.format(DateTime.parse(createdDate));
 
     final titleStyle = pw.TextStyle(
       fontSize: 24,
@@ -142,7 +143,7 @@ class PdfInvoiceGenerator {
                           pw.Text('Order ID: $salesOrderId',
                               style: headerStyle),
                           pw.SizedBox(height: 5),
-                          pw.Text('Date: $createdDate', style: contentStyle),
+                          pw.Text('Date: $formattedDate', style: contentStyle),
                           pw.SizedBox(height: 5),
                           pw.Container(
                             padding: const pw.EdgeInsets.symmetric(
