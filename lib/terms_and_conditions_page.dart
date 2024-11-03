@@ -29,7 +29,7 @@ class TermsandConditions extends StatelessWidget {
                   color: Color(0xff0175FF),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'The following terms and conditions apply to all visitors and users '
                     'of the Sales Navigator application. By using the app, you agree to be '
@@ -41,7 +41,7 @@ class TermsandConditions extends StatelessWidget {
                 thickness: 1.0,
                 height: 20.0,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'General',
                 style: TextStyle(
@@ -50,7 +50,7 @@ class TermsandConditions extends StatelessWidget {
                   color: Color(0xff0175FF),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'The content of these terms and conditions may be updated, modified, or '
                     'removed at any time. Please note that Sales Navigator reserves the right '
@@ -63,7 +63,7 @@ class TermsandConditions extends StatelessWidget {
                 thickness: 1.0,
                 height: 20.0,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'App Contents & Copyrights',
                 style: TextStyle(
@@ -72,7 +72,7 @@ class TermsandConditions extends StatelessWidget {
                   color: Color(0xff0175FF),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Unless otherwise stated, all materials including images, illustrations, '
                     'designs, icons, photographs, video clips, written materials, and other content '

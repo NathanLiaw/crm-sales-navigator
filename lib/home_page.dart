@@ -2,7 +2,6 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/Components/navigation_bar.dart';
-import 'package:sales_navigator/background_tasks.dart';
 import 'package:sales_navigator/create_lead_page.dart';
 import 'package:sales_navigator/create_task_page.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +21,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -477,10 +475,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           final leads = data['leads'] as List;
 
           for (var lead in leads) {
-            var customerName = lead['customer_name'];
-            var description = lead['description'];
-            var total = double.parse(lead['total']);
-            var createdDate = lead['created_date'];
+            var id = lead['id'] ?? 0; // Provide a default value if id is null
+            var customerName = lead['customer_name'] ?? 'Unknown'; // Default if null
+            var description = lead['description'] ?? '';
+            var total = double.tryParse(lead['total']?.toString() ?? '0') ?? 0.0;
+            var createdDate = lead['created_date'] ?? '';
             var contactNumber = lead['contact_number'] ?? '';
             var emailAddress = lead['email_address'] ?? '';
             var addressLine1 = lead['address'] ?? '';
@@ -488,7 +487,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             // If the INSERT operation is successful, add the leadItem to the list
             setState(() {
               leadItems.add(LeadItem(
-                id: lead['id'],
+                id: id,
                 salesmanId: salesmanId,
                 customerName: customerName,
                 description: description,
@@ -761,8 +760,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content:
-                    Text('Successfully moved lead to Order Processing stage')),
+              content: Text('Successfully moved lead to Order Processing stage'),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
           throw Exception(responseData['message']);
@@ -958,7 +958,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Successfully moved lead to Closed stage')),
+              content: Text('Successfully moved lead to Closed stage'),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
           throw Exception(responseData['message']);
@@ -1132,8 +1134,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content:
-                    Text('Successfully moved lead to Order Processing stage')),
+              content: Text('Successfully moved lead to Order Processing stage'),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
           throw Exception(responseData['message']);
@@ -1268,7 +1271,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Successfully deleted Engagement lead')),
+              content: Text('Successfully deleted Engagement lead'),
+              backgroundColor: Colors.green,
+            ),
           );
           developer
               .log('Engagement lead deleted and event logged successfully');
@@ -1354,7 +1359,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Successfully deleted Negotiation lead')),
+              content: Text('Successfully deleted Negotiation lead'),
+              backgroundColor: Colors.green,
+            ),
           );
 
           developer
@@ -1432,7 +1439,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Successfully undone Engagement lead')),
+              content: Text('Successfully undone Engagement lead'),
+              backgroundColor: Colors.green,
+            ),
           );
 
           developer.log('Engagement lead undone and event logged successfully');
@@ -1522,7 +1531,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Successfully undone Negotiation lead')),
+              content: Text('Successfully undone Negotiation lead'),
+              backgroundColor: Colors.green,
+            ),
           );
 
           developer
@@ -2120,14 +2131,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         _isLoading
                             ? _buildShimmerTab()
                             : _buildOpportunitiesTab(),
-                        _isLoading ? _buildShimmerTab() : _buildEngagementTab(),
+                        _isLoading
+                            ? _buildShimmerTab()
+                            : _buildEngagementTab(),
                         _isLoading
                             ? _buildShimmerTab()
                             : _buildNegotiationTab(),
                         _isLoading
                             ? _buildShimmerTab()
                             : _buildOrderProcessingTab(),
-                        _isLoading ? _buildShimmerTab() : _buildClosedTab(),
+                        _isLoading
+                            ? _buildShimmerTab()
+                            : _buildClosedTab(),
                       ],
                     ),
                   ),
@@ -2462,17 +2477,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
-                              padding: const MaterialStatePropertyAll(
+                              padding: const WidgetStatePropertyAll(
                                   EdgeInsets.all(1.0)),
-                              shape: MaterialStateProperty.all<
+                              shape: WidgetStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
                                       side:
                                           const BorderSide(color: Colors.red))),
-                              backgroundColor: MaterialStateProperty.all<Color>(
+                              backgroundColor: WidgetStateProperty.all<Color>(
                                   const Color(0xffF01C54)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
+                              foregroundColor: WidgetStateProperty.all<Color>(
                                   const Color.fromARGB(255, 255, 255, 255)),
                             ),
                             onPressed: () {
@@ -2509,17 +2524,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           width: 80,
                           child: TextButton(
                             style: ButtonStyle(
-                              padding: const MaterialStatePropertyAll(
+                              padding: const WidgetStatePropertyAll(
                                   EdgeInsets.all(1.0)),
-                              shape: MaterialStateProperty.all<
+                              shape: WidgetStateProperty.all<
                                       RoundedRectangleBorder>(
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4.0),
                                       side: const BorderSide(
                                           color: Color(0xff4566DD)))),
-                              backgroundColor: MaterialStateProperty.all<Color>(
+                              backgroundColor: WidgetStateProperty.all<Color>(
                                   const Color(0xff4566DD)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
+                              foregroundColor: WidgetStateProperty.all<Color>(
                                   const Color.fromARGB(255, 255, 255, 255)),
                             ),
                             onPressed: () {
@@ -2672,8 +2687,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content:
-                    Text('Successfully moved lead to Order Processing stage')),
+              content: Text('Successfully moved lead to Order Processing stage'),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
           throw Exception(responseData['message']);

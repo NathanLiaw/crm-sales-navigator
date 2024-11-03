@@ -623,7 +623,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     ),
                     const Divider(),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Column(
                         children: _statusFilters.keys.map((String key) {
                           return CheckboxListTile(
@@ -640,26 +640,28 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFF047CBD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                        ),
+                      child: ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pop(context);
-                          _loadSalesOrders(
-                              days: selectedDays, dateRange: dateRange);
+                          _loadSalesOrders(days: selectedDays, dateRange: dateRange);
                         },
-                        child: const Text(
+                        label: const Text(
                           'Apply Filters',
                           style: TextStyle(
+                            fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Colors.white,
                           ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: const Color(0xff0175FF),
+                          elevation: 6,
+                          shadowColor: Colors.grey.withOpacity(0.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          minimumSize: const Size(100, 40),
                         ),
                       ),
                     ),

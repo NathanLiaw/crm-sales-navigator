@@ -304,12 +304,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   @override
   Widget build(BuildContext context) {
     final formatter =
-        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
-    final formattedTotal = formatter.format(widget.total);
-    final formattedSubtotal = formatter.format(widget.subtotal);
-    final formattedDiscount = formatter.format(totalDiscount);
-    final formattedGST = formatter.format(widget.gst * widget.subtotal);
-    final formattedSST = formatter.format(widget.sst * widget.subtotal);
+    NumberFormat.currency(locale: 'en_US', symbol: '', decimalDigits: 3);
+    final orderSummaryFormatter =
+    NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+    final formattedTotal = orderSummaryFormatter.format(widget.total);
+    final formattedSubtotal = orderSummaryFormatter.format(widget.subtotal);
+    final formattedDiscount = orderSummaryFormatter.format(totalDiscount);
+    final formattedGST = orderSummaryFormatter.format(widget.gst * widget.subtotal);
+    final formattedSST = orderSummaryFormatter.format(widget.sst * widget.subtotal);
 
     return Scaffold(
       appBar: AppBar(
@@ -363,109 +365,134 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6.0),
-          Card(
+          Container(
             margin: const EdgeInsets.symmetric(vertical: 8.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.0),
+              gradient: LinearGradient(
+                colors: [Colors.white, Colors.grey.shade100],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.4),
+                  spreadRadius: 2,
+                  blurRadius: 8,
+                  offset: const Offset(2, 4),
+                ),
+              ],
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Displaying order details
-                  SizedBox(
-                    height: 250.0,
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
+                  Stack(
+                    children: [
+                      Scrollbar(
+                        thumbVisibility: true,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Table(
                             border: TableBorder(
-                              horizontalInside:
-                                  BorderSide(color: Colors.grey.shade300),
-                              verticalInside:
-                                  BorderSide(color: Colors.grey.shade300),
-                              bottom: const BorderSide(
-                                  color: Colors.black, width: 2.0),
+                              horizontalInside: BorderSide(color: Colors.grey.shade300),
+                              verticalInside: BorderSide(color: Colors.grey.shade300),
+                              bottom: const BorderSide(color: Colors.black, width: 2.0),
                             ),
                             columnWidths: const {
-                              0: FixedColumnWidth(
-                                  130), // Width for product name
-                              1: FixedColumnWidth(50), // Width for quantity
-                              2: FixedColumnWidth(
-                                  70), // Width for original price
-                              3: FixedColumnWidth(
-                                  70), // Width for discounted price
-                              4: FixedColumnWidth(80), // Width for total price
+                              0: FixedColumnWidth(130), // Width for product name
+                              1: FixedColumnWidth(50),  // Width for quantity
+                              2: FixedColumnWidth(70),  // Width for original price
+                              3: FixedColumnWidth(70),  // Width for discounted price
+                              4: FixedColumnWidth(80),  // Width for total price
                             },
                             children: [
-                              // Header Row
+                              // Header Row with "RM" symbol only in headers
                               const TableRow(
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF007ACC), // Header background color
+                                ),
                                 children: [
-                                  Text('Product',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  Text('Qty',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  Text('Orig',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  Text('Disc',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  Text('Total',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text('Product', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text('Orig (RM)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text('Disc (RM)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text('Total (RM)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
                                 ],
                               ),
                               // Data Rows
-                              for (var item in widget.cartItems)
+                              for (var item in widget.cartItems.asMap().entries)
                                 TableRow(
+                                  decoration: BoxDecoration(
+                                    color: item.key.isEven ? Colors.grey.shade100 : Colors.white, // Alternate row colors
+                                  ),
                                   children: [
-                                    Text(
-                                      item.productName,
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                    // Wrap product name to two lines
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        item.value.productName,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 14),
                                       ),
                                     ),
-                                    Text(
-                                      '${item.quantity}',
-                                      style: const TextStyle(
-                                          fontSize: 12, color: Colors.black),
-                                    ),
-                                    Text(
-                                      formatter.format(item.originalUnitPrice),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: item.originalUnitPrice !=
-                                                item.unitPrice
-                                            ? Colors.red[700]
-                                            : Colors.black,
-                                        decoration: item.originalUnitPrice !=
-                                                item.unitPrice
-                                            ? TextDecoration.lineThrough
-                                            : null,
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        '${item.value.quantity}',
+                                        style: const TextStyle(fontSize: 12, color: Colors.black),
                                       ),
                                     ),
-                                    Text(
-                                      item.originalUnitPrice != item.unitPrice
-                                          ? formatter.format(item.unitPrice)
-                                          : '-', // Display '-' if prices are the same
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        formatter.format(item.value.originalUnitPrice).replaceAll('RM', ''),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: item.value.originalUnitPrice != item.value.unitPrice ? Colors.red[700] : Colors.black,
+                                          decoration: item.value.originalUnitPrice != item.value.unitPrice ? TextDecoration.lineThrough : null,
+                                        ),
                                       ),
                                     ),
-                                    Text(
-                                      formatter.format(
-                                          item.unitPrice * item.quantity),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        item.value.originalUnitPrice != item.value.unitPrice
+                                            ? formatter.format(item.value.unitPrice).replaceAll('RM', '')
+                                            : '-',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        formatter.format(item.value.unitPrice * item.value.quantity).replaceAll('RM', ''),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -474,117 +501,116 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           ),
                         ),
                       ),
-                    ),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 20.0,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.transparent, Colors.grey.withOpacity(0.1)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16.0),
-                  // Order summary
-                  Container(
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8.0),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4.0,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Order Summary',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8.0),
-                        const Divider(color: Colors.black54),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Subtotal:',
-                                  style: TextStyle(fontSize: 16)),
-                              Text(formattedSubtotal,
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('GST:',
-                                  style: TextStyle(fontSize: 16)),
-                              Text(formattedGST,
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('SST:',
-                                  style: TextStyle(fontSize: 16)),
-                              Text(formattedSST,
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Discount:',
-                                  style: TextStyle(fontSize: 16)),
-                              Text(formattedDiscount,
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Total:',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                              Text(formattedTotal,
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green[800])),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                // Order summary
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4.0,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Order Summary',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      const Divider(color: Colors.black54),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Subtotal:', style: TextStyle(fontSize: 16)),
+                            Text(formattedSubtotal, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('GST:', style: TextStyle(fontSize: 16)),
+                            Text(formattedGST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('SST:', style: TextStyle(fontSize: 16)),
+                            Text(formattedSST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Discount:', style: TextStyle(fontSize: 16)),
+                            Text(formattedDiscount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            Text(
+                              formattedTotal,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[800],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16.0),
+        ),
+        const SizedBox(height: 16.0),
           TextField(
             controller: remarkController,
             decoration: const InputDecoration(
@@ -633,13 +659,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
           ElevatedButton(
             style: ButtonStyle(
               backgroundColor:
-                  MaterialStateProperty.all<Color>(const Color(0xff0069BA)),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  WidgetStateProperty.all<Color>(const Color(0xff0069BA)),
+              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
               ),
-              minimumSize: MaterialStateProperty.all<Size>(
+              minimumSize: WidgetStateProperty.all<Size>(
                 const Size(120, 40),
               ),
             ),

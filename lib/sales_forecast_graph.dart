@@ -377,121 +377,124 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
-          child: SizedBox(
-            height: 240,
-            width: MediaQuery.of(context).size.width * 0.95,
-            child: Container(
-              decoration: BoxDecoration(
-                  image: const DecorationImage(
-                    opacity: 0.8,
-                    image: ResizeImage(
-                        AssetImage('asset/Data_Analytics_stamp.png'),
-                        width: 150,
-                        height: 150),
-                    alignment: Alignment.bottomLeft,
-                  ),
-                  borderRadius: BorderRadius.circular(6),
-                  boxShadow: const [
-                    BoxShadow(
-                      blurStyle: BlurStyle.normal,
-                      color: Color.fromARGB(75, 117, 117, 117),
-                      spreadRadius: 0.1,
-                      blurRadius: 4,
-                      offset: Offset(0, 1),
+        GestureDetector(
+          onTap: _editSalesTarget,
+          child: Center(
+            child: SizedBox(
+              height: 240,
+              width: MediaQuery.of(context).size.width * 0.95,
+              child: Container(
+                decoration: BoxDecoration(
+                    image: const DecorationImage(
+                      opacity: 0.8,
+                      image: ResizeImage(
+                          AssetImage('asset/Data_Analytics_stamp.png'),
+                          width: 150,
+                          height: 150),
+                      alignment: Alignment.bottomLeft,
                     ),
-                  ],
-                  gradient: const LinearGradient(colors: [
-                    Color.fromRGBO(150, 218, 255, 0.882),
-                    Colors.white
-                  ], begin: Alignment.topRight, end: Alignment.bottomLeft)),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(left: 8),
-                              child: Text(
-                                'Sales Target',
-                                style: GoogleFonts.inter(
-                                    textStyle:
-                                        const TextStyle(letterSpacing: -0.8),
-                                    fontSize: 20.0,
-                                    color: const Color(0xff085ABE),
-                                    fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                          ],
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            icon: Icon(Icons.edit, color: Colors.grey[800]),
-                            onPressed: _editSalesTarget,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Spacer(),
-                        Container(
-                          margin: const EdgeInsets.only(right: 10),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurStyle: BlurStyle.normal,
+                        color: Color.fromARGB(75, 117, 117, 117),
+                        spreadRadius: 0.1,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                    gradient: const LinearGradient(colors: [
+                      Color.fromRGBO(150, 218, 255, 0.882),
+                      Colors.white
+                    ], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
-                              Text(
-                                _salesTarget,
-                                textAlign: TextAlign.start,
-                                style: GoogleFonts.inter(
-                                    fontSize: 24.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xff085ABE)),
-                              ),
-                              const SizedBox(height: 4.0),
-                              Text(
-                                'Current: ${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
-                                style: GoogleFonts.inter(
-                                    fontSize: 14.0,
-                                    fontWeight: FontWeight.w400,
-                                    color: const Color.fromARGB(255, 0, 0, 0)),
-                              ),
-                              const SizedBox(height: 4.0),
-                              SizedBox(
-                                width: 180,
-                                child: LinearProgressIndicator(
-                                  value: progressValue,
-                                  minHeight: 20.0,
-                                  backgroundColor:
-                                      const Color.fromRGBO(112, 112, 112, 0.37),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                          Color(0xff23C197)),
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                child: Text(
+                                  'Sales Target',
+                                  style: GoogleFonts.inter(
+                                      textStyle:
+                                          const TextStyle(letterSpacing: -0.8),
+                                      fontSize: 20.0,
+                                      color: const Color(0xff085ABE),
+                                      fontWeight: FontWeight.w700),
                                 ),
                               ),
-                              Text(
-                                '${completionPercentage.toStringAsFixed(0)}% Complete',
-                                textAlign: TextAlign.start,
-                                style: GoogleFonts.inter(
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.w400,
-                                    color: const Color.fromRGBO(0, 0, 0, 1)),
-                              ),
-                              const SizedBox(height: 8.0),
+                              const SizedBox(width: 8.0),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              icon: Icon(Icons.edit, color: Colors.grey[800]),
+                              onPressed: _editSalesTarget,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Spacer(),
+                          Container(
+                            margin: const EdgeInsets.only(right: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _salesTarget,
+                                  textAlign: TextAlign.start,
+                                  style: GoogleFonts.inter(
+                                      fontSize: 24.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xff085ABE)),
+                                ),
+                                const SizedBox(height: 4.0),
+                                Text(
+                                  'Current: ${NumberFormat.currency(locale: 'en_MY', symbol: 'RM', decimalDigits: 2).format(widget.currentSales)}',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 14.0,
+                                      fontWeight: FontWeight.w400,
+                                      color: const Color.fromARGB(255, 0, 0, 0)),
+                                ),
+                                const SizedBox(height: 4.0),
+                                SizedBox(
+                                  width: 180,
+                                  child: LinearProgressIndicator(
+                                    value: progressValue,
+                                    minHeight: 20.0,
+                                    backgroundColor:
+                                        const Color.fromRGBO(112, 112, 112, 0.37),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                            Color(0xff23C197)),
+                                  ),
+                                ),
+                                Text(
+                                  '${completionPercentage.toStringAsFixed(0)}% Complete',
+                                  textAlign: TextAlign.start,
+                                  style: GoogleFonts.inter(
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w400,
+                                      color: const Color.fromRGBO(0, 0, 0, 1)),
+                                ),
+                                const SizedBox(height: 8.0),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

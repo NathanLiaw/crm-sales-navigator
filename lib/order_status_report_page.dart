@@ -895,6 +895,18 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
   Widget _buildDateRangePicker() {
     final bool isCustomRangeSelected = dateRange != null;
+    String formattedDate;
+    if (selectedButtonIndex == 3) {
+      // Show full date range for "All" selection
+      formattedDate =
+      '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
+    } else if (isCustomRangeSelected) {
+      formattedDate =
+      '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}';
+    } else {
+      formattedDate = 'Filter Date';
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -915,11 +927,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                   : Theme.of(context).iconTheme.color,
             ),
             label: Text(
-              isCustomRangeSelected
-                  ? '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}'
-                  : 'Filter Date',
+              formattedDate,
               style: TextStyle(
-                color: isCustomRangeSelected
+                color: isCustomRangeSelected || selectedButtonIndex == 3
                     ? Colors.black
                     : Theme.of(context).textTheme.bodyMedium!.color,
               ),

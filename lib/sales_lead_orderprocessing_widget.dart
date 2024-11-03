@@ -212,14 +212,14 @@ class OrderProcessingLeadItem extends StatelessWidget {
                   ),
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: orderStatus == 'Pending'
                           ? const Color.fromARGB(255, 255, 195, 31)
                           : orderStatus == 'Void'
                               ? Colors.red
                               : Colors.green,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       orderStatus,
@@ -339,7 +339,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => onMoveToClosed(leadItem),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0069BA),
+                        backgroundColor: const Color(0xff0175FF),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/cart_item.dart';
-import 'package:provider/provider.dart';
-import 'package:sales_navigator/cart_item.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
@@ -16,7 +14,6 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:sales_navigator/pdf_generator.dart';
-import 'package:open_file/open_file.dart';
 
 class OrderDetailsPage extends StatefulWidget {
   final int cartID;
@@ -93,22 +90,23 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             salesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
             total = double.tryParse(orderDetails['final_total']) ?? 0.0;
             subtotal = double.tryParse(orderDetails['total']) ?? 0.0;
-
             orderItems = [];
           });
 
-          // Use a for loop to await each fetchProductPhoto call
-          for (var item in cartItems) {
+          // Fetch all product photos concurrently
+          final photoPaths = await Future.wait(cartItems.map((item) async {
             final productId = item['product_id'];
-            final productName = item['product_name'];
+            return fetchProductPhoto(productId);
+          }));
 
-            // Fetch the product photo for each item
-            final photoPath = await fetchProductPhoto(productId);
-
-            setState(() {
+          // Process each item and add to orderItems list
+          setState(() {
+            for (int i = 0; i < cartItems.length; i++) {
+              final item = cartItems[i];
+              final photoPath = photoPaths[i];
               orderItems.add(OrderItem(
-                productId: productId,
-                productName: productName,
+                productId: item['product_id'],
+                productName: item['product_name'],
                 unitPrice: (item['unit_price'] != null
                     ? double.parse(item['unit_price']).toStringAsFixed(2)
                     : '0.00'),
@@ -120,10 +118,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 photoPath: photoPath,
                 uom: item['uom'] ?? '',
               ));
-            });
-          }
-          subtotal = orderItems.fold(
-              0.0, (sum, item) => sum + double.parse(item.total));
+            }
+            // Recalculate subtotal
+            subtotal = orderItems.fold(
+                0.0, (sum, item) => sum + double.parse(item.total));
+          });
         } else {
           developer.log('Failed to fetch order details: ${data['message']}');
         }
@@ -331,8 +330,21 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           future: _orderDetailsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16.0), // Space between the indicator and text
+                    Text(
+                      'Fetching order details',
+                      style: TextStyle(fontSize: 16.0, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
+            }
+            else if (snapshot.hasError) {
               return const Center(child: Text('Failed to fetch order details'));
             } else {
               return Column(
@@ -1043,7 +1055,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: Text('Total: RM${item.total}',
+              child: Text('Total: RM${double.parse(item.total).toStringAsFixed(3)}',
                   style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.bold)),
             ),
@@ -1055,8 +1067,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   bool shouldHideVoidButton() {
-    return orderItems
-        .any((item) => item.status == 'Void' || item.status == 'Confirm');
+    return orderItems.isNotEmpty && orderItems.every((item) => item.status == 'Void' || item.status == 'Confirm');
   }
 }
 

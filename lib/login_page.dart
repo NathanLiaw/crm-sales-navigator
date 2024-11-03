@@ -186,120 +186,127 @@ class LoginPage extends StatelessWidget {
                   minHeight: MediaQuery.of(context).size.height,
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.only(
-                        left: 18,
-                        top: 50,
-                        bottom: 20,
-                      ),
-                      alignment: Alignment.centerLeft,
-                      child: Image.asset(
-                        'asset/logo/logo_fyh.png',
-                        width: 200,
-                        height: 100,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.only(
-                        left: 20,
-                        bottom: 24,
-                      ),
-                      child: const Text(
-                        'Control your Sales\ntoday.',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.only(
+                            left: 18,
+                            top: 50,
+                            bottom: 20,
+                          ),
+                          alignment: Alignment.centerLeft,
+                          child: Image.asset(
+                            'asset/logo/logo_fyh.png',
+                            width: 300,
+                            height: 150,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: TextFormField(
-                        controller: usernameController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Username',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: TextFormField(
-                        controller: passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Password',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 80),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => signIn(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(255, 7, 148, 255),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(
+                            left: 20,
+                            bottom: 24,
                           ),
                           child: const Text(
-                            'Sign In',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => showContactInfoDialog(context),
-                      child: const Text(
-                        'Forgot Password',
-                        style: TextStyle(
-                          color: Colors.black,
-                          decoration: TextDecoration.underline,
-                          decorationThickness: 2.0,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 244, // Fixed height for the image container
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Positioned(
-                            top: -100,
-                            left: 0,
-                            right: 0,
-                            child: Image.asset(
-                              'asset/SN_ELEMENTS_CENTER.png',
-                              fit: BoxFit.contain,
+                            'Control your Sales\ntoday.',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
-                          Positioned(
-                            top: 20,
-                            left: 0,
-                            right: 0,
-                            child: SizedBox(
-                              width: 40,
-                              child: Image.asset(
-                                width: 150,
-                                height: 150,
-                                'asset/chart_illu.png',
-                                fit: BoxFit.contain,
+                        ),
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: TextFormField(
+                            controller: usernameController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Username',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: TextFormField(
+                            controller: passwordController,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Password',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 80),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => signIn(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 7, 148, 255),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                              child: const Text(
+                                'Sign In',
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
-                        ],
+                        ),
+                        TextButton(
+                          onPressed: () => showContactInfoDialog(context),
+                          child: const Text(
+                            'Forgot Password',
+                            style: TextStyle(
+                              color: Colors.black,
+                              decoration: TextDecoration.underline,
+                              decorationThickness: 2.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      child: SizedBox(
+                        height: 244, // Fixed height for the image container
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Positioned(
+                              top: -100,
+                              left: 0,
+                              right: 0,
+                              child: Image.asset(
+                                'asset/SN_ELEMENTS_CENTER.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            Positioned(
+                              top: 20,
+                              left: 0,
+                              right: 0,
+                              child: SizedBox(
+                                width: 40,
+                                child: Image.asset(
+                                  width: 150,
+                                  height: 150,
+                                  'asset/chart_illu.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
