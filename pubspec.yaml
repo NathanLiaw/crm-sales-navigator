@@ -1,7 +1,7 @@
 name: sales_navigator
 description: "Sales Navigator - Customer Relationship Management (CRM) Sales Management"
 publish_to: 'none'
-version: 0.7.0
+version: 0.8.0
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

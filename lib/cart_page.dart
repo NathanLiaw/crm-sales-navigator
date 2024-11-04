@@ -1406,8 +1406,8 @@ class _CartPage extends State<CartPage> {
                             },
                             style: ButtonStyle(
                               backgroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.red),
-                              shape: MaterialStateProperty.all<
+                                  WidgetStateProperty.all<Color>(Colors.red),
+                              shape: WidgetStateProperty.all<
                                   RoundedRectangleBorder>(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -1493,15 +1493,15 @@ class _CartPage extends State<CartPage> {
                           }
                         },
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
+                          backgroundColor: WidgetStateProperty.all<Color>(
                               const Color(0xff0175FF)),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size(120,
                                 40), // Adjust the minimum width and height of the button
                           ),

@@ -47,8 +47,8 @@ class PdfInvoiceGenerator {
 
     double subtotal =
         orderItems.fold(0, (sum, item) => sum + double.parse(item.total));
-    double gstAmount = subtotal * (gst / 100);
-    double sstAmount = subtotal * (sst / 100);
+    double gstAmount = subtotal * (gst);
+    double sstAmount = subtotal * (sst);
     double total = subtotal + gstAmount + sstAmount;
 
     // Convert order items to table data for better handling
@@ -295,10 +295,10 @@ class PdfInvoiceGenerator {
                         _buildSummaryRow('Subtotal:',
                             subtotal.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
-                        _buildSummaryRow('GST (${gst.toStringAsFixed(2)}%):',
+                        _buildSummaryRow('GST (${gst*100}%):',
                             gstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
-                        _buildSummaryRow('SST (${sst.toStringAsFixed(2)}%):',
+                        _buildSummaryRow('SST (${sst*100}%):',
                             sstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
                         pw.Divider(color: PdfColors.grey400),

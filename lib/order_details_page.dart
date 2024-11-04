@@ -7,7 +7,6 @@ import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:sales_navigator/pdf_viewer_page.dart';
-import 'package:sales_navigator/sales_order_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'package:sales_navigator/event_logger.dart';
 import 'dart:developer' as developer;
@@ -107,6 +106,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               orderItems.add(OrderItem(
                 productId: item['product_id'],
                 productName: item['product_name'],
+                oriUnitPrice: (item['ori_unit_price'] != null
+                    ? double.parse(item['ori_unit_price']).toStringAsFixed(2)
+                    : '0.00'),
                 unitPrice: (item['unit_price'] != null
                     ? double.parse(item['unit_price']).toStringAsFixed(2)
                     : '0.00'),
@@ -119,9 +121,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 uom: item['uom'] ?? '',
               ));
             }
-            // Recalculate subtotal
-            subtotal = orderItems.fold(
-                0.0, (sum, item) => sum + double.parse(item.total));
           });
         } else {
           developer.log('Failed to fetch order details: ${data['message']}');
@@ -209,6 +208,28 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Future<void> getTax() async {
     gst = await UtilityFunction.retrieveTax('GST');
     sst = await UtilityFunction.retrieveTax('SST');
+  }
+
+  double calculateTotalDiscount(List<CartItem> items) {
+    double totalDiscount = 0.0;
+
+    for (var item in items) {
+      // Original price of the item
+      double originalPrice = item.originalUnitPrice;
+      // Current unit price of the item
+      double currentPrice = item.unitPrice;
+
+      // Check if the original price is different from the current unit price
+      if (originalPrice != currentPrice) {
+        // Calculate the discount amount per item
+        double discountAmount = (originalPrice - currentPrice) * item.quantity;
+
+        // Add the discount amount to the total discount
+        totalDiscount += discountAmount;
+      }
+    }
+
+    return totalDiscount;
   }
 
   Future<void> insertItemIntoCart(CartItem cartItem) async {
@@ -346,7 +367,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildExpandableOrderInfo(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -387,7 +408,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
                   const SizedBox(height: 4),
 
-                  Container(
+                  SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () async {
@@ -441,8 +462,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 2),
-
+                  const SizedBox(height: 4),
                   // Order Items List
                   Expanded(
                     child: Column(
@@ -885,6 +905,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
     return Column(
       children: [
+        const SizedBox(height: 8,),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -954,6 +975,48 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ),
           ],
         ),
+        // const SizedBox(height: 8),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     RichText(
+        //       text: const TextSpan(
+        //         style: TextStyle(
+        //           color: Colors.black,
+        //           fontWeight: FontWeight.bold,
+        //         ),
+        //         children: [
+        //           TextSpan(text: 'Discount '),
+        //         ],
+        //       ),
+        //     ),
+        //     Text(
+        //       formattedSST,
+        //       style: const TextStyle(fontWeight: FontWeight.bold),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 8),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     RichText(
+        //       text: const TextSpan(
+        //         style: TextStyle(
+        //           color: Colors.black,
+        //           fontWeight: FontWeight.bold,
+        //         ),
+        //         children: [
+        //           TextSpan(text: 'Customer Rate '),
+        //         ],
+        //       ),
+        //     ),
+        //     Text(
+        //       formattedSST,
+        //       style: const TextStyle(fontWeight: FontWeight.bold),
+        //     ),
+        //   ],
+        // ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1009,78 +1072,97 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildOrderItem(OrderItem item) {
+    double oriUnitPriceConverted = double.parse(item.oriUnitPrice);
     double unitPriceConverted = double.parse(item.unitPrice);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            (item.photoPath.isNotEmpty && Uri.parse(item.photoPath).isAbsolute)
-                ? Image.network(
-                    item.photoPath,
-                    height: 80,
-                    width: 80,
-                  )
-                : Image.asset(
-                    'asset/no_image.jpg',
-                    height: 80,
-                    width: 80,
-                  ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.productName,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Unit Price: RM${unitPriceConverted.toStringAsFixed(3)}',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Text(
-                          'Qty: ${item.qty}',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              (item.photoPath.isNotEmpty && Uri.parse(item.photoPath).isAbsolute)
+                  ? Image.network(
+                      item.photoPath,
+                      height: 80,
+                      width: 80,
+                    )
+                  : Image.asset(
+                      'asset/no_image.jpg',
+                      height: 80,
+                      width: 80,
+                    ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.productName,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      item.uom,
+                      style: const TextStyle(
+                          fontSize: 16,),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Unit Price: RM${oriUnitPriceConverted.toStringAsFixed(3)}',
+                      style: const TextStyle(fontSize: 16),
+                      maxLines: null, // Allow multiline
+                      overflow: TextOverflow.visible, // Show text fully without truncating
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Disc. Price: RM${unitPriceConverted.toStringAsFixed(3)}',
+                            style: const TextStyle(fontSize: 16),
+                            maxLines: null, // Allow multiline
+                            overflow: TextOverflow.visible, // Show text fully without truncating
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            'Qty: ${item.qty}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            maxLines: null, // Allow multiline
+                            overflow: TextOverflow.visible, // Show text fully without truncating
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Status: ${item.status}',
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Text(
-                  'Total: RM${double.parse(item.total).toStringAsFixed(3)}',
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-        const Divider(),
-      ],
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Status: ${item.status}',
+                  style:
+                      const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Text(
+                    'Total: RM${double.parse(item.total).toStringAsFixed(3)}',
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const Divider(),
+        ],
+      ),
     );
   }
 
@@ -1094,6 +1176,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 class OrderItem {
   final int productId;
   final String productName;
+  final String oriUnitPrice;
   final String unitPrice;
   final String qty;
   final String status;
@@ -1105,6 +1188,7 @@ class OrderItem {
     required this.productId,
     required this.productName,
     required this.unitPrice,
+    required this.oriUnitPrice,
     required this.qty,
     required this.status,
     required this.total,

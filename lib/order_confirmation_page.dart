@@ -113,7 +113,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'buyer_name': name,
         'customer_id': widget.customer.id,
         'customer_company_name': widget.customer.companyName,
-        'customer_discount': widget.customer.customerRate,
+        'customer_discount': double.parse(((widget.customer.discountRate / 100) * widget.subtotal).toStringAsFixed(3)),
         'status': 'Pending',
         'last_checked_status': 'Pending',
         'created': UtilityFunction.getCurrentDateTime(),
@@ -312,6 +312,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     final formattedDiscount = orderSummaryFormatter.format(totalDiscount);
     final formattedGST = orderSummaryFormatter.format(widget.gst * widget.subtotal);
     final formattedSST = orderSummaryFormatter.format(widget.sst * widget.subtotal);
+    final customerRate = orderSummaryFormatter.format(widget.customer.discountRate/100 * widget.subtotal).toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -583,6 +584,16 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           children: [
                             const Text('Discount:', style: TextStyle(fontSize: 16)),
                             Text(formattedDiscount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Customer Rate:', style: TextStyle(fontSize: 16)),
+                            Text(customerRate, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),

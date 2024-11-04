@@ -61,7 +61,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
             addressLine2: customerData['address_line_2'] as String? ?? '',
             contactNumber: customerData['contact_number'] as String? ?? '',
             email: customerData['email'] as String? ?? '',
-            customerRate: customerData['customer_rate'] as String? ?? '',
+            customerRate: customerData['customer_rate'] as String? ?? '7',
             discountRate: customerData['discount_rate'] is int
                 ? customerData['discount_rate']
                 : int.tryParse(customerData['discount_rate'].toString()) ?? 0,
