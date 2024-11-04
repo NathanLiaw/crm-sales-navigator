@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_navigator/chatbot_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -38,6 +39,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     super.initState();
     _loadUsername();
     _loadChatFromCache();
+    _loadUsernameAndData();
   }
 
   Future<void> _loadUsername() async {
@@ -47,6 +49,14 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
     });
     _fetchSalesPerformance();
     _fetchSalesLeads();
+  }
+
+  Future<void> _loadUsernameAndData() async {
+    await _loadUsername();
+    await _fetchSalesLeads();
+    if (_messages.isEmpty) {
+      _sendInitialSalesOverview();
+    }
   }
 
   Future<void> _loadChatFromCache() async {
@@ -459,9 +469,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
   void _handleSuggestion(String suggestion) {
     _controller.text = suggestion;
     _handleSendMessage(suggestion);
-    setState(() {
-      // Suggestions are not removed
-    });
+    setState(() {});
   }
 
   @override
@@ -476,7 +484,10 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatScreen()),
+            );
           },
         ),
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sales_navigator/ai_assistant.dart';
 import 'package:sales_navigator/chatbot_page.dart';
 import 'package:sales_navigator/data_analytics_page.dart';
 import 'package:sales_navigator/model/notification_state.dart';
@@ -157,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
               buildProfileOption('Terms & Condition', Icons.description, context),
               buildProfileOption('Contact Us', Icons.phone, context),
               buildProfileOption('About Us', Icons.info, context),
-              buildProfileOption('AI Assistant', Icons.assistant, context),
+              buildProfileOption('Chatbot', Icons.chat, context),
               const SizedBox(height: 20),
               Center(child: buildLogoutButton()),
               const SizedBox(height: 20),
@@ -195,8 +194,8 @@ class _ProfilePageState extends State<ProfilePage> {
           case 'About Us':
             Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutUs()));
             break;
-          case 'AI Assistant':
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SalesPerformancePage()));
+          case 'Chatbot':
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatScreen()));
             break;
         }
       },
