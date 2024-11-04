@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:path/path.dart' as path;
 
 class PDFViewerPage extends StatefulWidget {
@@ -32,6 +33,79 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   void initState() {
     super.initState();
     _saveTempFile();
+    _checkAndRequestPermissions();
+  }
+
+  Future<void> _checkAndRequestPermissions() async {
+    final deviceInfo = await DeviceInfoPlugin().androidInfo;
+    final sdkInt = deviceInfo.version.sdkInt;
+
+    if (sdkInt >= 33) {
+      // Android 13 and above
+      await Permission.photos.request();
+      await Permission.videos.request();
+      await Permission.audio.request();
+    } else if (sdkInt >= 29) {
+      // Android 10 and 11
+      await Permission.storage.request();
+    } else {
+      // Below Android 10
+      await Permission.storage.request();
+    }
+  }
+
+  Future<bool> _handlePermissions() async {
+    final deviceInfo = await DeviceInfoPlugin().androidInfo;
+    final sdkInt = deviceInfo.version.sdkInt;
+
+    if (sdkInt >= 33) {
+      // For Android 13+, check media permissions
+      final photos = await Permission.photos.status;
+      if (!photos.isGranted) {
+        final result = await Permission.photos.request();
+        if (!result.isGranted) {
+          _showPermissionDeniedDialog();
+          return false;
+        }
+      }
+      return true;
+    } else {
+      // For Android 12 and below, check storage permission
+      final storage = await Permission.storage.status;
+      if (!storage.isGranted) {
+        final result = await Permission.storage.request();
+        if (!result.isGranted) {
+          _showPermissionDeniedDialog();
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Storage Permission Required'),
+        content: const Text(
+          'This app needs storage permission to save invoices. Please grant permission in app settings.',
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: const Text('Open Settings'),
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _saveTempFile() async {
@@ -45,50 +119,153 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   Future<void> _downloadPDF() async {
     setState(() => isLoading = true);
     try {
-      // Request storage access
-      var status = await Permission.storage.request();
-      if (status.isGranted) {
-        // Get download directory
+      // 1. Handle permissions
+      final hasPermission = await _handlePermissions();
+      if (!hasPermission) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      // 2. Get device SDK version for handling Android specific logic
+      if (Platform.isAndroid) {
+        final deviceInfo = await DeviceInfoPlugin().androidInfo;
+        final sdkInt = deviceInfo.version.sdkInt;
+
         Directory? downloadDir;
-        if (Platform.isAndroid) {
+        String? filePath;
+
+        // Handle different Android versions
+        if (sdkInt >= 33) {
+          // Android 13 and above
           downloadDir = Directory('/storage/emulated/0/Download');
-        } else if (Platform.isIOS) {
-          downloadDir = await getApplicationDocumentsDirectory();
+        } else if (sdkInt >= 29) {
+          // Android 10 and 11
+          downloadDir = Directory('/storage/emulated/0/Download');
+        } else {
+          // Below Android 10
+          downloadDir = Directory('/storage/emulated/0/Download');
         }
 
-        if (downloadDir != null) {
-          final fileName = 'invoice_${widget.salesOrderId}.pdf';
-          final filePath = path.join(downloadDir.path, fileName);
-          final file = File(filePath);
-          await file.writeAsBytes(widget.pdfData);
+        // Create download directory if it doesn't exist
+        if (!await downloadDir.exists()) {
+          await downloadDir.create(recursive: true);
+        }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('PDF saved to ${file.path}'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
+        // Generate filename with timestamp to avoid duplicates
+        final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+        final fileName = 'invoice_${widget.salesOrderId}_$timestamp.pdf';
+        filePath = path.join(downloadDir.path, fileName);
+
+        // Save the file
+        final file = File(filePath);
+        await file.writeAsBytes(widget.pdfData);
+
+        if (!mounted) return;
+
+        // Show success message with file path
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'PDF saved successfully!',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Location: ${file.path}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
             ),
-          );
-        }
-      } else {
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'VIEW',
+              textColor: Colors.white,
+              onPressed: () async {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PDFViewerPage(
+                      pdfData: file.readAsBytesSync(),
+                      salesOrderId: widget.salesOrderId,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      } else if (Platform.isIOS) {
+        // Handle iOS
+        final directory = await getApplicationDocumentsDirectory();
+        final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+        final fileName = 'invoice_${widget.salesOrderId}_$timestamp.pdf';
+        final filePath = path.join(directory.path, fileName);
+        final file = File(filePath);
+        await file.writeAsBytes(widget.pdfData);
+
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Storage permission denied'),
-            backgroundColor: Colors.red,
+            content: Text('PDF saved to Documents'),
+            backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
+      if (!mounted) return;
+
+      // Show detailed error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving PDF: $e'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Error saving PDF',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                e.toString(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white70,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'RETRY',
+            textColor: Colors.white,
+            onPressed: _downloadPDF,
+          ),
         ),
       );
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:sales_navigator/cached_page_manager.dart';
 import 'package:sales_navigator/cart_page.dart';
 import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/home_page.dart';
@@ -17,12 +18,10 @@ class CustomNavigationBar extends StatelessWidget {
         Provider.of<NavigationProvider>(context, listen: false);
     navigationProvider.setSelectedIndex(index);
 
-    // Get the current route name
     final String currentRoute =
         ModalRoute.of(context)?.settings.name ?? '/home';
     String targetRoute;
 
-    // Determine the target route
     switch (index) {
       case 0:
         targetRoute = '/home';
@@ -43,40 +42,58 @@ class CustomNavigationBar extends StatelessWidget {
         targetRoute = '/home';
     }
 
-    // Only navigate if we're actually changing routes
     if (currentRoute != targetRoute) {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
           settings: RouteSettings(name: targetRoute),
+          transitionDuration: const Duration(milliseconds: 150),
+          reverseTransitionDuration: const Duration(milliseconds: 150),
           pageBuilder: (context, animation, secondaryAnimation) {
+            Widget page = CachedPageManager.getCachedPage(targetRoute, () {
+              switch (targetRoute) {
+                case '/home':
+                  return const HomePage();
+                case '/sales':
+                  return const SalesOrderPage();
+                case '/product':
+                  return const ProductsScreen();
+                case '/cart':
+                  return const CartPage();
+                case '/profile':
+                  return const ProfilePage();
+                default:
+                  return const HomePage();
+              }
+            });
+
             return FadeTransition(
               opacity: animation,
-              child: _buildPage(targetRoute),
+              child: page,
             );
           },
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
         ),
       );
     }
   }
 
-  Widget _buildPage(String route) {
-    switch (route) {
-      case '/home':
-        return const HomePage();
-      case '/sales':
-        return const SalesOrderPage();
-      case '/product':
-        return const ProductsScreen();
-      case '/cart':
-        return const CartPage();
-      case '/profile':
-        return const ProfilePage();
-      default:
-        return const HomePage();
-    }
+  Widget _buildCachedPage(String route) {
+    return CachedPageManager.getCachedPage(route, () {
+      switch (route) {
+        case '/home':
+          return const HomePage();
+        case '/sales':
+          return const SalesOrderPage();
+        case '/product':
+          return const ProductsScreen();
+        case '/cart':
+          return const CartPage();
+        case '/profile':
+          return const ProfilePage();
+        default:
+          return const HomePage();
+      }
+    });
   }
 
   @override

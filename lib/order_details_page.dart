@@ -312,12 +312,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 ),
               );
             } else if (widget.fromSalesOrder) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SalesOrderPage(),
-                ),
-              );
+              Navigator.pop(context, true);
             } else {
               Navigator.pop(context, true);
             }
@@ -335,7 +330,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircularProgressIndicator(),
-                    SizedBox(height: 16.0), // Space between the indicator and text
+                    SizedBox(
+                        height: 16.0), // Space between the indicator and text
                     Text(
                       'Fetching order details',
                       style: TextStyle(fontSize: 16.0, color: Colors.grey),
@@ -343,8 +339,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   ],
                 ),
               );
-            }
-            else if (snapshot.hasError) {
+            } else if (snapshot.hasError) {
               return const Center(child: Text('Failed to fetch order details'));
             } else {
               return Column(
@@ -355,49 +350,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Order Status and Download Icon
-                      Row(
-                        children: [
-                          // Order Status Bubble
-                          getStatusLabel(status),
-
-                          const SizedBox(width: 8),
-
-                          // View PDF Button
-                          IconButton(
-                            icon: const Icon(Icons.visibility,
-                                color: Color(0xff0175FF)),
-                            tooltip: 'View Invoice',
-                            onPressed: () async {
-                              final pdfData =
-                                  await pdfGenerator.generateInvoicePdf(
-                                companyName: companyName,
-                                address: address,
-                                salesmanName: salesmanName,
-                                salesOrderId: salesOrderId,
-                                createdDate: createdDate,
-                                status: status,
-                                orderItems: orderItems,
-                                gst: gst,
-                                sst: sst,
-                              );
-
-                              if (!mounted) return;
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PDFViewerPage(
-                                    pdfData: pdfData,
-                                    salesOrderId: salesOrderId,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          // Text('Download PDF'),
-                        ],
-                      ),
+                      // Status Bubble
+                      getStatusLabel(status),
 
                       // Copy Order Button
                       ElevatedButton.icon(
@@ -416,10 +370,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white, // White text
-                          backgroundColor:
-                              const Color(0xff0175FF), // Blue background
-                          elevation: 6, // Add elevation
+                          foregroundColor: Colors.white,
+                          backgroundColor: const Color(0xff0175FF),
+                          elevation: 6,
                           shadowColor: Colors.grey.withOpacity(0.5),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12.0, vertical: 6.0),
@@ -431,21 +384,85 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      thickness: 3,
-                      child: ListView.builder(
-                        itemCount: orderItems.length,
-                        itemBuilder: (context, index) {
-                          return _buildOrderItem(orderItems[index]);
-                        },
+
+                  const SizedBox(height: 4),
+
+                  Container(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final pdfData = await pdfGenerator.generateInvoicePdf(
+                          companyName: companyName,
+                          address: address,
+                          salesmanName: salesmanName,
+                          salesOrderId: salesOrderId,
+                          createdDate: createdDate,
+                          status: status,
+                          orderItems: orderItems,
+                          gst: gst,
+                          sst: sst,
+                        );
+
+                        if (!mounted) return;
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PDFViewerPage(
+                              pdfData: pdfData,
+                              salesOrderId: salesOrderId,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.description_outlined,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'View / Download Invoice',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff0175FF),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _buildOrderSummary(),
+
+                  const SizedBox(height: 2),
+
+                  // Order Items List
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            thickness: 3,
+                            child: ListView.builder(
+                              itemCount: orderItems.length,
+                              itemBuilder: (context, index) {
+                                return _buildOrderItem(orderItems[index]);
+                              },
+                            ),
+                          ),
+                        ),
+                        _buildOrderSummary(),
+                      ],
+                    ),
+                  ),
                 ],
               );
             }
@@ -1055,7 +1072,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: Text('Total: RM${double.parse(item.total).toStringAsFixed(3)}',
+              child: Text(
+                  'Total: RM${double.parse(item.total).toStringAsFixed(3)}',
                   style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.bold)),
             ),
@@ -1067,7 +1085,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   bool shouldHideVoidButton() {
-    return orderItems.isNotEmpty && orderItems.every((item) => item.status == 'Void' || item.status == 'Confirm');
+    return orderItems.isNotEmpty &&
+        orderItems
+            .every((item) => item.status == 'Void' || item.status == 'Confirm');
   }
 }
 
