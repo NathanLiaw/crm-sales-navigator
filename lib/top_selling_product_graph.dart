@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class TopSellingProductsPage extends StatefulWidget {
   const TopSellingProductsPage({super.key});
@@ -40,7 +40,7 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
 
     // Prepare API endpoint
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/top_selling_product_graph/get_top_selling_products.php?username=$loggedInUsername');
+        '${dotenv.env['API_URL']}/top_selling_product_graph/get_top_selling_products.php?username=$loggedInUsername');
 
     try {
       // Call the API to fetch top-selling products

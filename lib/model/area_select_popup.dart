@@ -6,6 +6,7 @@ import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AreaSelectPopUp extends StatefulWidget {
   final Function(int) onAreaSelected; // Callback to notify selected area
@@ -58,8 +59,8 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
 
   Future<void> fetchAreaFromDb() async {
     Map<int, String> areaMap = {};
-    const String apiUrl =
-        'https://haluansama.com/crm-sales/api/area/get_area.php';
+    String apiUrl =
+        '${dotenv.env['API_URL']}/area/get_area.php';
     try {
       // Call the API to fetch areas
       final response = await http.get(Uri.parse('$apiUrl?status=1'));

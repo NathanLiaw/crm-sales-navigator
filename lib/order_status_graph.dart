@@ -7,6 +7,7 @@ import 'package:date_picker_plus/date_picker_plus.dart';
 import 'order_status_report_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OrderStatusWidget extends StatefulWidget {
   const OrderStatusWidget({super.key});
@@ -153,7 +154,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         DateFormat('yyyy-MM-dd HH:mm:ss').format(adjustedEndDate);
 
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/order_status_graph/get_order_status_graph.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate');
+        '${dotenv.env['API_URL']}/order_status_graph/get_order_status_graph.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate');
 
     try {
       final response = await http.get(apiUrl);
@@ -505,7 +506,7 @@ class InProgressOrdersWidget extends StatelessWidget {
 
   Future<List<InProgressOrder>> fetchInProgressOrders() async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/order_status_graph/get_in_progress_orders.php');
+        '${dotenv.env['API_URL']}/order_status_graph/get_in_progress_orders.php');
 
     try {
       final response = await http.get(apiUrl);

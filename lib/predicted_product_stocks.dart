@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PredictedProductsTarget extends StatefulWidget {
   const PredictedProductsTarget({super.key});
@@ -38,7 +39,7 @@ class _PredictedProductsTargetState extends State<PredictedProductsTarget> {
     }
 
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/predict_product_stock/get_predict_product.php?username=$loggedInUsername');
+        '${dotenv.env['API_URL']}/predict_product_stock/get_predict_product.php?username=$loggedInUsername');
 
     try {
       final response = await http.get(apiUrl);

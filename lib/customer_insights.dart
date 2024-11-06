@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sales_navigator/recent_order_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CustomerInsightsPage extends StatefulWidget {
   final String customerName;
@@ -55,7 +56,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   Future<Map<String, dynamic>> fetchOrderStatistics(int customerId) async {
     try {
       final String url =
-          'https://haluansama.com/crm-sales/api/customer_insights/get_order_statistics.php?customer_id=$customerId';
+          '${dotenv.env['API_URL']}/customer_insights/get_order_statistics.php?customer_id=$customerId';
       developer.log('Fetching order statistics from: $url');
 
       final response = await http.get(Uri.parse(url));
@@ -78,8 +79,8 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<Customer.Customer?> fetchCustomer() async {
     try {
-      const String apiUrl =
-          'https://haluansama.com/crm-sales/api/customer_insights/get_customer_data.php';
+      String apiUrl =
+          '${dotenv.env['API_URL']}/customer_insights/get_customer_data.php';
       final response = await http
           .get(Uri.parse('$apiUrl?company_name=${widget.customerName}'));
 
@@ -143,7 +144,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
       int customerId) async {
     try {
       String apiUrl =
-          'https://haluansama.com/crm-sales/api/customer_insights/get_customer_salesdata.php?customer_id=$customerId';
+          '${dotenv.env['API_URL']}/customer_insights/get_customer_salesdata.php?customer_id=$customerId';
 
       // Prepare the API request
       final url = Uri.parse(apiUrl);
@@ -196,7 +197,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     try {
       // API URL where the PHP script is hosted
       final String apiUrl =
-          'https://haluansama.com/crm-sales/api/customer_insights/get_products_by_customer_id.php?customer_id=$customerId';
+          '${dotenv.env['API_URL']}/customer_insights/get_products_by_customer_id.php?customer_id=$customerId';
 
       // Prepare the API request
       final url = Uri.parse(apiUrl);
@@ -221,7 +222,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   void navigateToItemScreen(int selectedProductId) async {
     final apiUrl =
-        'https://haluansama.com/crm-sales/api/product/get_product_by_id.php?id=$selectedProductId';
+        '${dotenv.env['API_URL']}/product/get_product_by_id.php?id=$selectedProductId';
 
     try {
       // Make an HTTP GET request to fetch the product details
@@ -284,7 +285,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     try {
       // Set the API URL with the keyword as a query parameter
       String apiUrl =
-          'https://haluansama.com/crm-sales/api/customer_insights/get_product_recommendation.php?keyword=${Uri.encodeComponent(keyword)}';
+          '${dotenv.env['API_URL']}/customer_insights/get_product_recommendation.php?keyword=${Uri.encodeComponent(keyword)}';
 
       // Prepare the API request
       final url = Uri.parse(apiUrl);
@@ -314,7 +315,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   Future<List<String>> fetchKeywords(int customerId) async {
     try {
       String sqlUrl =
-          'https://haluansama.com/crm-sales/api/customer_insights/get_keywords.php?customer_id=$customerId'; // Adjust this API endpoint to fetch keywords
+          '${dotenv.env['API_URL']}/customer_insights/get_keywords.php?customer_id=$customerId'; // Adjust this API endpoint to fetch keywords
 
       // Prepare the API request
       final url = Uri.parse(sqlUrl);
@@ -362,7 +363,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
     const String apiUrl = 'http://haluansama.com/crm-sales/api/customer_segmentation/customer_segmentation_api.php';
 
     try {
-      final response = await http.get(Uri.parse(apiUrl)).timeout(Duration(seconds: 10));
+      final response = await http.get(Uri.parse(apiUrl)).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         // Parse the JSON response
@@ -399,16 +400,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   String categoriseTotalSpentGroup(String totalSpentGroup) {
     if (totalSpentGroup == "Low") {
-      this.totalSpendGroup = 'Low';
-      this.clusterLabel = 'Low';
+      totalSpendGroup = 'Low';
+      clusterLabel = 'Low';
       return 'Low';
     } else if (totalSpentGroup == "Mid") {
-      this.totalSpendGroup = 'Mid';
-      this.clusterLabel = 'Mid';
+      totalSpendGroup = 'Mid';
+      clusterLabel = 'Mid';
       return 'Mid';
     } else {
-      this.totalSpendGroup = 'High';
-      this.clusterLabel = 'High';
+      totalSpendGroup = 'High';
+      clusterLabel = 'High';
       return 'High';
     }
   }
@@ -454,7 +455,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<void> getRecency() async {
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/customer_insights/get_recency.php?customer_id=$customerId';
+        '${dotenv.env['API_URL']}/customer_insights/get_recency.php?customer_id=$customerId';
 
     try {
       // Make the API request
@@ -485,7 +486,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
 
   Future<void> getTotalSpendGroup() async {
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/customer_insights/get_total_spend_group.php?customer_id=$customerId';
+        '${dotenv.env['API_URL']}/customer_insights/get_total_spend_group.php?customer_id=$customerId';
 
     try {
       // Make the API request
@@ -556,7 +557,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   Future<int?> fetchPredictedVisitDay() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://haluansama.com/crm-sales/api/customer_insights/get_next_visit.php?customer_id=$customerId'));
+          '${dotenv.env['API_URL']}/customer_insights/get_next_visit.php?customer_id=$customerId'));
 
       // Check if the request was successful
       if (response.statusCode == 200) {

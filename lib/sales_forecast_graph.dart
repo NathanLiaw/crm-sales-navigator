@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SalesForecastGraph extends StatefulWidget {
   const SalesForecastGraph({super.key});
@@ -38,7 +39,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 
   Future<void> updateSalesTargetsInDatabase() async {
     final apiUrl = Uri.parse(
-      'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target_table.php?username=$loggedInUsername',
+      '${dotenv.env['API_URL']}/sales_forecast_graph/update_sales_target_table.php?username=$loggedInUsername',
     );
 
     try {
@@ -70,7 +71,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 
   Future<List<SalesForecast>> fetchSalesForecasts() async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_forecast.php?username=$loggedInUsername');
+        '${dotenv.env['API_URL']}/sales_forecast_graph/get_sales_forecast.php?username=$loggedInUsername');
 
     try {
       final response = await http.get(apiUrl);
@@ -136,7 +137,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     final currentYear = now.year;
 
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_new_month_row.php?username=$loggedInUsername&currentMonth=$currentMonth&currentYear=$currentYear');
+        '${dotenv.env['API_URL']}/sales_forecast_graph/update_new_month_row.php?username=$loggedInUsername&currentMonth=$currentMonth&currentYear=$currentYear');
 
     try {
       final response = await http.get(apiUrl);
@@ -160,7 +161,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
   // Fetch Sales Conversion Rate from the new API
   Future<void> fetchSalesConversionRate() async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_conversation_rate.php?username=$loggedInUsername');
+        '${dotenv.env['API_URL']}/sales_forecast_graph/get_sales_conversation_rate.php?username=$loggedInUsername');
 
     try {
       final response = await http.get(apiUrl);
@@ -185,7 +186,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
 // Fetch Average Order Value (AOV) from the new API
   Future<void> fetchAverageOrderValue() async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_average_order_value.php?username=$loggedInUsername');
+        '${dotenv.env['API_URL']}/sales_forecast_graph/get_average_order_value.php?username=$loggedInUsername');
 
     try {
       final response = await http.get(apiUrl);
@@ -326,7 +327,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
 
     // Construct the API URL with the necessary parameters
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_forecast_graph/get_sales_target.php?username=${widget.loggedInUsername}&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
+        '${dotenv.env['API_URL']}/sales_forecast_graph/get_sales_target.php?username=${widget.loggedInUsername}&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
     try {
       // Make a GET request to fetch the sales target from the API
@@ -643,7 +644,7 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
     final currentMonth = now.month;
     final currentYear = now.year;
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_forecast_graph/update_sales_target.php'
+        '${dotenv.env['API_URL']}/sales_forecast_graph/update_sales_target.php'
         '?username=${widget.loggedInUsername}&newSalesTarget=$newSalesTarget&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
     try {

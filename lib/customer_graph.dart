@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CustomersGraph extends StatefulWidget {
   const CustomersGraph({super.key});
@@ -31,7 +32,7 @@ class _CustomersGraphState extends State<CustomersGraph> {
 
   Future<List<Customer>> fetchCustomersFromApi() async {
     final apiUrl =
-        'https://haluansama.com/crm-sales/api/customer_graph/get_top_customers.php?username=$loggedInUsername';
+        '${dotenv.env['API_URL']}/customer_graph/get_top_customers.php?username=$loggedInUsername';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));

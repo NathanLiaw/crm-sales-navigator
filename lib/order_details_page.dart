@@ -13,6 +13,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:sales_navigator/pdf_generator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OrderDetailsPage extends StatefulWidget {
   final int cartID;
@@ -77,7 +78,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/cart/get_order_details.php?cartId=$cartId'),
+            '${dotenv.env['API_URL']}/cart/get_order_details.php?cartId=$cartId'),
       );
 
       if (response.statusCode == 200) {
@@ -148,7 +149,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/product/get_prod_photo_by_prod_id.php?productId=$productId'),
+            '${dotenv.env['API_URL']}/product/get_prod_photo_by_prod_id.php?productId=$productId'),
       );
 
       if (response.statusCode == 200) {
@@ -172,8 +173,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Future<void> voidOrder() async {
-    const url =
-        'https://haluansama.com/crm-sales/api/order_details/void_order.php';
+     String url =
+        '${dotenv.env['API_URL']}/order_details/void_order.php';
 
     try {
       final response = await http.post(

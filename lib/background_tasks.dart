@@ -6,6 +6,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -55,7 +56,7 @@ void callbackDispatcher() {
 
 Future<void> checkOrderStatusAndNotify(int salesmanId) async {
   final String baseUrl =
-      'https://haluansama.com/crm-sales/api/background_tasks/get_order_status.php?salesman_id=$salesmanId';
+      '${dotenv.env['API_URL']}/background_tasks/get_order_status.php?salesman_id=$salesmanId';
 
   try {
     final response = await http.get(Uri.parse(baseUrl));
@@ -87,7 +88,7 @@ Future<void> checkOrderStatusAndNotify(int salesmanId) async {
 
 //   try {
 //     final apiUrl = Uri.parse(
-//         'https://haluansama.com/crm-sales/api/background_tasks/get_order_status.php');
+//         '${dotenv.env['API_URL']}/background_tasks/get_order_status.php');
 //     final response = await http.get(apiUrl);
 
 //     if (response.statusCode == 200) {
@@ -149,7 +150,7 @@ Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
 
   try {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/background_tasks/get_task_due_dates.php?salesman_id=$salesmanId');
+        '${dotenv.env['API_URL']}/background_tasks/get_task_due_dates.php?salesman_id=$salesmanId');
     final response = await http.get(apiUrl);
 
     if (response.statusCode == 200) {
@@ -190,7 +191,7 @@ Future<void> checkTaskDueDatesAndNotify(int salesmanId) async {
 
 //   try {
 //     final apiUrl = Uri.parse(
-//         'https://haluansama.com/crm-sales/api/background_tasks/get_task_due_dates.php');
+//         '${dotenv.env['API_URL']}/background_tasks/get_task_due_dates.php');
 //     final response = await http.get(apiUrl);
 
 //     if (response.statusCode == 200) {
@@ -232,7 +233,7 @@ Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
 
   try {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php?salesman_id=$salesmanId');
+        '${dotenv.env['API_URL']}/background_tasks/get_new_sales_leads.php?salesman_id=$salesmanId');
     developer.log("Calling API with URL: $apiUrl"); // Add this log
     final response = await http.get(apiUrl);
 
@@ -279,7 +280,7 @@ Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
 
 //   try {
 //     final apiUrl = Uri.parse(
-//         'https://haluansama.com/crm-sales/api/background_tasks/get_new_sales_leads.php');
+//         '${dotenv.env['API_URL']}/background_tasks/get_new_sales_leads.php');
 //     final response = await http.get(apiUrl);
 
 //     if (response.statusCode == 200) {
@@ -312,8 +313,8 @@ Future<void> checkNewSalesLeadsAndNotify(int salesmanId) async {
 // Generate status change notification
 Future<void> _generateNotification(
     LeadItem leadItem, String newStatus, String oldStatus) async {
-  const String baseUrl =
-      'https://haluansama.com/crm-sales/api/background_tasks/update_notification.php';
+  String baseUrl =
+      '${dotenv.env['API_URL']}/background_tasks/update_notification.php';
 
   // Check if salesOrderId exists
   if (leadItem.salesOrderId == null) {
@@ -366,7 +367,7 @@ Future<void> _generateNotification(
 //   try {
 //     // API URL for generating notifications
 //     final apiUrl = Uri.parse(
-//         'https://haluansama.com/crm-sales/api/background_tasks/update_notification.php');
+//         '${dotenv.env['API_URL']}/background_tasks/update_notification.php');
 
 //     // Prepare the POST request
 //     final response = await http.post(apiUrl, body: {
@@ -400,8 +401,8 @@ Future<void> _generateNotification(
 
 Future<void> _generateTaskandSalesLeadNotification(int salesmanId, String title,
     String description, int leadId, String type) async {
-  const String baseUrl =
-      'https://haluansama.com/crm-sales/api/background_tasks/update_task_lead_notification.php';
+  String baseUrl =
+      '${dotenv.env['API_URL']}/background_tasks/update_task_lead_notification.php';
 
   final Map<String, String> queryParameters = {
     'salesman_id': salesmanId.toString(),
@@ -440,7 +441,7 @@ Future<void> _generateTaskandSalesLeadNotification(int salesmanId, String title,
 //   try {
 //     // API URL for generating task/lead notifications
 //     final apiUrl = Uri.parse(
-//         'https://haluansama.com/crm-sales/api/background_tasks/update_task_lead_notification.php');
+//         '${dotenv.env['API_URL']}/background_tasks/update_task_lead_notification.php');
 
 //     // Prepare the POST request
 //     final response = await http.post(apiUrl, body: {

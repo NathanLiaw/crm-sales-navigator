@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AccountSetting extends StatefulWidget {
   const AccountSetting({super.key});
@@ -47,7 +48,7 @@ class _AccountSettingState extends State<AccountSetting> {
     String newEmail = emailController.text;
 
     try {
-      final url = Uri.parse('https://haluansama.com/crm-sales/api/salesman/update_salesman_details.php');
+      final url = Uri.parse('${dotenv.env['API_URL']}/salesman/update_salesman_details.php');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -120,9 +121,9 @@ class _AccountSettingState extends State<AccountSetting> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xff0175FF), width: 2.0),
+        border: const OutlineInputBorder(),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Color(0xff0175FF), width: 2.0),
         ),
       ),
     );

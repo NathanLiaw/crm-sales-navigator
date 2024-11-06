@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BrandData {
   final int id;
@@ -20,7 +21,7 @@ class BrandData {
 
 Future<List<BrandData>> fetchBrands() async {
   final response = await http.get(
-    Uri.parse('https://haluansama.com/crm-sales/api/brand/get_brands.php'),
+    Uri.parse('${dotenv.env['API_URL']}/brand/get_brands.php'),
   );
 
   if (response.statusCode == 200) {

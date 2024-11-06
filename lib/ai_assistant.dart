@@ -97,7 +97,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
 
   void _fetchSalesPerformance() async {
     final url =
-        'https://haluansama.com/crm-sales/api/ai_assistant/get_salesman_performance.php?username=$_loggedInUsername';
+        '${dotenv.env['API_URL']}/ai_assistant/get_salesman_performance.php?username=$_loggedInUsername';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -172,7 +172,7 @@ class _SalesPerformancePageState extends State<SalesPerformancePage> {
 
   Future<void> _fetchSalesLeads() async {
     final url =
-        'https://haluansama.com/crm-sales/api/ai_assistant/get_sales_lead.php?username=$_loggedInUsername';
+        '${dotenv.env['API_URL']}/ai_assistant/get_sales_lead.php?username=$_loggedInUsername';
 
     try {
       final response = await http.get(Uri.parse(url));

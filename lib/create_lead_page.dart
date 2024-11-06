@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +7,7 @@ import 'package:sales_navigator/customer_details_page.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:sales_navigator/home_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CreateLeadPage extends StatefulWidget {
   final Function(LeadItem) onCreateLead;
@@ -39,7 +39,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
     });
 
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/customer/get_customers.php?limit=1000&offset=0';
+        '${dotenv.env['API_URL']}/customer/get_customers.php?limit=1000&offset=0';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -480,7 +480,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
 
   Future<void> _saveLeadToDatabase() async {
     final String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead_to_database.php';
+        '${dotenv.env['API_URL']}/sales_lead/update_new_lead_to_database.php';
 
     final Map<String, String> queryParameters = {
       'salesman_id': widget.salesmanId.toString(),

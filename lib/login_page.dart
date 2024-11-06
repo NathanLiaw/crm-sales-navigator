@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
@@ -26,7 +27,7 @@ class LoginPage extends StatelessWidget {
     try {
       // API URL for the login request
       var url = Uri.parse(
-          'https://haluansama.com/crm-sales/api/authentication/authenticate_login.php');
+          '${dotenv.env['API_URL']}/authentication/authenticate_login.php');
 
       // Make a POST request to the API
       var response = await http.post(

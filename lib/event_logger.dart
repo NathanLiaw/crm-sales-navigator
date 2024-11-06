@@ -1,13 +1,14 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EventLogger {
   static Future<void> logEvent(
       int salesmanId, String activityDescription, String activityType,
       {int? leadId}) async {
     final apiUrl =
-        Uri.parse('https://haluansama.com/crm-sales/api/event_logger/update_log_event.php');
+        Uri.parse('${dotenv.env['API_URL']}/event_logger/update_log_event.php');
 
     try {
       final response = await http.post(apiUrl, body: {

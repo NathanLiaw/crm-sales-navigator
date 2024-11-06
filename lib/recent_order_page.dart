@@ -6,6 +6,7 @@ import 'dart:developer' as developer;
 import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RecentOrder extends StatefulWidget {
   const RecentOrder({
@@ -441,7 +442,7 @@ class _RecentOrderState extends State<RecentOrder> {
 
   void _navigateToItemScreen(String selectedProductName) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/recent_order_page/get_product_details.php?productName=$selectedProductName');
+        '${dotenv.env['API_URL']}/recent_order_page/get_product_details.php?productName=$selectedProductName');
 
     try {
       final response = await http.get(apiUrl);
@@ -482,13 +483,13 @@ class _RecentOrderState extends State<RecentOrder> {
             ),
           );
         } else {
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
         }
       } else {
-        print('Failed to load product data');
+        developer.log('Failed to load product data');
       }
     } catch (e) {
-      print('Error fetching product data: $e');
+      developer.log('Error fetching product data: $e');
     }
   }
 
@@ -506,9 +507,7 @@ class _RecentOrderState extends State<RecentOrder> {
 
     // Constructing the API URL to pass correct parameters
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/recent_order_page/get_recent_orders.php?userId=$_userId&customerId=${widget.customerId}');
-
-    print(apiUrl); // To check if the URL is correctly constructed
+        '${dotenv.env['API_URL']}/recent_order_page/get_recent_orders.php?userId=$_userId&customerId=${widget.customerId}');
 
     try {
       final response = await http.get(apiUrl);
@@ -524,13 +523,13 @@ class _RecentOrderState extends State<RecentOrder> {
           _sortResults(_fetchedData!); // Ensure sorting happens
           return _fetchedData!;
         } else {
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
         }
       } else {
-        print('Failed to load recent orders');
+        developer.log('Failed to load recent orders');
       }
     } catch (e) {
-      print('Error fetching recent orders: $e');
+      developer.log('Error fetching recent orders: $e');
     }
 
     return [];
@@ -591,9 +590,7 @@ class _RecentOrderState extends State<RecentOrder> {
   Future<String> _fetchProductPhoto(String productName) async {
     // Construct the API URL to pass the product name
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/recent_order_page/get_product_photo.php?productName=$productName');
-
-    print(apiUrl); // Print URL to check if it's correct
+        '${dotenv.env['API_URL']}/recent_order_page/get_product_photo.php?productName=$productName');
 
     try {
       final response = await http.get(apiUrl);
@@ -615,12 +612,12 @@ class _RecentOrderState extends State<RecentOrder> {
           return photoPath;
         } else {
           // If no photo found or an error occurred, return the default image path
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
           return 'asset/no_image.jpg';
         }
       } else {
         // If the request failed, log the error and return the default image path
-        print('Failed to load product photo');
+        developer.log('Failed to load product photo');
         return 'asset/no_image.jpg';
       }
     } catch (e) {

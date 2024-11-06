@@ -4,8 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CustomerSalesPredictionPage extends StatefulWidget {
   const CustomerSalesPredictionPage({super.key});
@@ -49,7 +48,7 @@ class _CustomerSalesPredictionPageState
         : DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/predict_product_stock/get_predict_product_report.php?username=$loggedInUsername&startDate=$startDate&endDate=$endDate');
+        '${dotenv.env['API_URL']}/predict_product_stock/get_predict_product_report.php?username=$loggedInUsername&startDate=$startDate&endDate=$endDate');
 
     try {
       final response = await http.get(apiUrl);
@@ -59,7 +58,7 @@ class _CustomerSalesPredictionPageState
         if (jsonData['status'] == 'success') {
           final List<dynamic> salesDataJson = jsonData['data'];
 
-          print('Data Length: ${salesDataJson.length}');
+          developer.log('Data Length: ${salesDataJson.length}');
 
           List<CustomerSalesData> salesDataList = salesDataJson.map((data) {
             return CustomerSalesData(
@@ -81,7 +80,7 @@ class _CustomerSalesPredictionPageState
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching sales data: $e');
+      developer.log('Error fetching sales data: $e');
       return [];
     }
   }

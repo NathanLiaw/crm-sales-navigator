@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mysql1/mysql1.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:developer' as developer;
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -16,7 +18,7 @@ class ProductCard extends StatelessWidget {
       int productId, int areaId) async {
     // Construct the API URL
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/product_card/get_product_details.php?productId=$productId');
+        '${dotenv.env['API_URL']}/product_card/get_product_details.php?productId=$productId');
 
     try {
       final response = await http.get(apiUrl);
@@ -40,7 +42,7 @@ class ProductCard extends StatelessWidget {
           };
         } else {
           // Handle the error if API returns failure
-          print('Error: ${jsonData['message']}');
+          developer.log('Error: ${jsonData['message']}');
           return {
             'description': Blob.fromString(
                 'No description available.'), // Returning a Blob
@@ -49,7 +51,7 @@ class ProductCard extends StatelessWidget {
           };
         }
       } else {
-        print('Failed to load product details');
+        developer.log('Failed to load product details');
         return {
           'description':
               Blob.fromString('Error fetching details.'), // Returning a Blob
@@ -58,7 +60,7 @@ class ProductCard extends StatelessWidget {
         };
       }
     } catch (e) {
-      print('Error fetching product details: $e');
+      developer.log('Error fetching product details: $e');
       return {
         'description':
             Blob.fromString('Error fetching details.'), // Returning a Blob

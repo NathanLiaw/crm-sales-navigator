@@ -20,6 +20,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -223,7 +224,7 @@ class _CartPage extends State<CartPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/product/get_prod_photo_by_prod_id.php?productId=$productId'),
+            '${dotenv.env['API_URL']}/product/get_prod_photo_by_prod_id.php?productId=$productId'),
       );
 
       if (response.statusCode == 200) {
@@ -362,7 +363,7 @@ class _CartPage extends State<CartPage> {
 
   void navigateToItemScreen(int selectedProductId) async {
     final apiUrl =
-        'https://haluansama.com/crm-sales/api/product/get_product_by_id.php?id=$selectedProductId';
+        '${dotenv.env['API_URL']}/product/get_product_by_id.php?id=$selectedProductId';
 
     try {
       // Make an HTTP GET request to fetch the product details
@@ -422,8 +423,8 @@ class _CartPage extends State<CartPage> {
 
   Future<Map<int, double>> retrieveLatestPrices(List<int> productIds) async {
     // API URL
-    const String apiUrl =
-        'https://haluansama.com/crm-sales/api/sales_order/get_product_prices.php';
+    String apiUrl =
+        '${dotenv.env['API_URL']}/sales_order/get_product_prices.php';
 
     // Prepare the JSON body
     final Map<String, dynamic> body = {
