@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CategoryData {
   final int id;
@@ -22,7 +23,7 @@ class CategoryData {
 
 Future<List<CategoryData>> fetchCategories() async {
   final response = await http.get(
-    Uri.parse('https://haluansama.com/crm-sales/api/category/get_categories.php'),
+    Uri.parse('${dotenv.env['API_URL']}/category/get_categories.php'),
   );
 
   if (response.statusCode == 200) {

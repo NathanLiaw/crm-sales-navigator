@@ -12,6 +12,7 @@ import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NotificationsPage extends StatefulWidget {
   final RemoteMessage? message;
@@ -21,7 +22,7 @@ class NotificationsPage extends StatefulWidget {
 
   static Future<int> getUnreadCount(int salesmanId) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/notification_page/get_unread_count.php?salesmanId=$salesmanId');
+        '${dotenv.env['API_URL']}/notification_page/get_unread_count.php?salesmanId=$salesmanId');
     try {
       final response = await http.get(apiUrl);
       if (response.statusCode == 200) {
@@ -64,7 +65,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _fetchNotifications() async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/notification_page/get_notifications.php?salesmanId=$salesmanId');
+        '${dotenv.env['API_URL']}/notification_page/get_notifications.php?salesmanId=$salesmanId');
     try {
       final response = await http.get(apiUrl);
 
@@ -98,7 +99,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _deleteNotification(int notificationId) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/notification_page/update_delete_notification.php');
+        '${dotenv.env['API_URL']}/notification_page/update_delete_notification.php');
 
     try {
       final response = await http.post(apiUrl, body: {
@@ -121,7 +122,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _markAsRead(int notificationId) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/notification_page/update_mark_as_read.php');
+        '${dotenv.env['API_URL']}/notification_page/update_mark_as_read.php');
 
     try {
       final response = await http.post(apiUrl, body: {
@@ -147,7 +148,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   // Get unread notifications count
   static Future<int> getUnreadCount(int salesmanId) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/notification_page/get_unread_count.php?salesmanId=$salesmanId');
+        '${dotenv.env['API_URL']}/notification_page/get_unread_count.php?salesmanId=$salesmanId');
     try {
       final response = await http.get(apiUrl);
       if (response.statusCode == 200) {

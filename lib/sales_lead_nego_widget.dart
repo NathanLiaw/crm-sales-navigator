@@ -9,6 +9,7 @@ import 'package:sales_navigator/home_page.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NegotiationLeadItem extends StatefulWidget {
   final LeadItem leadItem;
@@ -122,7 +123,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
 
   Future<void> _fetchTaskDetails() async {
     final String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/get_task_details.php';
+        '${dotenv.env['API_URL']}/sales_lead/get_task_details.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': widget.leadItem.id.toString(),
@@ -264,7 +265,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
 
   Future<void> _deleteTask(int taskId) async {
     final String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/delete_task.php';
+        '${dotenv.env['API_URL']}/sales_lead/delete_task.php';
 
     final Map<String, String> queryParameters = {
       'task_id': taskId.toString(),

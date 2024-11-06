@@ -5,6 +5,7 @@ import 'package:date_picker_plus/date_picker_plus.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProductReport extends StatefulWidget {
   const ProductReport({super.key});
@@ -69,7 +70,7 @@ class _ProductReportState extends State<ProductReport> {
     String orderByField = _getOrderByField();
 
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/top_selling_product_page/get_top_selling_products_report.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate&sortOrder=$sortOrder&orderByField=$orderByField');
+        '${dotenv.env['API_URL']}/top_selling_product_page/get_top_selling_products_report.php?username=$loggedInUsername&startDate=$formattedStartDate&endDate=$formattedEndDate&sortOrder=$sortOrder&orderByField=$orderByField');
 
     try {
       final response = await http.get(apiUrl);
@@ -254,23 +255,23 @@ class _ProductReportState extends State<ProductReport> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return const Color(0xFF047CBD);
                       }
                       return const Color(0xFFD9D9D9);
                     },
                   ),
-                  foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
                       if (isCustomRangeSelected) {
                         return Colors.white;
                       }
                       return Colors.black;
                     },
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -313,25 +314,25 @@ class _ProductReportState extends State<ProductReport> {
     return TextButton(
       onPressed: onPressed,
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color.fromARGB(255, 255, 255, 255);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             side: const BorderSide(color: Color(0xFF999999)),
             borderRadius: BorderRadius.circular(50),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8),
         ),
       ),

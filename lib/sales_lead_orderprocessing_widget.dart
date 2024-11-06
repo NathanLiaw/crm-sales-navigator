@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OrderProcessingLeadItem extends StatelessWidget {
   final LeadItem leadItem;
@@ -104,7 +105,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
       onRemoveLead(leadItem);
       final response = await http.get(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/sales_lead/void_sales_order.php?id=${leadItem.id}&salesman_id=${leadItem.salesmanId}'),
+            '${dotenv.env['API_URL']}/sales_lead/void_sales_order.php?id=${leadItem.id}&salesman_id=${leadItem.salesmanId}'),
         headers: {'Content-Type': 'application/json'},
       );
 

@@ -3,6 +3,7 @@ import 'customer.dart';
 import 'dart:developer' as developer;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CustomerDetails extends StatefulWidget {
   final ValueChanged<Customer>? onSelectionChanged;
@@ -34,7 +35,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
   Future<List<Customer>> fetchCustomers(int limit, int offset) async {
     List<Customer> fetchedCustomers = [];
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/customer/get_customers.php?limit=$limit&offset=$offset';
+        '${dotenv.env['API_URL']}/customer/get_customers.php?limit=$limit&offset=$offset';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CustomerSalesReport extends StatefulWidget {
   final int customerId;
@@ -72,7 +73,7 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
   Future<List<SalesData>> fetchCustomerSalesData(
       String reportType, int customerId) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/customer_insight_graph/get_customer_graph.php?reportType=$reportType&customerId=$customerId');
+        '${dotenv.env['API_URL']}/customer_insight_graph/get_customer_graph.php?reportType=$reportType&customerId=$customerId');
 
     try {
       final response = await http.get(apiUrl);

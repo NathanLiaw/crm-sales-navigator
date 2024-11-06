@@ -13,6 +13,7 @@ import 'customer.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OrderConfirmationPage extends StatefulWidget {
   final Customer customer;
@@ -49,8 +50,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   Future<List<String>> fetchOrderOptions() async {
     List<String> fetchedOrderOptions = [];
-    const String apiUrl =
-        'https://haluansama.com/crm-sales/api/order_option/get_order_options.php';
+    String apiUrl =
+        '${dotenv.env['API_URL']}/order_option/get_order_options.php';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -122,7 +123,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
       // Make a POST request to the API
       final response = await http.post(
-        Uri.parse('https://haluansama.com/crm-sales/api/cart/create_cart.php'),
+        Uri.parse('${dotenv.env['API_URL']}/cart/create_cart.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(cartData),
       );
@@ -174,7 +175,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       // Send the data to the API
       final response = await http.post(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/cart/complete_cart.php'),
+            '${dotenv.env['API_URL']}/cart/complete_cart.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(cartItemsData),
       );
@@ -237,7 +238,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     try {
       final response = await http.post(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/cart/get_sales_order_id.php?salesman_id=$salesmanId'),
+            '${dotenv.env['API_URL']}/cart/get_sales_order_id.php?salesman_id=$salesmanId'),
         headers: {'Content-Type': 'application/json'},
       );
 

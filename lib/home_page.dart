@@ -48,7 +48,7 @@ class SalesmanPerformanceUpdater {
 
   Future<void> _updateSalesmanPerformance(int salesmanId) async {
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_salesman_performance.php?salesman_id=$salesmanId';
+        '${dotenv.env['API_URL']}/sales_lead/update_salesman_performance.php?salesman_id=$salesmanId';
 
     try {
       // Make the POST request to the API with the salesmanId
@@ -322,7 +322,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Update salesman performance by calling the sql Stored Procedure
   Future<void> _updateSalesmanPerformance(int salesmanId) async {
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_salesman_performance.php?salesman_id=$salesmanId';
+        '${dotenv.env['API_URL']}/sales_lead/update_salesman_performance.php?salesman_id=$salesmanId';
 
     try {
       // Make the POST request to the API with the salesmanId
@@ -355,7 +355,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<double> _getAverageClosedValue(
       int salesmanId, String startDate, String endDate) async {
     final String apiUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/get_average_closed_value.php?salesman_id=$salesmanId&start_date=$startDate&end_date=$endDate';
+        '${dotenv.env['API_URL']}/sales_lead/get_average_closed_value.php?salesman_id=$salesmanId&start_date=$startDate&end_date=$endDate';
 
     try {
       // Make the POST request to the API with the salesmanId, startDate, and endDate
@@ -413,7 +413,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     developer
         .log('Starting _cleanAndValidateLeadData for salesman_id: $salesmanId');
     final url = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
+        '${dotenv.env['API_URL']}/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
 
     try {
       final response = await http.get(url);
@@ -437,7 +437,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   // Future<void> _cleanAndValidateLeadData() async {
   //   final url = Uri.parse(
-  //       'https://haluansama.com/crm-sales/api/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
+  //       '${dotenv.env['API_URL']}/sales_lead/clean_validate_leads.php?salesman_id=$salesmanId');
 
   //   try {
   //     final response = await http.get(url);
@@ -723,8 +723,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _moveFromNegotiationToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_negotiation_to_order_processing.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_sales_lead_from_negotiation_to_order_processing.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -927,8 +927,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _moveFromOrderProcessingToClosed(LeadItem leadItem) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_order_processing_to_closed.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_sales_lead_from_order_processing_to_closed.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -1100,8 +1100,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _moveFromOpportunitiesToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_opportunities_to_order_processing.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_sales_lead_from_opportunities_to_order_processing.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -1243,8 +1243,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _onDeleteEngagementLead(LeadItem leadItem) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/delete_engagement_lead.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/delete_engagement_lead.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -1331,8 +1331,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // }
 
   Future<void> _onDeleteNegotiationLead(LeadItem leadItem) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/delete_negotiation_lead.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/delete_negotiation_lead.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -1402,8 +1402,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _onUndoEngagementLead(
       LeadItem leadItem, String previousStage) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_engagement_to_previous_stage.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_engagement_to_previous_stage.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -1494,8 +1494,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _onUndoNegotiationLead(
       LeadItem leadItem, String previousStage) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_negotiation_to_previous_stage.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_negotiation_to_previous_stage.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -1646,8 +1646,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _createLead(
       String customerName, String description, String amount) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_new_lead.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_new_lead.php';
 
     final Map<String, String> queryParameters = {
       'customer_name': customerName,
@@ -1769,8 +1769,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     if (confirmDelete == true) {
-      const String baseUrl =
-          'https://haluansama.com/crm-sales/api/sales_lead/delete_opportunities_lead.php';
+      String baseUrl =
+          '${dotenv.env['API_URL']}/sales_lead/delete_opportunities_lead.php';
 
       final Map<String, String> queryParameters = {
         'lead_id': leadItem.id.toString(),
@@ -2652,8 +2652,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _moveFromEngagementToOrderProcessing(
       LeadItem leadItem, String salesOrderId, int? quantity) async {
-    const String baseUrl =
-        'https://haluansama.com/crm-sales/api/sales_lead/update_sales_lead_from_engagement_to_order_processing.php';
+    String baseUrl =
+        '${dotenv.env['API_URL']}/sales_lead/update_sales_lead_from_engagement_to_order_processing.php';
 
     final Map<String, String> queryParameters = {
       'lead_id': leadItem.id.toString(),
@@ -2903,7 +2903,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     try {
       // Replace with your actual PHP API URL
       final String apiUrl =
-          'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_status.php?salesOrderId=$salesOrderId';
+          '${dotenv.env['API_URL']}/sales_lead/get_sales_order_status.php?salesOrderId=$salesOrderId';
 
       // Send the GET request to the PHP API
       final response = await http.get(Uri.parse(apiUrl));
@@ -2975,7 +2975,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://haluansama.com/crm-sales/api/sales_lead/get_sales_order_details.php?id=$salesOrderId'),
+            '${dotenv.env['API_URL']}/sales_lead/get_sales_order_details.php?id=$salesOrderId'),
         headers: {'Content-Type': 'application/json'},
       );
 

@@ -4,6 +4,7 @@ import 'package:sales_navigator/item_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -17,7 +18,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> _searchResults = [];
 
   Future<void> _performSearch(String query) async {
-    final apiUrl = Uri.parse('https://haluansama.com/crm-sales/api/search_screen/get_search_products.php?query=$query');
+    final apiUrl = Uri.parse('${dotenv.env['API_URL']}/search_screen/get_search_products.php?query=$query');
 
     try {
       final response = await http.get(apiUrl);
@@ -49,7 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _navigateToItemScreen(String selectedProductName) async {
-    final apiUrl = Uri.parse('https://haluansama.com/crm-sales/api/search_screen/get_product_details.php?productName=$selectedProductName');
+    final apiUrl = Uri.parse('${dotenv.env['API_URL']}/search_screen/get_product_details.php?productName=$selectedProductName');
 
     try {
       final response = await http.get(apiUrl);

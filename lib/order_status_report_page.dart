@@ -18,7 +18,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OrderStatusReportPage extends StatefulWidget {
   const OrderStatusReportPage({super.key});
@@ -166,7 +166,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
     try {
       Uri apiUrl = Uri.parse(
-          'https://haluansama.com/crm-sales/api/sales_order/get_sales_orders.php');
+          '${dotenv.env['API_URL']}/sales_order/get_sales_orders.php');
 
       // Add query parameters for username
       Map<String, String> queryParams = {

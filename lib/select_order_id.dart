@@ -4,6 +4,7 @@ import 'package:sales_navigator/order_details_page.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SelectOrderIDPage extends StatefulWidget {
   final String customerName;
@@ -24,8 +25,8 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
   }
 
   Future<List<Map<String, dynamic>>> fetchSalesOrders() async {
-    const String apiUrl =
-        'https://haluansama.com/crm-sales/api/utility_function/get_sales_orders.php';
+    String apiUrl =
+        '${dotenv.env['API_URL']}/utility_function/get_sales_orders.php';
 
     try {
       final response = await http.get(Uri.parse(

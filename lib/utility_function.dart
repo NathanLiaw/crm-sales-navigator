@@ -8,6 +8,7 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class UtilityFunction{
   static String calculateExpirationDate() {
@@ -31,7 +32,7 @@ class UtilityFunction{
 
   static Future<double> retrieveTax(String taxType) async {
     double defaultTaxInPercent = 0.0; // Default tax percentage (0.0 = 0%)
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/utility_function/get_tax.php';
+    String apiUrl = '${dotenv.env['API_URL']}/utility_function/get_tax.php';
 
     try {
       // Prepare the API request
@@ -86,7 +87,7 @@ class UtilityFunction{
   // Function to retrieve area name by ID from the API
   static Future<String> getAreaNameById(int id) async {
     String areaName = '';
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/utility_function/get_area.php';
+    String apiUrl = '${dotenv.env['API_URL']}/utility_function/get_area.php';
 
     try {
       // Prepare the API request

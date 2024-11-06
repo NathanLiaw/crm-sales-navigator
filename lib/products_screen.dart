@@ -13,6 +13,7 @@ import 'model/items_widget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -57,7 +58,7 @@ class _ProductsScreenState extends State<ProductsScreen>
     try {
       // API URL
       final apiUrl = Uri.parse(
-          'https://haluansama.com/crm-sales/api/product_screen/get_areas.php');
+          '${dotenv.env['API_URL']}/product_screen/get_areas.php');
 
       // Make the API call
       final response = await http.get(apiUrl);

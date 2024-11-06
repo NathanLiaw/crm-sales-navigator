@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CreateTaskPage extends StatefulWidget {
   final int id;
@@ -180,7 +181,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://haluansama.com/crm-sales/api/create_task/get_sales_order_details.php?salesOrderId=$salesOrderId'),
+        Uri.parse('${dotenv.env['API_URL']}/create_task/get_sales_order_details.php?salesOrderId=$salesOrderId'),
       );
 
       if (response.statusCode == 200) {
@@ -213,7 +214,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     SharedPreferences pref = await SharedPreferences.getInstance();
     int buyerId = pref.getInt('id') ?? 1;
 
-    const String apiUrl = 'https://haluansama.com/crm-sales/api/create_task/get_sales_orders_dropdown.php';
+    String apiUrl = '${dotenv.env['API_URL']}/create_task/get_sales_orders_dropdown.php';
 
     try {
       final response = await http.get(Uri.parse('$apiUrl?buyer_id=$buyerId&customer_name=${Uri.encodeComponent(customerName)}'));
@@ -713,7 +714,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     try {
       // Make the API request
       final response = await http.post(
-        Uri.parse('https://haluansama.com/crm-sales/api/create_task/save_task_to_database.php'),
+        Uri.parse('${dotenv.env['API_URL']}/create_task/save_task_to_database.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(payload),
       );

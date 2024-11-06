@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SalesReport extends StatefulWidget {
   const SalesReport({super.key});
@@ -72,7 +73,7 @@ class _SalesReportState extends State<SalesReport> {
 
   Future<List<SalesData>> fetchSalesData(String reportType) async {
     final apiUrl = Uri.parse(
-        'https://haluansama.com/crm-sales/api/sales_report_graph/get_sales_report.php?username=$loggedInUsername&reportType=$reportType');
+        '${dotenv.env['API_URL']}/sales_report_graph/get_sales_report.php?username=$loggedInUsername&reportType=$reportType');
 
     try {
       final response = await http.get(apiUrl);
@@ -124,24 +125,24 @@ class _SalesReportState extends State<SalesReport> {
         });
       },
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xff0175FF)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),
