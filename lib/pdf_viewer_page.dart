@@ -46,8 +46,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       await Permission.videos.request();
       await Permission.audio.request();
     } else if (sdkInt >= 29) {
-      // Android 10 and 11
-      await Permission.storage.request();
     } else {
       // Below Android 10
       await Permission.storage.request();
@@ -59,18 +57,28 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
     final sdkInt = deviceInfo.version.sdkInt;
 
     if (sdkInt >= 33) {
-      // For Android 13+, check media permissions
-      final photos = await Permission.photos.status;
-      if (!photos.isGranted) {
-        final result = await Permission.photos.request();
-        if (!result.isGranted) {
+      // For Android 13+ (API 33+), we need to request media permissions
+      final videos = await Permission.videos.status;
+      final images = await Permission.photos.status;
+      if (!videos.isGranted || !images.isGranted) {
+        await Permission.photos.request();
+        await Permission.videos.request();
+
+        // Check again after request
+        final videosAfter = await Permission.videos.status;
+        final imagesAfter = await Permission.photos.status;
+
+        if (!videosAfter.isGranted || !imagesAfter.isGranted) {
           _showPermissionDeniedDialog();
           return false;
         }
       }
       return true;
+    } else if (sdkInt >= 29) {
+      // For Android 10-12 (API 29-32)
+      return true; // Scoped storage, no need for runtime permission
     } else {
-      // For Android 12 and below, check storage permission
+      // For Android 9 and below (API < 29)
       final storage = await Permission.storage.status;
       if (!storage.isGranted) {
         final result = await Permission.storage.request();

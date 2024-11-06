@@ -16,6 +16,7 @@ class PdfInvoiceGenerator {
     required List<OrderItem> orderItems,
     required double gst,
     required double sst,
+    required double customerRate,
   }) async {
     final pdf = pw.Document();
 
@@ -49,7 +50,8 @@ class PdfInvoiceGenerator {
         orderItems.fold(0, (sum, item) => sum + double.parse(item.total));
     double gstAmount = subtotal * (gst);
     double sstAmount = subtotal * (sst);
-    double total = subtotal + gstAmount + sstAmount;
+    double customerDiscountAmount = subtotal * (customerRate / 100);
+    double total = subtotal - customerDiscountAmount + gstAmount + sstAmount;
 
     // Convert order items to table data for better handling
     final List<List<String>> tableData = orderItems.map((item) {
@@ -295,11 +297,16 @@ class PdfInvoiceGenerator {
                         _buildSummaryRow('Subtotal:',
                             subtotal.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
-                        _buildSummaryRow('GST (${gst*100}%):',
+                        _buildSummaryRow('GST (${gst * 100}%):',
                             gstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
-                        _buildSummaryRow('SST (${sst*100}%):',
+                        _buildSummaryRow('SST (${sst * 100}%):',
                             sstAmount.toStringAsFixed(3), contentStyle),
+                        pw.SizedBox(height: 5),
+                        _buildSummaryRow(
+                            'Customer Discount (${customerRate}%):',
+                            '- ${customerDiscountAmount.toStringAsFixed(3)}',
+                            contentStyle),
                         pw.SizedBox(height: 5),
                         pw.Divider(color: PdfColors.grey400),
                         _buildSummaryRow(

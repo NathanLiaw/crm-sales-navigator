@@ -5,6 +5,7 @@ import 'package:sales_navigator/cart_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
+import 'package:sales_navigator/order_details_page.dart';
 import 'package:sales_navigator/order_submitted_page.dart';
 import 'package:sales_navigator/terms_and_conditions_page.dart';
 import 'utility_function.dart';
@@ -113,7 +114,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'buyer_name': name,
         'customer_id': widget.customer.id,
         'customer_company_name': widget.customer.companyName,
-        'customer_discount': double.parse(((widget.customer.discountRate / 100) * widget.subtotal).toStringAsFixed(3)),
+        'customer_discount': double.parse(
+            ((widget.customer.discountRate / 100) * widget.subtotal)
+                .toStringAsFixed(3)),
         'status': 'Pending',
         'last_checked_status': 'Pending',
         'created': UtilityFunction.getCurrentDateTime(),
@@ -304,15 +307,19 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   @override
   Widget build(BuildContext context) {
     final formatter =
-    NumberFormat.currency(locale: 'en_US', symbol: '', decimalDigits: 3);
+        NumberFormat.currency(locale: 'en_US', symbol: '', decimalDigits: 3);
     final orderSummaryFormatter =
-    NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
+        NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
     final formattedTotal = orderSummaryFormatter.format(widget.total);
     final formattedSubtotal = orderSummaryFormatter.format(widget.subtotal);
     final formattedDiscount = orderSummaryFormatter.format(totalDiscount);
-    final formattedGST = orderSummaryFormatter.format(widget.gst * widget.subtotal);
-    final formattedSST = orderSummaryFormatter.format(widget.sst * widget.subtotal);
-    final customerRate = orderSummaryFormatter.format(widget.customer.discountRate/100 * widget.subtotal).toString();
+    final formattedGST =
+        orderSummaryFormatter.format(widget.gst * widget.subtotal);
+    final formattedSST =
+        orderSummaryFormatter.format(widget.sst * widget.subtotal);
+    final customerRate = orderSummaryFormatter
+        .format(widget.customer.discountRate / 100 * widget.subtotal)
+        .toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -397,43 +404,65 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           scrollDirection: Axis.horizontal,
                           child: Table(
                             border: TableBorder(
-                              horizontalInside: BorderSide(color: Colors.grey.shade300),
-                              verticalInside: BorderSide(color: Colors.grey.shade300),
-                              bottom: const BorderSide(color: Colors.black, width: 2.0),
+                              horizontalInside:
+                                  BorderSide(color: Colors.grey.shade300),
+                              verticalInside:
+                                  BorderSide(color: Colors.grey.shade300),
+                              bottom: const BorderSide(
+                                  color: Colors.black, width: 2.0),
                             ),
                             columnWidths: const {
-                              0: FixedColumnWidth(130), // Width for product name
-                              1: FixedColumnWidth(50),  // Width for quantity
-                              2: FixedColumnWidth(70),  // Width for original price
-                              3: FixedColumnWidth(70),  // Width for discounted price
-                              4: FixedColumnWidth(80),  // Width for total price
+                              0: FixedColumnWidth(
+                                  130), // Width for product name
+                              1: FixedColumnWidth(50), // Width for quantity
+                              2: FixedColumnWidth(
+                                  70), // Width for original price
+                              3: FixedColumnWidth(
+                                  70), // Width for discounted price
+                              4: FixedColumnWidth(80), // Width for total price
                             },
                             children: [
                               // Header Row with "RM" symbol only in headers
                               const TableRow(
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF007ACC), // Header background color
+                                  color: Color(
+                                      0xFF007ACC), // Header background color
                                 ),
                                 children: [
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
-                                    child: Text('Product', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    child: Text('Product',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
                                   ),
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
-                                    child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    child: Text('Qty',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
                                   ),
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
-                                    child: Text('Orig (RM)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    child: Text('Orig (RM)',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
                                   ),
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
-                                    child: Text('Disc (RM)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    child: Text('Disc (RM)',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
                                   ),
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
-                                    child: Text('Total (RM)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    child: Text('Total (RM)',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
                                   ),
                                 ],
                               ),
@@ -441,7 +470,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                               for (var item in widget.cartItems.asMap().entries)
                                 TableRow(
                                   decoration: BoxDecoration(
-                                    color: item.key.isEven ? Colors.grey.shade100 : Colors.white, // Alternate row colors
+                                    color: item.key.isEven
+                                        ? Colors.grey.shade100
+                                        : Colors.white, // Alternate row colors
                                   ),
                                   children: [
                                     // Wrap product name to two lines
@@ -458,25 +489,39 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                       padding: const EdgeInsets.all(8.0),
                                       child: Text(
                                         '${item.value.quantity}',
-                                        style: const TextStyle(fontSize: 12, color: Colors.black),
+                                        style: const TextStyle(
+                                            fontSize: 12, color: Colors.black),
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Text(
-                                        formatter.format(item.value.originalUnitPrice).replaceAll('RM', ''),
+                                        formatter
+                                            .format(
+                                                item.value.originalUnitPrice)
+                                            .replaceAll('RM', ''),
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: item.value.originalUnitPrice != item.value.unitPrice ? Colors.red[700] : Colors.black,
-                                          decoration: item.value.originalUnitPrice != item.value.unitPrice ? TextDecoration.lineThrough : null,
+                                          color: item.value.originalUnitPrice !=
+                                                  item.value.unitPrice
+                                              ? Colors.red[700]
+                                              : Colors.black,
+                                          decoration:
+                                              item.value.originalUnitPrice !=
+                                                      item.value.unitPrice
+                                                  ? TextDecoration.lineThrough
+                                                  : null,
                                         ),
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Text(
-                                        item.value.originalUnitPrice != item.value.unitPrice
-                                            ? formatter.format(item.value.unitPrice).replaceAll('RM', '')
+                                        item.value.originalUnitPrice !=
+                                                item.value.unitPrice
+                                            ? formatter
+                                                .format(item.value.unitPrice)
+                                                .replaceAll('RM', '')
                                             : '-',
                                         style: const TextStyle(
                                           fontSize: 14,
@@ -488,7 +533,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Text(
-                                        formatter.format(item.value.unitPrice * item.value.quantity).replaceAll('RM', ''),
+                                        formatter
+                                            .format(item.value.unitPrice *
+                                                item.value.quantity)
+                                            .replaceAll('RM', ''),
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
@@ -510,7 +558,10 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           width: 20.0,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.transparent, Colors.grey.withOpacity(0.1)],
+                              colors: [
+                                Colors.transparent,
+                                Colors.grey.withOpacity(0.1)
+                              ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -520,108 +571,131 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ],
                   ),
                   const SizedBox(height: 16.0),
-                // Order summary
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4.0,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Order Summary',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                  // Order summary
+                  Container(
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4.0,
+                          offset: Offset(2, 2),
                         ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      const Divider(color: Colors.black54),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Subtotal:', style: TextStyle(fontSize: 16)),
-                            Text(formattedSubtotal, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Order Summary',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('GST:', style: TextStyle(fontSize: 16)),
-                            Text(formattedGST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
+                        const SizedBox(height: 8.0),
+                        const Divider(color: Colors.black54),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Subtotal:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedSubtotal,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('SST:', style: TextStyle(fontSize: 16)),
-                            Text(formattedSST, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('GST:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedGST,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Discount:', style: TextStyle(fontSize: 16)),
-                            Text(formattedDiscount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('SST:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedSST,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Customer Rate:', style: TextStyle(fontSize: 16)),
-                            Text(customerRate, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Discount:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(formattedDiscount,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            Text(
-                              formattedTotal,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[800],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Customer Rate:',
+                                  style: TextStyle(fontSize: 16)),
+                              Text(customerRate,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total:',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                formattedTotal,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[800],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
           TextField(
             controller: remarkController,
             decoration: const InputDecoration(
@@ -709,8 +783,13 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              OrderSubmittedPage(salesOrderId: salesOrderId!),
+                          builder: (context) => OrderDetailsPage(
+                            cartID: salesOrderId!,
+                            fromOrderConfirmation: true,
+                            fromSalesOrder: false,
+                            discountRate:
+                                widget.customer.discountRate.toDouble(),
+                          ),
                         ),
                       );
                     } else {

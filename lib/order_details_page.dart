@@ -18,12 +18,15 @@ class OrderDetailsPage extends StatefulWidget {
   final int cartID;
   final bool fromOrderConfirmation;
   final bool fromSalesOrder;
+  final double? discountRate;
 
-  const OrderDetailsPage(
-      {super.key,
-      required this.cartID,
-      required this.fromOrderConfirmation,
-      required this.fromSalesOrder});
+  const OrderDetailsPage({
+    super.key,
+    required this.cartID,
+    required this.fromOrderConfirmation,
+    required this.fromSalesOrder,
+    this.discountRate,
+  });
 
   @override
   _OrderDetailsPageState createState() => _OrderDetailsPageState();
@@ -42,6 +45,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   double total = 0.0;
   bool isVoidButtonDisabled = false;
   bool _isExpanded = false;
+  bool _isSummaryExpanded = false;
   final PdfInvoiceGenerator pdfGenerator = PdfInvoiceGenerator();
 
   late int salesmanId;
@@ -49,9 +53,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   double gst = 0;
   double sst = 0;
 
+  late double discountRate = 0.0;
+
   @override
   void initState() {
     super.initState();
+    discountRate = widget.discountRate ?? 0.0;
     _orderDetailsFuture = fetchOrderDetails();
     getTax();
     _initializeSalesmanId();
@@ -89,6 +96,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             salesOrderId = 'SO${cartId.toString().padLeft(7, '0')}';
             total = double.tryParse(orderDetails['final_total']) ?? 0.0;
             subtotal = double.tryParse(orderDetails['total']) ?? 0.0;
+            discountRate = widget.discountRate ??
+                (double.tryParse(
+                        orderDetails['discount_rate']?.toString() ?? '0') ??
+                    0.0);
             orderItems = [];
           });
 
@@ -339,6 +350,51 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             }
           },
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) async {
+              if (value == 'viewInvoice') {
+                final pdfData = await pdfGenerator.generateInvoicePdf(
+                  companyName: companyName,
+                  address: address,
+                  salesmanName: salesmanName,
+                  salesOrderId: salesOrderId,
+                  createdDate: createdDate,
+                  status: status,
+                  orderItems: orderItems,
+                  gst: gst,
+                  sst: sst,
+                  customerRate: discountRate,
+                );
+
+                if (!mounted) return;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PDFViewerPage(
+                      pdfData: pdfData,
+                      salesOrderId: salesOrderId,
+                    ),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'viewInvoice',
+                child: Row(
+                  children: [
+                    Icon(Icons.description_outlined),
+                    SizedBox(width: 8),
+                    Text('View / Download Invoice'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(14.0),
@@ -367,7 +423,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildExpandableOrderInfo(),
-                  const SizedBox(height: 4),
+                  // const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -405,64 +461,66 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 4),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final pdfData = await pdfGenerator.generateInvoicePdf(
-                          companyName: companyName,
-                          address: address,
-                          salesmanName: salesmanName,
-                          salesOrderId: salesOrderId,
-                          createdDate: createdDate,
-                          status: status,
-                          orderItems: orderItems,
-                          gst: gst,
-                          sst: sst,
-                        );
+                  // const SizedBox(height: 4),
 
-                        if (!mounted) return;
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: ElevatedButton.icon(
+                  //     onPressed: () async {
+                  //       final pdfData = await pdfGenerator.generateInvoicePdf(
+                  //         companyName: companyName,
+                  //         address: address,
+                  //         salesmanName: salesmanName,
+                  //         salesOrderId: salesOrderId,
+                  //         createdDate: createdDate,
+                  //         status: status,
+                  //         orderItems: orderItems,
+                  //         gst: gst,
+                  //         sst: sst,
+                  //         customerRate: discountRate,
+                  //       );
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PDFViewerPage(
-                              pdfData: pdfData,
-                              salesOrderId: salesOrderId,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.description_outlined,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'View / Download Invoice',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0175FF),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
-                  ),
+                  //       if (!mounted) return;
 
-                  const SizedBox(height: 4),
+                  //       Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //           builder: (context) => PDFViewerPage(
+                  //             pdfData: pdfData,
+                  //             salesOrderId: salesOrderId,
+                  //           ),
+                  //         ),
+                  //       );
+                  //     },
+                  //     icon: const Icon(
+                  //       Icons.description_outlined,
+                  //       size: 20,
+                  //       color: Colors.white,
+                  //     ),
+                  //     label: const Text(
+                  //       'View / Download Invoice',
+                  //       style: TextStyle(
+                  //         color: Colors.white,
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.w500,
+                  //       ),
+                  //     ),
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xff0175FF),
+                  //       padding: const EdgeInsets.symmetric(
+                  //         horizontal: 16,
+                  //         vertical: 8,
+                  //       ),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(5),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+
+                  // const SizedBox(height: 4),
                   // Order Items List
                   Expanded(
                     child: Column(
@@ -537,6 +595,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   Widget _buildExpandableOrderInfo() {
     return Card(
+      margin: EdgeInsets.zero,
       child: ExpansionTile(
         title: const Text('Order Information',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -899,176 +958,193 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final formattedGST = formatter.format(gst * subtotal);
     final formattedSST = formatter.format(sst * subtotal);
     final formattedTotal = formatter.format(total);
-
     final gstPercentage = (gst * 100).toStringAsFixed(1);
     final sstPercentage = (sst * 100).toStringAsFixed(1);
+    final customerDiscountAmount = subtotal * (discountRate / 100);
+    final formattedCustomerDiscount = formatter.format(customerDiscountAmount);
 
-    return Column(
-      children: [
-        const SizedBox(height: 8,),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Subtotal (${orderItems.length} items)',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              formattedSubtotal,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+    return StatefulBuilder(builder: (context, setState) {
+      return Card(
+        elevation: 1,
+        margin: const EdgeInsets.only(top: 2),
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: 8,
+            right: 8,
+            top: 12,
+            bottom: 8,
+          ),
+          child: Column(
+            children: [
+              if (_isSummaryExpanded) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Subtotal (${orderItems.length} items)',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      formattedSubtotal,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                children: [
-                  const TextSpan(text: 'GST '),
-                  TextSpan(
-                    text: '($gstPercentage%)',
-                    // style: const TextStyle(
-                    //   color: Colors.grey,
-                    //   fontWeight: FontWeight.normal,
-                    // ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              formattedGST,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-                children: [
-                  const TextSpan(text: 'SST '),
-                  TextSpan(
-                    text: '($sstPercentage%)',
-                    // style: const TextStyle(
-                    //   color: Colors.grey,
-                    //   fontWeight: FontWeight.normal,
-                    // ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              formattedSST,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        // const SizedBox(height: 8),
-        // Row(
-        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //   children: [
-        //     RichText(
-        //       text: const TextSpan(
-        //         style: TextStyle(
-        //           color: Colors.black,
-        //           fontWeight: FontWeight.bold,
-        //         ),
-        //         children: [
-        //           TextSpan(text: 'Discount '),
-        //         ],
-        //       ),
-        //     ),
-        //     Text(
-        //       formattedSST,
-        //       style: const TextStyle(fontWeight: FontWeight.bold),
-        //     ),
-        //   ],
-        // ),
-        // const SizedBox(height: 8),
-        // Row(
-        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //   children: [
-        //     RichText(
-        //       text: const TextSpan(
-        //         style: TextStyle(
-        //           color: Colors.black,
-        //           fontWeight: FontWeight.bold,
-        //         ),
-        //         children: [
-        //           TextSpan(text: 'Customer Rate '),
-        //         ],
-        //       ),
-        //     ),
-        //     Text(
-        //       formattedSST,
-        //       style: const TextStyle(fontWeight: FontWeight.bold),
-        //     ),
-        //   ],
-        // ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(
-              formattedTotal,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        const Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Expanded(
-              child: Text(
-                '*This is not an invoice & prices are not finalised',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            Opacity(
-              opacity:
-                  (isVoidButtonDisabled || shouldHideVoidButton()) ? 0.0 : 1.0,
-              child: ElevatedButton(
-                onPressed: shouldHideVoidButton()
-                    ? null
-                    : () => showVoidConfirmationDialog(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      shouldHideVoidButton() ? Colors.transparent : Colors.red,
-                  foregroundColor: Colors.white,
-                  elevation: shouldHideVoidButton() ? 0 : 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  minimumSize: const Size(120, 40),
-                ),
-                child: shouldHideVoidButton()
-                    ? const SizedBox.shrink()
-                    : const Text(
-                        'Void',
-                        style: TextStyle(
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
+                        children: [
+                          const TextSpan(text: 'GST '),
+                          TextSpan(text: '($gstPercentage%)'),
+                        ],
                       ),
+                    ),
+                    Text(
+                      formattedGST,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        children: [
+                          const TextSpan(text: 'SST '),
+                          TextSpan(text: '($sstPercentage%)'),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      formattedSST,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Customer Discount '),
+                          TextSpan(
+                            text: '(${discountRate.toStringAsFixed(1)}%)',
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '- ${formattedCustomerDiscount}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
+              ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Total',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          )),
+                      IconButton(
+                        icon: Icon(
+                          _isSummaryExpanded
+                              ? Icons.keyboard_arrow_down
+                              : Icons.keyboard_arrow_up,
+                          color: Colors.blue[700],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isSummaryExpanded = !_isSummaryExpanded;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  Text(
+                    formattedTotal,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xff0175FF),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '*This is not an invoice & prices are not finalised',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: (isVoidButtonDisabled || shouldHideVoidButton())
+                        ? 0.0
+                        : 1.0,
+                    child: ElevatedButton(
+                      onPressed: shouldHideVoidButton()
+                          ? null
+                          : () => showVoidConfirmationDialog(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: shouldHideVoidButton()
+                            ? Colors.transparent
+                            : Colors.red,
+                        foregroundColor: Colors.white,
+                        elevation: shouldHideVoidButton() ? 0 : 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        minimumSize: const Size(120, 40),
+                      ),
+                      child: shouldHideVoidButton()
+                          ? const SizedBox.shrink()
+                          : const Text(
+                              'Void',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ],
-    );
+      );
+    });
   }
 
   Widget _buildOrderItem(OrderItem item) {
@@ -1083,7 +1159,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              (item.photoPath.isNotEmpty && Uri.parse(item.photoPath).isAbsolute)
+              (item.photoPath.isNotEmpty &&
+                      Uri.parse(item.photoPath).isAbsolute)
                   ? Image.network(
                       item.photoPath,
                       height: 80,
@@ -1107,14 +1184,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     Text(
                       item.uom,
                       style: const TextStyle(
-                          fontSize: 16,),
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Unit Price: RM${oriUnitPriceConverted.toStringAsFixed(3)}',
                       style: const TextStyle(fontSize: 16),
                       maxLines: null, // Allow multiline
-                      overflow: TextOverflow.visible, // Show text fully without truncating
+                      overflow: TextOverflow
+                          .visible, // Show text fully without truncating
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1124,16 +1203,19 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             'Disc. Price: RM${unitPriceConverted.toStringAsFixed(3)}',
                             style: const TextStyle(fontSize: 16),
                             maxLines: null, // Allow multiline
-                            overflow: TextOverflow.visible, // Show text fully without truncating
+                            overflow: TextOverflow
+                                .visible, // Show text fully without truncating
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: Text(
                             'Qty: ${item.qty}',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                             maxLines: null, // Allow multiline
-                            overflow: TextOverflow.visible, // Show text fully without truncating
+                            overflow: TextOverflow
+                                .visible, // Show text fully without truncating
                           ),
                         ),
                       ],
@@ -1149,8 +1231,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Status: ${item.status}',
-                  style:
-                      const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.bold)),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
