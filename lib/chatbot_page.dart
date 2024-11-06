@@ -2,10 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
+import 'package:sales_navigator/profile_page.dart';
 import 'dart:convert';
 import 'product_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:sales_navigator/ai_assistant.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -19,7 +21,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
-  String _loggedInUsername = ''; // Add this variable
+  String _loggedInUsername = ''; 
   final String userId = 'default_user';
   String selectedCategory = '';
   List<String> faqQuestions = [];
@@ -49,14 +51,13 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadSelectedAreaId();
-    _loadUsername(); // Load the username on initialization
+    _loadUsername();
   }
 
   Future<void> _loadUsername() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _loggedInUsername = prefs.getString('username') ?? '';
-      print('Loaded username: $_loggedInUsername'); // Debug print
     });
   }
 
@@ -80,7 +81,8 @@ class _ChatScreenState extends State<ChatScreen> {
         feedbackEnabled = false;
       });
 
-      const String url = 'http://10.0.2.2:5000/chat';
+      const String url =
+          'https://salesnavigator-production-fdd1.up.railway.app/chat';
 
       try {
         final response = await http.post(
@@ -190,7 +192,8 @@ class _ChatScreenState extends State<ChatScreen> {
           (thumbsDownResponseIndex + 1) % thumbsDownResponses.length;
     }
 
-    final url = Uri.parse('http://10.0.2.2:5000/feedback');
+    final url = Uri.parse(
+        'https://salesnavigator-production-fdd1.up.railway.app/feedback');
     try {
       await http.post(
         url,
@@ -226,6 +229,12 @@ class _ChatScreenState extends State<ChatScreen> {
       faqQuestions = _getFAQQuestions(category);
       currentQuestionIndex = 0;
       showSuggestionBox = true;
+      if (category == 'ai_assistant') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SalesPerformancePage()),
+        );
+      }
     });
   }
 
@@ -237,6 +246,8 @@ class _ChatScreenState extends State<ChatScreen> {
         return 'Search Product';
       case 'sales_order':
         return 'Inquire about Sales Order';
+      case 'ai_assistant':
+        return 'AI Assistant';
       default:
         return category;
     }
@@ -316,10 +327,17 @@ class _ChatScreenState extends State<ChatScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            if (selectedCategory.isEmpty) {
-              Navigator.pop(context);
+            if (selectedCategory == 'general' ||
+                selectedCategory == 'search_product' ||
+                selectedCategory == 'sales_order') {
+              setState(() {
+                _clearChat();
+              });
             } else {
-              _clearChat();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
             }
           },
         ),
@@ -352,318 +370,327 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          Column(
-            children: <Widget>[
-              if (selectedCategory.isEmpty)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: FAQSelection(
-                        onCategorySelected: _handleCategorySelection),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (selectedCategory.isEmpty)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: FAQSelection(
+                          onCategorySelected: _handleCategorySelection),
+                    ),
                   ),
-                ),
-              if (selectedCategory.isNotEmpty)
-                Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(mediaQuery.size.width * 0.02),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey),
+                if (selectedCategory.isNotEmpty)
+                  Column(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(mediaQuery.size.width * 0.02),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey),
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Stack(
-                            children: [
-                              const CircleAvatar(
-                                backgroundColor: Colors.white,
-                                child: Icon(Icons.chat, color: Colors.blue),
-                              ),
-                              Positioned(
-                                right: 0,
-                                bottom: 0,
-                                child: Container(
-                                  width: 12,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color: Colors.white, width: 2),
+                        child: Row(
+                          children: [
+                            Stack(
+                              children: [
+                                const CircleAvatar(
+                                  backgroundColor: Colors.white,
+                                  child: Icon(Icons.chat, color: Colors.blue),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(width: mediaQuery.size.width * 0.03),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _getCategoryDisplayName(selectedCategory),
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                              const Text('Sales Navigator Smart Agent',
-                                  style: TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: Icon(Icons.thumb_up_alt_outlined,
-                                color: feedbackEnabled
-                                    ? Colors.blue
-                                    : Colors.grey),
-                            onPressed: feedbackEnabled
-                                ? () => _handleFeedback(true)
-                                : null,
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.thumb_down_alt_outlined,
-                                color: feedbackEnabled
-                                    ? Colors.blue
-                                    : Colors.grey),
-                            onPressed: feedbackEnabled
-                                ? () => _handleFeedback(false)
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (faqQuestions.isNotEmpty && showSuggestionBox)
-                      Container(
-                        margin: const EdgeInsets.all(10),
-                        child: Card(
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                              ],
+                            ),
+                            SizedBox(width: mediaQuery.size.width * 0.03),
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'You may want to ask:',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Text(
+                                  _getCategoryDisplayName(selectedCategory),
+                                  style: const TextStyle(fontSize: 18),
                                 ),
-                                const SizedBox(height: 10),
-                                Column(
-                                  children: List.generate(3, (index) {
-                                    int questionIndex =
-                                        (currentQuestionIndex + index) %
-                                            faqQuestions.length;
-                                    return Column(
-                                      children: [
-                                        ListTile(
-                                          contentPadding: EdgeInsets.zero,
-                                          title:
-                                              Text(faqQuestions[questionIndex]),
-                                          trailing:
-                                              const Icon(Icons.arrow_forward),
-                                          onTap: () {
-                                            _handleFAQSelection(
-                                                faqQuestions[questionIndex]);
-                                          },
-                                        ),
-                                        if (index < 2)
-                                          const Divider(color: Colors.grey),
-                                      ],
-                                    );
-                                  }),
-                                ),
-                                Center(
-                                  child: TextButton(
-                                    onPressed: _cycleQuestions,
-                                    child: const Text(
-                                      'Change Questions',
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xff0175FF)),
-                                    ),
-                                  ),
-                                ),
+                                const Text('Sales Navigator Smart Agent',
+                                    style: TextStyle(fontSize: 12)),
                               ],
                             ),
-                          ),
+                            const Spacer(),
+                            IconButton(
+                              icon: Icon(Icons.thumb_up_alt_outlined,
+                                  color: feedbackEnabled
+                                      ? Colors.blue
+                                      : Colors.grey),
+                              onPressed: feedbackEnabled
+                                  ? () => _handleFeedback(true)
+                                  : null,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.thumb_down_alt_outlined,
+                                  color: feedbackEnabled
+                                      ? Colors.blue
+                                      : Colors.grey),
+                              onPressed: feedbackEnabled
+                                  ? () => _handleFeedback(false)
+                                  : null,
+                            ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
-              if (selectedCategory.isNotEmpty)
-                Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      final isUser = message["isUser"] as bool;
-                      final timestamp = message["timestamp"] as String;
-                      final products = message["products"] as List<dynamic>?;
-                      final salesOrders =
-                          message["sales_orders"] as List<dynamic>?;
-                      return Column(
-                        crossAxisAlignment: isUser
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: EdgeInsets.only(
-                                left: mediaQuery.size.width * 0.03,
-                                right: mediaQuery.size.width * 0.02,
-                                top: mediaQuery.size.width * 0.01,
-                                bottom: mediaQuery.size.width * 0.01),
-                            padding:
-                                EdgeInsets.all(mediaQuery.size.width * 0.03),
-                            decoration: BoxDecoration(
-                              color: isUser
-                                  ? const Color.fromARGB(255, 0, 100, 177)
-                                  : Colors.white,
+                      if (faqQuestions.isNotEmpty && showSuggestionBox)
+                        Container(
+                          margin: const EdgeInsets.all(10),
+                          child: Card(
+                            elevation: 5,
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  spreadRadius: 3,
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: isUser
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  message["message"],
-                                  style: TextStyle(
-                                      color:
-                                          isUser ? Colors.white : Colors.black),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  timestamp,
-                                  style: TextStyle(
-                                      color: isUser
-                                          ? Colors.white70
-                                          : Colors.black54,
-                                      fontSize: 10),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (salesOrders != null && salesOrders.isNotEmpty)
-                            ...salesOrders
-                                .map((order) => SalesOrderCard(order: order)),
-                          if (products != null && products.isNotEmpty)
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                  childAspectRatio: 0.7,
-                                ),
-                                itemCount: products.length,
-                                itemBuilder: (context, index) {
-                                  return _buildProductCard(products[index]);
-                                },
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              if (isTyping)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(width: 10),
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Text('Sales Navigator Smart Agent is typing...'),
-                    ],
-                  ),
-                ),
-              if (selectedCategory.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      if (faqQuestions.isNotEmpty)
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: faqQuestions.map((question) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    foregroundColor: Colors.black,
-                                    backgroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15.0),
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'You may want to ask:',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  onPressed: () {
-                                    _handleFAQSelection(question);
-                                  },
-                                  child: Text(question,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              decoration: InputDecoration(
-                                hintText: 'Type your message...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
+                                  const SizedBox(height: 10),
+                                  Column(
+                                    children: List.generate(3, (index) {
+                                      int questionIndex =
+                                          (currentQuestionIndex + index) %
+                                              faqQuestions.length;
+                                      return Column(
+                                        children: [
+                                          ListTile(
+                                            contentPadding: EdgeInsets.zero,
+                                            title: Text(
+                                                faqQuestions[questionIndex]),
+                                            trailing:
+                                                const Icon(Icons.arrow_forward),
+                                            onTap: () {
+                                              _handleFAQSelection(
+                                                  faqQuestions[questionIndex]);
+                                            },
+                                          ),
+                                          if (index < 2)
+                                            const Divider(color: Colors.grey),
+                                        ],
+                                      );
+                                    }),
+                                  ),
+                                  Center(
+                                    child: TextButton(
+                                      onPressed: _cycleQuestions,
+                                      child: const Text(
+                                        'Change Questions',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xff0175FF)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.send),
-                            onPressed: () =>
-                                _handleSendMessage(_controller.text),
-                          ),
-                        ],
-                      ),
+                        ),
                     ],
                   ),
-                ),
-            ],
+                if (selectedCategory.isNotEmpty)
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _messages[index];
+                        final isUser = message["isUser"] as bool;
+                        final timestamp = message["timestamp"] as String;
+                        final products = message["products"] as List<dynamic>?;
+                        final salesOrders =
+                            message["sales_orders"] as List<dynamic>?;
+                        return Column(
+                          crossAxisAlignment: isUser
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(
+                                  left: mediaQuery.size.width * 0.03,
+                                  right: mediaQuery.size.width * 0.02,
+                                  top: mediaQuery.size.width * 0.01,
+                                  bottom: mediaQuery.size.width * 0.01),
+                              padding:
+                                  EdgeInsets.all(mediaQuery.size.width * 0.03),
+                              decoration: BoxDecoration(
+                                color: isUser
+                                    ? const Color.fromARGB(255, 0, 100, 177)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(15.0),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    spreadRadius: 3,
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: isUser
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message["message"],
+                                    style: TextStyle(
+                                        color: isUser
+                                            ? Colors.white
+                                            : Colors.black),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    timestamp,
+                                    style: TextStyle(
+                                        color: isUser
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                        fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (salesOrders != null && salesOrders.isNotEmpty)
+                              ...salesOrders
+                                  .map((order) => SalesOrderCard(order: order)),
+                            if (products != null && products.isNotEmpty)
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                    childAspectRatio: 0.7,
+                                  ),
+                                  itemCount: products.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildProductCard(products[index]);
+                                  },
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                if (isTyping)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(width: 10),
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text('Sales Navigator Smart Agent is typing...'),
+                      ],
+                    ),
+                  ),
+                if (selectedCategory.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        if (faqQuestions.isNotEmpty)
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: faqQuestions.map((question) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5.0),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: Colors.black,
+                                      backgroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(15.0),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      _handleFAQSelection(question);
+                                    },
+                                    child: Text(question,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _controller,
+                                  decoration: InputDecoration(
+                                    hintText: 'Type your message...',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.send),
+                                onPressed: () =>
+                                    _handleSendMessage(_controller.text),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -734,6 +761,11 @@ class FAQSelection extends StatelessWidget {
                           icon: Icons.description,
                           label: 'Sales Inquiry',
                           onTap: () => onCategorySelected('sales_order'),
+                        ),
+                        _buildCategoryCard(
+                          icon: Icons.assistant,
+                          label: 'AI Assistant',
+                          onTap: () => onCategorySelected('ai_assistant'),
                         ),
                       ],
                     ),
