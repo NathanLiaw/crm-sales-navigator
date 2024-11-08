@@ -107,6 +107,80 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isButtonVisible = true;
   int _unreadNotifications = 0;
 
+  String _timeFilter = 'All Time';
+  List<String> timeFilterOptions = [
+    'All Time',
+    'Today',
+    'Yesterday',
+    'This Week',
+    'This Month',
+    'This Year'
+  ];
+
+  List<LeadItem> _filterLeadsByTime(List<LeadItem> leads, String timeFilter) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final thisWeekStart = today.subtract(Duration(days: today.weekday - 1));
+    final thisMonthStart = DateTime(now.year, now.month, 1);
+    final thisYearStart = DateTime(now.year, 1, 1);
+
+    return leads.where((lead) {
+      if (lead.createdDate.isEmpty) {
+        return false;
+      }
+
+      DateTime? leadDate;
+      try {
+        leadDate = DateFormat('MM/dd/yyyy').parse(lead.createdDate);
+      } catch (e) {
+        developer.log('Error parsing date: ${lead.createdDate}');
+        return false;
+      }
+
+      switch (timeFilter) {
+        case 'Today':
+          return leadDate.isAfter(today.subtract(const Duration(seconds: 1))) &&
+              leadDate.isBefore(today.add(const Duration(days: 1)));
+        case 'Yesterday':
+          return leadDate
+                  .isAfter(yesterday.subtract(const Duration(seconds: 1))) &&
+              leadDate.isBefore(today);
+        case 'This Week':
+          return leadDate.isAfter(
+                  thisWeekStart.subtract(const Duration(seconds: 1))) &&
+              leadDate.isBefore(today.add(const Duration(days: 1)));
+        case 'This Month':
+          return leadDate.isAfter(
+                  thisMonthStart.subtract(const Duration(seconds: 1))) &&
+              leadDate.isBefore(now);
+        case 'This Year':
+          return leadDate.isAfter(
+                  thisYearStart.subtract(const Duration(seconds: 1))) &&
+              leadDate.isBefore(now);
+        default:
+          return true;
+      }
+    }).toList();
+  }
+
+  List<LeadItem> _filteredOpportunities = [];
+  List<LeadItem> _filteredEngagement = [];
+  List<LeadItem> _filteredNegotiation = [];
+  List<LeadItem> _filteredOrderProcessing = [];
+  List<LeadItem> _filteredClosed = [];
+
+  void _updateFilteredLists() {
+    setState(() {
+      _filteredOpportunities = _filterLeadsByTime(leadItems, _timeFilter);
+      _filteredEngagement = _filterLeadsByTime(engagementLeads, _timeFilter);
+      _filteredNegotiation = _filterLeadsByTime(negotiationLeads, _timeFilter);
+      _filteredOrderProcessing =
+          _filterLeadsByTime(orderProcessingLeads, _timeFilter);
+      _filteredClosed = _filterLeadsByTime(closedLeads, _timeFilter);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -118,6 +192,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Future.delayed(const Duration(seconds: 2), () {
       setState(() {
         _isLoading = false; // Set loading state to false when data is loaded
+        _updateFilteredLists();
       });
     });
     _tabController = TabController(
@@ -476,9 +551,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           for (var lead in leads) {
             var id = lead['id'] ?? 0; // Provide a default value if id is null
-            var customerName = lead['customer_name'] ?? 'Unknown'; // Default if null
+            var customerName =
+                lead['customer_name'] ?? 'Unknown'; // Default if null
             var description = lead['description'] ?? '';
-            var total = double.tryParse(lead['total']?.toString() ?? '0') ?? 0.0;
+            var total =
+                double.tryParse(lead['total']?.toString() ?? '0') ?? 0.0;
             var createdDate = lead['created_date'] ?? '';
             var contactNumber = lead['contact_number'] ?? '';
             var emailAddress = lead['email_address'] ?? '';
@@ -760,7 +837,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Successfully moved lead to Order Processing stage'),
+              content:
+                  Text('Successfully moved lead to Order Processing stage'),
               backgroundColor: Colors.green,
             ),
           );
@@ -1134,7 +1212,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Successfully moved lead to Order Processing stage'),
+              content:
+                  Text('Successfully moved lead to Order Processing stage'),
               backgroundColor: Colors.green,
             ),
           );
@@ -1646,8 +1725,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _createLead(
       String customerName, String description, String amount) async {
-    String baseUrl =
-        '${dotenv.env['API_URL']}/sales_lead/update_new_lead.php';
+    String baseUrl = '${dotenv.env['API_URL']}/sales_lead/update_new_lead.php';
 
     final Map<String, String> queryParameters = {
       'customer_name': customerName,
@@ -1953,6 +2031,63 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: _showSortOptions,
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.filter_list, color: Colors.white),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Filter by Time'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: timeFilterOptions.map((option) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: ListTile(
+                                    title: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(option),
+                                        if (_timeFilter == option)
+                                          const Icon(
+                                            Icons.check,
+                                            size: 16,
+                                            color: Color(0xFF0175FF),
+                                          ),
+                                      ],
+                                    ),
+                                    tileColor: _timeFilter == option
+                                        ? const Color(0xFFF5F8FF)
+                                        : null,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: _timeFilter == option
+                                          ? const BorderSide(
+                                              color: Color(0xFF0175FF),
+                                              width: 1)
+                                          : BorderSide.none,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _timeFilter = option;
+                                        _updateFilteredLists();
+                                      });
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 16),
+                          );
+                        },
+                      );
+                    },
+                  ),
                   Consumer<NotificationState>(
                     builder: (context, notificationState, child) {
                       return Padding(
@@ -2113,13 +2248,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     isScrollable: true,
                     indicatorSize: TabBarIndicatorSize.label,
                     tabs: [
-                      Tab(text: 'Opportunities(${leadItems.length})'),
-                      Tab(text: 'Engagement(${engagementLeads.length})'),
-                      Tab(text: 'Negotiation(${negotiationLeads.length})'),
                       Tab(
                           text:
-                              'Order Processing(${orderProcessingLeads.length})'),
-                      Tab(text: 'Closed(${closedLeads.length})'),
+                              'Opportunities(${_filteredOpportunities.length})'),
+                      Tab(text: 'Engagement(${_filteredEngagement.length})'),
+                      Tab(text: 'Negotiation(${_filteredNegotiation.length})'),
+                      Tab(
+                          text:
+                              'Order Processing(${_filteredOrderProcessing.length})'),
+                      Tab(text: 'Closed(${_filteredClosed.length})'),
                     ],
                     labelStyle: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.bold),
@@ -2131,18 +2268,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         _isLoading
                             ? _buildShimmerTab()
                             : _buildOpportunitiesTab(),
-                        _isLoading
-                            ? _buildShimmerTab()
-                            : _buildEngagementTab(),
+                        _isLoading ? _buildShimmerTab() : _buildEngagementTab(),
                         _isLoading
                             ? _buildShimmerTab()
                             : _buildNegotiationTab(),
                         _isLoading
                             ? _buildShimmerTab()
                             : _buildOrderProcessingTab(),
-                        _isLoading
-                            ? _buildShimmerTab()
-                            : _buildClosedTab(),
+                        _isLoading ? _buildShimmerTab() : _buildClosedTab(),
                       ],
                     ),
                   ),
@@ -2262,7 +2395,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildOpportunitiesTab() {
-    if (leadItems.isEmpty) {
+    if (_isLoading) {
+      return _buildShimmerTab();
+    }
+    final filteredLeads = _filterLeadsByTime(leadItems, _timeFilter);
+
+    if (filteredLeads.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2274,7 +2412,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             SizedBox(height: 20),
             Text(
-              'No Sales Leads created yet,\ncreate one now!',
+              'No Sales Leads found for selected time period,\ncreate one now!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
@@ -2284,22 +2422,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
         ),
       );
-    } else {
-      return ListView.builder(
-        itemCount: leadItems.length,
-        itemBuilder: (context, index) {
-          return Column(
-            children: [
-              _buildLeadItem(leadItems[index]),
-              // Check if it's the last item
-              if (index == leadItems.length - 1)
-                // Add additional padding for the last item
-                const SizedBox(height: 80),
-            ],
-          );
-        },
-      );
     }
+
+    return ListView.builder(
+      itemCount: filteredLeads.length,
+      itemBuilder: (context, index) {
+        return Column(
+          children: [
+            _buildLeadItem(filteredLeads[index]),
+            if (index == filteredLeads.length - 1) const SizedBox(height: 80),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildLeadItem(LeadItem leadItem) {
@@ -2560,7 +2695,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEngagementTab() {
-    if (engagementLeads.isEmpty) {
+    if (_isLoading) {
+      return _buildShimmerTab();
+    }
+    final filteredLeads = _filterLeadsByTime(engagementLeads, _timeFilter);
+    if (filteredLeads.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2584,9 +2723,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     } else {
       return ListView.builder(
-        itemCount: engagementLeads.length,
+        itemCount: filteredLeads.length,
         itemBuilder: (context, index) {
-          LeadItem leadItem = engagementLeads[index];
+          LeadItem leadItem = filteredLeads[index];
           return EngagementLeadItem(
             leadItem: leadItem,
             onMoveToNegotiation: () =>
@@ -2596,7 +2735,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               await _moveFromEngagementToOrderProcessing(
                   leadItem, salesOrderId, quantity);
               setState(() {
-                engagementLeads.remove(leadItem);
+                filteredLeads.remove(leadItem);
                 orderProcessingLeads.add(leadItem);
               });
             },
@@ -2619,7 +2758,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               );
               if (result != null && result['salesOrderId'] != null) {
                 setState(() {
-                  engagementLeads.remove(leadItem);
+                  filteredLeads.remove(leadItem);
                   leadItem.salesOrderId = result['salesOrderId'];
                   leadItem.quantity = result['quantity'];
                   closedLeads.add(leadItem);
@@ -2687,7 +2826,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Successfully moved lead to Order Processing stage'),
+              content:
+                  Text('Successfully moved lead to Order Processing stage'),
               backgroundColor: Colors.green,
             ),
           );
@@ -2706,7 +2846,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildNegotiationTab() {
-    if (negotiationLeads.isEmpty) {
+    if (_isLoading) {
+      return _buildShimmerTab();
+    }
+    final filteredLeads = _filterLeadsByTime(negotiationLeads, _timeFilter);
+    if (filteredLeads.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2730,9 +2874,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     } else {
       return ListView.builder(
-        itemCount: negotiationLeads.length,
+        itemCount: filteredLeads.length,
         itemBuilder: (context, index) {
-          LeadItem leadItem = negotiationLeads[index];
+          LeadItem leadItem = filteredLeads[index];
           return NegotiationLeadItem(
             leadItem: leadItem,
             onMoveToOrderProcessing: (leadItem, salesOrderId, quantity) async {
@@ -2740,7 +2884,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   leadItem, salesOrderId, quantity);
               await _updateSalesmanPerformance(salesmanId);
               setState(() {
-                negotiationLeads.remove(leadItem);
+                filteredLeads.remove(leadItem);
                 orderProcessingLeads.add(leadItem);
               });
             },
@@ -2763,7 +2907,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               );
               if (result != null && result['salesOrderId'] != null) {
                 setState(() {
-                  negotiationLeads.remove(leadItem);
+                  filteredLeads.remove(leadItem);
                   leadItem.salesOrderId = result['salesOrderId'];
                   leadItem.quantity = result['quantity'];
                   closedLeads.add(leadItem);
@@ -2778,7 +2922,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildOrderProcessingTab() {
-    if (orderProcessingLeads.isEmpty) {
+    if (_isLoading) {
+      return _buildShimmerTab();
+    }
+    final filteredLeads = _filterLeadsByTime(orderProcessingLeads, _timeFilter);
+    if (filteredLeads.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2802,9 +2950,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     } else {
       return ListView.builder(
-        itemCount: orderProcessingLeads.length,
+        itemCount: filteredLeads.length,
         itemBuilder: (context, index) {
-          LeadItem leadItem = orderProcessingLeads[index];
+          LeadItem leadItem = filteredLeads[index];
           if (leadItem.salesOrderId == null) {
             return OrderProcessingLeadItem(
               leadItem: leadItem,
@@ -3014,7 +3162,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildClosedTab() {
-    if (closedLeads.isEmpty) {
+    if (_isLoading) {
+      return _buildShimmerTab();
+    }
+    final filteredLeads = _filterLeadsByTime(closedLeads, _timeFilter);
+    if (filteredLeads.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -3038,9 +3190,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     } else {
       return ListView.builder(
-        itemCount: closedLeads.length,
+        itemCount: filteredLeads.length,
         itemBuilder: (context, index) {
-          LeadItem leadItem = closedLeads[index];
+          LeadItem leadItem = filteredLeads[index];
           return FutureBuilder<Map<String, String>>(
             future: _fetchSalesOrderDetails(leadItem.salesOrderId!),
             builder: (context, snapshot) {
