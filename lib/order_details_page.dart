@@ -173,8 +173,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Future<void> voidOrder() async {
-     String url =
-        '${dotenv.env['API_URL']}/order_details/void_order.php';
+    String url = '${dotenv.env['API_URL']}/order_details/void_order.php';
 
     try {
       final response = await http.post(
@@ -355,7 +354,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onSelected: (value) async {
-              if (value == 'viewInvoice') {
+              if (value == 'viewDocument') {
                 final pdfData = await pdfGenerator.generateInvoicePdf(
                   companyName: companyName,
                   address: address,
@@ -382,18 +381,25 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 );
               }
             },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'viewInvoice',
-                child: Row(
-                  children: [
-                    Icon(Icons.description_outlined),
-                    SizedBox(width: 8),
-                    Text('View / Download Invoice'),
-                  ],
+            itemBuilder: (BuildContext context) {
+              // Move the conditional logic outside of the const constructor
+              String buttonText = status.toLowerCase() == 'confirm'
+                  ? 'View / Download Invoice'
+                  : 'View / Download Quotation';
+
+              return <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'viewDocument',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description_outlined),
+                      const SizedBox(width: 8),
+                      Text(buttonText),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ];
+            },
           ),
         ],
       ),

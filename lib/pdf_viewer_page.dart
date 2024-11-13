@@ -127,14 +127,12 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
   Future<void> _downloadPDF() async {
     setState(() => isLoading = true);
     try {
-      // 1. Handle permissions
       final hasPermission = await _handlePermissions();
       if (!hasPermission) {
         setState(() => isLoading = false);
         return;
       }
 
-      // 2. Get device SDK version for handling Android specific logic
       if (Platform.isAndroid) {
         final deviceInfo = await DeviceInfoPlugin().androidInfo;
         final sdkInt = deviceInfo.version.sdkInt;

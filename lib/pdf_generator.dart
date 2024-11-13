@@ -124,7 +124,11 @@ class PdfInvoiceGenerator {
                       pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('SALES ORDER', style: titleStyle),
+                          pw.Text(
+                              status.toLowerCase() == 'confirm'
+                                  ? 'SALES ORDER'
+                                  : 'SALES QUOTATION',
+                              style: titleStyle),
                           pw.SizedBox(height: 10),
                           pw.Text(companyName, style: headerStyle),
                           pw.SizedBox(height: 5),

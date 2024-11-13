@@ -21,6 +21,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 
 final List<String> tabbarNames = [
   'Opportunities',
@@ -107,6 +108,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isButtonVisible = true;
   int _unreadNotifications = 0;
 
+  DateTimeRange? dateRange;
+  DateTime? _startDate;
+  DateTime? _endDate;
+
   String _timeFilter = 'All Time';
   List<String> timeFilterOptions = [
     'All Time',
@@ -114,7 +119,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     'Yesterday',
     'This Week',
     'This Month',
-    'This Year'
+    'This Year',
+    'Custom Range',
   ];
 
   List<LeadItem> _filterLeadsByTime(List<LeadItem> leads, String timeFilter) {
@@ -158,6 +164,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           return leadDate.isAfter(
                   thisYearStart.subtract(const Duration(seconds: 1))) &&
               leadDate.isBefore(now);
+        case 'Custom Range':
+          if (_startDate != null && _endDate != null) {
+            return leadDate.isAfter(
+                    _startDate!.subtract(const Duration(seconds: 1))) &&
+                leadDate.isBefore(_endDate!.add(const Duration(days: 1)));
+          }
+          return true;
         default:
           return true;
       }
@@ -206,6 +219,187 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             _tabController.index == 0; // Show button only on first tab
       });
     });
+  }
+
+  Future<void> _showDateRangePicker() async {
+    final previousStartDate = _startDate;
+    final previousEndDate = _endDate;
+    final previousDateRange = dateRange;
+    final previousTimeFilter = _timeFilter;
+
+    final initialDateRange = dateRange ??
+        DateTimeRange(
+          start: DateTime.now().subtract(const Duration(days: 7)),
+          end: DateTime.now(),
+        );
+
+    final size = MediaQuery.of(context).size;
+    final dialogWidth = size.width * 0.9;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        DateTime? tempStartDate = _startDate;
+        DateTime? tempEndDate = _endDate;
+        DateTimeRange? tempDateRange = dateRange;
+
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            width: dialogWidth,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 400,
+                  child: CalendarDatePicker2(
+                    config: CalendarDatePicker2Config(
+                      calendarType: CalendarDatePicker2Type.range,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                      selectedDayHighlightColor: const Color(0xFF0175FF),
+                      weekdayLabelTextStyle: const TextStyle(
+                        color: Color(0xFF0175FF),
+                        fontWeight: FontWeight.bold,
+                      ),
+                      centerAlignModePicker: true,
+                      customModePickerIcon: const SizedBox(),
+                      yearTextStyle: const TextStyle(
+                        fontSize: 13,
+                        height: 1.0,
+                      ),
+                      controlsTextStyle: const TextStyle(
+                        fontSize: 13,
+                        height: 1.0,
+                      ),
+                      dayTextStyle: const TextStyle(
+                        fontSize: 13,
+                        height: 1.0,
+                      ),
+                      selectedDayTextStyle: const TextStyle(
+                        fontSize: 13,
+                        height: 1.0,
+                        color: Colors.white,
+                      ),
+                    ),
+                    value: [initialDateRange.start, initialDateRange.end],
+                    onValueChanged: (dates) {
+                      if (dates.length == 2 &&
+                          dates[0] != null &&
+                          dates[1] != null) {
+                        tempStartDate = dates[0]!;
+                        tempEndDate = dates[1]!;
+                        tempDateRange = DateTimeRange(
+                          start: dates[0]!,
+                          end: dates[1]!,
+                        );
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _startDate = previousStartDate;
+                          _endDate = previousEndDate;
+                          dateRange = previousDateRange;
+                          _timeFilter = previousTimeFilter;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _startDate = tempStartDate;
+                          _endDate = tempEndDate;
+                          dateRange = tempDateRange;
+                          _timeFilter = 'Custom Range';
+                        });
+                        _updateFilteredLists();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filter by Time'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: timeFilterOptions.map((option) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(option),
+                      if (_timeFilter == option)
+                        const Icon(
+                          Icons.check,
+                          size: 16,
+                          color: Color(0xFF0175FF),
+                        ),
+                    ],
+                  ),
+                  tileColor:
+                      _timeFilter == option ? const Color(0xFFF5F8FF) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: _timeFilter == option
+                        ? const BorderSide(color: Color(0xFF0175FF), width: 1)
+                        : BorderSide.none,
+                  ),
+                  onTap: () {
+                    if (option == 'Custom Range') {
+                      Navigator.of(context).pop();
+                      _showDateRangePicker();
+                    } else {
+                      setState(() {
+                        _timeFilter = option;
+                        _startDate = null;
+                        _endDate = null;
+                        _updateFilteredLists();
+                      });
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  subtitle: option == 'Custom Range' &&
+                          _startDate != null &&
+                          _endDate != null
+                      ? Text(
+                          '${DateFormat('MM/dd/yyyy').format(_startDate!)} - ${DateFormat('MM/dd/yyyy').format(_endDate!)}',
+                          style: const TextStyle(fontSize: 12),
+                        )
+                      : null,
+                ),
+              );
+            }).toList(),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        );
+      },
+    );
   }
 
   Future<void> _loadUnreadNotifications() async {
@@ -698,7 +892,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //       var salesOrderId = row['so_id']?.toString();
   //       var previousStage = row['previous_stage']?.toString();
   //       var quantity = row['quantity'];
-  //       // 添加这两行来获取 engagement_start_date 和 negotiation_start_date
+  //       engagement_start_date 和 negotiation_start_date
   //       var engagementStartDate = row['engagement_start_date'] as DateTime?;
   //       var negotiationStartDate = row['negotiation_start_date'] as DateTime?;
   //
@@ -716,8 +910,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //         salesOrderId: salesOrderId,
   //         previousStage: previousStage,
   //         quantity: quantity,
-  //         engagementStartDate: engagementStartDate, // 添加这行
-  //         negotiationStartDate: negotiationStartDate, // 添加这行
+  //         engagementStartDate: engagementStartDate,
+  //         negotiationStartDate: negotiationStartDate,
   //       );
   //
   //       setState(() {
@@ -1669,7 +1863,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   //   MySqlConnection conn = await connectToDatabase();
   //   try {
   //     await conn.transaction((ctx) async {
-  //       // 使用正确的日期格式
   //       String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   //       var result = await ctx.query(
@@ -1685,7 +1878,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   //       int newLeadId = result.insertId!;
 
-  //       // 现在记录事件
   //       await ctx.query(
   //           'INSERT INTO event_log (salesman_id, activity_description, activity_type, datetime, lead_id) VALUES (?, ?, ?, NOW(), ?)',
   //           [
@@ -1975,7 +2167,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<int?> _getSalesmanId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? id = prefs.getInt('id');
-    developer.log("_getSalesmanId returned: $id"); // Add this log
+    developer.log("_getSalesmanId returned: $id");
     return id;
   }
 
@@ -2027,77 +2219,80 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //     ),
                   //   ],
                   // ),
-                  IconButton(
-                    icon: const Icon(Icons.sort, color: Colors.white),
-                    onPressed: _showSortOptions,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.filter_list, color: Colors.white),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Filter by Time'),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: timeFilterOptions.map((option) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: ListTile(
-                                    title: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(option),
-                                        if (_timeFilter == option)
-                                          const Icon(
-                                            Icons.check,
-                                            size: 16,
-                                            color: Color(0xFF0175FF),
-                                          ),
-                                      ],
-                                    ),
-                                    tileColor: _timeFilter == option
-                                        ? const Color(0xFFF5F8FF)
-                                        : null,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: _timeFilter == option
-                                          ? const BorderSide(
-                                              color: Color(0xFF0175FF),
-                                              width: 1)
-                                          : BorderSide.none,
-                                    ),
-                                    onTap: () {
-                                      setState(() {
-                                        _timeFilter = option;
-                                        _updateFilteredLists();
-                                      });
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 16),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.sort, color: Colors.white),
+                  //   onPressed: _showSortOptions,
+                  // ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.filter_list, color: Colors.white),
+                  //   onPressed: () {
+                  //     showDialog(
+                  //       context: context,
+                  //       builder: (BuildContext context) {
+                  //         return AlertDialog(
+                  //           title: const Text('Filter by Time'),
+                  //           content: Column(
+                  //             mainAxisSize: MainAxisSize.min,
+                  //             children: timeFilterOptions.map((option) {
+                  //               return Padding(
+                  //                 padding: const EdgeInsets.symmetric(
+                  //                     horizontal: 8.0),
+                  //                 child: ListTile(
+                  //                   title: Row(
+                  //                     mainAxisAlignment:
+                  //                         MainAxisAlignment.spaceBetween,
+                  //                     children: [
+                  //                       Text(option),
+                  //                       if (_timeFilter == option)
+                  //                         const Icon(
+                  //                           Icons.check,
+                  //                           size: 16,
+                  //                           color: Color(0xFF0175FF),
+                  //                         ),
+                  //                     ],
+                  //                   ),
+                  //                   tileColor: _timeFilter == option
+                  //                       ? const Color(0xFFF5F8FF)
+                  //                       : null,
+                  //                   shape: RoundedRectangleBorder(
+                  //                     borderRadius: BorderRadius.circular(8),
+                  //                     side: _timeFilter == option
+                  //                         ? const BorderSide(
+                  //                             color: Color(0xFF0175FF),
+                  //                             width: 1)
+                  //                         : BorderSide.none,
+                  //                   ),
+                  //                   onTap: () {
+                  //                     setState(() {
+                  //                       _timeFilter = option;
+                  //                       _updateFilteredLists();
+                  //                     });
+                  //                     Navigator.of(context).pop();
+                  //                   },
+                  //                 ),
+                  //               );
+                  //             }).toList(),
+                  //           ),
+                  //           contentPadding: const EdgeInsets.symmetric(
+                  //               horizontal: 8, vertical: 16),
+                  //         );
+                  //       },
+                  //     );
+                  //   },
+                  // ),
                   Consumer<NotificationState>(
                     builder: (context, notificationState, child) {
                       return Padding(
-                        padding: const EdgeInsets.only(right: 7.0),
+                        padding: const EdgeInsets.only(right: 0.0),
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.notifications,
                                   color: Colors.white),
+                              padding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints(),
                               onPressed: () async {
                                 await Navigator.push(
                                   context,
@@ -2205,6 +2400,93 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   //       }
                   //     },
                   //   ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    onSelected: (String choice) {
+                      if (choice == 'sort') {
+                        _showSortOptions();
+                      } else if (choice == 'filter') {
+                        _showFilterDialog();
+                        // showDialog(
+                        //   context: context,
+                        //   builder: (BuildContext context) {
+                        //     return AlertDialog(
+                        //       title: const Text('Filter by Time'),
+                        //       content: Column(
+                        //         mainAxisSize: MainAxisSize.min,
+                        //         children: timeFilterOptions.map((option) {
+                        //           return Padding(
+                        //             padding: const EdgeInsets.symmetric(
+                        //                 horizontal: 8.0),
+                        //             child: ListTile(
+                        //               title: Row(
+                        //                 mainAxisAlignment:
+                        //                     MainAxisAlignment.spaceBetween,
+                        //                 children: [
+                        //                   Text(option),
+                        //                   if (_timeFilter == option)
+                        //                     const Icon(
+                        //                       Icons.check,
+                        //                       size: 16,
+                        //                       color: Color(0xFF0175FF),
+                        //                     ),
+                        //                 ],
+                        //               ),
+                        //               tileColor: _timeFilter == option
+                        //                   ? const Color(0xFFF5F8FF)
+                        //                   : null,
+                        //               shape: RoundedRectangleBorder(
+                        //                 borderRadius: BorderRadius.circular(8),
+                        //                 side: _timeFilter == option
+                        //                     ? const BorderSide(
+                        //                         color: Color(0xFF0175FF),
+                        //                         width: 1)
+                        //                     : BorderSide.none,
+                        //               ),
+                        //               onTap: () {
+                        //                 setState(() {
+                        //                   _timeFilter = option;
+                        //                   _updateFilteredLists();
+                        //                 });
+                        //                 Navigator.of(context).pop();
+                        //               },
+                        //             ),
+                        //           );
+                        //         }).toList(),
+                        //       ),
+                        //       contentPadding: const EdgeInsets.symmetric(
+                        //           horizontal: 8, vertical: 16),
+                        //     );
+                        //   },
+                        // );
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'sort',
+                        child: Row(
+                          children: [
+                            Icon(Icons.sort, size: 20),
+                            SizedBox(width: 8),
+                            Text('Sort'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'filter',
+                        child: Row(
+                          children: [
+                            Icon(Icons.filter_list, size: 20),
+                            SizedBox(width: 8),
+                            Text('Filter'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    position: PopupMenuPosition.under,
+                  ),
                 ],
               ),
               body: Column(
