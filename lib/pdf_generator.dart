@@ -46,58 +46,161 @@ class PdfInvoiceGenerator {
       color: PdfColors.grey700,
     );
 
-    double subtotal =
-        orderItems.fold(0, (sum, item) => sum + double.parse(item.total));
+    double subtotal = orderItems.fold(
+        0,
+        (sum, item) =>
+            sum + (double.parse(item.unitPrice) * double.parse(item.qty)));
     double gstAmount = subtotal * (gst);
     double sstAmount = subtotal * (sst);
     double customerDiscountAmount = subtotal * (customerRate / 100);
     double total = subtotal - customerDiscountAmount + gstAmount + sstAmount;
 
-    // Convert order items to table data for better handling
-    final List<List<String>> tableData = orderItems.map((item) {
+    // Convert order items to table data with custom price column
+    final List<List<dynamic>> tableData = orderItems.map((item) {
+      double discountedTotal =
+          double.parse(item.unitPrice) * double.parse(item.qty);
+      double originalPrice = double.parse(item.oriUnitPrice);
+      double discountedPrice = double.parse(item.unitPrice);
+
+      // Create price column showing both original and discounted prices
+      final priceColumn = pw.Container(
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          mainAxisAlignment: pw.MainAxisAlignment.center,
+          children: [
+            if (originalPrice != discountedPrice) ...[
+              pw.Text(
+                originalPrice.toStringAsFixed(3),
+                style: const pw.TextStyle(
+                  decoration: pw.TextDecoration.lineThrough,
+                  color: PdfColors.grey600,
+                  fontSize: 10,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Text(
+                discountedPrice.toStringAsFixed(3),
+                style: const pw.TextStyle(
+                  fontSize: 14,
+                ),
+              ),
+            ] else
+              pw.Text(
+                originalPrice.toStringAsFixed(3),
+                style: const pw.TextStyle(
+                  fontSize: 14,
+                ),
+              ),
+          ],
+        ),
+      );
+
       return [
         item.productName,
         item.uom,
         item.qty,
-        double.parse(item.unitPrice).toStringAsFixed(3),
-        double.parse(item.total).toStringAsFixed(3),
+        priceColumn,
+        discountedTotal.toStringAsFixed(3)
       ];
     }).toList();
 
-    // Calculate number of items per page
     const int firstPageItems = 10;
     const int subsequentPageItems = 15;
 
-    // Calculate total pages needed
     int remainingItems = tableData.length;
-    int totalPages = 1; // Start with 1 for the first page
+    int totalPages = 1;
     if (remainingItems > firstPageItems) {
       remainingItems -= firstPageItems;
       totalPages +=
           (remainingItems + subsequentPageItems - 1) ~/ subsequentPageItems;
     }
 
-    // Generate pages
+    // Helper function to build table
+    pw.Widget buildTable(List<List<dynamic>> data,
+        {bool includeHeader = true}) {
+      return pw.Table(
+        border: pw.TableBorder.all(
+          color: PdfColors.grey400,
+          width: 0.5,
+        ),
+        columnWidths: {
+          0: const pw.FlexColumnWidth(3),
+          1: const pw.FlexColumnWidth(1),
+          2: const pw.FlexColumnWidth(1),
+          3: const pw.FlexColumnWidth(1.5),
+          4: const pw.FlexColumnWidth(1.5),
+        },
+        children: [
+          if (includeHeader)
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColors.blue900),
+              children: [
+                'Product Name',
+                'UOM',
+                'Qty',
+                'Unit Price',
+                'Total (RM)'
+              ]
+                  .map((header) => pw.Container(
+                        alignment: header == 'Product Name'
+                            ? pw.Alignment.centerLeft
+                            : header == 'Unit Price' || header == 'Total (RM)'
+                                ? pw.Alignment.centerRight
+                                : pw.Alignment.center,
+                        padding: const pw.EdgeInsets.all(5),
+                        height: 30,
+                        child: pw.Text(
+                          header,
+                          style: pw.TextStyle(
+                            color: PdfColors.white,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ...data.map((row) => pw.TableRow(
+                children: List<pw.Widget>.generate(row.length, (idx) {
+                  dynamic value = row[idx];
+
+                  return pw.Container(
+                    alignment: idx == 0
+                        ? pw.Alignment.centerLeft
+                        : idx == 3 || idx == 4
+                            ? pw.Alignment.centerRight
+                            : pw.Alignment.center,
+                    padding: const pw.EdgeInsets.all(5),
+                    child: value is pw.Widget
+                        ? value
+                        : pw.Text(
+                            value.toString(),
+                            style: const pw.TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                  );
+                }),
+              )),
+        ],
+      );
+    }
+
     for (int pageNum = 0; pageNum < totalPages; pageNum++) {
-      // Calculate start and end indices for current page
       int startIndex;
       int endIndex;
 
       if (pageNum == 0) {
-        // First page
         startIndex = 0;
         endIndex = tableData.length < firstPageItems
             ? tableData.length
             : firstPageItems;
       } else {
-        // Follow-up page
         startIndex = firstPageItems + (pageNum - 1) * subsequentPageItems;
         endIndex = min(startIndex + subsequentPageItems, tableData.length);
       }
 
-      List<List<String>> currentPageData =
+      List<List<dynamic>> currentPageData =
           tableData.sublist(startIndex, endIndex);
-
       final isLastPage = pageNum == totalPages - 1;
 
       pdf.addPage(
@@ -115,7 +218,6 @@ class PdfInvoiceGenerator {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // First page header
                 if (pageNum == 0) ...[
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -126,7 +228,7 @@ class PdfInvoiceGenerator {
                         children: [
                           pw.Text(
                               status.toLowerCase() == 'confirm'
-                                  ? 'SALES ORDER'
+                                  ? 'SALES INVOICE'
                                   : 'SALES QUOTATION',
                               style: titleStyle),
                           pw.SizedBox(height: 10),
@@ -181,7 +283,6 @@ class PdfInvoiceGenerator {
                   ),
                   pw.SizedBox(height: 10),
                   pw.Container(
-                    // padding: const pw.EdgeInsets.all(10),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.grey100,
                       borderRadius:
@@ -195,8 +296,9 @@ class PdfInvoiceGenerator {
                     ),
                   ),
                   pw.SizedBox(height: 10),
+                  pw.Text('Order Items', style: headerStyle),
+                  pw.SizedBox(height: 5),
                 ] else ...[
-                  // Continuation header for subsequent pages
                   pw.Container(
                     padding: const pw.EdgeInsets.only(bottom: 5),
                     decoration: const pw.BoxDecoration(
@@ -216,81 +318,13 @@ class PdfInvoiceGenerator {
                     ),
                   ),
                 ],
-
-                // Table header text
-                if (pageNum == 0) ...[
-                  pw.Text('Order Items', style: headerStyle),
-                  pw.SizedBox(height: 5),
-                ],
-
-                // Table
                 pageNum == 0
-                    ? pw.Table.fromTextArray(
-                        border: pw.TableBorder.all(
-                            color: PdfColors.grey400, width: 0.5),
-                        headerDecoration:
-                            pw.BoxDecoration(color: PdfColors.blue900),
-                        headerHeight: 30,
-                        headerStyle: pw.TextStyle(
-                          color: PdfColors.white,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                        headerAlignment: pw.Alignment.centerLeft,
-                        cellAlignment: pw.Alignment.centerLeft,
-                        cellStyle: contentStyle,
-                        cellHeight: 30,
-                        columnWidths: {
-                          0: const pw.FlexColumnWidth(3),
-                          1: const pw.FlexColumnWidth(1),
-                          2: const pw.FlexColumnWidth(1),
-                          3: const pw.FlexColumnWidth(1.5),
-                          4: const pw.FlexColumnWidth(1.5),
-                        },
-                        cellAlignments: {
-                          0: pw.Alignment.centerLeft,
-                          1: pw.Alignment.center,
-                          2: pw.Alignment.center,
-                          3: pw.Alignment.centerRight,
-                          4: pw.Alignment.centerRight,
-                        },
-                        headers: [
-                          'Product Name',
-                          'UOM',
-                          'Qty',
-                          'Unit Price',
-                          'Total (RM)'
-                        ],
-                        data: currentPageData,
-                      )
+                    ? buildTable(currentPageData, includeHeader: true)
                     : pw.Padding(
                         padding: const pw.EdgeInsets.only(top: 5),
-                        child: pw.Table.fromTextArray(
-                          border: pw.TableBorder.all(
-                              color: PdfColors.grey400, width: 0.5),
-                          headerHeight: 30,
-                          cellAlignment: pw.Alignment.centerLeft,
-                          cellStyle: contentStyle,
-                          cellHeight: 30,
-                          columnWidths: {
-                            0: const pw.FlexColumnWidth(3),
-                            1: const pw.FlexColumnWidth(1),
-                            2: const pw.FlexColumnWidth(1),
-                            3: const pw.FlexColumnWidth(1.5),
-                            4: const pw.FlexColumnWidth(1.5),
-                          },
-                          cellAlignments: {
-                            0: pw.Alignment.centerLeft,
-                            1: pw.Alignment.center,
-                            2: pw.Alignment.center,
-                            3: pw.Alignment.centerRight,
-                            4: pw.Alignment.centerRight,
-                          },
-                          headers: null,
-                          data: currentPageData,
-                        ),
+                        child:
+                            buildTable(currentPageData, includeHeader: false),
                       ),
-
-                // Summary and company details for last page
                 if (isLastPage) ...[
                   pw.SizedBox(height: 20),
                   pw.Container(
@@ -301,6 +335,32 @@ class PdfInvoiceGenerator {
                         _buildSummaryRow('Subtotal:',
                             subtotal.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
+                        // Calculate total sales discount
+                        () {
+                          double originalTotal = orderItems.fold(
+                              0,
+                              (sum, item) =>
+                                  sum +
+                                  (double.parse(item.oriUnitPrice) *
+                                      double.parse(item.qty)));
+                          double salesDiscount =
+                              (originalTotal - subtotal).abs();
+
+                          // Only show sales discount if there is any discount
+                          if (salesDiscount > 0) {
+                            return pw.Column(
+                              children: [
+                                _buildSummaryRow(
+                                    'Sales Discount:',
+                                    '- ${salesDiscount.toStringAsFixed(3)}',
+                                    contentStyle),
+                                pw.SizedBox(height: 5),
+                              ],
+                            );
+                          }
+                          return pw
+                              .Container(); // Return empty container if no discount
+                        }(),
                         _buildSummaryRow('GST (${gst * 100}%):',
                             gstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
@@ -320,7 +380,6 @@ class PdfInvoiceGenerator {
                   ),
                   pw.SizedBox(height: 20),
                   pw.Container(
-                    // padding: const pw.EdgeInsets.all(10),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.grey100,
                       borderRadius:
@@ -343,10 +402,7 @@ class PdfInvoiceGenerator {
                     ),
                   ),
                 ],
-
                 pw.Expanded(child: pw.Container()),
-
-                // Footer
                 pw.Container(
                   decoration: pw.BoxDecoration(
                     border:
