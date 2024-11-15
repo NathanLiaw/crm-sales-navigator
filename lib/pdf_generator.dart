@@ -62,6 +62,9 @@ class PdfInvoiceGenerator {
       double originalPrice = double.parse(item.oriUnitPrice);
       double discountedPrice = double.parse(item.unitPrice);
 
+      print('Status: ${item.status}');
+      print('Cancel: ${item.cancel}');
+
       // Create price column showing both original and discounted prices
       final priceColumn = pw.Container(
         child: pw.Column(
@@ -95,10 +98,15 @@ class PdfInvoiceGenerator {
         ),
       );
 
+      String displayStatus = item.status == 'Void' && item.cancel != null
+          ? item.cancel!
+          : item.status;
+
       return [
         item.productName,
         item.uom,
         item.qty,
+        displayStatus,
         priceColumn,
         discountedTotal.toStringAsFixed(3)
       ];
@@ -129,6 +137,7 @@ class PdfInvoiceGenerator {
           2: const pw.FlexColumnWidth(1),
           3: const pw.FlexColumnWidth(1.5),
           4: const pw.FlexColumnWidth(1.5),
+          5: const pw.FlexColumnWidth(1.5),
         },
         children: [
           if (includeHeader)
@@ -138,6 +147,7 @@ class PdfInvoiceGenerator {
                 'Product Name',
                 'UOM',
                 'Qty',
+                'Status',
                 'Unit Price',
                 'Total (RM)'
               ]
@@ -163,10 +173,36 @@ class PdfInvoiceGenerator {
                 children: List<pw.Widget>.generate(row.length, (idx) {
                   dynamic value = row[idx];
 
+                  if (idx == 0) {
+                    return pw.Container(
+                      alignment: pw.Alignment.centerLeft,
+                      padding: const pw.EdgeInsets.all(5),
+                      child: pw.Text(
+                        value.toString(),
+                        style: const pw.TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (idx == 3) {
+                    return pw.Container(
+                      alignment: pw.Alignment.center,
+                      padding: const pw.EdgeInsets.all(5),
+                      child: pw.Text(
+                        value.toString(),
+                        style: const pw.TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  }
+
                   return pw.Container(
                     alignment: idx == 0
                         ? pw.Alignment.centerLeft
-                        : idx == 3 || idx == 4
+                        : idx == 4 || idx == 5
                             ? pw.Alignment.centerRight
                             : pw.Alignment.center,
                     padding: const pw.EdgeInsets.all(5),
@@ -226,11 +262,7 @@ class PdfInvoiceGenerator {
                       pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text(
-                              status.toLowerCase() == 'confirm'
-                                  ? 'SALES INVOICE'
-                                  : 'SALES QUOTATION',
-                              style: titleStyle),
+                          pw.Text('SALES ORDER', style: titleStyle),
                           pw.SizedBox(height: 10),
                           pw.Text(companyName, style: headerStyle),
                           pw.SizedBox(height: 5),
@@ -358,8 +390,7 @@ class PdfInvoiceGenerator {
                               ],
                             );
                           }
-                          return pw
-                              .Container(); // Return empty container if no discount
+                          return pw.Container();
                         }(),
                         _buildSummaryRow('GST (${gst * 100}%):',
                             gstAmount.toStringAsFixed(3), contentStyle),

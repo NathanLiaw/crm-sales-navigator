@@ -115,6 +115,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             for (int i = 0; i < cartItems.length; i++) {
               final item = cartItems[i];
               final photoPath = photoPaths[i];
+
               orderItems.add(OrderItem(
                 productId: item['product_id'],
                 productName: item['product_name'],
@@ -131,6 +132,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     : '0.00'),
                 photoPath: photoPath,
                 uom: item['uom'] ?? '',
+                cancel: item['cancel']?.toString(),
               ));
             }
           });
@@ -381,25 +383,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 );
               }
             },
-            itemBuilder: (BuildContext context) {
-              // Move the conditional logic outside of the const constructor
-              String buttonText = status.toLowerCase() == 'confirm'
-                  ? 'View / Download Invoice'
-                  : 'View / Download Quotation';
-
-              return <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  value: 'viewDocument',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.description_outlined),
-                      const SizedBox(width: 8),
-                      Text(buttonText),
-                    ],
-                  ),
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'viewDocument',
+                child: Row(
+                  children: [
+                    Icon(Icons.description_outlined),
+                    SizedBox(width: 8),
+                    Text('View / Download Order'),
+                  ],
                 ),
-              ];
-            },
+              ),
+            ],
           ),
         ],
       ),
@@ -1272,6 +1267,7 @@ class OrderItem {
   final String total;
   final String photoPath;
   final String uom;
+  final String? cancel;
 
   OrderItem({
     required this.productId,
@@ -1283,5 +1279,6 @@ class OrderItem {
     required this.total,
     required this.photoPath,
     required this.uom,
+    this.cancel,
   });
 }
