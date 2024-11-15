@@ -644,7 +644,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       child: ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pop(context);
-                          _loadSalesOrders(days: selectedDays, dateRange: dateRange);
+                          _loadSalesOrders(
+                              days: selectedDays, dateRange: dateRange);
                         },
                         label: const Text(
                           'Apply Filters',
@@ -658,7 +659,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                           backgroundColor: const Color(0xff0175FF),
                           elevation: 6,
                           shadowColor: Colors.grey.withOpacity(0.5),
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0, vertical: 6.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -1117,6 +1119,31 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     );
   }
 
+// Function to calculate the subtotal, excluding canceled items and adjusting prices to 0 if needed
+  double _calculateSubtotal(List<Map<String, dynamic>> items) {
+    double subtotal = 0.0; // Explicitly initialize as a double
+    for (var item in items) {
+      double price = (item['ori_unit_price'] is int)
+          ? (item['ori_unit_price'] as int).toDouble()
+          : item['ori_unit_price'];
+
+      // If item status is not 'Uncancel', null, or '0', set the price to 0
+      if (item['cancel'] != null &&
+          item['cancel'] != '0' &&
+          item['cancel'] != 'Uncancel') {
+        price =
+            0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
+      }
+
+      // Only add to subtotal if the item is not 'Cancelled'
+      if (item['cancel'] != 'Cancelled') {
+        subtotal += item['qty'] *
+            price; // `price` and `qty` are both treated as doubles
+      }
+    }
+    return subtotal;
+  }
+
   Widget _buildSalesOrderItem({
     required int index,
     required String orderNumber,
@@ -1167,6 +1194,30 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           ),
         ),
       );
+    }
+
+    String _getItemStatus(String? cancel) {
+      // Handle null, "0", and "Uncancel" as "In Progress"
+      if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
+        return 'In Progress';
+      }
+      return cancel;
+    }
+
+    Color _getItemStatusColor(String? cancel) {
+      // Set color for item status
+      if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
+        return Colors.green;
+      }
+      return Colors.red;
+    }
+
+    // Calculate subtotal excluding canceled items and setting price to 0 if needed
+    double subtotal = _calculateSubtotal(items);
+
+    // If subtotal is 0, set the order status to "Void"
+    if (subtotal == 0) {
+      status = 'Void';
     }
 
     // Safely attempt to parse orderNumber
@@ -1244,12 +1295,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                         ),
                         const SizedBox(height: 8),
                         // Amount and copy button
-                        // Replace this part inside the _buildSalesOrderItem function
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'RM $amount',
+                              'RM ${subtotal.toStringAsFixed(2)}', // Show the subtotal
                               style: const TextStyle(
                                 color: Color(0xFF0175FF),
                                 fontSize: 24,
@@ -1390,6 +1440,29 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                           ),
                                         ],
                                       ),
+                                      const SizedBox(height: 8),
+                                      // Item Status
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            'Status: ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          Text(
+                                            _getItemStatus(item['cancel']),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: _getItemStatusColor(
+                                                  item['cancel']),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -1404,7 +1477,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       );
                     }).toList(),
                   ),
-                )
+                ),
               ],
             ),
           ),

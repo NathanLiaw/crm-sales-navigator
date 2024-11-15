@@ -10,6 +10,7 @@ class SalesOrder {
   String salesmanName;
   DateTime createdDate;
   String status;
+  String cancel;
 
   // Constructor
   SalesOrder({
@@ -24,6 +25,7 @@ class SalesOrder {
     required this.salesmanName,
     required this.createdDate,
     required this.status,
+    required this.cancel,
   });
 
   // Factory method to create a SalesOrder object from JSON
@@ -40,6 +42,7 @@ class SalesOrder {
       salesmanName: json['salesman_name'] as String,
       createdDate: DateTime.parse(json['created_date']),
       status: json['status'] as String,
+      cancel: json['cancel'] as String,
     );
   }
 
@@ -57,6 +60,7 @@ class SalesOrder {
       'salesman_name': salesmanName,
       'created_date': createdDate.toIso8601String(),
       'status': status,
+      'cancel': cancel,
     };
   }
 }

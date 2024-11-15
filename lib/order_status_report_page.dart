@@ -899,10 +899,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     if (selectedButtonIndex == 3) {
       // Show full date range for "All" selection
       formattedDate =
-      '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
+          '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (isCustomRangeSelected) {
       formattedDate =
-      '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}';
+          '${DateFormat('dd/MM/yyyy').format(dateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(dateRange!.end)}';
     } else {
       formattedDate = 'Filter Date';
     }
@@ -1059,6 +1059,27 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     );
   }
 
+// Function to calculate the subtotal, excluding canceled items and adjusting prices to 0 if needed
+  double _calculateSubtotal(List<Map<String, dynamic>> items) {
+    double subtotal = 0.0;
+    for (var item in items) {
+      double price = (item['ori_unit_price'] is int)
+          ? (item['ori_unit_price'] as int).toDouble()
+          : item['ori_unit_price'];
+      if (item['cancel'] != null &&
+          item['cancel'] != '0' &&
+          item['cancel'] != 'Uncancel') {
+        price = 0.0;
+      }
+
+      // Only add to subtotal if the item is not 'Cancelled'
+      if (item['cancel'] != 'Cancelled') {
+        subtotal += item['qty'] * price;
+      }
+    }
+    return subtotal;
+  }
+
   Widget _buildSalesOrderItem({
     required int index,
     required String orderNumber,
@@ -1111,6 +1132,30 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
       );
     }
 
+    String _getItemStatus(String? cancel) {
+      // Handle null, "0", and "Uncancel" as "In Progress"
+      if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
+        return 'In Progress';
+      }
+      return cancel;
+    }
+
+    Color _getItemStatusColor(String? cancel) {
+      // Set color for item status
+      if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
+        return Colors.green;
+      }
+      return Colors.red;
+    }
+
+    // Calculate subtotal excluding canceled items and setting price to 0 if needed
+    double subtotal = _calculateSubtotal(items);
+
+    // If subtotal is 0, set the order status to "Void"
+    if (subtotal == 0) {
+      status = 'Void'; // Update the status
+    }
+
     // Safely attempt to parse orderNumber
     String formattedOrderNumber = 'S${orderNumber.padLeft(7, '0')}';
     int? orderId = int.tryParse(orderNumber);
@@ -1129,7 +1174,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
             builder: (context) => OrderDetailsPage(
               cartID: orderId,
               fromOrderConfirmation: false,
-              fromSalesOrder: false,
+              fromSalesOrder: true,
             ),
           ),
         );
@@ -1178,7 +1223,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                         ),
                         // Creation date
                         Text(
-                          'Created on: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                          'Created on: ${DateFormat('dd-MM-yyyy hh:mm a').format(creationDate)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
@@ -1190,7 +1235,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'RM $amount',
+                              'RM ${subtotal.toStringAsFixed(2)}', // Show the subtotal
                               style: const TextStyle(
                                 color: Color(0xFF0175FF),
                                 fontSize: 24,
@@ -1220,7 +1265,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12.0, vertical: 6.0),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(5),
                                 ),
                                 minimumSize: const Size(98, 32),
                               ),
@@ -1331,6 +1376,29 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                           ),
                                         ],
                                       ),
+                                      const SizedBox(height: 8),
+                                      // Item Status
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            'Status: ',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          Text(
+                                            _getItemStatus(item['cancel']),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: _getItemStatusColor(
+                                                  item['cancel']),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -1345,7 +1413,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       );
                     }).toList(),
                   ),
-                )
+                ),
               ],
             ),
           ),

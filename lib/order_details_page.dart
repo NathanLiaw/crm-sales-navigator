@@ -953,17 +953,40 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
+  double _calculateFilteredSubtotal() {
+    double filteredSubtotal = 0.0;
+    for (var item in orderItems) {
+      if (item.cancel == null ||
+          item.cancel == '0' ||
+          item.cancel == 'Uncancel') {
+        // Only add to subtotal if the item's status is "In Progress"
+        filteredSubtotal +=
+            double.parse(item.unitPrice) * double.parse(item.qty);
+      }
+    }
+    return filteredSubtotal;
+  }
+
   Widget _buildOrderSummary() {
+    final filteredSubtotal =
+        _calculateFilteredSubtotal(); // Use filtered subtotal
+    final gstAmount = gst * filteredSubtotal;
+    final sstAmount = sst * filteredSubtotal;
+    final customerDiscountAmount = filteredSubtotal * (discountRate / 100);
+    final finalTotal =
+        filteredSubtotal + gstAmount + sstAmount - customerDiscountAmount;
+
     final formatter =
         NumberFormat.currency(locale: 'en_US', symbol: 'RM', decimalDigits: 3);
-    final formattedSubtotal = formatter.format(subtotal);
-    final formattedGST = formatter.format(gst * subtotal);
-    final formattedSST = formatter.format(sst * subtotal);
-    final formattedTotal = formatter.format(total);
+
+    final formattedSubtotal = formatter.format(filteredSubtotal);
+    final formattedGST = formatter.format(gstAmount);
+    final formattedSST = formatter.format(sstAmount);
+    final formattedCustomerDiscount = formatter.format(customerDiscountAmount);
+    final formattedTotal = formatter.format(finalTotal);
+
     final gstPercentage = (gst * 100).toStringAsFixed(1);
     final sstPercentage = (sst * 100).toStringAsFixed(1);
-    final customerDiscountAmount = subtotal * (discountRate / 100);
-    final formattedCustomerDiscount = formatter.format(customerDiscountAmount);
 
     return StatefulBuilder(builder: (context, setState) {
       return Card(
@@ -1149,6 +1172,26 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     });
   }
 
+  String _getStatusText(String? cancelStatus) {
+    if (cancelStatus == null ||
+        cancelStatus == '0' ||
+        cancelStatus == 'Uncancel') {
+      return 'In Progress';
+    } else {
+      return cancelStatus;
+    }
+  }
+
+  Color _getStatusColor(String? cancelStatus) {
+    if (cancelStatus == null ||
+        cancelStatus == '0' ||
+        cancelStatus == 'Uncancel') {
+      return Colors.green;
+    } else {
+      return Colors.red;
+    }
+  }
+
   Widget _buildOrderItem(OrderItem item) {
     double oriUnitPriceConverted = double.parse(item.oriUnitPrice);
     double unitPriceConverted = double.parse(item.unitPrice);
@@ -1204,9 +1247,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           child: Text(
                             'Disc. Price: RM${unitPriceConverted.toStringAsFixed(3)}',
                             style: const TextStyle(fontSize: 16),
-                            maxLines: null, // Allow multiline
-                            overflow: TextOverflow
-                                .visible, // Show text fully without truncating
+                            maxLines: null,
+                            overflow: TextOverflow.visible,
                           ),
                         ),
                         Padding(
@@ -1215,9 +1257,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             'Qty: ${item.qty}',
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold),
-                            maxLines: null, // Allow multiline
-                            overflow: TextOverflow
-                                .visible, // Show text fully without truncating
+                            maxLines: null,
+                            overflow: TextOverflow.visible,
                           ),
                         ),
                       ],
@@ -1231,16 +1272,62 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           const Divider(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Status: ${item.status}',
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  const Text(
+                    'Status: ',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    _getStatusText(item.cancel),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: _getStatusColor(item.cancel),
+                    ),
+                  ),
+                ],
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Text(
-                    'Total: RM${double.parse(item.total).toStringAsFixed(3)}',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                child: item.cancel != null &&
+                        item.cancel != '0' &&
+                        item.cancel != 'Uncancel'
+                    ? Text.rich(
+                        TextSpan(
+                          text: 'Total: ',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          children: [
+                            TextSpan(
+                              text:
+                                  'RM${double.parse(item.total).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Text(
+                        'Total: RM${double.parse(item.total).toStringAsFixed(3)}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ],
           ),
