@@ -46,10 +46,14 @@ class PdfInvoiceGenerator {
       color: PdfColors.grey700,
     );
 
-    double subtotal = orderItems.fold(
-        0,
-        (sum, item) =>
-            sum + (double.parse(item.unitPrice) * double.parse(item.qty)));
+    double subtotal = orderItems.fold(0, (sum, item) {
+      if (item.cancel != null &&
+          item.cancel != '0' &&
+          item.cancel != 'Uncancel') {
+        return sum;
+      }
+      return sum + (double.parse(item.unitPrice) * double.parse(item.qty));
+    });
     double gstAmount = subtotal * (gst);
     double sstAmount = subtotal * (sst);
     double customerDiscountAmount = subtotal * (customerRate / 100);
@@ -57,13 +61,17 @@ class PdfInvoiceGenerator {
 
     // Convert order items to table data with custom price column
     final List<List<dynamic>> tableData = orderItems.map((item) {
-      double discountedTotal =
-          double.parse(item.unitPrice) * double.parse(item.qty);
+      bool isVoided = item.cancel != null &&
+          item.cancel != '0' &&
+          item.cancel != 'Uncancel';
+
+      // double discountedTotal =
+      //     double.parse(item.unitPrice) * double.parse(item.qty);
       double originalPrice = double.parse(item.oriUnitPrice);
       double discountedPrice = double.parse(item.unitPrice);
-
-      print('Status: ${item.status}');
-      print('Cancel: ${item.cancel}');
+      double displayTotal = isVoided
+          ? 0.0
+          : (double.parse(item.unitPrice) * double.parse(item.qty));
 
       // Create price column showing both original and discounted prices
       final priceColumn = pw.Container(
@@ -71,7 +79,7 @@ class PdfInvoiceGenerator {
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           mainAxisAlignment: pw.MainAxisAlignment.center,
           children: [
-            if (originalPrice != discountedPrice) ...[
+            if (originalPrice != discountedPrice && !isVoided) ...[
               pw.Text(
                 originalPrice.toStringAsFixed(3),
                 style: const pw.TextStyle(
@@ -108,7 +116,7 @@ class PdfInvoiceGenerator {
         item.qty,
         displayStatus,
         priceColumn,
-        discountedTotal.toStringAsFixed(3)
+        displayTotal.toStringAsFixed(3)
       ];
     }).toList();
 
@@ -369,12 +377,17 @@ class PdfInvoiceGenerator {
                         pw.SizedBox(height: 5),
                         // Calculate total sales discount
                         () {
-                          double originalTotal = orderItems.fold(
-                              0,
-                              (sum, item) =>
-                                  sum +
-                                  (double.parse(item.oriUnitPrice) *
-                                      double.parse(item.qty)));
+                          double originalTotal =
+                              orderItems.fold(0.0, (sum, item) {
+                            if (item.cancel != null &&
+                                item.cancel != '0' &&
+                                item.cancel != 'Uncancel') {
+                              return sum;
+                            }
+                            return sum +
+                                (double.parse(item.oriUnitPrice) *
+                                    double.parse(item.qty));
+                          });
                           double salesDiscount =
                               (originalTotal - subtotal).abs();
 
