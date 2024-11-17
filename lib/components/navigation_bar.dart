@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/cached_page_manager.dart';
 import 'package:sales_navigator/screens/cart/cart_page.dart';

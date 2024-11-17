@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import "package:flutter/material.dart";
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:mysql1/mysql1.dart';
@@ -5,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:sales_navigator/screens/product/item_variations_screen.dart';
-import 'package:sales_navigator/screens/cart/cart_page.dart';
 import "package:google_fonts/google_fonts.dart";
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';

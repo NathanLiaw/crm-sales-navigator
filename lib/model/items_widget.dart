@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -91,17 +93,22 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       };
 
       // Add optional filter parameters only if they are not null and not empty
-      if (widget.sortOrder.isNotEmpty)
+      if (widget.sortOrder.isNotEmpty) {
         queryParams['sortOrder'] = widget.sortOrder;
+      }
       if (widget.isFeatured) queryParams['isFeatured'] = 'true';
-      if (widget.brandId != null)
+      if (widget.brandId != null) {
         queryParams['brandId'] = widget.brandId.toString();
-      if (widget.subCategoryId != null)
+      }
+      if (widget.subCategoryId != null) {
         queryParams['subCategoryId'] = widget.subCategoryId.toString();
-      if (widget.subCategoryIds != null && widget.subCategoryIds!.isNotEmpty)
+      }
+      if (widget.subCategoryIds != null && widget.subCategoryIds!.isNotEmpty) {
         queryParams['subCategoryIds'] = widget.subCategoryIds!.join(',');
-      if (widget.brandIds != null && widget.brandIds!.isNotEmpty)
+      }
+      if (widget.brandIds != null && widget.brandIds!.isNotEmpty) {
         queryParams['brandIds'] = widget.brandIds!.join(',');
+      }
 
       final uri = Uri.https('haluansama.com',
           '/crm-sales/api/product/get_products.php', queryParams);
@@ -311,7 +318,7 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.only(left: 12),
+                  margin: const EdgeInsets.only(left: 12),
                   child: Column(
                     children: [
                       Container(
@@ -324,17 +331,15 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    child: Text(
-                                      productName,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color.fromARGB(
-                                            255, 25, 23, 49),
-                                      ),
+                                  Text(
+                                    productName,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color.fromARGB(
+                                          255, 25, 23, 49),
                                     ),
                                   ),
                                 ],
@@ -354,31 +359,27 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    child: Text(
-                                      textAlign: TextAlign.left,
-                                      'RM ${product['first_price']}',
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 2,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xff0175FF),
-                                      ),
+                                  Text(
+                                    textAlign: TextAlign.left,
+                                    'RM ${product['first_price']}',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xff0175FF),
                                     ),
                                   ),
-                                  SizedBox(height: 4),
-                                  Container(
-                                    child: Text(
-                                      textAlign: TextAlign.left,
-                                      '${product['variant_count']} Variants',
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black,
-                                      ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    textAlign: TextAlign.left,
+                                    '${product['variant_count']} Variants',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black,
                                     ),
                                   ),
                                 ],

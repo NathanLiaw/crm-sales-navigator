@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:developer' as developer;
 
 class CustomerSalesReport extends StatefulWidget {
   final int customerId;
@@ -108,7 +109,7 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching customer sales data: $e');
+      developer.log('Error fetching customer sales data: $e');
       return [];
     }
   }
@@ -127,24 +128,24 @@ class _CustomerSalesReportState extends State<CustomerSalesReport> {
         });
       },
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected
                 ? const Color(0xFF047CBD)
                 : const Color(0xFFD9D9D9);
           },
         ),
-        foregroundColor: MaterialStateProperty.resolveWith<Color>(
-          (Set<MaterialState> states) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (Set<WidgetState> states) {
             return isSelected ? Colors.white : Colors.black;
           },
         ),
-        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
           const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         ),
       ),

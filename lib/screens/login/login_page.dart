@@ -48,7 +48,7 @@ class LoginPage extends StatelessWidget {
         // Save salesman data to shared preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setInt('id', salesman['id']);
-        print(
+        developer.log(
             "Saved salesman_id to SharedPreferences: ${salesman['id']}"); // Add this log
         prefs.setInt('area', salesman['area']);
         prefs.setString('salesmanName', salesman['salesman_name']);
@@ -277,37 +277,35 @@ class LoginPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Container(
-                      child: SizedBox(
-                        height: 244, // Fixed height for the image container
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Positioned(
-                              top: -100,
-                              left: 0,
-                              right: 0,
+                    SizedBox(
+                      height: 244, // Fixed height for the image container
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Positioned(
+                            top: -100,
+                            left: 0,
+                            right: 0,
+                            child: Image.asset(
+                              'asset/SN_ELEMENTS_CENTER.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          Positioned(
+                            top: 20,
+                            left: 0,
+                            right: 0,
+                            child: SizedBox(
+                              width: 40,
                               child: Image.asset(
-                                'asset/SN_ELEMENTS_CENTER.png',
+                                width: 150,
+                                height: 150,
+                                'asset/chart_illu.png',
                                 fit: BoxFit.contain,
                               ),
                             ),
-                            Positioned(
-                              top: 20,
-                              left: 0,
-                              right: 0,
-                              child: SizedBox(
-                                width: 40,
-                                child: Image.asset(
-                                  width: 150,
-                                  height: 150,
-                                  'asset/chart_illu.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

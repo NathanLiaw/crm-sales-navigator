@@ -3,8 +3,6 @@ import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
-import 'package:sqflite/sqflite.dart';
-
 class EditItemPage extends StatefulWidget {
   final int? itemId;
   final String itemName;
@@ -445,13 +443,13 @@ class _EditItemPageState extends State<EditItemPage> {
                           });
                         },
                         style: ButtonStyle(
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size.fromHeight(40.0),
                           ),
                           backgroundColor:
-                              MaterialStateProperty.all<Color>(Colors.white),
+                              WidgetStateProperty.all<Color>(Colors.white),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                               side: const BorderSide(color: Colors.red),
@@ -474,14 +472,14 @@ class _EditItemPageState extends State<EditItemPage> {
                           updatePriceAndAuthority();
                         },
                         style: ButtonStyle(
-                          minimumSize: MaterialStateProperty.all<Size>(
+                          minimumSize: WidgetStateProperty.all<Size>(
                             const Size.fromHeight(40.0),
                           ),
-                          backgroundColor: MaterialStateProperty.all<Color>(
+                          backgroundColor: WidgetStateProperty.all<Color>(
                             const Color(0xff0175FF),
                           ),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5.0),
                             ),

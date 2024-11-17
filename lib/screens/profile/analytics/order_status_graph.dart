@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import 'package:sales_navigator/screens/profile/analytics/order_status_report_pa
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:developer' as developer;
 
 class OrderStatusWidget extends StatefulWidget {
   const OrderStatusWidget({super.key});
@@ -194,7 +197,7 @@ class _OrderStatusIndicatorState extends State<OrderStatusIndicator> {
         throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error fetching order status data: $e');
+      developer.log('Error fetching order status data: $e');
     }
   }
 
@@ -342,7 +345,7 @@ class OrderStatusPainter extends CustomPainter {
     final total = complete + pending + voided;
 
     // Default grey color for zero status values
-    final noDataColor = Colors.grey;
+    const noDataColor = Colors.grey;
 
     Paint paintComplete = Paint()
       ..color = complete == 0 && pending == 0 && voided == 0
@@ -534,7 +537,7 @@ class InProgressOrdersWidget extends StatelessWidget {
         throw Exception('Failed to load in-progress orders');
       }
     } catch (e) {
-      print('Error fetching in-progress orders: $e');
+      developer.log('Error fetching in-progress orders: $e');
       return [];
     }
   }

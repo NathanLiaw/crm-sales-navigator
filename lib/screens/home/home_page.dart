@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -285,14 +287,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     value: [initialDateRange.start, initialDateRange.end],
                     onValueChanged: (dates) {
-                      if (dates.length == 2 &&
-                          dates[0] != null &&
-                          dates[1] != null) {
-                        tempStartDate = dates[0]!;
-                        tempEndDate = dates[1]!;
+                      if (dates.length == 2) {
+                        tempStartDate = dates[0];
+                        tempEndDate = dates[1];
                         tempDateRange = DateTimeRange(
-                          start: dates[0]!,
-                          end: dates[1]!,
+                          start: dates[0],
+                          end: dates[1],
                         );
                       }
                     },

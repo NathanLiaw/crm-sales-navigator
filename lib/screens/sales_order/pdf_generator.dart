@@ -36,12 +36,12 @@ class PdfInvoiceGenerator {
       color: PdfColors.blue900,
     );
 
-    final contentStyle = pw.TextStyle(
+    const contentStyle = pw.TextStyle(
       fontSize: 14,
       color: PdfColors.black,
     );
 
-    final smallStyle = pw.TextStyle(
+    const smallStyle = pw.TextStyle(
       fontSize: 12,
       color: PdfColors.grey700,
     );
@@ -150,7 +150,7 @@ class PdfInvoiceGenerator {
         children: [
           if (includeHeader)
             pw.TableRow(
-              decoration: pw.BoxDecoration(color: PdfColors.blue900),
+              decoration: const pw.BoxDecoration(color: PdfColors.blue900),
               children: [
                 'Product Name',
                 'UOM',
@@ -323,10 +323,10 @@ class PdfInvoiceGenerator {
                   ),
                   pw.SizedBox(height: 10),
                   pw.Container(
-                    decoration: pw.BoxDecoration(
+                    decoration: const pw.BoxDecoration(
                       color: PdfColors.grey100,
                       borderRadius:
-                          const pw.BorderRadius.all(pw.Radius.circular(5)),
+                          pw.BorderRadius.all(pw.Radius.circular(5)),
                     ),
                     child: pw.Row(
                       children: [
@@ -412,7 +412,7 @@ class PdfInvoiceGenerator {
                             sstAmount.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
                         _buildSummaryRow(
-                            'Customer Discount (${customerRate}%):',
+                            'Customer Discount ($customerRate%):',
                             '- ${customerDiscountAmount.toStringAsFixed(3)}',
                             contentStyle),
                         pw.SizedBox(height: 5),
@@ -424,10 +424,10 @@ class PdfInvoiceGenerator {
                   ),
                   pw.SizedBox(height: 20),
                   pw.Container(
-                    decoration: pw.BoxDecoration(
+                    decoration: const pw.BoxDecoration(
                       color: PdfColors.grey100,
                       borderRadius:
-                          const pw.BorderRadius.all(pw.Radius.circular(5)),
+                          pw.BorderRadius.all(pw.Radius.circular(5)),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -448,7 +448,7 @@ class PdfInvoiceGenerator {
                 ],
                 pw.Expanded(child: pw.Container()),
                 pw.Container(
-                  decoration: pw.BoxDecoration(
+                  decoration: const pw.BoxDecoration(
                     border:
                         pw.Border(top: pw.BorderSide(color: PdfColors.grey400)),
                   ),

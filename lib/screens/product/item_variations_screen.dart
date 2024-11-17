@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
@@ -5,7 +7,6 @@ import 'package:sales_navigator/model/cart_item.dart';
 import 'package:sales_navigator/components/navigation_provider.dart';
 import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
-import 'package:sales_navigator/screens/cart/cart_page.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:developer' as developer;
 import 'package:provider/provider.dart';

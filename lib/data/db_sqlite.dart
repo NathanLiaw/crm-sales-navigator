@@ -175,7 +175,7 @@ class DatabaseHelper {
   }
 
   static Future<int> getCartItemCount() async {
-    final db = await _database; // Your database initialization
+    final db = _database; // Your database initialization
     final List<Map<String, Object?>>? result = await db?.query(
         'SELECT COUNT(*) as count FROM cart_item WHERE status = "in progress"'
     );

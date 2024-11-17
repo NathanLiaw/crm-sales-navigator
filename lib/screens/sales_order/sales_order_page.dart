@@ -1196,7 +1196,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       );
     }
 
-    String _getItemStatus(String? cancel) {
+    String getItemStatus(String? cancel) {
       // Handle null, "0", and "Uncancel" as "In Progress"
       if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
         return 'In Progress';
@@ -1204,7 +1204,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       return cancel;
     }
 
-    Color _getItemStatusColor(String? cancel) {
+    Color getItemStatusColor(String? cancel) {
       // Set color for item status
       if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
         return Colors.green;
@@ -1453,11 +1453,11 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                             ),
                                           ),
                                           Text(
-                                            _getItemStatus(item['cancel']),
+                                            getItemStatus(item['cancel']),
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               fontSize: 14,
-                                              color: _getItemStatusColor(
+                                              color: getItemStatusColor(
                                                   item['cancel']),
                                             ),
                                           ),

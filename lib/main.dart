@@ -23,7 +23,6 @@ import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -200,7 +199,7 @@ class _MyAppState extends State<MyApp> {
           headlineSmall: TextStyle(color: Colors.black),
         ),
       ),
-      home: isOffline ? NoInternetScreen() : const StartingPage(),
+      home: isOffline ? const NoInternetScreen() : const StartingPage(),
       routes: {
         '/home': (context) => const HomePage(),
         '/sales': (context) => const SalesOrderPage(),
@@ -215,6 +214,8 @@ class _MyAppState extends State<MyApp> {
 }
 
 class NoInternetScreen extends StatelessWidget {
+  const NoInternetScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

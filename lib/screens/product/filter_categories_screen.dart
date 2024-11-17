@@ -1,18 +1,21 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sales_navigator/data/brand_data.dart';
 import 'package:sales_navigator/data/category_data.dart';
 import 'package:sales_navigator/data/sub_category_data.dart';
+import 'dart:developer' as developer;
 
 class FilterCategoriesScreen extends StatefulWidget {
   final List<int> initialSelectedSubCategoryIds;
   final List<int> initialSelectedBrandIds;
 
   const FilterCategoriesScreen({
-    Key? key,
+    super.key,
     required this.initialSelectedSubCategoryIds,
     required this.initialSelectedBrandIds,
-  }) : super(key: key);
+  });
 
   @override
   _FilterCategoriesScreenState createState() => _FilterCategoriesScreenState();
@@ -53,7 +56,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       _brands = results[2] as List<BrandData>;
     } catch (e) {
       // Handle error
-      print('Error fetching data: $e');
+      developer.log('Error fetching data: $e');
     } finally {
       setState(() {
         isLoading = false; // Remove loader once data is fetched
@@ -91,7 +94,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
             ),
             children: [
               // Wrapping ListView.builder with Container to control height
-              Container(
+              SizedBox(
                 height: 300, // Set a fixed height to prevent infinite space
                 child: ListView.builder(
                   itemCount: _brands.length,
@@ -138,7 +141,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                 ),
                 children: [
                   // Wrapping ListView.builder with Container to control height
-                  Container(
+                  SizedBox(
                     height: 200, // Set a fixed height for subcategories
                     child: ListView.builder(
                       shrinkWrap: true,

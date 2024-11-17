@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -8,16 +10,17 @@ import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:path/path.dart' as path;
+import 'dart:developer' as developer;
 
 class PDFViewerPage extends StatefulWidget {
   final String salesOrderId;
   final Uint8List pdfData;
 
   const PDFViewerPage({
-    Key? key,
+    super.key,
     required this.pdfData,
     required this.salesOrderId,
-  }) : super(key: key);
+  });
 
   @override
   _PDFViewerPageState createState() => _PDFViewerPageState();
@@ -580,7 +583,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
                   });
                 },
                 onError: (error) {
-                  print(error.toString());
+                  developer.log(error.toString());
                 },
               );
             },
@@ -608,10 +611,10 @@ class PageDividers extends StatelessWidget {
   final int currentPage;
 
   const PageDividers({
-    Key? key,
+    super.key,
     required this.totalPages,
     required this.currentPage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

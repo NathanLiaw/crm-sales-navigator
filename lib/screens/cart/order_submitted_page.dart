@@ -8,8 +8,7 @@ import 'package:sales_navigator/screens/sales_order/order_details_page.dart';
 class OrderSubmittedPage extends StatefulWidget {
   final int salesOrderId;
 
-  const OrderSubmittedPage({Key? key, required this.salesOrderId})
-      : super(key: key);
+  const OrderSubmittedPage({super.key, required this.salesOrderId});
 
   @override
   _OrderSubmittedPageState createState() => _OrderSubmittedPageState();
@@ -109,14 +108,14 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
+                    backgroundColor: WidgetStateProperty.all<Color>(
                         const Color(0xff0175FF)),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                       ),
                     ),
-                    minimumSize: MaterialStateProperty.all<Size>(
+                    minimumSize: WidgetStateProperty.all<Size>(
                       const Size(130.0, 40.0),
                     ),
                   ),
@@ -144,10 +143,10 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
+                    backgroundColor: WidgetStateProperty.all<Color>(
                       const Color(0xffffffff),
                     ),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                         side: const BorderSide(
@@ -156,7 +155,7 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                         ),
                       ),
                     ),
-                    padding: MaterialStateProperty.all<EdgeInsets>(
+                    padding: WidgetStateProperty.all<EdgeInsets>(
                       const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     ),
                   ),

@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:sales_navigator/screens/product/item_screen.dart';

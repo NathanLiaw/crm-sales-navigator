@@ -322,7 +322,7 @@ class _CreateLeadPageState extends State<CreateLeadPage> {
                     hintText: 'RM',
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   // Only positive numbers and decimal points are allowed
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
