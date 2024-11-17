@@ -597,6 +597,24 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
+  Color getExpiryDateColor(String createdDate) {
+    DateTime currentDate = DateTime.now();
+    DateTime createdDateTime = DateTime.parse(createdDate);
+    DateTime expiryDate = createdDateTime.add(Duration(days: 7));
+
+    // Check if the expiry date is within 3 days from the current date
+    if (expiryDate.isBefore(currentDate)) {
+      // If expired, return red color
+      return Colors.red;
+    } else if (expiryDate.isBefore(currentDate.add(Duration(days: 3)))) {
+      // If within 3 days of expiration, return orange color
+      return Colors.orange;
+    } else {
+      // Default color (black) if not expired or within 3 days
+      return Colors.black;
+    }
+  }
+
   Widget _buildExpandableOrderInfo() {
     return Card(
       margin: EdgeInsets.zero,
@@ -614,7 +632,19 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     'From:', 'Fong Yuan Hung Import & Export Sdn Bhd.'),
                 _buildInfoRow('Salesman:', salesmanName),
                 _buildInfoRow('Order ID:', salesOrderId),
-                _buildInfoRow('Created Date:', createdDate),
+                _buildInfoRow(
+                  'Created Date:',
+                  DateFormat("dd-MM-yyyy HH:mm:ss")
+                      .format(DateTime.parse(createdDate)),
+                ),
+                _buildInfoRow(
+                  'Expiry Date:',
+                  DateFormat("dd-MM-yyyy HH:mm:ss").format(
+                      DateTime.parse(createdDate).add(Duration(days: 7))),
+                  style: TextStyle(
+                    color: getExpiryDateColor(createdDate)
+                  ),
+                ),
               ],
             ),
           ),
@@ -934,21 +964,22 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, {TextStyle? style}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
+          const SizedBox(width: 8),
           Expanded(
-            child: Text(value),
+            child: Text(
+              value,
+              style: style ?? const TextStyle(),
+            ),
           ),
         ],
       ),
@@ -970,8 +1001,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildOrderSummary() {
-    final filteredSubtotal =
-        _calculateFilteredSubtotal(); // Use filtered subtotal
+    final filteredSubtotal = _calculateFilteredSubtotal();
     final gstAmount = gst * filteredSubtotal;
     final sstAmount = sst * filteredSubtotal;
     final customerDiscountAmount = filteredSubtotal * (discountRate / 100);
@@ -1238,9 +1268,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     Text(
                       'Unit Price: RM${oriUnitPriceConverted.toStringAsFixed(3)}',
                       style: const TextStyle(fontSize: 16),
-                      maxLines: null, // Allow multiline
-                      overflow: TextOverflow
-                          .visible, // Show text fully without truncating
+                      maxLines: null,
+                      overflow: TextOverflow.visible,
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

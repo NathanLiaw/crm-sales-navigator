@@ -1133,7 +1133,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     }
 
     String _getItemStatus(String? cancel) {
-      // Handle null, "0", and "Uncancel" as "In Progress"
       if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
         return 'In Progress';
       }
@@ -1141,27 +1140,47 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     }
 
     Color _getItemStatusColor(String? cancel) {
-      // Set color for item status
       if (cancel == null || cancel == '0' || cancel == 'Uncancel') {
         return Colors.green;
       }
       return Colors.red;
     }
 
-    // Calculate subtotal excluding canceled items and setting price to 0 if needed
-    double subtotal = _calculateSubtotal(items);
-
-    // If subtotal is 0, set the order status to "Void"
-    if (subtotal == 0) {
-      status = 'Void'; // Update the status
+// Function to calculate expiry date (7 days after creation date)
+    String getExpiryDate(DateTime creationDate) {
+      DateTime expiryDate = creationDate.add(Duration(days: 7));
+      return DateFormat('dd-MM-yyyy').format(expiryDate);
     }
 
-    // Safely attempt to parse orderNumber
+// Function to calculate remaining days to expiry
+    int getRemainingDaysToExpiry(DateTime creationDate) {
+      DateTime expiryDate = creationDate.add(Duration(days: 7));
+      return expiryDate.difference(DateTime.now()).inDays;
+    }
+
+// Function to determine the color of the expiry date
+    Color getExpiryDateColor(DateTime creationDate) {
+      int remainingDays = getRemainingDaysToExpiry(creationDate);
+
+      if (remainingDays < 0) {
+        return Colors.red; // Expired
+      } else if (remainingDays <= 3) {
+        return Colors.orange; // 3 days or less
+      } else {
+        return Colors.black; // More than 3 days
+      }
+    }
+
+    double subtotal = _calculateSubtotal(items);
+
+    if (subtotal == 0) {
+      status = 'Void';
+    }
+
     String formattedOrderNumber = 'S${orderNumber.padLeft(7, '0')}';
     int? orderId = int.tryParse(orderNumber);
 
     if (orderId == null) {
-      // Handle invalid number, log an error or show a fallback UI
       developer.log('Invalid order number: $orderNumber');
       return Container();
     }
@@ -1202,7 +1221,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Order number and company name
                         Text(
                           '${index + 1}. $formattedOrderNumber',
                           style: const TextStyle(
@@ -1221,21 +1239,30 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 8),
                         // Creation date
                         Text(
-                          'Created on: ${DateFormat('dd-MM-yyyy hh:mm a').format(creationDate)}',
+                          'Created On: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
+                        // Expiry date
+                        Text(
+                          'Expiry Date: ${getExpiryDate(creationDate)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: getExpiryDateColor(creationDate),
+                          ),
+                        ),
                         const SizedBox(height: 8),
-                        // Amount and copy button
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'RM ${subtotal.toStringAsFixed(2)}', // Show the subtotal
+                              'RM ${subtotal.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 color: Color(0xFF0175FF),
                                 fontSize: 24,
@@ -1274,7 +1301,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                         ),
                       ],
                     ),
-                    // Status label
                     Positioned(
                       right: 6,
                       child: getStatusLabel(status),
@@ -1282,7 +1308,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Expansion tile for items
                 Card(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
@@ -1321,7 +1346,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 2),
-                                      // Product name
                                       Text(
                                         item['product_name'] ?? 'Unknown',
                                         style: const TextStyle(
@@ -1332,7 +1356,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 4),
-                                      // UOM and Quantity
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -1377,7 +1400,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      // Item Status
                                       Row(
                                         children: [
                                           const Text(
