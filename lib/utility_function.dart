@@ -1,6 +1,6 @@
 import 'dart:core';
 import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;

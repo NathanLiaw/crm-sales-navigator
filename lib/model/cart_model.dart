@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:sales_navigator/utility_function.dart';
 
 class CartModel extends ChangeNotifier {

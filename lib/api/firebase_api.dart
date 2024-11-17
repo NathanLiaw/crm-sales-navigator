@@ -4,7 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/main.dart';
 import 'package:sales_navigator/model/notification_state.dart';
-import 'package:sales_navigator/notification_page.dart';
+import 'package:sales_navigator/screens/notification/notification_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;

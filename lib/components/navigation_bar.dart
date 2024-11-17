@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/cached_page_manager.dart';
-import 'package:sales_navigator/cart_page.dart';
+import 'package:sales_navigator/screens/cart/cart_page.dart';
 import 'package:sales_navigator/components/navigation_provider.dart';
-import 'package:sales_navigator/home_page.dart';
+import 'package:sales_navigator/screens/home/home_page.dart';
 import 'package:sales_navigator/model/cart_model.dart';
-import 'package:sales_navigator/products_screen.dart';
-import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_order_page.dart';
+import 'package:sales_navigator/screens/product/products_screen.dart';
+import 'package:sales_navigator/screens/profile/profile_page.dart';
+import 'package:sales_navigator/screens/sales_order/sales_order_page.dart';
 
 class CustomNavigationBar extends StatelessWidget {
   const CustomNavigationBar({super.key});

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:sales_navigator/item_screen.dart';
+import 'package:sales_navigator/screens/product/item_screen.dart';
 import 'package:sales_navigator/utility_function.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
