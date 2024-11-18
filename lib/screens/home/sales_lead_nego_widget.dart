@@ -848,7 +848,28 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                 ),
                               );
                             },
-                            child: const Text('view more'),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'View More',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],  // You can adjust the grey shade as you like
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                    color: Colors.grey[600],  // Keep the icon consistent with the text color
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                           const Spacer(),
                           Container(

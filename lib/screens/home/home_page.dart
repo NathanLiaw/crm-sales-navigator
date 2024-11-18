@@ -2199,97 +2199,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   style: const TextStyle(color: Colors.white),
                 ),
                 actions: [
-                  // PopupMenuButton<String>(
-                  //   icon: Icon(
-                  //     Icons.sort,
-                  //     color: Colors.white,
-                  //   ),
-                  //   onSelected: (String result) {
-                  //     setState(() {
-                  //       if (result == _sortBy) {
-                  //         _sortAscending = !_sortAscending;
-                  //       } else {
-                  //         _sortBy = result;
-                  //         _sortAscending = true;
-                  //       }
-                  //       _sortLeads();
-                  //     });
-                  //   },
-                  //   itemBuilder: (BuildContext context) =>
-                  //       <PopupMenuEntry<String>>[
-                  //     PopupMenuItem<String>(
-                  //       value: 'created_date',
-                  //       child: Text(
-                  //           'Sort by Date ${_sortBy == 'created_date' ? (_sortAscending ? '↑' : '↓') : ''}'),
-                  //     ),
-                  //     PopupMenuItem<String>(
-                  //       value: 'predicted_sales',
-                  //       child: Text(
-                  //           'Sort by Predicted Sales ${_sortBy == 'predicted_sales' ? (_sortAscending ? '↑' : '↓') : ''}'),
-                  //     ),
-                  //   ],
-                  // ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.sort, color: Colors.white),
-                  //   onPressed: _showSortOptions,
-                  // ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.filter_list, color: Colors.white),
-                  //   onPressed: () {
-                  //     showDialog(
-                  //       context: context,
-                  //       builder: (BuildContext context) {
-                  //         return AlertDialog(
-                  //           title: const Text('Filter by Time'),
-                  //           content: Column(
-                  //             mainAxisSize: MainAxisSize.min,
-                  //             children: timeFilterOptions.map((option) {
-                  //               return Padding(
-                  //                 padding: const EdgeInsets.symmetric(
-                  //                     horizontal: 8.0),
-                  //                 child: ListTile(
-                  //                   title: Row(
-                  //                     mainAxisAlignment:
-                  //                         MainAxisAlignment.spaceBetween,
-                  //                     children: [
-                  //                       Text(option),
-                  //                       if (_timeFilter == option)
-                  //                         const Icon(
-                  //                           Icons.check,
-                  //                           size: 16,
-                  //                           color: Color(0xFF0175FF),
-                  //                         ),
-                  //                     ],
-                  //                   ),
-                  //                   tileColor: _timeFilter == option
-                  //                       ? const Color(0xFFF5F8FF)
-                  //                       : null,
-                  //                   shape: RoundedRectangleBorder(
-                  //                     borderRadius: BorderRadius.circular(8),
-                  //                     side: _timeFilter == option
-                  //                         ? const BorderSide(
-                  //                             color: Color(0xFF0175FF),
-                  //                             width: 1)
-                  //                         : BorderSide.none,
-                  //                   ),
-                  //                   onTap: () {
-                  //                     setState(() {
-                  //                       _timeFilter = option;
-                  //                       _updateFilteredLists();
-                  //                     });
-                  //                     Navigator.of(context).pop();
-                  //                   },
-                  //                 ),
-                  //               );
-                  //             }).toList(),
-                  //           ),
-                  //           contentPadding: const EdgeInsets.symmetric(
-                  //               horizontal: 8, vertical: 16),
-                  //         );
-                  //       },
-                  //     );
-                  //   },
-                  // ),
                   Consumer<NotificationState>(
                     builder: (context, notificationState, child) {
                       return Padding(
@@ -2373,43 +2282,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                  // if (kDebugMode)
-                  //   IconButton(
-                  //     icon: const Icon(Icons.refresh, color: Colors.white),
-                  //     onPressed: () async {
-                  //       showDialog(
-                  //         context: context,
-                  //         barrierDismissible: false,
-                  //         builder: (BuildContext context) {
-                  //           return const Center(
-                  //               child: CircularProgressIndicator());
-                  //         },
-                  //       );
-
-                  //       // Get the salesman ID
-                  //       int? salesmanId = await _getSalesmanId();
-                  //       developer.log("Retrieved salesmanId: $salesmanId");
-
-                  //       if (salesmanId != null) {
-                  //         await checkOrderStatusAndNotify(salesmanId);
-                  //         // await checkTaskDueDatesAndNotify(salesmanId);
-                  //         // await checkNewSalesLeadsAndNotify(salesmanId);
-
-                  //         Navigator.of(context).pop();
-
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           const SnackBar(
-                  //               content: Text('Notification check completed')),
-                  //         );
-                  //       } else {
-                  //         Navigator.of(context).pop();
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           const SnackBar(
-                  //               content: Text('Error: Salesman ID not found')),
-                  //         );
-                  //       }
-                  //     },
-                  //   ),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.white),
                     padding: EdgeInsets.zero,
@@ -2418,58 +2290,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         _showSortOptions();
                       } else if (choice == 'filter') {
                         _showFilterDialog();
-                        // showDialog(
-                        //   context: context,
-                        //   builder: (BuildContext context) {
-                        //     return AlertDialog(
-                        //       title: const Text('Filter by Time'),
-                        //       content: Column(
-                        //         mainAxisSize: MainAxisSize.min,
-                        //         children: timeFilterOptions.map((option) {
-                        //           return Padding(
-                        //             padding: const EdgeInsets.symmetric(
-                        //                 horizontal: 8.0),
-                        //             child: ListTile(
-                        //               title: Row(
-                        //                 mainAxisAlignment:
-                        //                     MainAxisAlignment.spaceBetween,
-                        //                 children: [
-                        //                   Text(option),
-                        //                   if (_timeFilter == option)
-                        //                     const Icon(
-                        //                       Icons.check,
-                        //                       size: 16,
-                        //                       color: Color(0xFF0175FF),
-                        //                     ),
-                        //                 ],
-                        //               ),
-                        //               tileColor: _timeFilter == option
-                        //                   ? const Color(0xFFF5F8FF)
-                        //                   : null,
-                        //               shape: RoundedRectangleBorder(
-                        //                 borderRadius: BorderRadius.circular(8),
-                        //                 side: _timeFilter == option
-                        //                     ? const BorderSide(
-                        //                         color: Color(0xFF0175FF),
-                        //                         width: 1)
-                        //                     : BorderSide.none,
-                        //               ),
-                        //               onTap: () {
-                        //                 setState(() {
-                        //                   _timeFilter = option;
-                        //                   _updateFilteredLists();
-                        //                 });
-                        //                 Navigator.of(context).pop();
-                        //               },
-                        //             ),
-                        //           );
-                        //         }).toList(),
-                        //       ),
-                        //       contentPadding: const EdgeInsets.symmetric(
-                        //           horizontal: 8, vertical: 16),
-                        //     );
-                        //   },
-                        // );
                       }
                     },
                     itemBuilder: (BuildContext context) =>

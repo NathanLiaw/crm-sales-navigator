@@ -547,16 +547,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // InkWell(
-                        //   onTap: () => _showSalesOrderDialog(context),
-                        //   child: const Text(
-                        //     'View Sales Order Details',
-                        //     style: TextStyle(
-                        //       color: Color(0xff0069BA),
-                        //       decoration: TextDecoration.underline,
-                        //     ),
-                        //   ),
-                        // ),
                         const SizedBox(height: 5),
                         Text(
                           'Created date: ${formattedCreatedDate ?? ''}',
@@ -568,27 +558,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        // const SizedBox(height: 16),
-                        // const Text(
-                        //   'Cart Items:',
-                        //   style: TextStyle(
-                        //     fontSize: 16,
-                        //     fontWeight: FontWeight.bold,
-                        //   ),
-                        // ),
-                        // SizedBox(
-                        //   height: 100,
-                        //   child: ListView.builder(
-                        //     itemCount: cartItemList.length,
-                        //     itemBuilder: (context, index) {
-                        //       final item = cartItemList[index];
-                        //       return ListTile(
-                        //         title: Text('${item['product_name']}'),
-                        //         trailing: Text('Qty: ${item['qty']}'),
-                        //       );
-                        //     },
-                        //   ),
-                        // ),
                       ],
                     ),
                     const SizedBox(height: 30),
