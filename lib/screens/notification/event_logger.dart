@@ -11,27 +11,46 @@ class EventLogger {
         Uri.parse('${dotenv.env['API_URL']}/event_logger/update_log_event.php');
 
     try {
-      final response = await http.post(apiUrl, body: {
+      final Map<String, String> requestBody = {
         'salesmanId': salesmanId.toString(),
         'activityDescription': activityDescription,
         'activityType': activityType,
-        'leadId': leadId?.toString(),
-      });
+      };
 
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
+      // Only add leadId if it's not null
+      if (leadId != null) {
+        requestBody['leadId'] = leadId.toString();
+      }
 
-        if (jsonData['status'] == 'success') {
-          developer.log('Event logged successfully');
+      developer.log('Sending event log request: $requestBody');
+
+      final response = await http.post(apiUrl, body: requestBody);
+
+      // Check if response body is empty
+      if (response.body.isEmpty) {
+        developer.log('Empty response received from server');
+        return;
+      }
+
+      try {
+        final responseData = json.decode(response.body);
+        developer.log('Event log response: $responseData');
+
+        if (response.statusCode == 200) {
+          if (responseData['status'] == 'success') {
+            developer.log('Event logged successfully');
+          } else {
+            developer.log('Error logging event: ${responseData['message']}');
+          }
         } else {
-          developer.log('Error logging event: ${jsonData['message']}');
+          developer
+              .log('Failed to log event. Server error: ${response.statusCode}');
         }
-      } else {
-        developer
-            .log('Failed to log event. Server error: ${response.statusCode}');
+      } catch (e) {
+        developer.log('Error parsing response: ${response.body}', error: e);
       }
     } catch (e) {
-      developer.log('Error logging event: $e');
+      developer.log('Error logging event', error: e);
     }
   }
 }

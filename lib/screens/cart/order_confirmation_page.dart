@@ -102,7 +102,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       developer.log(name);
       developer.log(areaName);
       // Prepare selected order options
-      List<String> selectedOrderOptions = selectedIndices.map((index) => orderOptions[index]).toList();
+      List<String> selectedOrderOptions =
+          selectedIndices.map((index) => orderOptions[index]).toList();
       String stringOrderOptions = selectedOrderOptions.isNotEmpty
           ? '["${selectedOrderOptions.join('","')}"]'
           : 'null';
@@ -186,8 +187,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
       // Send the data to the API
       final response = await http.post(
-        Uri.parse(
-            '${dotenv.env['API_URL']}/cart/complete_cart.php'),
+        Uri.parse('${dotenv.env['API_URL']}/cart/complete_cart.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(cartItemsData),
       );
@@ -340,12 +340,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CartPage(),
-              ),
-            );
+            Navigator.pop(context);
           },
         ),
       ),
@@ -794,7 +789,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                          OrderSubmittedPage(salesOrderId: salesOrderId!),
+                              OrderSubmittedPage(salesOrderId: salesOrderId!),
                         ),
                       );
                     } else {

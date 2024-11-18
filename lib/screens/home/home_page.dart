@@ -186,6 +186,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<LeadItem> _filteredClosed = [];
 
   void _updateFilteredLists() {
+    if (!mounted) return;
     setState(() {
       _filteredOpportunities = _filterLeadsByTime(leadItems, _timeFilter);
       _filteredEngagement = _filterLeadsByTime(engagementLeads, _timeFilter);
@@ -204,6 +205,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _loadUnreadNotifications();
     // _fetchLeadItems();
     // _cleanAndValidateLeadData().then((_) => _fetchLeadItems());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).addListener(() {
+        if (FocusScope.of(context).hasFocus) {
+          _updateFilteredLists();
+        }
+      });
+    });
     Future.delayed(const Duration(seconds: 2), () {
       setState(() {
         _isLoading = false; // Set loading state to false when data is loaded
@@ -791,6 +799,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _sortLeads(negotiationLeads);
     _sortLeads(orderProcessingLeads);
     _sortLeads(closedLeads);
+    _updateFilteredLists();
     developer.log("Finished _fetchLeadItems");
   }
 
@@ -872,6 +881,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } catch (e) {
       developer.log('Error fetching sales_lead items: $e');
     }
+    _updateFilteredLists();
   }
 
   // Future<void> _fetchCreateLeadItems(MySqlConnection conn) async {
