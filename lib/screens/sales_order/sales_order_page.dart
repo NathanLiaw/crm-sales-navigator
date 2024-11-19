@@ -1120,28 +1120,57 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   }
 
 // Function to calculate the subtotal, excluding canceled items and adjusting prices to 0 if needed
-  double _calculateSubtotal(List<Map<String, dynamic>> items) {
+//   double _calculateSubtotal(List<Map<String, dynamic>> items) {
+//     double subtotal = 0.0; // Explicitly initialize as a double
+//     for (var item in items) {
+//       double price = (item['ori_unit_price'] is int)
+//           ? (item['ori_unit_price'] as int).toDouble()
+//           : item['ori_unit_price'];
+//
+//       // If item status is not 'Uncancel', null, or '0', set the price to 0
+//       if (item['cancel'] != null &&
+//           item['cancel'] != '0' &&
+//           item['cancel'] != 'Uncancel') {
+//         price =
+//             0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
+//       }
+//
+//       // Only add to subtotal if the item is not 'Cancelled'
+//       if (item['cancel'] != 'Cancelled') {
+//         subtotal += item['qty'] *
+//             price; // `price` and `qty` are both treated as doubles
+//       }
+//     }
+//     return subtotal;
+//   }
+
+  double _calculateSubtotal(List<Map<String, dynamic>> items, {double gstRate = 0.06, double sstRate = 0.10}) {
     double subtotal = 0.0; // Explicitly initialize as a double
+
     for (var item in items) {
       double price = (item['ori_unit_price'] is int)
           ? (item['ori_unit_price'] as int).toDouble()
           : item['ori_unit_price'];
 
       // If item status is not 'Uncancel', null, or '0', set the price to 0
-      if (item['cancel'] != null &&
-          item['cancel'] != '0' &&
-          item['cancel'] != 'Uncancel') {
-        price =
-            0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
+      if (item['cancel'] != null && item['cancel'] != '0' && item['cancel'] != 'Uncancel') {
+        price = 0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
       }
 
       // Only add to subtotal if the item is not 'Cancelled'
       if (item['cancel'] != 'Cancelled') {
-        subtotal += item['qty'] *
-            price; // `price` and `qty` are both treated as doubles
+        subtotal += item['qty'] * price; // `price` and `qty` are both treated as doubles
       }
     }
-    return subtotal;
+
+    // Apply GST and SST to the subtotal
+    double gstAmount = subtotal * gstRate;  // GST calculation
+    double sstAmount = subtotal * sstRate;  // SST calculation
+
+    // Add GST and SST to the subtotal
+    double totalWithTaxes = subtotal + gstAmount + sstAmount;
+
+    return totalWithTaxes; // Return the total amount including GST and SST
   }
 
   Widget _buildSalesOrderItem({
@@ -1326,7 +1355,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'RM ${subtotal.toStringAsFixed(2)}',
+                              'RM ${subtotal.toStringAsFixed(3)}',
                               style: const TextStyle(
                                 color: Color(0xFF0175FF),
                                 fontSize: 24,
