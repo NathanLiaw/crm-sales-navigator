@@ -1209,7 +1209,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         cancelStatus == '0' ||
         cancelStatus == 'Uncancel') {
       return 'In Progress';
-    } else {
+    }
+    else {
       return cancelStatus;
     }
   }
@@ -1217,9 +1218,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   Color _getStatusColor(String? cancelStatus) {
     if (cancelStatus == null ||
         cancelStatus == '0' ||
-        cancelStatus == 'Uncancel') {
+        cancelStatus == 'Uncancel' ||
+        cancelStatus == 'Confirm'
+    ) {
       return Colors.green;
-    } else {
+    }
+    else {
       return Colors.red;
     }
   }
@@ -1316,11 +1320,19 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ),
                   ),
                   Text(
-                    _getStatusText(item.cancel),
+                    _getStatusText(
+                        (item.cancel != null && item.cancel != '0' && item.cancel != 'Uncancel')
+                            ? item.cancel
+                            : item.status
+                    ),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: _getStatusColor(item.cancel),
+                      color: _getStatusColor(
+                          (item.cancel != null && item.cancel != '0' && item.cancel != 'Uncancel')
+                              ? item.cancel
+                              : item.status
+                      ),
                     ),
                   ),
                 ],

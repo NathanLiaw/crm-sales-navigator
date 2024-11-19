@@ -2,12 +2,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_navigator/model/cart_item.dart';
 import 'package:sales_navigator/screens/cart/order_submitted_page.dart';
-import 'package:sales_navigator/screens/cart/cart_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:sales_navigator/screens/profile/terms_and_conditions_page.dart';
-import '../../utility_function.dart';
+import 'package:sales_navigator/utility_function.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sales_navigator/model/customer.dart';
 import 'dart:developer' as developer;
@@ -116,7 +115,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'sst': widget.subtotal * sst,
         'final_total': widget.total,
         'total': widget.subtotal,
-        'remark': remark,
+        'remark': remark.toString(),
         'order_option': stringOrderOptions,
         'buyer_user_group': 'salesman',
         'buyer_area_id': areaId,

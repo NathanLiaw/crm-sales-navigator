@@ -99,7 +99,7 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(1);
+                    Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
