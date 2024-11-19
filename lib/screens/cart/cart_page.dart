@@ -381,9 +381,9 @@ class _CartPage extends State<CartPage> {
           int productId = product['id'];
           String productName = product['product_name'];
           List<String> itemAssetName = [
-            'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
-            'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
-            'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
+            '${dotenv.env['IMG_URL']}/${product['photo1'] ?? 'null'}',
+            '${dotenv.env['IMG_URL']}/${product['photo2'] ?? 'null'}',
+            '${dotenv.env['IMG_URL']}/${product['photo3'] ?? 'null'}',
           ];
           Blob description = stringToBlob(product['description']);
           String priceByUom = product['price_by_uom'] ?? '';
@@ -841,7 +841,7 @@ class _CartPage extends State<CartPage> {
                                     width: 90,
                                     child: (itemPhotos.isNotEmpty)
                                         ? Image.network(
-                                            'https://haluansama.com/crm-sales/${itemPhotos[0]}',
+                                            '${dotenv.env['IMG_URL']}/${itemPhotos[0]}',
                                             height: 90,
                                             width: 90,
                                             fit: BoxFit.cover,

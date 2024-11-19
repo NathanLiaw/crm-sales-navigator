@@ -72,9 +72,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 productId: product['id'],
                 productName: product['product_name'],
                 itemAssetNames: [
-                  'https://haluansama.com/crm-sales/${product['photo1']}',
-                  'https://haluansama.com/crm-sales/${product['photo2']}',
-                  'https://haluansama.com/crm-sales/${product['photo3']}',
+                  '${dotenv.env['IMG_URL']}/${product['photo1']}',
+                  '${dotenv.env['IMG_URL']}/${product['photo2']}',
+                  '${dotenv.env['IMG_URL']}/${product['photo3']}',
                 ],
                 itemDescription: descriptionBlob,  // Pass Blob instead of String
                 priceByUom: product['price_by_uom'],

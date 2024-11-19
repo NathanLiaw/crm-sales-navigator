@@ -163,7 +163,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           if (photos.isNotEmpty && photos[0]['photo1'] != null) {
             String photoPath = photos[0]['photo1'];
             if (photoPath.startsWith('photo/')) {
-              photoPath = 'https://haluansama.com/crm-sales/$photoPath';
+              photoPath = '${dotenv.env['IMG_URL']}/$photoPath';
             }
             return photoPath;
           }

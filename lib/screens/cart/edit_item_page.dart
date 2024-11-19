@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EditItemPage extends StatefulWidget {
   final int? itemId;
@@ -302,7 +303,7 @@ class _EditItemPageState extends State<EditItemPage> {
                               width: 90,
                               child: widget.itemPhoto.isNotEmpty
                                   ? Image.network(
-                                      'https://haluansama.com/crm-sales/${widget.itemPhoto}',
+                                      '${dotenv.env['IMG_URL']}/${widget.itemPhoto}',
                                       height: 90,
                                       width: 90,
                                       fit: BoxFit.cover,

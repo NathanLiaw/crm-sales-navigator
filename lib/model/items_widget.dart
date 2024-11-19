@@ -11,6 +11,7 @@ import 'dart:developer' as developer;
 import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ItemsWidget extends StatefulWidget {
   final int? brandId;
@@ -221,12 +222,12 @@ class _ItemsWidgetState extends State<ItemsWidget> {
         Blob itemDescription =
             UtilityFunction.stringToBlob(product['description']);
 
-        final photoUrl1 = "https://haluansama.com/crm-sales/$localPath";
+        final photoUrl1 = "${dotenv.env['IMG_URL']}/$localPath";
         final photoUrl2 = localPath2 != null
-            ? "https://haluansama.com/crm-sales/$localPath2"
+            ? "${dotenv.env['IMG_URL']}/$localPath2"
             : '';
         final photoUrl3 = localPath3 != null
-            ? "https://haluansama.com/crm-sales/$localPath3"
+            ? "${dotenv.env['IMG_URL']}/$localPath3"
             : '';
 
         final containerSize = (MediaQuery.of(context).size.width - 40) / 2;

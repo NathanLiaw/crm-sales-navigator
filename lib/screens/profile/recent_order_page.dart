@@ -458,9 +458,9 @@ class _RecentOrderState extends State<RecentOrder> {
           int productId = product['id'];
           String productName = product['product_name'];
           List<String> itemAssetNames = [
-            'https://haluansama.com/crm-sales/${product['photo1']}',
-            'https://haluansama.com/crm-sales/${product['photo2']}',
-            'https://haluansama.com/crm-sales/${product['photo3']}',
+            '${dotenv.env['IMG_URL']}/${product['photo1']}',
+            '${dotenv.env['IMG_URL']}/${product['photo2']}',
+            '${dotenv.env['IMG_URL']}/${product['photo3']}',
           ];
 
           // Convert the String description into Blob
@@ -608,7 +608,7 @@ class _RecentOrderState extends State<RecentOrder> {
           // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
           if (photoPath.startsWith('photo/')) {
             photoPath =
-                'https://haluansama.com/crm-sales/photo/${photoPath.substring(6)}';
+                '${dotenv.env['IMG_URL']}/photo/${photoPath.substring(6)}';
           }
 
           return photoPath;

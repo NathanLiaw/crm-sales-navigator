@@ -74,7 +74,7 @@ class ProductCard extends StatelessWidget {
 
   String _formatImageUrl(String? url) {
     if (url != null && url.isNotEmpty && url.startsWith('photo/')) {
-      return 'https://haluansama.com/crm-sales/$url';
+      return '${dotenv.env['IMG_URL']}/$url';
     }
     return url ?? '';
   }

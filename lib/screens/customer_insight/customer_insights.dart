@@ -242,9 +242,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
           int productId = product['id'];
           String productName = product['product_name'];
           List<String> itemAssetName = [
-            'https://haluansama.com/crm-sales/${product['photo1'] ?? 'null'}',
-            'https://haluansama.com/crm-sales/${product['photo2'] ?? 'null'}',
-            'https://haluansama.com/crm-sales/${product['photo3'] ?? 'null'}',
+            '${dotenv.env['IMG_URL']}/${product['photo1'] ?? 'null'}',
+            '${dotenv.env['IMG_URL']}/${product['photo2'] ?? 'null'}',
+            '${dotenv.env['IMG_URL']}/${product['photo3'] ?? 'null'}',
           ];
           Blob description = stringToBlob(product['description']);
           String priceByUom = product['price_by_uom'] ?? '';
@@ -362,7 +362,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   }
 
   Future<void> fetchCustomerSegmentation() async {
-    const String apiUrl = 'http://haluansama.com/crm-sales/api/customer_segmentation/customer_segmentation_api.php';
+    final String apiUrl = '${dotenv.env['API_URL']}/customer_segmentation/customer_segmentation_api.php';
 
     try {
       final response = await http.get(Uri.parse(apiUrl)).timeout(const Duration(seconds: 10));
@@ -1697,7 +1697,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                             final localPath =
                                                 product['photo1'] ?? '';
                                             final photoUrl =
-                                                "https://haluansama.com/crm-sales/$localPath";
+                                                "${dotenv.env['IMG_URL']}/$localPath";
                                             final productName =
                                                 product['product_name'] ?? '';
                                             final productUom =
@@ -1841,7 +1841,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                             final localPath =
                                                 product['photo1'] ?? '';
                                             final photoUrl =
-                                                "https://haluansama.com/crm-sales/$localPath";
+                                                "${dotenv.env['IMG_URL']}/$localPath";
                                             final productName =
                                                 product['product_name'] ?? '';
 

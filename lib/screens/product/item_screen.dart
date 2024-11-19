@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ItemScreen extends StatefulWidget {
   final int productId;
@@ -213,7 +214,7 @@ class _ItemScreenState extends State<ItemScreen> {
 
                 // Check if the assetName is empty or 'null' placeholder
                 if (assetName.isEmpty ||
-                    assetName == 'https://haluansama.com/crm-sales/null') {
+                    assetName == '${dotenv.env['IMG_URL']}/null') {
                   return const SizedBox
                       .shrink(); // Shrinks if the assetName is empty
                 }
