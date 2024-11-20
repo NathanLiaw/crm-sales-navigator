@@ -23,15 +23,11 @@ class _SalesReportPageState extends State<SalesReportPage> {
   bool isSortedAscending = false;
   String _loggedInUsername = '';
 
-  final List<String> _sortingMethods = [
-    'By Date (Ascending)',
-    'By Date (Descending)',
-    'By Total Sales (Low to High)',
-    'By Total Sales (High to Low)',
-    'By Total Quantity (Low to High)',
-    'By Total Quantity (High to Low)',
-    'By Total Orders (Low to High)',
-    'By Total Orders (High to Low)',
+  final List<String> _sortingCriteria = [
+    'By Date',
+    'By Total Sales',
+    'By Total Quantity',
+    'By Total Orders',
   ];
 
   String _selectedMethod = 'By Date (Ascending)';
@@ -118,9 +114,30 @@ class _SalesReportPageState extends State<SalesReportPage> {
     });
   }
 
-  void toggleSortOrder() {
+  void toggleSortOrder(String criterion) {
     setState(() {
-      isSortedAscending = !isSortedAscending;
+      // Toggle the sort order for each criterion
+      if (criterion == 'By Date') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod =
+            isSortedAscending ? 'By Date (Ascending)' : 'By Date (Descending)';
+      } else if (criterion == 'By Total Sales') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Total Sales (Low to High)'
+            : 'By Total Sales (High to Low)';
+      } else if (criterion == 'By Total Quantity') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Total Quantity (Low to High)'
+            : 'By Total Quantity (High to Low)';
+      } else if (criterion == 'By Total Orders') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Total Orders (Low to High)'
+            : 'By Total Orders (High to Low)';
+      }
+      // Trigger data re-fetch based on the selected sort method
       salesData = fetchSalesData(_selectedDateRange);
     });
   }
@@ -142,31 +159,50 @@ class _SalesReportPageState extends State<SalesReportPage> {
       builder: (BuildContext context) {
         return ListView.builder(
           shrinkWrap: true,
-          itemCount: _sortingMethods.length,
+          itemCount: _sortingCriteria.length,
           itemBuilder: (BuildContext context, int index) {
+            String criterion = _sortingCriteria[index];
+
+            // Toggle the text based on current sorting order
+            String displayText = '';
+            if (criterion == 'By Date') {
+              displayText = isSortedAscending
+                  ? 'By Date (Ascending)'
+                  : 'By Date (Descending)';
+            } else if (criterion == 'By Total Sales') {
+              displayText = isSortedAscending
+                  ? 'By Total Sales (Low to High)'
+                  : 'By Total Sales (High to Low)';
+            } else if (criterion == 'By Total Quantity') {
+              displayText = isSortedAscending
+                  ? 'By Total Quantity (Low to High)'
+                  : 'By Total Quantity (High to Low)';
+            } else if (criterion == 'By Total Orders') {
+              displayText = isSortedAscending
+                  ? 'By Total Orders (Low to High)'
+                  : 'By Total Orders (High to Low)';
+            }
+
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5.0),
               child: ListTile(
                 title: Text(
-                  _sortingMethods[index],
+                  displayText,
                   style: TextStyle(
-                    fontWeight: _selectedMethod == _sortingMethods[index]
+                    fontWeight: _selectedMethod == displayText
                         ? FontWeight.bold
                         : FontWeight.normal,
-                    color: _selectedMethod == _sortingMethods[index]
+                    color: _selectedMethod == displayText
                         ? Colors.blue
                         : Colors.black,
                   ),
                 ),
-                trailing: _selectedMethod == _sortingMethods[index]
+                trailing: _selectedMethod == displayText
                     ? const Icon(Icons.check, color: Colors.blue)
                     : null,
                 onTap: () {
-                  setState(() {
-                    _selectedMethod = _sortingMethods[index];
-                  });
+                  toggleSortOrder(criterion);
                   Navigator.pop(context);
-                  _sortResults();
                 },
               ),
             );

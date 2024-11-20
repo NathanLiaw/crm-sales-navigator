@@ -43,10 +43,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   List<Map<String, dynamic>> filteredOrders = [];
 
   final List<String> _sortingMethods = [
-    'By Creation Date (Ascending)',
-    'By Creation Date (Descending)',
-    'By Amount (Low to High)',
-    'By Amount (High to Low)',
+    'By Creation Date',
+    'By Amount',
+    // You can add more sorting criteria here
   ];
 
   String _selectedMethod = 'By Creation Date (Descending)';
@@ -240,6 +239,40 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         setState(() => isLoading = false);
       }
     }
+  }
+
+  void toggleSortOrder(String criterion) {
+    setState(() {
+      if (criterion == 'By Creation Date') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Creation Date (Ascending)'
+            : 'By Creation Date (Descending)';
+      } else if (criterion == 'By Amount') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Amount (Low to High)'
+            : 'By Amount (High to Low)';
+      }
+      // Trigger data re-fetch or update based on the selected sort method
+      filteredOrders = applySorting(
+          filteredOrders); // Assuming applySorting handles the actual data sorting
+    });
+  }
+
+  List<Map<String, dynamic>> applySorting(List<Map<String, dynamic>> orders) {
+    if (_selectedMethod.contains('Date')) {
+      return orders
+        ..sort((a, b) => isSortedAscending
+            ? a['date'].compareTo(b['date'])
+            : b['date'].compareTo(a['date']));
+    } else if (_selectedMethod.contains('Amount')) {
+      return orders
+        ..sort((a, b) => isSortedAscending
+            ? a['amount'].compareTo(b['amount'])
+            : b['amount'].compareTo(a['amount']));
+    }
+    return orders;
   }
 
   String _getOrderByField() {
@@ -593,30 +626,55 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       shrinkWrap: true,
                       itemCount: _sortingMethods.length,
                       itemBuilder: (BuildContext context, int index) {
+                        // Get the criterion (like "By Creation Date" or "By Amount")
+                        String criterion = _sortingMethods[index];
+                        String displayText = criterion;
+
+                        // Add toggle text logic for each sorting criterion
+                        if (criterion == 'By Creation Date') {
+                          displayText = isSortedAscending
+                              ? 'By Creation Date (Ascending)'
+                              : 'By Creation Date (Descending)';
+                        } else if (criterion == 'By Amount') {
+                          displayText = isSortedAscending
+                              ? 'By Amount (Low to High)'
+                              : 'By Amount (High to Low)';
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: ListTile(
                             title: Text(
-                              _sortingMethods[index],
+                              displayText,
                               style: TextStyle(
-                                fontWeight:
-                                    _selectedMethod == _sortingMethods[index]
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                color: _selectedMethod == _sortingMethods[index]
+                                fontWeight: _selectedMethod == displayText
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: _selectedMethod == displayText
                                     ? Colors.blue
                                     : Colors.black,
                               ),
                             ),
-                            trailing: _selectedMethod == _sortingMethods[index]
+                            trailing: _selectedMethod == displayText
                                 ? const Icon(Icons.check, color: Colors.blue)
                                 : null,
                             onTap: () {
                               setState(() {
-                                _selectedMethod = _sortingMethods[index];
+                                // Toggle the sorting order for the selected criterion
+                                if (criterion == 'By Creation Date') {
+                                  isSortedAscending = !isSortedAscending;
+                                  _selectedMethod = isSortedAscending
+                                      ? 'By Creation Date (Ascending)'
+                                      : 'By Creation Date (Descending)';
+                                } else if (criterion == 'By Amount') {
+                                  isSortedAscending = !isSortedAscending;
+                                  _selectedMethod = isSortedAscending
+                                      ? 'By Amount (Low to High)'
+                                      : 'By Amount (High to Low)';
+                                }
                               });
-                              Navigator.pop(context);
-                              _sortResults();
+                              Navigator.pop(context); // Close the modal
+                              _sortResults(); // Apply the sorting
                             },
                           ),
                         );
@@ -624,7 +682,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     ),
                     const Divider(),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Column(
                         children: _statusFilters.keys.map((String key) {
                           return CheckboxListTile(
@@ -641,30 +699,26 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: ElevatedButton.icon(
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFF047CBD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
                         onPressed: () {
                           Navigator.pop(context);
                           _loadSalesOrders(
                               days: selectedDays, dateRange: dateRange);
                         },
-                        label: const Text(
+                        child: const Text(
                           'Apply Filters',
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: Colors.white,
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: const Color(0xff0175FF),
-                          elevation: 6,
-                          shadowColor: Colors.grey.withOpacity(0.5),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0, vertical: 6.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          minimumSize: const Size(100, 40),
                         ),
                       ),
                     ),
@@ -1119,32 +1173,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     );
   }
 
-// Function to calculate the subtotal, excluding canceled items and adjusting prices to 0 if needed
-//   double _calculateSubtotal(List<Map<String, dynamic>> items) {
-//     double subtotal = 0.0; // Explicitly initialize as a double
-//     for (var item in items) {
-//       double price = (item['ori_unit_price'] is int)
-//           ? (item['ori_unit_price'] as int).toDouble()
-//           : item['ori_unit_price'];
-//
-//       // If item status is not 'Uncancel', null, or '0', set the price to 0
-//       if (item['cancel'] != null &&
-//           item['cancel'] != '0' &&
-//           item['cancel'] != 'Uncancel') {
-//         price =
-//             0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
-//       }
-//
-//       // Only add to subtotal if the item is not 'Cancelled'
-//       if (item['cancel'] != 'Cancelled') {
-//         subtotal += item['qty'] *
-//             price; // `price` and `qty` are both treated as doubles
-//       }
-//     }
-//     return subtotal;
-//   }
-
-  double _calculateSubtotal(List<Map<String, dynamic>> items, {double gstRate = 0.06, double sstRate = 0.10}) {
+  double _calculateSubtotal(List<Map<String, dynamic>> items,
+      {double gstRate = 0.06, double sstRate = 0.10}) {
     double subtotal = 0.0; // Explicitly initialize as a double
 
     for (var item in items) {
@@ -1153,19 +1183,23 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
           : item['ori_unit_price'];
 
       // If item status is not 'Uncancel', null, or '0', set the price to 0
-      if (item['cancel'] != null && item['cancel'] != '0' && item['cancel'] != 'Uncancel') {
-        price = 0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
+      if (item['cancel'] != null &&
+          item['cancel'] != '0' &&
+          item['cancel'] != 'Uncancel') {
+        price =
+            0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
       }
 
       // Only add to subtotal if the item is not 'Cancelled'
       if (item['cancel'] != 'Cancelled') {
-        subtotal += item['qty'] * price; // `price` and `qty` are both treated as doubles
+        subtotal += item['qty'] *
+            price; // `price` and `qty` are both treated as doubles
       }
     }
 
     // Apply GST and SST to the subtotal
-    double gstAmount = subtotal * gstRate;  // GST calculation
-    double sstAmount = subtotal * sstRate;  // SST calculation
+    double gstAmount = subtotal * gstRate; // GST calculation
+    double sstAmount = subtotal * sstRate; // SST calculation
 
     // Add GST and SST to the subtotal
     double totalWithTaxes = subtotal + gstAmount + sstAmount;
@@ -1266,10 +1300,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
     double subtotal = _calculateSubtotal(items);
 
-    if (subtotal == 0) {
-      status = 'Void';
-    }
-
     String formattedOrderNumber = 'S${orderNumber.padLeft(7, '0')}';
     int? orderId = int.tryParse(orderNumber);
 
@@ -1335,7 +1365,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                         const SizedBox(height: 8),
                         // Creation date
                         Text(
-                          'Created On: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                          'Created Date: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,

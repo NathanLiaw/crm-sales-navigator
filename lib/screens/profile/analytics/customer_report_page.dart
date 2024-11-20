@@ -21,15 +21,23 @@ class _CustomerReportState extends State<CustomerReport> {
   int selectedButtonIndex = -1;
   String loggedInUsername = '';
 
-  final List<String> _sortingMethods = [
-    'By Company Name (A-Z)',
-    'By Company Name (Z-A)',
-    'By Total Sales (Low to High)',
-    'By Total Sales (High to Low)',
-    'By Total Quantity (Low to High)',
-    'By Total Quantity (High to Low)',
-    'By Last Purchase (Ascending)',
-    'By Last Purchase (Descending)',
+  final List<Map<String, String>> _sortingMethods = [
+    {'name': 'By Company Name', 'ascending': 'A-Z', 'descending': 'Z-A'},
+    {
+      'name': 'By Total Sales',
+      'ascending': 'Low to High',
+      'descending': 'High to Low'
+    },
+    {
+      'name': 'By Total Quantity',
+      'ascending': 'Low to High',
+      'descending': 'High to Low'
+    },
+    {
+      'name': 'By Last Purchase',
+      'ascending': 'Ascending',
+      'descending': 'Descending'
+    },
   ];
 
   String _selectedMethod = 'By Company Name (A-Z)';
@@ -189,12 +197,16 @@ class _CustomerReportState extends State<CustomerReport> {
     return data;
   }
 
-  void toggleSortOrder() {
+  void toggleSortOrder(String criterion) {
     setState(() {
       isSortedAscending = !isSortedAscending;
-      SharedPreferences.getInstance().then((prefs) {
-        prefs.setBool('isSortedAscending', isSortedAscending);
-      });
+      for (var method in _sortingMethods) {
+        if (method['name'] == criterion) {
+          _selectedMethod =
+              '${method['name']} (${isSortedAscending ? method['ascending'] : method['descending']})';
+        }
+      }
+
       salesData = fetchSalesData(isSortedAscending, _selectedDateRange);
     });
   }
@@ -227,29 +239,33 @@ class _CustomerReportState extends State<CustomerReport> {
             shrinkWrap: true,
             itemCount: _sortingMethods.length,
             itemBuilder: (BuildContext context, int index) {
+              String criterion = _sortingMethods[index]['name']!;
+              String displayText =
+                  '${_sortingMethods[index]['name']} (${isSortedAscending ? _sortingMethods[index]['ascending'] : _sortingMethods[index]['descending']})';
+
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 5.0),
                 child: ListTile(
                   title: Text(
-                    _sortingMethods[index],
+                    displayText,
                     style: TextStyle(
-                      fontWeight: _selectedMethod == _sortingMethods[index]
+                      fontWeight: _selectedMethod == displayText
                           ? FontWeight.bold
                           : FontWeight.normal,
-                      color: _selectedMethod == _sortingMethods[index]
+                      color: _selectedMethod == displayText
                           ? Colors.blue
                           : Colors.black,
                     ),
                   ),
-                  trailing: _selectedMethod == _sortingMethods[index]
+                  trailing: _selectedMethod == displayText
                       ? const Icon(Icons.check, color: Colors.blue)
                       : null,
                   onTap: () {
                     setState(() {
-                      _selectedMethod = _sortingMethods[index];
+                      _selectedMethod = displayText;
                     });
                     Navigator.pop(context);
-                    _sortResults();
+                    toggleSortOrder(criterion);
                   },
                 ),
               );
@@ -271,7 +287,6 @@ class _CustomerReportState extends State<CustomerReport> {
 
     String formattedDate;
     if (selectedButtonIndex == 3) {
-      // Modified to show full date range instead of "Filter Date"
       formattedDate =
           '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (_selectedDateRange != null) {
@@ -491,18 +506,14 @@ class _CustomerReportState extends State<CustomerReport> {
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
-                                      customer
-                                          .companyName, // Here is the customer company name
+                                      customer.companyName,
                                       style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      softWrap:
-                                          true, // Enables wrapping of long text
-                                      maxLines:
-                                          2, // Limits to 2 lines before truncating
-                                      overflow: TextOverflow
-                                          .ellipsis, // Adds "..." if text is too long
+                                      softWrap: true,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],

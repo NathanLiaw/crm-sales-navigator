@@ -185,9 +185,16 @@ class _CustomerSalesPredictionPageState
                                 horizontal: 10, vertical: 5),
                             child: Container(
                               decoration: BoxDecoration(
-                                color:
-                                    const Color.fromRGBO(111, 188, 249, 0.35),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 2,
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
@@ -204,8 +211,10 @@ class _CustomerSalesPredictionPageState
                                         Text(
                                           entry.key,
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                            color: Color.fromARGB(
+                                                255, 0, 0, 0),
                                             fontSize: 18,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                         const SizedBox(height: 5),
@@ -231,7 +240,8 @@ class _CustomerSalesPredictionPageState
                                   children: [
                                     Container(
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE1F5FE),
+                                        color: const Color.fromARGB(
+                                            105, 225, 245, 254),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Column(

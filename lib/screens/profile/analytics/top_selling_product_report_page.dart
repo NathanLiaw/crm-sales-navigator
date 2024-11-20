@@ -23,15 +23,23 @@ class _ProductReportState extends State<ProductReport> {
   bool isSortedAscending = true;
   String loggedInUsername = '';
 
-  final List<String> _sortingMethods = [
-    'By Name (A to Z)',
-    'By Name (Z to A)',
-    'By Total Sales (Low to High)',
-    'By Total Sales (High to Low)',
-    'By Total Quantity Sold (Low to High)',
-    'By Total Quantity Sold (High to Low)',
-    'By Last Sold (Oldest to Newest)',
-    'By Last Sold (Newest to Oldest)',
+  final List<Map<String, String>> _sortingMethods = [
+    {'name': 'By Name', 'ascending': 'A to Z', 'descending': 'Z to A'},
+    {
+      'name': 'By Total Sales',
+      'ascending': 'Low to High',
+      'descending': 'High to Low'
+    },
+    {
+      'name': 'By Total Quantity Sold',
+      'ascending': 'Low to High',
+      'descending': 'High to Low'
+    },
+    {
+      'name': 'By Last Sold',
+      'ascending': 'Oldest to Newest',
+      'descending': 'Newest to Oldest'
+    },
   ];
 
   String _selectedMethod = 'By Name (A to Z)';
@@ -115,9 +123,20 @@ class _ProductReportState extends State<ProductReport> {
     });
   }
 
-  void toggleSortOrder() {
+  void toggleSortOrder(String criterion) {
     setState(() {
       isSortedAscending = !isSortedAscending;
+
+      // Find the criterion and update its selected method
+      for (var method in _sortingMethods) {
+        if (method['name'] == criterion) {
+          // Update the selected method's text based on ascending or descending
+          _selectedMethod =
+              '${method['name']} (${isSortedAscending ? method['ascending'] : method['descending']})';
+        }
+      }
+
+      // Refetch the product data based on the updated sorting
       products = fetchProducts(_selectedDateRange);
     });
   }
@@ -143,29 +162,34 @@ class _ProductReportState extends State<ProductReport> {
           shrinkWrap: true,
           itemCount: _sortingMethods.length,
           itemBuilder: (BuildContext context, int index) {
+            String criterion = _sortingMethods[index]['name']!;
+            String displayText =
+                '${_sortingMethods[index]['name']} (${isSortedAscending ? _sortingMethods[index]['ascending'] : _sortingMethods[index]['descending']})';
+
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5.0),
               child: ListTile(
                 title: Text(
-                  _sortingMethods[index],
+                  displayText,
                   style: TextStyle(
-                    fontWeight: _selectedMethod == _sortingMethods[index]
+                    fontWeight: _selectedMethod == displayText
                         ? FontWeight.bold
                         : FontWeight.normal,
-                    color: _selectedMethod == _sortingMethods[index]
+                    color: _selectedMethod == displayText
                         ? Colors.blue
                         : Colors.black,
                   ),
                 ),
-                trailing: _selectedMethod == _sortingMethods[index]
+                trailing: _selectedMethod == displayText
                     ? const Icon(Icons.check, color: Colors.blue)
                     : null,
                 onTap: () {
                   setState(() {
-                    _selectedMethod = _sortingMethods[index];
+                    _selectedMethod = displayText;
                   });
                   Navigator.pop(context);
-                  _sortResults();
+                  toggleSortOrder(
+                      criterion); // Call toggleSortOrder for the selected criterion
                 },
               ),
             );
@@ -528,30 +552,26 @@ class _ProductReportState extends State<ProductReport> {
   }
 
   List<Product> _getSortedData(List<Product> data) {
-    switch (_selectedMethod) {
-      case 'By Name (A to Z)':
-        data.sort((a, b) => a.productName.compareTo(b.productName));
+    switch (_selectedMethod.split(' ')[0]) {
+      case 'By Name':
+        data.sort((a, b) => isSortedAscending
+            ? a.productName.compareTo(b.productName)
+            : b.productName.compareTo(a.productName));
         break;
-      case 'By Name (Z to A)':
-        data.sort((a, b) => b.productName.compareTo(a.productName));
+      case 'By Total Sales':
+        data.sort((a, b) => isSortedAscending
+            ? a.totalSales.compareTo(b.totalSales)
+            : b.totalSales.compareTo(a.totalSales));
         break;
-      case 'By Total Sales (Low to High)':
-        data.sort((a, b) => a.totalSales.compareTo(b.totalSales));
+      case 'By Total Quantity Sold':
+        data.sort((a, b) => isSortedAscending
+            ? a.totalQuantitySold.compareTo(b.totalQuantitySold)
+            : b.totalQuantitySold.compareTo(a.totalQuantitySold));
         break;
-      case 'By Total Sales (High to Low)':
-        data.sort((a, b) => b.totalSales.compareTo(a.totalSales));
-        break;
-      case 'By Total Quantity Sold (Low to High)':
-        data.sort((a, b) => a.totalQuantitySold.compareTo(b.totalQuantitySold));
-        break;
-      case 'By Total Quantity Sold (High to Low)':
-        data.sort((a, b) => b.totalQuantitySold.compareTo(a.totalQuantitySold));
-        break;
-      case 'By Last Sold (Oldest to Newest)':
-        data.sort((a, b) => a.lastSold.compareTo(b.lastSold));
-        break;
-      case 'By Last Sold (Newest to Oldest)':
-        data.sort((a, b) => b.lastSold.compareTo(a.lastSold));
+      case 'By Last Sold':
+        data.sort((a, b) => isSortedAscending
+            ? a.lastSold.compareTo(b.lastSold)
+            : b.lastSold.compareTo(a.lastSold));
         break;
     }
     return data;

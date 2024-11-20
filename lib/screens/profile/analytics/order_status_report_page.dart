@@ -33,17 +33,18 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   DateTimeRange? dateRange;
   int? selectedDays;
   int selectedButtonIndex = 3;
-  bool isSortedAscending = false;
+  bool isSortedAscending = false; // This flag tracks the current sort order
   String loggedInUsername = '';
   Customer? selectedCustomer;
   int currentPageIndex = 1;
   String searchQuery = '';
   List<Map<String, dynamic>> filteredOrders = [];
+
+  // Define the sorting criteria
   final List<String> _sortingMethods = [
-    'By Creation Date (Ascending)',
-    'By Creation Date (Descending)',
-    'By Amount (Low to High)',
-    'By Amount (High to Low)',
+    'By Creation Date',
+    'By Amount',
+    // You can add more sorting criteria here
   ];
 
   String _selectedMethod = 'By Creation Date (Descending)';
@@ -62,6 +63,41 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         _loadSalesOrders(days: selectedDays, dateRange: dateRange);
       }
     });
+  }
+
+  void toggleSortOrder(String criterion) {
+    setState(() {
+      if (criterion == 'By Creation Date') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Creation Date (Ascending)'
+            : 'By Creation Date (Descending)';
+      } else if (criterion == 'By Amount') {
+        isSortedAscending = !isSortedAscending;
+        _selectedMethod = isSortedAscending
+            ? 'By Amount (Low to High)'
+            : 'By Amount (High to Low)';
+      }
+      // Trigger data re-fetch or update based on the selected sort method
+      filteredOrders = applySorting(
+          filteredOrders); // Assuming applySorting handles the actual data sorting
+    });
+  }
+
+  // Function to handle sorting based on the selected method
+  List<Map<String, dynamic>> applySorting(List<Map<String, dynamic>> orders) {
+    if (_selectedMethod.contains('Date')) {
+      return orders
+        ..sort((a, b) => isSortedAscending
+            ? a['date'].compareTo(b['date'])
+            : b['date'].compareTo(a['date']));
+    } else if (_selectedMethod.contains('Amount')) {
+      return orders
+        ..sort((a, b) => isSortedAscending
+            ? a['amount'].compareTo(b['amount'])
+            : b['amount'].compareTo(a['amount']));
+    }
+    return orders;
   }
 
   Future<void> insertItemIntoCart(CartItem cartItem) async {
@@ -590,30 +626,55 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       shrinkWrap: true,
                       itemCount: _sortingMethods.length,
                       itemBuilder: (BuildContext context, int index) {
+                        // Get the criterion (like "By Creation Date" or "By Amount")
+                        String criterion = _sortingMethods[index];
+                        String displayText = criterion;
+
+                        // Add toggle text logic for each sorting criterion
+                        if (criterion == 'By Creation Date') {
+                          displayText = isSortedAscending
+                              ? 'By Creation Date (Ascending)'
+                              : 'By Creation Date (Descending)';
+                        } else if (criterion == 'By Amount') {
+                          displayText = isSortedAscending
+                              ? 'By Amount (Low to High)'
+                              : 'By Amount (High to Low)';
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: ListTile(
                             title: Text(
-                              _sortingMethods[index],
+                              displayText,
                               style: TextStyle(
-                                fontWeight:
-                                    _selectedMethod == _sortingMethods[index]
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                color: _selectedMethod == _sortingMethods[index]
+                                fontWeight: _selectedMethod == displayText
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: _selectedMethod == displayText
                                     ? Colors.blue
                                     : Colors.black,
                               ),
                             ),
-                            trailing: _selectedMethod == _sortingMethods[index]
+                            trailing: _selectedMethod == displayText
                                 ? const Icon(Icons.check, color: Colors.blue)
                                 : null,
                             onTap: () {
                               setState(() {
-                                _selectedMethod = _sortingMethods[index];
+                                // Toggle the sorting order for the selected criterion
+                                if (criterion == 'By Creation Date') {
+                                  isSortedAscending = !isSortedAscending;
+                                  _selectedMethod = isSortedAscending
+                                      ? 'By Creation Date (Ascending)'
+                                      : 'By Creation Date (Descending)';
+                                } else if (criterion == 'By Amount') {
+                                  isSortedAscending = !isSortedAscending;
+                                  _selectedMethod = isSortedAscending
+                                      ? 'By Amount (Low to High)'
+                                      : 'By Amount (High to Low)';
+                                }
                               });
-                              Navigator.pop(context);
-                              _sortResults();
+                              Navigator.pop(context); // Close the modal
+                              _sortResults(); // Apply the sorting
                             },
                           ),
                         );
@@ -1173,10 +1234,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
 
     double subtotal = _calculateSubtotal(items);
 
-    if (subtotal == 0) {
-      status = 'Void';
-    }
-
     String formattedOrderNumber = 'S${orderNumber.padLeft(7, '0')}';
     int? orderId = int.tryParse(orderNumber);
 
@@ -1242,7 +1299,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                         const SizedBox(height: 8),
                         // Creation date
                         Text(
-                          'Created On: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
+                          'Created Date: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
