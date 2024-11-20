@@ -59,36 +59,45 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
     final deviceInfo = await DeviceInfoPlugin().androidInfo;
     final sdkInt = deviceInfo.version.sdkInt;
 
-    if (sdkInt >= 33) {
-      // For Android 13+ (API 33+), we need to request media permissions
-      final videos = await Permission.videos.status;
+    if (sdkInt >= 34) {
+      // Android 14
       final images = await Permission.photos.status;
-      if (!videos.isGranted || !images.isGranted) {
-        await Permission.photos.request();
-        await Permission.videos.request();
+      final videos = await Permission.videos.status;
 
-        // Check again after request
-        final videosAfter = await Permission.videos.status;
-        final imagesAfter = await Permission.photos.status;
+      if (!images.isGranted || !videos.isGranted) {
+        final statuses = await [
+          Permission.photos,
+          Permission.videos,
+        ].request();
 
-        if (!videosAfter.isGranted || !imagesAfter.isGranted) {
-          _showPermissionDeniedDialog();
-          return false;
-        }
+        return statuses.values.every((status) => status.isGranted);
+      }
+      return true;
+    } else if (sdkInt >= 33) {
+      // Android 13
+      final images = await Permission.photos.status;
+      final videos = await Permission.videos.status;
+      final audio = await Permission.audio.status;
+
+      if (!images.isGranted || !videos.isGranted || !audio.isGranted) {
+        final statuses = await [
+          Permission.photos,
+          Permission.videos,
+          Permission.audio,
+        ].request();
+
+        return statuses.values.every((status) => status.isGranted);
       }
       return true;
     } else if (sdkInt >= 29) {
-      // For Android 10-12 (API 29-32)
+      // Android 10-12
       return true; // Scoped storage, no need for runtime permission
     } else {
-      // For Android 9 and below (API < 29)
+      // Android 9 and below
       final storage = await Permission.storage.status;
       if (!storage.isGranted) {
-        final result = await Permission.storage.request();
-        if (!result.isGranted) {
-          _showPermissionDeniedDialog();
-          return false;
-        }
+        final status = await Permission.storage.request();
+        return status.isGranted;
       }
       return true;
     }
