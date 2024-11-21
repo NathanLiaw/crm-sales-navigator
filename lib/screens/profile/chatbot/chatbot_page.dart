@@ -20,7 +20,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
-  String _loggedInUsername = ''; 
+  String _loggedInUsername = '';
   final String userId = 'default_user';
   String selectedCategory = '';
   List<String> faqQuestions = [];
@@ -369,7 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          Expanded(
+          Positioned.fill(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
