@@ -33,18 +33,16 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   DateTimeRange? dateRange;
   int? selectedDays;
   int selectedButtonIndex = 3;
-  bool isSortedAscending = false; // This flag tracks the current sort order
+  bool isSortedAscending = false;
   String loggedInUsername = '';
   Customer? selectedCustomer;
   int currentPageIndex = 1;
   String searchQuery = '';
   List<Map<String, dynamic>> filteredOrders = [];
 
-  // Define the sorting criteria
   final List<String> _sortingMethods = [
     'By Creation Date',
     'By Amount',
-    // You can add more sorting criteria here
   ];
 
   String _selectedMethod = 'By Creation Date (Descending)';
@@ -78,13 +76,11 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
             ? 'By Amount (Low to High)'
             : 'By Amount (High to Low)';
       }
-      // Trigger data re-fetch or update based on the selected sort method
-      filteredOrders = applySorting(
-          filteredOrders); // Assuming applySorting handles the actual data sorting
+      filteredOrders = applySorting(filteredOrders);
     });
   }
 
-  // Function to handle sorting based on the selected method
+  // Handle sorting based on the selected method
   List<Map<String, dynamic>> applySorting(List<Map<String, dynamic>> orders) {
     if (_selectedMethod.contains('Date')) {
       return orders
@@ -204,12 +200,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
       Uri apiUrl = Uri.parse(
           '${dotenv.env['API_URL']}/sales_order/get_sales_orders.php');
 
-      // Add query parameters for username
       Map<String, String> queryParams = {
         'username': loggedInUsername,
       };
 
-      // Add filters for date range or days
       if (dateRange != null) {
         String startDate =
             DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
@@ -223,12 +217,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         queryParams['days'] = days.toString();
       }
 
-      // Add customer filter if selected
       if (selectedCustomer != null) {
         queryParams['customer_id'] = selectedCustomer!.id.toString();
       }
 
-      // Add status filters
       String statusFilters = _statusFilters.entries
           .where((entry) => entry.value)
           .map((entry) => entry.key)
@@ -626,11 +618,9 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                       shrinkWrap: true,
                       itemCount: _sortingMethods.length,
                       itemBuilder: (BuildContext context, int index) {
-                        // Get the criterion (like "By Creation Date" or "By Amount")
                         String criterion = _sortingMethods[index];
                         String displayText = criterion;
 
-                        // Add toggle text logic for each sorting criterion
                         if (criterion == 'By Creation Date') {
                           displayText = isSortedAscending
                               ? 'By Creation Date (Ascending)'
@@ -660,7 +650,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                 : null,
                             onTap: () {
                               setState(() {
-                                // Toggle the sorting order for the selected criterion
                                 if (criterion == 'By Creation Date') {
                                   isSortedAscending = !isSortedAscending;
                                   _selectedMethod = isSortedAscending
@@ -673,8 +662,8 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                                       : 'By Amount (High to Low)';
                                 }
                               });
-                              Navigator.pop(context); // Close the modal
-                              _sortResults(); // Apply the sorting
+                              Navigator.pop(context);
+                              _sortResults();
                             },
                           ),
                         );
@@ -839,12 +828,10 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
   Widget _buildCustomerPicker() {
     return Row(
       children: [
-        // Search bar on the left
         Expanded(
           child: _buildSearchBar(),
         ),
         const SizedBox(width: 16.0),
-        // Select customer icon only on the right, always blue
         InkWell(
           onTap: _selectCustomer,
           child: Container(
@@ -891,8 +878,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
               },
             ),
           ),
-
-          // The clear button is now at the end of the search bar
           if (_searchController.text.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.clear, color: Colors.grey),
@@ -911,23 +896,19 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     setState(() {
       searchQuery = query;
 
-      // Filter orders based on the query
       filteredOrders = orders.where((order) {
         String orderId = order['id'].toString();
         String formattedOrderId = 'S${orderId.padLeft(7, '0')}';
         String creationDate = '';
 
-        // Check if order has 'created_date'
         if (order['created_date'] != null) {
           DateTime dateTime =
               DateFormat('dd/MM/yyyy').parse(order['created_date']);
           creationDate = DateFormat('dd-MM-yyyy').format(dateTime);
         }
 
-        // Company name and other fields to filter
         String companyName = order['company_name']?.toString() ?? '';
 
-        // Return true if any of the fields match the query
         return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
             orderId.contains(query) ||
             companyName.toLowerCase().contains(query.toLowerCase()) ||
@@ -958,7 +939,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     final bool isCustomRangeSelected = dateRange != null;
     String formattedDate;
     if (selectedButtonIndex == 3) {
-      // Show full date range for "All" selection
       formattedDate =
           '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (isCustomRangeSelected) {
@@ -1120,7 +1100,7 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
     );
   }
 
-// Function to calculate the subtotal, excluding canceled items and adjusting prices to 0 if needed
+// Calculate the subtotal, excluding canceled items and adjusting prices to 0 if needed
   double _calculateSubtotal(List<Map<String, dynamic>> items) {
     double subtotal = 0.0;
     for (var item in items) {
@@ -1133,7 +1113,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
         price = 0.0;
       }
 
-      // Only add to subtotal if the item is not 'Cancelled'
       if (item['cancel'] != 'Cancelled') {
         subtotal += item['qty'] * price;
       }
@@ -1207,19 +1186,19 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
       return Colors.red;
     }
 
-// Function to calculate expiry date (7 days after creation date)
+// Calculate expiry date (7 days after creation date)
     String getExpiryDate(DateTime creationDate) {
       DateTime expiryDate = creationDate.add(Duration(days: 7));
       return DateFormat('dd-MM-yyyy').format(expiryDate);
     }
 
-// Function to calculate remaining days to expiry
+// Calculate remaining days to expiry
     int getRemainingDaysToExpiry(DateTime creationDate) {
       DateTime expiryDate = creationDate.add(Duration(days: 7));
       return expiryDate.difference(DateTime.now()).inDays;
     }
 
-// Function to determine the color of the expiry date
+// Determine the color of the expiry date
     Color getExpiryDateColor(DateTime creationDate) {
       int remainingDays = getRemainingDaysToExpiry(creationDate);
 
@@ -1297,7 +1276,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                        // Creation date
                         Text(
                           'Created Date: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                           style: const TextStyle(
@@ -1305,7 +1283,6 @@ class _OrderStatusReportPageState extends State<OrderStatusReportPage> {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        // Expiry date
                         Text(
                           'Expiry Date: ${getExpiryDate(creationDate)}',
                           style: TextStyle(

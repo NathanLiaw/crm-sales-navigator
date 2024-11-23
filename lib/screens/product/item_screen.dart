@@ -93,18 +93,15 @@ class _ItemScreenState extends State<ItemScreen> {
     }
   }
 
-  // Function to fetch the cart count from the database
   Future<void> fetchCartCount() async {
-    final count =
-        await DatabaseHelper.getCartItemCount(); // Replace with your logic
+    final count = await DatabaseHelper.getCartItemCount();
     setState(() {
-      cartCount = count; // Update the state variable
+      cartCount = count;
     });
   }
 
-  // Function to update cart count when called from ItemVariationsScreen
   void updateCartCount() {
-    fetchCartCount(); // Re-fetch the cart count
+    fetchCartCount();
   }
 
   Future<void> initializeData() async {
@@ -140,9 +137,9 @@ class _ItemScreenState extends State<ItemScreen> {
                   size: 30,
                 ),
                 onPressed: () {
-                  Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(3);
+                  Provider.of<NavigationProvider>(context, listen: false)
+                      .setSelectedIndex(3);
                   Navigator.pushReplacementNamed(context, '/cart').then((_) {
-                    // Refresh cart count when returning from cart page
                     fetchCartCount();
                   });
                 },
@@ -173,7 +170,7 @@ class _ItemScreenState extends State<ItemScreen> {
                 ),
             ],
           ),
-          const SizedBox(width: 8), // Add some padding on the right
+          const SizedBox(width: 8),
         ],
         foregroundColor: Colors.white,
         backgroundColor: const Color(0xff0175FF),
@@ -212,11 +209,9 @@ class _ItemScreenState extends State<ItemScreen> {
               itemBuilder: (context, index) {
                 final assetName = widget.itemAssetNames[index];
 
-                // Check if the assetName is empty or 'null' placeholder
                 if (assetName.isEmpty ||
                     assetName == '${dotenv.env['IMG_URL']}/null') {
-                  return const SizedBox
-                      .shrink(); // Shrinks if the assetName is empty
+                  return const SizedBox.shrink();
                 }
 
                 return GestureDetector(
@@ -271,11 +266,6 @@ class _ItemScreenState extends State<ItemScreen> {
                   ],
                 ),
                 const Spacer(),
-                /*IconButton(
-                  iconSize: 40,
-                  onPressed: () {},
-                  icon: const Icon(Icons.shortcut_sharp),
-                ), */
               ],
             ),
           ),

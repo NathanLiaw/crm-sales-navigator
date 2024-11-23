@@ -212,9 +212,7 @@ class _ChatScreenState extends State<ChatScreen> {
           "timestamp": _getCurrentTime()
         });
       });
-    } catch (e) {
-      // Handle error if needed
-    }
+    } catch (e) {}
   }
 
   String _getCurrentTime() {

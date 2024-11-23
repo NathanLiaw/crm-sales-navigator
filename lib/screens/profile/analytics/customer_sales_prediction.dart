@@ -92,17 +92,14 @@ class _CustomerSalesPredictionPageState
     if (data.isEmpty || windowSize <= 1) return emaPredictions;
 
     double alpha = 2 / (windowSize + 1);
-    double emaSales =
-        data.first.totalSalesValue; // Initialize EMA with the first data point
-    double emaStock =
-        data.first.totalQuantitySold.toDouble(); // Initialize EMA for stock
+    double emaSales = data.first.totalSalesValue;
+    double emaStock = data.first.totalQuantitySold.toDouble();
 
     for (int i = 1; i < data.length; i++) {
       emaSales = (data[i].totalSalesValue * alpha) + (emaSales * (1 - alpha));
       emaStock = (data[i].totalQuantitySold * alpha) + (emaStock * (1 - alpha));
 
-      // Ensure stock prediction is not zero if sales is predicted
-      double predictedStock = emaStock > 0 ? emaStock : 1; // Avoid 0 stock
+      double predictedStock = emaStock > 0 ? emaStock : 1;
 
       emaPredictions.add(CustomerSalesData(
         productId: data[i].productId,
@@ -172,7 +169,6 @@ class _CustomerSalesPredictionPageState
                       if (entry.value.length >= 3) {
                         var emaData = calculateEMA(entry.value, 3);
                         if (emaData.isNotEmpty) {
-                          // Sum up total sales and stock for the group
                           double totalSales = emaData
                               .map((e) => e.totalSalesValue)
                               .reduce((a, b) => a + b);
@@ -211,8 +207,7 @@ class _CustomerSalesPredictionPageState
                                         Text(
                                           entry.key,
                                           style: const TextStyle(
-                                            color: Color.fromARGB(
-                                                255, 0, 0, 0),
+                                            color: Color.fromARGB(255, 0, 0, 0),
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
                                           ),

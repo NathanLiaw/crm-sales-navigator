@@ -106,13 +106,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             orderItems = [];
           });
 
-          // Fetch all product photos concurrently
           final photoPaths = await Future.wait(cartItems.map((item) async {
             final productId = item['product_id'];
             return fetchProductPhoto(productId);
           }));
 
-          // Process each item and add to orderItems list
           setState(() {
             for (int i = 0; i < cartItems.length; i++) {
               final item = cartItems[i];
@@ -189,10 +187,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
-          // Notify the provider that the order status has changed
           Provider.of<OrderStatusProvider>(context, listen: false)
               .triggerRefresh();
-          // Successfully voided the order
           developer.log('Order voided successfully');
         } else {
           developer.log('Error voiding order: ${responseData['message']}');
@@ -229,17 +225,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     double totalDiscount = 0.0;
 
     for (var item in items) {
-      // Original price of the item
       double originalPrice = item.originalUnitPrice;
-      // Current unit price of the item
       double currentPrice = item.unitPrice;
 
-      // Check if the original price is different from the current unit price
       if (originalPrice != currentPrice) {
-        // Calculate the discount amount per item
         double discountAmount = (originalPrice - currentPrice) * item.quantity;
 
-        // Add the discount amount to the total discount
         totalDiscount += discountAmount;
       }
     }
@@ -411,8 +402,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircularProgressIndicator(),
-                    SizedBox(
-                        height: 16.0), // Space between the indicator and text
+                    SizedBox(height: 16.0),
                     Text(
                       'Fetching order details',
                       style: TextStyle(fontSize: 16.0, color: Colors.grey),
@@ -427,14 +417,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildExpandableOrderInfo(),
-                  // const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Status Bubble
                       getStatusLabel(status),
-
-                      // Copy Order Button
                       ElevatedButton.icon(
                         onPressed: () async {
                           await _showItemSelectionDialog(orderItems);
@@ -466,66 +452,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ],
                   ),
                   const SizedBox(height: 4),
-
-                  // const SizedBox(height: 4),
-
-                  // SizedBox(
-                  //   width: double.infinity,
-                  //   child: ElevatedButton.icon(
-                  //     onPressed: () async {
-                  //       final pdfData = await pdfGenerator.generateInvoicePdf(
-                  //         companyName: companyName,
-                  //         address: address,
-                  //         salesmanName: salesmanName,
-                  //         salesOrderId: salesOrderId,
-                  //         createdDate: createdDate,
-                  //         status: status,
-                  //         orderItems: orderItems,
-                  //         gst: gst,
-                  //         sst: sst,
-                  //         customerRate: discountRate,
-                  //       );
-
-                  //       if (!mounted) return;
-
-                  //       Navigator.push(
-                  //         context,
-                  //         MaterialPageRoute(
-                  //           builder: (context) => PDFViewerPage(
-                  //             pdfData: pdfData,
-                  //             salesOrderId: salesOrderId,
-                  //           ),
-                  //         ),
-                  //       );
-                  //     },
-                  //     icon: const Icon(
-                  //       Icons.description_outlined,
-                  //       size: 20,
-                  //       color: Colors.white,
-                  //     ),
-                  //     label: const Text(
-                  //       'View / Download Invoice',
-                  //       style: TextStyle(
-                  //         color: Colors.white,
-                  //         fontSize: 16,
-                  //         fontWeight: FontWeight.w500,
-                  //       ),
-                  //     ),
-                  //     style: ElevatedButton.styleFrom(
-                  //       backgroundColor: const Color(0xff0175FF),
-                  //       padding: const EdgeInsets.symmetric(
-                  //         horizontal: 16,
-                  //         vertical: 8,
-                  //       ),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(5),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-
-                  // const SizedBox(height: 4),
-                  // Order Items List
                   Expanded(
                     child: Column(
                       children: [
@@ -602,15 +528,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     DateTime createdDateTime = DateTime.parse(createdDate);
     DateTime expiryDate = createdDateTime.add(Duration(days: 7));
 
-    // Check if the expiry date is within 3 days from the current date
     if (expiryDate.isBefore(currentDate)) {
-      // If expired, return red color
       return Colors.red;
     } else if (expiryDate.isBefore(currentDate.add(Duration(days: 3)))) {
-      // If within 3 days of expiration, return orange color
       return Colors.orange;
     } else {
-      // Default color (black) if not expired or within 3 days
       return Colors.black;
     }
   }
@@ -641,9 +563,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   'Expiry Date:',
                   DateFormat("dd-MM-yyyy HH:mm:ss").format(
                       DateTime.parse(createdDate).add(Duration(days: 7))),
-                  style: TextStyle(
-                    color: getExpiryDateColor(createdDate)
-                  ),
+                  style: TextStyle(color: getExpiryDateColor(createdDate)),
                 ),
               ],
             ),
@@ -992,7 +912,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       if (item.cancel == null ||
           item.cancel == '0' ||
           item.cancel == 'Uncancel') {
-        // Only add to subtotal if the item's status is "In Progress"
         filteredSubtotal +=
             double.parse(item.unitPrice) * double.parse(item.qty);
       }
@@ -1209,8 +1128,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         cancelStatus == '0' ||
         cancelStatus == 'Uncancel') {
       return 'In Progress';
-    }
-    else {
+    } else {
       return cancelStatus;
     }
   }
@@ -1219,11 +1137,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     if (cancelStatus == null ||
         cancelStatus == '0' ||
         cancelStatus == 'Uncancel' ||
-        cancelStatus == 'Confirm'
-    ) {
+        cancelStatus == 'Confirm') {
       return Colors.green;
-    }
-    else {
+    } else {
       return Colors.red;
     }
   }
@@ -1320,19 +1236,19 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ),
                   ),
                   Text(
-                    _getStatusText(
-                        (item.cancel != null && item.cancel != '0' && item.cancel != 'Uncancel')
-                            ? item.cancel
-                            : item.status
-                    ),
+                    _getStatusText((item.cancel != null &&
+                            item.cancel != '0' &&
+                            item.cancel != 'Uncancel')
+                        ? item.cancel
+                        : item.status),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: _getStatusColor(
-                          (item.cancel != null && item.cancel != '0' && item.cancel != 'Uncancel')
-                              ? item.cancel
-                              : item.status
-                      ),
+                      color: _getStatusColor((item.cancel != null &&
+                              item.cancel != '0' &&
+                              item.cancel != 'Uncancel')
+                          ? item.cancel
+                          : item.status),
                     ),
                   ),
                 ],

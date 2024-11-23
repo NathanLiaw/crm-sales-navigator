@@ -27,7 +27,6 @@ class _RecentOrderState extends State<RecentOrder> {
   final bool _isAscending = true;
   int numberOfItems = 0;
 
-  // Define sorting methods
   final List<String> _sortingMethods = [
     'By Name (A to Z)',
     'By Name (Z to A)',
@@ -37,10 +36,8 @@ class _RecentOrderState extends State<RecentOrder> {
     'By Price (High to Low)'
   ];
 
-  // Selected sorting method
   String _selectedMethod = 'By Name (A to Z)';
 
-  // To cache the fetched data
   List<Map<String, dynamic>>? _fetchedData;
 
   @override
@@ -113,7 +110,6 @@ class _RecentOrderState extends State<RecentOrder> {
     );
   }
 
-  // Show sorting options
   void _showSortingOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -463,15 +459,11 @@ class _RecentOrderState extends State<RecentOrder> {
             '${dotenv.env['IMG_URL']}/${product['photo3']}',
           ];
 
-          // Convert the String description into Blob
-          String descriptionString =
-              product['description']; // Assuming it's a String from the API
-          Blob descriptionBlob =
-              Blob.fromString(descriptionString); // Convert to Blob
+          String descriptionString = product['description'];
+          Blob descriptionBlob = Blob.fromString(descriptionString);
 
           String priceByUom = product['price_by_uom'];
 
-          // Navigate to ItemScreen and pass the Blob instead of String
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -479,7 +471,7 @@ class _RecentOrderState extends State<RecentOrder> {
                 productId: productId,
                 productName: productName,
                 itemAssetNames: itemAssetNames,
-                itemDescription: descriptionBlob, // Pass as Blob
+                itemDescription: descriptionBlob,
                 priceByUom: priceByUom,
               ),
             ),
@@ -496,7 +488,6 @@ class _RecentOrderState extends State<RecentOrder> {
   }
 
   Blob stringToBlob(String data) {
-    // Create a Blob instance from the string using Blob.fromString
     Blob blob = Blob.fromString(data);
 
     return blob;
@@ -507,7 +498,6 @@ class _RecentOrderState extends State<RecentOrder> {
       return _fetchedData!;
     }
 
-    // Constructing the API URL to pass correct parameters
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/recent_order_page/get_recent_orders.php?userId=$_userId&customerId=${widget.customerId}');
 
@@ -522,7 +512,7 @@ class _RecentOrderState extends State<RecentOrder> {
           setState(() {
             numberOfItems = _fetchedData!.length;
           });
-          _sortResults(_fetchedData!); // Ensure sorting happens
+          _sortResults(_fetchedData!);
           return _fetchedData!;
         } else {
           developer.log('Error: ${jsonData['message']}');
@@ -590,22 +580,18 @@ class _RecentOrderState extends State<RecentOrder> {
   }
 
   Future<String> _fetchProductPhoto(String productName) async {
-    // Construct the API URL to pass the product name
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/recent_order_page/get_product_photo.php?productName=$productName');
 
     try {
       final response = await http.get(apiUrl);
 
-      // Check if the request was successful
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // Check if the API returned success status
         if (jsonData['status'] == 'success' && jsonData['photo1'] != null) {
           String photoPath = jsonData['photo1'];
 
-          // Check if photoPath starts with "photo/" and replace it with "asset/photo/"
           if (photoPath.startsWith('photo/')) {
             photoPath =
                 '${dotenv.env['IMG_URL']}/photo/${photoPath.substring(6)}';
@@ -613,17 +599,14 @@ class _RecentOrderState extends State<RecentOrder> {
 
           return photoPath;
         } else {
-          // If no photo found or an error occurred, return the default image path
           developer.log('Error: ${jsonData['message']}');
           return 'asset/no_image.jpg';
         }
       } else {
-        // If the request failed, log the error and return the default image path
         developer.log('Failed to load product photo');
         return 'asset/no_image.jpg';
       }
     } catch (e) {
-      // Log any exceptions that occur
       developer.log('Error fetching product photo: $e', error: e);
       return 'asset/no_image.jpg';
     }

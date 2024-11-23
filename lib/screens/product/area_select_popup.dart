@@ -11,7 +11,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AreaSelectPopUp extends StatefulWidget {
-  final Function(int) onAreaSelected; // Callback to notify selected area
+  final Function(int) onAreaSelected;
 
   const AreaSelectPopUp({super.key, required this.onAreaSelected});
 
@@ -31,7 +31,6 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
       selectedAreaId = areaId;
     });
 
-    // Log the event when an area is selected
     String selectedAreaName = area[areaId] ?? 'Unknown Area';
     await EventLogger.logEvent(
       salesmanId,
@@ -40,10 +39,8 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
       leadId: null,
     );
 
-    // Notify the parent widget of the selected area
-    widget.onAreaSelected(areaId); // Call the callback
+    widget.onAreaSelected(areaId);
 
-    // Show SnackBar notification
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -55,26 +52,21 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
       ),
     );
 
-    // Close the pop-up after selection
     Navigator.of(context).pop();
   }
 
   Future<void> fetchAreaFromDb() async {
     Map<int, String> areaMap = {};
-    String apiUrl =
-        '${dotenv.env['API_URL']}/area/get_area.php';
+    String apiUrl = '${dotenv.env['API_URL']}/area/get_area.php';
     try {
-      // Call the API to fetch areas
       final response = await http.get(Uri.parse('$apiUrl?status=1'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'success') {
-          // Ensure the data is in the expected format
           if (data['data'] is List) {
             for (var row in data['data']) {
               if (row is Map<String, dynamic>) {
-                // Ensure row is of correct type
                 int id = row['id'] is int
                     ? row['id']
                     : int.tryParse(row['id'].toString()) ?? 0;
@@ -87,11 +79,9 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
               area = areaMap;
             });
 
-            // Retrieve the currently selected areaId from preferences
             SharedPreferences prefs = await SharedPreferences.getInstance();
             int? storedAreaId = prefs.getInt('areaId');
 
-            // Set selectedAreaId to the stored areaId if available, otherwise set it to the first areaId from the query
             if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
               setState(() {
                 selectedAreaId = storedAreaId;
@@ -99,7 +89,6 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
             } else if (areaMap.isNotEmpty) {
               setState(() {
                 selectedAreaId = areaMap.keys.first;
-                // Store the initial selectedAreaId in SharedPreferences
                 prefs.setInt('areaId', selectedAreaId);
               });
             }
@@ -108,7 +97,6 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
                 error: 'Expected a list but got ${data['data']}');
           }
         } else {
-          // Handle error case
           developer.log('Error: ${data['message']}', error: data['message']);
         }
       } else {
@@ -152,7 +140,6 @@ class _AreaSelectPopUpState extends State<AreaSelectPopUp> {
           value: areaId,
           groupValue: selectedAreaId,
           onChanged: (newAreaId) {
-            // Call setAreaId directly without confirmation
             setAreaId(newAreaId!);
           },
         );

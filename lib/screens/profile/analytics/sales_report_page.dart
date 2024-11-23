@@ -60,7 +60,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
       return [];
     }
 
-    // Format date range
     String startDate =
         DateFormat('yyyy-MM-dd').format(dateRange?.start ?? DateTime(2019));
     String endDate =
@@ -68,7 +67,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
 
     String sortOrder = isSortedAscending ? 'ASC' : 'DESC';
 
-    // Prepare the API URL with the appropriate query parameters
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/sales_report_page/get_sales_report_page.php?username=$_loggedInUsername&startDate=$startDate&endDate=$endDate&sortOrder=$sortOrder');
 
@@ -81,7 +79,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
         if (jsonData['status'] == 'success') {
           final List<dynamic> salesData = jsonData['data'];
 
-          // Map the API data to the SalesData model
           return salesData.map((data) {
             return SalesData(
               day: DateFormat('EEEE').format(DateTime.parse(data['Date'])),
@@ -116,7 +113,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
 
   void toggleSortOrder(String criterion) {
     setState(() {
-      // Toggle the sort order for each criterion
       if (criterion == 'By Date') {
         isSortedAscending = !isSortedAscending;
         _selectedMethod =
@@ -137,7 +133,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
             ? 'By Total Orders (Low to High)'
             : 'By Total Orders (High to Low)';
       }
-      // Trigger data re-fetch based on the selected sort method
       salesData = fetchSalesData(_selectedDateRange);
     });
   }
@@ -163,7 +158,6 @@ class _SalesReportPageState extends State<SalesReportPage> {
           itemBuilder: (BuildContext context, int index) {
             String criterion = _sortingCriteria[index];
 
-            // Toggle the text based on current sorting order
             String displayText = '';
             if (criterion == 'By Date') {
               displayText = isSortedAscending
@@ -436,7 +430,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w400,
                                     fontSize: 16,
-                                    color: Colors.black, //33B44F
+                                    color: Colors.black,
                                   ),
                                 ),
                                 const SizedBox(height: 4),

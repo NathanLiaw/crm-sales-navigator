@@ -32,51 +32,17 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initNotifications();
 
-  // Request storage permission at startup
   await requestStoragePermission();
 
-  // Initialize local notifications
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@drawable/sales_navigator');
   const InitializationSettings initializationSettings =
       InitializationSettings(android: initializationSettingsAndroid);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Check and request the SCHEDULE_EXACT_ALARM permission for Android 14+
   if (await shouldRequestExactAlarmPermission()) {
     await requestExactAlarmPermission();
   }
-
-  // // Initialize Workmanager
-  // await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-
-  // // Register periodic tasks
-  // await Workmanager().registerPeriodicTask(
-  //   "1",
-  //   "fetchSalesOrderStatus",
-  //   frequency: const Duration(minutes: 15),
-  //   constraints: Constraints(
-  //     networkType: NetworkType.connected,
-  //   ),
-  // );
-
-  // await Workmanager().registerPeriodicTask(
-  //   "2",
-  //   "checkTaskDueDates",
-  //   frequency: const Duration(days: 1),
-  //   constraints: Constraints(
-  //     networkType: NetworkType.connected,
-  //   ),
-  // );
-
-  // await Workmanager().registerPeriodicTask(
-  //   "3",
-  //   "checkNewSalesLeads",
-  //   frequency: const Duration(days: 1),
-  //   constraints: Constraints(
-  //     networkType: NetworkType.connected,
-  //   ),
-  // );
 
   // Handling notifications received when the app is completely closed
   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
@@ -101,7 +67,6 @@ void main() async {
     });
   });
 
-  // Initialize the SQLite database
   await DatabaseHelper.database;
 
   runApp(
@@ -111,7 +76,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => NotificationState()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => OrderStatusProvider()),
-        // Add other providers here
       ],
       child: const MyApp(),
     ),
@@ -170,7 +134,6 @@ class _MyAppState extends State<MyApp> {
       isOffline = result == ConnectivityResult.none;
     });
 
-    // Listen for connectivity changes
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
           setState(() {
             isOffline = result == ConnectivityResult.none;

@@ -29,8 +29,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     _loadUserDetails().then((_) {
       if (mounted) {
         setState(() {
-          // Call the API to update the sales target before fetching data
-          updateSalesTargetsInDatabase(); // Add this function call
+          updateSalesTargetsInDatabase();
           salesForecasts = fetchSalesForecasts();
           fetchSalesConversionRate();
           fetchAverageOrderValue();
@@ -160,7 +159,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     }
   }
 
-  // Fetch Sales Conversion Rate from the new API
+  // Fetch Sales Conversion Rate
   Future<void> fetchSalesConversionRate() async {
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/sales_forecast_graph/get_sales_conversation_rate.php?username=$loggedInUsername');
@@ -185,7 +184,7 @@ class _SalesForecastGraphState extends State<SalesForecastGraph> {
     }
   }
 
-// Fetch Average Order Value (AOV) from the new API
+// Fetch Average Order Value (AOV)
   Future<void> fetchAverageOrderValue() async {
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/sales_forecast_graph/get_average_order_value.php?username=$loggedInUsername');
@@ -327,35 +326,28 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
     final currentMonth = now.month;
     final currentYear = now.year;
 
-    // Construct the API URL with the necessary parameters
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/sales_forecast_graph/get_sales_target.php?username=${widget.loggedInUsername}&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
     try {
-      // Make a GET request to fetch the sales target from the API
       final response = await http.get(apiUrl);
 
-      // Check if the request was successful
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // Check if the response is successful and contains the sales target
         if (jsonData['status'] == 'success') {
           final salesTarget = double.parse(jsonData['sales_target'].toString());
           setState(() {
             _salesTarget = _currencyFormat.format(salesTarget);
           });
         } else {
-          // Handle case where no sales target is found
           developer.log('Error: ${jsonData['message']}');
         }
       } else {
-        // Handle unsuccessful responses (e.g., server issues, 404, etc.)
         developer.log(
             'Failed to load sales target, status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Handle any errors that occur during the API call
       developer.log('Error fetching sales target: $e');
     }
   }
@@ -467,7 +459,8 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                                   style: GoogleFonts.inter(
                                       fontSize: 14.0,
                                       fontWeight: FontWeight.w400,
-                                      color: const Color.fromARGB(255, 0, 0, 0)),
+                                      color:
+                                          const Color.fromARGB(255, 0, 0, 0)),
                                 ),
                                 const SizedBox(height: 4.0),
                                 SizedBox(
@@ -475,8 +468,8 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
                                   child: LinearProgressIndicator(
                                     value: progressValue,
                                     minHeight: 20.0,
-                                    backgroundColor:
-                                        const Color.fromRGBO(112, 112, 112, 0.37),
+                                    backgroundColor: const Color.fromRGBO(
+                                        112, 112, 112, 0.37),
                                     valueColor:
                                         const AlwaysStoppedAnimation<Color>(
                                             Color(0xff23C197)),
@@ -650,14 +643,11 @@ class _EditableSalesTargetCardState extends State<EditableSalesTargetCard> {
         '?username=${widget.loggedInUsername}&newSalesTarget=$newSalesTarget&purchaseMonth=$currentMonth&purchaseYear=$currentYear');
 
     try {
-      // Make the HTTP GET request
       final response = await http.get(apiUrl);
 
-      // Check the status code of the response
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // Check if the API returned a success status
         if (jsonData['status'] == 'success') {
           developer.log('Sales target updated successfully');
         } else {

@@ -91,7 +91,7 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       return true;
     } else if (sdkInt >= 29) {
       // Android 10-12
-      return true; // Scoped storage, no need for runtime permission
+      return true;
     } else {
       // Android 9 and below
       final storage = await Permission.storage.status;
@@ -152,7 +152,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
         Directory? downloadDir;
         String? filePath;
 
-        // Handle different Android versions
         if (sdkInt >= 33) {
           // Android 13 and above
           downloadDir = Directory('/storage/emulated/0/Download');
@@ -164,23 +163,19 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           downloadDir = Directory('/storage/emulated/0/Download');
         }
 
-        // Create download directory if it doesn't exist
         if (!await downloadDir.exists()) {
           await downloadDir.create(recursive: true);
         }
 
-        // Generate filename with timestamp to avoid duplicates
         final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
         final fileName = 'invoice_${widget.salesOrderId}_$timestamp.pdf';
         filePath = path.join(downloadDir.path, fileName);
 
-        // Save the file
         final file = File(filePath);
         await file.writeAsBytes(widget.pdfData);
 
         if (!mounted) return;
 
-        // Show success message with file path
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Column(
@@ -245,7 +240,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
     } catch (e) {
       if (!mounted) return;
 
-      // Show detailed error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Column(
@@ -315,7 +309,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       }
 
       if (downloadDir != null && downloadDir.existsSync()) {
-        // Get the file and add the last modification time
         final files = downloadDir
             .listSync()
             .where((file) =>
@@ -330,7 +323,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
           };
         }).toList();
 
-        // Sort by modification time (newest first)
         files.sort((a, b) => (b['modifiedTime'] as DateTime)
             .compareTo(a['modifiedTime'] as DateTime));
 
@@ -563,7 +555,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
       ),
       body: Stack(
         children: [
-          // PDF Viewer
           FutureBuilder(
             future: Future.delayed(Duration.zero),
             builder: (context, snapshot) {
@@ -597,7 +588,6 @@ class _PDFViewerPageState extends State<PDFViewerPage> {
               );
             },
           ),
-          // Page Dividers
           if (totalPages != null)
             PageDividers(
               totalPages: totalPages!,

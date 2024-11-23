@@ -18,14 +18,14 @@ class ItemVariationsScreen extends StatefulWidget {
     required this.productName,
     required this.itemAssetName,
     required this.priceByUom,
-    required this.onCartUpdate, // Add this line
+    required this.onCartUpdate,
   });
 
   final int productId;
   final String productName;
   final String itemAssetName;
   final String priceByUom;
-  final VoidCallback onCartUpdate; // Add this line
+  final VoidCallback onCartUpdate;
 
   @override
   State<ItemVariationsScreen> createState() => _ItemVariationsScreenState();
@@ -52,7 +52,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
   }
 
   void updateCartCountInNavBar() {
-    // Trigger navigation bar to refresh cart item count
     setState(() {});
   }
 
@@ -85,7 +84,8 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                   color: Colors.white,
                 ),
                 onPressed: () {
-                  Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(3);
+                  Provider.of<NavigationProvider>(context, listen: false)
+                      .setSelectedIndex(3);
                   Navigator.pushReplacementNamed(context, '/cart');
                 },
               );
@@ -111,7 +111,8 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 10),
-                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                margin:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
@@ -186,13 +187,16 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       onPressed: isUnavailable
                                           ? null
                                           : () {
-                                        if (currentQuantity > 1) {
-                                          setState(() {
-                                            quantityMap[uom] = currentQuantity - 1;
-                                            textController.text = quantityMap[uom].toString();
-                                          });
-                                        }
-                                      },
+                                              if (currentQuantity > 1) {
+                                                setState(() {
+                                                  quantityMap[uom] =
+                                                      currentQuantity - 1;
+                                                  textController.text =
+                                                      quantityMap[uom]
+                                                          .toString();
+                                                });
+                                              }
+                                            },
                                       icon: const Icon(Icons.remove),
                                     ),
                                     SizedBox(
@@ -207,7 +211,8 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                             setState(() {
                                               quantityMap[uom] = 0;
                                             });
-                                          } else if (newValue != null && newValue > 0) {
+                                          } else if (newValue != null &&
+                                              newValue > 0) {
                                             setState(() {
                                               quantityMap[uom] = newValue;
                                             });
@@ -225,11 +230,13 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                       onPressed: isUnavailable
                                           ? null
                                           : () {
-                                        setState(() {
-                                          quantityMap[uom] = currentQuantity + 1;
-                                          textController.text = quantityMap[uom].toString();
-                                        });
-                                      },
+                                              setState(() {
+                                                quantityMap[uom] =
+                                                    currentQuantity + 1;
+                                                textController.text =
+                                                    quantityMap[uom].toString();
+                                              });
+                                            },
                                       icon: const Icon(Icons.add),
                                     ),
                                   ],
@@ -254,66 +261,69 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
-                                overflow: TextOverflow.ellipsis, // Enable ellipsis overflow
-                                maxLines: 1, // Limit to 1 line
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                             ElevatedButton(
                               onPressed: isUnavailable || quantityMap[uom] == 0
-                                  ? null // Disable button if unavailable or quantity is 0
+                                  ? null
                                   : () async {
-                                final cartItem = CartItem(
-                                  buyerId: await UtilityFunction.getUserId(),
-                                  productId: widget.productId,
-                                  productName: widget.productName,
-                                  uom: uom,
-                                  quantity: currentQuantity,
-                                  discount: 0,
-                                  originalUnitPrice: price,
-                                  unitPrice: price,
-                                  total: price * currentQuantity,
-                                  cancel: null,
-                                  remark: null,
-                                  status: 'in progress',
-                                  created: DateTime.now(),
-                                  modified: DateTime.now(),
-                                );
+                                      final cartItem = CartItem(
+                                        buyerId:
+                                            await UtilityFunction.getUserId(),
+                                        productId: widget.productId,
+                                        productName: widget.productName,
+                                        uom: uom,
+                                        quantity: currentQuantity,
+                                        discount: 0,
+                                        originalUnitPrice: price,
+                                        unitPrice: price,
+                                        total: price * currentQuantity,
+                                        cancel: null,
+                                        remark: null,
+                                        status: 'in progress',
+                                        created: DateTime.now(),
+                                        modified: DateTime.now(),
+                                      );
 
-                                await insertItemIntoCart(cartItem);
+                                      await insertItemIntoCart(cartItem);
 
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => const AlertDialog(
-                                    backgroundColor: Colors.green,
-                                    title: Row(
-                                      children: [
-                                        SizedBox(width: 20),
-                                        Icon(
-                                          Icons.check_circle,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Item added to cart',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => const AlertDialog(
+                                          backgroundColor: Colors.green,
+                                          title: Row(
+                                            children: [
+                                              SizedBox(width: 20),
+                                              Icon(
+                                                Icons.check_circle,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Item added to cart',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                );
+                                      );
 
-                                Future.delayed(const Duration(seconds: 1), () {
-                                  Navigator.pop(context);
-                                  updateCartCountInNavBar();
-                                  Navigator.pop(context);
-                                });
-                              },
+                                      Future.delayed(const Duration(seconds: 1),
+                                          () {
+                                        Navigator.pop(context);
+                                        updateCartCountInNavBar();
+                                        Navigator.pop(context);
+                                      });
+                                    },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 20),
                                 backgroundColor: const Color(0xff0175FF),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -369,7 +379,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
 
       final db = await DatabaseHelper.database;
 
-      // Read data from the database based on the provided condition
       final result = await DatabaseHelper.readData(
         db,
         tableName,
@@ -396,7 +405,6 @@ class _ItemVariationsScreenState extends State<ItemVariationsScreen> {
         developer.log('New cart item inserted successfully');
       }
 
-      // Use the CartModel to update the cart count
       Provider.of<CartModel>(context, listen: false).initializeCartCount();
     } catch (e) {
       developer.log('Error inserting or updating cart item: $e', error: e);

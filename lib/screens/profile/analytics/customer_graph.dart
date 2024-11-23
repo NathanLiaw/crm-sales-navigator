@@ -89,7 +89,6 @@ class _CustomersGraphState extends State<CustomersGraph> {
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else {
-              // If no data or an empty list is returned, we show 5 placeholder customers
               final customerData =
                   (snapshot.data == null || snapshot.data!.isEmpty)
                       ? List.generate(
@@ -136,7 +135,6 @@ class CustomerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate the percentage (ensure it's valid, or set to 0)
     double percentage = customer.percentageOfTotal.isNaN ||
             customer.percentageOfTotal.isInfinite
         ? 0
@@ -149,7 +147,6 @@ class CustomerBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Customer name: Shows "No Customer" for placeholder
               Text(
                 customer.name,
                 style: const TextStyle(
@@ -158,10 +155,8 @@ class CustomerBar extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
-              // Display "RM 0" if no data
               Text(
-                customer
-                    .totalSalesDisplay, // Will display RM 0 for placeholders
+                customer.totalSalesDisplay,
                 style: const TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.w500,
@@ -171,7 +166,6 @@ class CustomerBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          // The progress bar for percentage
           Stack(
             children: [
               Container(
@@ -182,7 +176,7 @@ class CustomerBar extends StatelessWidget {
                 ),
               ),
               FractionallySizedBox(
-                widthFactor: percentage, // 0 if no valid percentage
+                widthFactor: percentage,
                 child: Container(
                   height: 10,
                   decoration: BoxDecoration(

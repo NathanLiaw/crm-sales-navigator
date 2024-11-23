@@ -127,16 +127,13 @@ class _ProductReportState extends State<ProductReport> {
     setState(() {
       isSortedAscending = !isSortedAscending;
 
-      // Find the criterion and update its selected method
       for (var method in _sortingMethods) {
         if (method['name'] == criterion) {
-          // Update the selected method's text based on ascending or descending
           _selectedMethod =
               '${method['name']} (${isSortedAscending ? method['ascending'] : method['descending']})';
         }
       }
 
-      // Refetch the product data based on the updated sorting
       products = fetchProducts(_selectedDateRange);
     });
   }
@@ -188,8 +185,7 @@ class _ProductReportState extends State<ProductReport> {
                     _selectedMethod = displayText;
                   });
                   Navigator.pop(context);
-                  toggleSortOrder(
-                      criterion); // Call toggleSortOrder for the selected criterion
+                  toggleSortOrder(criterion);
                 },
               ),
             );
@@ -229,7 +225,6 @@ class _ProductReportState extends State<ProductReport> {
 
     String formattedDate;
     if (selectedButtonIndex == 3) {
-      // Modified to show full date range instead of "Filter Date"
       formattedDate =
           '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (_selectedDateRange != null) {
@@ -402,8 +397,7 @@ class _ProductReportState extends State<ProductReport> {
                     itemCount: sortedData.length,
                     itemBuilder: (context, index) {
                       final product = sortedData[index];
-                      final serialNumber =
-                          index + 1; // Assign serial number here
+                      final serialNumber = index + 1;
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 5),
@@ -428,7 +422,7 @@ class _ProductReportState extends State<ProductReport> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '$serialNumber. ', // Display the serial number here
+                                    '$serialNumber. ',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16),

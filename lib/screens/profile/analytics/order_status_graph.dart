@@ -25,13 +25,10 @@ class _OrderStatusWidgetState extends State<OrderStatusWidget> {
     return Consumer<OrderStatusProvider>(
       builder: (context, orderStatusProvider, child) {
         if (orderStatusProvider.shouldRefresh) {
-          // Reset the refresh flag
           orderStatusProvider.resetRefresh();
-          // Refresh data after one frame delay
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               setState(() {
-                // Reload data
                 _OrderStatusIndicatorState.instance?.loadUsernameAndFetchData();
               });
             }
@@ -344,29 +341,28 @@ class OrderStatusPainter extends CustomPainter {
     final radius = size.width / 2 - lineWidth / 2;
     final total = complete + pending + voided;
 
-    // Default grey color for zero status values
     const noDataColor = Colors.grey;
 
     Paint paintComplete = Paint()
       ..color = complete == 0 && pending == 0 && voided == 0
-          ? noDataColor // Use grey for all zero values
-          : const Color(0xFF487C08) // Original color if not zero
+          ? noDataColor
+          : const Color(0xFF487C08)
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
 
     Paint paintPending = Paint()
       ..color = complete == 0 && pending == 0 && voided == 0
-          ? noDataColor // Use grey for all zero values
-          : Colors.blue // Original color if not zero
+          ? noDataColor
+          : Colors.blue
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
 
     Paint paintVoided = Paint()
       ..color = complete == 0 && pending == 0 && voided == 0
-          ? noDataColor // Use grey for all zero values
-          : Colors.red // Original color if not zero
+          ? noDataColor
+          : Colors.red
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
       ..strokeWidth = lineWidth;
@@ -375,7 +371,6 @@ class OrderStatusPainter extends CustomPainter {
     const sweepAngle = 2 * 3.141592653589793238462643383279502884197;
 
     if (total == 0) {
-      // If all statuses are 0, draw the entire chart in the `noDataColor`
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle,
@@ -388,12 +383,10 @@ class OrderStatusPainter extends CustomPainter {
           ..strokeWidth = lineWidth,
       );
     } else {
-      // Draw the segments for non-zero values
       double completeSweep = sweepAngle * (complete / total);
       double pendingSweep = sweepAngle * (pending / total);
       double voidedSweep = sweepAngle * (voided / total);
 
-      // Draw complete orders
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle,
@@ -402,7 +395,6 @@ class OrderStatusPainter extends CustomPainter {
         paintComplete,
       );
 
-      // Draw pending orders
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle + completeSweep,
@@ -411,7 +403,6 @@ class OrderStatusPainter extends CustomPainter {
         paintPending,
       );
 
-      // Draw voided orders
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle + completeSweep + pendingSweep,

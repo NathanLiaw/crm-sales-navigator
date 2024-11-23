@@ -35,17 +35,14 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
   }
 
   Future<void> _loadTopProducts() async {
-    // Ensure username is loaded before making the request
     if (loggedInUsername.isEmpty) {
       return;
     }
 
-    // Prepare API endpoint
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/top_selling_product_graph/get_top_selling_products.php?username=$loggedInUsername');
 
     try {
-      // Call the API to fetch top-selling products
       final response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -54,7 +51,6 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
         if (jsonData['status'] == 'success') {
           final List<dynamic> productData = jsonData['data'];
 
-          // Map the API data to the Product model
           final List<Product> fetchedProducts = productData.map((data) {
             return Product(
               data['product_name'] as String,
@@ -63,7 +59,6 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
             );
           }).toList();
 
-          // Update the UI
           setState(() {
             products = fetchedProducts;
           });
@@ -84,7 +79,6 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
     final maxQuantity =
         products.fold<int>(0, (max, p) => p.quantity > max ? p.quantity : max);
 
-    // Show placeholders when no products are available
     final displayedProducts = products.isNotEmpty
         ? products
         : List.generate(5, (index) => Product('No Product', 0, 0.0));
@@ -149,7 +143,7 @@ class _TopSellingProductsPageState extends State<TopSellingProductsPage> {
                           MediaQuery.of(context).size.width * 0.8;
                       final double normalizedQuantity = maxQuantity != 0
                           ? product.quantity / maxQuantity
-                          : 0.0; // Avoid division by 0
+                          : 0.0;
                       final double barWidth = normalizedQuantity * maxBarWidth;
                       return Container(
                         padding: const EdgeInsets.symmetric(

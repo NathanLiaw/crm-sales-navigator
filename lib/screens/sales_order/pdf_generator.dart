@@ -20,7 +20,6 @@ class PdfInvoiceGenerator {
   }) async {
     final pdf = pw.Document();
 
-    // Date formatting with time
     final DateFormat dateTimeFormat = DateFormat('dd MMM yyyy hh:mm a');
     final formattedDate = dateTimeFormat.format(DateTime.parse(createdDate));
 
@@ -59,21 +58,16 @@ class PdfInvoiceGenerator {
     double customerDiscountAmount = subtotal * (customerRate / 100);
     double total = subtotal - customerDiscountAmount + gstAmount + sstAmount;
 
-    // Convert order items to table data with custom price column
     final List<List<dynamic>> tableData = orderItems.map((item) {
       bool isVoided = item.cancel != null &&
           item.cancel != '0' &&
           item.cancel != 'Uncancel';
-
-      // double discountedTotal =
-      //     double.parse(item.unitPrice) * double.parse(item.qty);
       double originalPrice = double.parse(item.oriUnitPrice);
       double discountedPrice = double.parse(item.unitPrice);
       double displayTotal = isVoided
           ? 0.0
           : (double.parse(item.unitPrice) * double.parse(item.qty));
 
-      // Create price column showing both original and discounted prices
       final priceColumn = pw.Container(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -131,7 +125,6 @@ class PdfInvoiceGenerator {
           (remainingItems + subsequentPageItems - 1) ~/ subsequentPageItems;
     }
 
-    // Helper function to build table
     pw.Widget buildTable(List<List<dynamic>> data,
         {bool includeHeader = true}) {
       return pw.Table(
@@ -325,8 +318,7 @@ class PdfInvoiceGenerator {
                   pw.Container(
                     decoration: const pw.BoxDecoration(
                       color: PdfColors.grey100,
-                      borderRadius:
-                          pw.BorderRadius.all(pw.Radius.circular(5)),
+                      borderRadius: pw.BorderRadius.all(pw.Radius.circular(5)),
                     ),
                     child: pw.Row(
                       children: [
@@ -375,7 +367,6 @@ class PdfInvoiceGenerator {
                         _buildSummaryRow('Subtotal:',
                             subtotal.toStringAsFixed(3), contentStyle),
                         pw.SizedBox(height: 5),
-                        // Calculate total sales discount
                         () {
                           double originalTotal =
                               orderItems.fold(0.0, (sum, item) {
@@ -391,7 +382,6 @@ class PdfInvoiceGenerator {
                           double salesDiscount =
                               (originalTotal - subtotal).abs();
 
-                          // Only show sales discount if there is any discount
                           if (salesDiscount > 0) {
                             return pw.Column(
                               children: [
@@ -426,8 +416,7 @@ class PdfInvoiceGenerator {
                   pw.Container(
                     decoration: const pw.BoxDecoration(
                       color: PdfColors.grey100,
-                      borderRadius:
-                          pw.BorderRadius.all(pw.Radius.circular(5)),
+                      borderRadius: pw.BorderRadius.all(pw.Radius.circular(5)),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,

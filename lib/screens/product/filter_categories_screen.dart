@@ -28,7 +28,7 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
   List<int> selectedSubCategoryIds = [];
   List<int> _selectedBrandIds = [];
 
-  bool isLoading = true; // To handle loading state
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -40,10 +40,9 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
 
   Future<void> _loadData() async {
     setState(() {
-      isLoading = true; // Show loader while fetching data
+      isLoading = true;
     });
 
-    // Fetch data in parallel using Future.wait to optimize loading
     try {
       final results = await Future.wait([
         fetchCategories(),
@@ -55,11 +54,10 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       _subCategories = results[1] as List<List<SubCategoryData>>;
       _brands = results[2] as List<BrandData>;
     } catch (e) {
-      // Handle error
       developer.log('Error fetching data: $e');
     } finally {
       setState(() {
-        isLoading = false; // Remove loader once data is fetched
+        isLoading = false;
       });
     }
   }
@@ -82,98 +80,94 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-        children: [
-          // Display brands
-          ExpansionTile(
-            title: const Text(
-              'Brands',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            children: [
-              // Wrapping ListView.builder with Container to control height
-              SizedBox(
-                height: 300, // Set a fixed height to prevent infinite space
-                child: ListView.builder(
-                  itemCount: _brands.length,
-                  itemBuilder: (context, index) {
-                    final brand = _brands[index];
-                    return CheckboxListTile(
-                      title: Text(brand.brand),
-                      value: _selectedBrandIds.contains(brand.id),
-                      onChanged: (selected) {
-                        setState(() {
-                          if (selected!) {
-                            _selectedBrandIds.add(brand.id);
-                          } else {
-                            _selectedBrandIds.remove(brand.id);
-                          }
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          // Display categories with expandable subcategories
-          ExpansionTile(
-            title: const Text(
-              'Categories',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            children: _categories.asMap().entries.map((entry) {
-              final index = entry.key;
-              final category = entry.value;
-
-              return ExpansionTile(
-                title: Text(
-                  category.category,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                children: [
-                  // Wrapping ListView.builder with Container to control height
-                  SizedBox(
-                    height: 200, // Set a fixed height for subcategories
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _subCategories[index].length,
-                      itemBuilder: (context, subIndex) {
-                        final subCategoryData =
-                        _subCategories[index][subIndex];
-                        return CheckboxListTile(
-                          title: Text(subCategoryData.subCategory),
-                          value: selectedSubCategoryIds
-                              .contains(subCategoryData.id),
-                          onChanged: (selected) {
-                            setState(() {
-                              if (selected!) {
-                                selectedSubCategoryIds
-                                    .add(subCategoryData.id);
-                              } else {
-                                selectedSubCategoryIds
-                                    .remove(subCategoryData.id);
-                              }
-                            });
-                          },
-                        );
-                      },
+              children: [
+                ExpansionTile(
+                  title: const Text(
+                    'Brands',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+                  children: [
+                    SizedBox(
+                      height: 300,
+                      child: ListView.builder(
+                        itemCount: _brands.length,
+                        itemBuilder: (context, index) {
+                          final brand = _brands[index];
+                          return CheckboxListTile(
+                            title: Text(brand.brand),
+                            value: _selectedBrandIds.contains(brand.id),
+                            onChanged: (selected) {
+                              setState(() {
+                                if (selected!) {
+                                  _selectedBrandIds.add(brand.id);
+                                } else {
+                                  _selectedBrandIds.remove(brand.id);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                ExpansionTile(
+                  title: const Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  children: _categories.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final category = entry.value;
+
+                    return ExpansionTile(
+                      title: Text(
+                        category.category,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      children: [
+                        SizedBox(
+                          height: 200,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _subCategories[index].length,
+                            itemBuilder: (context, subIndex) {
+                              final subCategoryData =
+                                  _subCategories[index][subIndex];
+                              return CheckboxListTile(
+                                title: Text(subCategoryData.subCategory),
+                                value: selectedSubCategoryIds
+                                    .contains(subCategoryData.id),
+                                onChanged: (selected) {
+                                  setState(() {
+                                    if (selected!) {
+                                      selectedSubCategoryIds
+                                          .add(subCategoryData.id);
+                                    } else {
+                                      selectedSubCategoryIds
+                                          .remove(subCategoryData.id);
+                                    }
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.zero,
         color: const Color.fromARGB(255, 255, 255, 255),
@@ -192,7 +186,8 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                 });
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
                 backgroundColor: const Color.fromARGB(255, 184, 10, 39),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(2),
@@ -216,7 +211,8 @@ class _FilterCategoriesScreenState extends State<FilterCategoriesScreen> {
                 });
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 38),
                 backgroundColor: const Color(0xff0175FF),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(2),

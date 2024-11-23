@@ -18,7 +18,8 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> _searchResults = [];
 
   Future<void> _performSearch(String query) async {
-    final apiUrl = Uri.parse('${dotenv.env['API_URL']}/search_screen/get_search_products.php?query=$query');
+    final apiUrl = Uri.parse(
+        '${dotenv.env['API_URL']}/search_screen/get_search_products.php?query=$query');
 
     try {
       final response = await http.get(apiUrl);
@@ -28,7 +29,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
         if (jsonData['status'] == 'success') {
           setState(() {
-            _searchResults = List<String>.from(jsonData['data'].map((item) => item['product_name']));
+            _searchResults = List<String>.from(
+                jsonData['data'].map((item) => item['product_name']));
           });
         } else {
           throw Exception('API Error: ${jsonData['message']}');
@@ -50,7 +52,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _navigateToItemScreen(String selectedProductName) async {
-    final apiUrl = Uri.parse('${dotenv.env['API_URL']}/search_screen/get_product_details.php?productName=$selectedProductName');
+    final apiUrl = Uri.parse(
+        '${dotenv.env['API_URL']}/search_screen/get_product_details.php?productName=$selectedProductName');
 
     try {
       final response = await http.get(apiUrl);
@@ -61,10 +64,8 @@ class _SearchScreenState extends State<SearchScreen> {
         if (jsonData['status'] == 'success') {
           final product = jsonData['data'];
 
-          // Convert the description String to a Blob object
           Blob descriptionBlob = stringToBlob(product['description']);
 
-          // Navigate to ItemScreen with product details
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -76,7 +77,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   '${dotenv.env['IMG_URL']}/${product['photo2']}',
                   '${dotenv.env['IMG_URL']}/${product['photo3']}',
                 ],
-                itemDescription: descriptionBlob,  // Pass Blob instead of String
+                itemDescription: descriptionBlob,
                 priceByUom: product['price_by_uom'],
               ),
             ),
@@ -92,7 +93,6 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  // Convert the String description into a Blob object using Blob.fromString
   Blob stringToBlob(String data) {
     return Blob.fromString(data);
   }
@@ -113,7 +113,6 @@ class _SearchScreenState extends State<SearchScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Perform search when the search button is pressed
               _performSearch(_searchQuery);
             },
           ),

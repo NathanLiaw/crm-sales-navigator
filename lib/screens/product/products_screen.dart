@@ -56,26 +56,24 @@ class _ProductsScreenState extends State<ProductsScreen>
   Future<void> fetchAreaFromDb() async {
     Map<int, String> areaMap = {};
     try {
-      // API URL
-      final apiUrl = Uri.parse(
-          '${dotenv.env['API_URL']}/product_screen/get_areas.php');
+      final apiUrl =
+          Uri.parse('${dotenv.env['API_URL']}/product_screen/get_areas.php');
 
-      // Make the API call
       final response = await http.get(apiUrl);
 
-      // Check if the request was successful
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        developer.log('Raw JSON Data: $jsonData'); // Debugging statement
+        developer.log('Raw JSON Data: $jsonData');
 
         if (jsonData['status'] == 'success') {
-          // Parse the area data
-          areaMap = { for (var item in jsonData['data'])
-            int.tryParse(item['id'].toString()) ?? -1 : item['area'] as String? ?? '' };
+          areaMap = {
+            for (var item in jsonData['data'])
+              int.tryParse(item['id'].toString()) ?? -1:
+                  item['area'] as String? ?? ''
+          };
 
           setState(() {
             area = areaMap;
-            // Log the first area's name if it exists
             if (area.isNotEmpty) {
               developer.log(area.values.first);
             }
@@ -84,7 +82,6 @@ class _ProductsScreenState extends State<ProductsScreen>
           SharedPreferences prefs = await SharedPreferences.getInstance();
           int? storedAreaId = prefs.getInt('areaId');
 
-          // Set the area ID based on stored preferences or the first area in the list
           if (storedAreaId != null && areaMap.containsKey(storedAreaId)) {
             setState(() {
               selectedAreaId = storedAreaId;
@@ -105,7 +102,7 @@ class _ProductsScreenState extends State<ProductsScreen>
       developer.log('Error fetching area: $e');
     }
   }
-  
+
   void _openFilterCategoriesScreen() async {
     final result = await Navigator.push(
       context,
@@ -170,7 +167,6 @@ class _ProductsScreenState extends State<ProductsScreen>
 
   void refreshScreen() {
     setState(() {
-      // This will trigger a rebuild of the screen
       fetchAreaFromDb();
     });
   }
@@ -188,7 +184,7 @@ class _ProductsScreenState extends State<ProductsScreen>
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor: const Color(0xff0175FF),
-          leadingWidth: 80, // Width for the column layout
+          leadingWidth: 80,
           leading: Padding(
             padding: const EdgeInsets.only(left: 10.0),
             child: GestureDetector(
@@ -303,7 +299,8 @@ class _ProductsScreenState extends State<ProductsScreen>
                               child: Column(
                                 children: [
                                   Container(
-                                    margin: const EdgeInsets.symmetric(vertical: 16),
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                     child: Text(
                                       'Sort',
                                       style: GoogleFonts.inter(
@@ -316,10 +313,10 @@ class _ProductsScreenState extends State<ProductsScreen>
                                   SortPopUp(
                                     onSortChanged: (newSortOrder) {
                                       setState(() {
-                                        _currentSortOrder = newSortOrder; // Update the sort order
-                                        _tabBarViewKey = UniqueKey(); // Change the key to force rebuild
+                                        _currentSortOrder = newSortOrder;
+                                        _tabBarViewKey = UniqueKey();
                                       });
-                                      Navigator.pop(context); // Close the bottom sheet
+                                      Navigator.pop(context);
                                     },
                                   ),
                                 ],

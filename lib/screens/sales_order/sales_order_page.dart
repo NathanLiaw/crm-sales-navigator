@@ -45,7 +45,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
   final List<String> _sortingMethods = [
     'By Creation Date',
     'By Amount',
-    // You can add more sorting criteria here
   ];
 
   String _selectedMethod = 'By Creation Date (Descending)';
@@ -170,12 +169,10 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       Uri apiUrl = Uri.parse(
           '${dotenv.env['API_URL']}/sales_order/get_sales_orders.php');
 
-      // Add query parameters for username
       Map<String, String> queryParams = {
         'username': loggedInUsername,
       };
 
-      // Add filters for date range or days
       if (dateRange != null) {
         String startDate =
             DateFormat('yyyy-MM-dd HH:mm:ss').format(dateRange.start);
@@ -189,12 +186,10 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
         queryParams['days'] = days.toString();
       }
 
-      // Add customer filter if selected
       if (selectedCustomer != null) {
         queryParams['customer_id'] = selectedCustomer!.id.toString();
       }
 
-      // Add status filters
       String statusFilters = _statusFilters.entries
           .where((entry) => entry.value)
           .map((entry) => entry.key)
@@ -254,9 +249,7 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
             ? 'By Amount (Low to High)'
             : 'By Amount (High to Low)';
       }
-      // Trigger data re-fetch or update based on the selected sort method
-      filteredOrders = applySorting(
-          filteredOrders); // Assuming applySorting handles the actual data sorting
+      filteredOrders = applySorting(filteredOrders);
     });
   }
 
@@ -626,11 +619,9 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                       shrinkWrap: true,
                       itemCount: _sortingMethods.length,
                       itemBuilder: (BuildContext context, int index) {
-                        // Get the criterion (like "By Creation Date" or "By Amount")
                         String criterion = _sortingMethods[index];
                         String displayText = criterion;
 
-                        // Add toggle text logic for each sorting criterion
                         if (criterion == 'By Creation Date') {
                           displayText = isSortedAscending
                               ? 'By Creation Date (Ascending)'
@@ -660,7 +651,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                 : null,
                             onTap: () {
                               setState(() {
-                                // Toggle the sorting order for the selected criterion
                                 if (criterion == 'By Creation Date') {
                                   isSortedAscending = !isSortedAscending;
                                   _selectedMethod = isSortedAscending
@@ -673,8 +663,8 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                                       : 'By Amount (High to Low)';
                                 }
                               });
-                              Navigator.pop(context); // Close the modal
-                              _sortResults(); // Apply the sorting
+                              Navigator.pop(context);
+                              _sortResults();
                             },
                           ),
                         );
@@ -801,8 +791,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             builder: (context) => const NotificationsPage(),
                           ),
                         );
-                        // Optionally, reload notifications after returning
-                        // _loadUnreadNotifications(); // Uncomment if needed
                       },
                     ),
                     if (notificationState.unreadCount > 0)
@@ -960,23 +948,19 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     setState(() {
       searchQuery = query;
 
-      // Filter orders based on the query
       filteredOrders = orders.where((order) {
         String orderId = order['id'].toString();
         String formattedOrderId = 'S${orderId.padLeft(7, '0')}';
         String creationDate = '';
 
-        // Check if order has 'created_date'
         if (order['created_date'] != null) {
           DateTime dateTime =
               DateFormat('dd/MM/yyyy').parse(order['created_date']);
           creationDate = DateFormat('dd-MM-yyyy').format(dateTime);
         }
 
-        // Company name and other fields to filter
         String companyName = order['company_name']?.toString() ?? '';
 
-        // Return true if any of the fields match the query
         return formattedOrderId.toLowerCase().contains(query.toLowerCase()) ||
             orderId.contains(query) ||
             companyName.toLowerCase().contains(query.toLowerCase()) ||
@@ -1010,7 +994,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
     final bool isCustomRangeSelected = dateRange != null;
     String formattedDate;
     if (selectedButtonIndex == 3) {
-      // Show full date range for "All" selection
       formattedDate =
           '${DateFormat('dd/MM/yyyy').format(DateTime(2019))} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
     } else if (isCustomRangeSelected) {
@@ -1175,36 +1158,30 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
 
   double _calculateSubtotal(List<Map<String, dynamic>> items,
       {double gstRate = 0.06, double sstRate = 0.10}) {
-    double subtotal = 0.0; // Explicitly initialize as a double
+    double subtotal = 0.0;
 
     for (var item in items) {
       double price = (item['ori_unit_price'] is int)
           ? (item['ori_unit_price'] as int).toDouble()
           : item['ori_unit_price'];
 
-      // If item status is not 'Uncancel', null, or '0', set the price to 0
       if (item['cancel'] != null &&
           item['cancel'] != '0' &&
           item['cancel'] != 'Uncancel') {
-        price =
-            0.0; // Price becomes 0 if the item status is not 'Uncancel', '0', or null
+        price = 0.0;
       }
 
-      // Only add to subtotal if the item is not 'Cancelled'
       if (item['cancel'] != 'Cancelled') {
-        subtotal += item['qty'] *
-            price; // `price` and `qty` are both treated as doubles
+        subtotal += item['qty'] * price;
       }
     }
 
-    // Apply GST and SST to the subtotal
-    double gstAmount = subtotal * gstRate; // GST calculation
-    double sstAmount = subtotal * sstRate; // SST calculation
+    double gstAmount = subtotal * gstRate;
+    double sstAmount = subtotal * sstRate;
 
-    // Add GST and SST to the subtotal
     double totalWithTaxes = subtotal + gstAmount + sstAmount;
 
-    return totalWithTaxes; // Return the total amount including GST and SST
+    return totalWithTaxes;
   }
 
   Widget _buildSalesOrderItem({
@@ -1273,19 +1250,16 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
       return Colors.red;
     }
 
-// Function to calculate expiry date (7 days after creation date)
     String getExpiryDate(DateTime creationDate) {
       DateTime expiryDate = creationDate.add(Duration(days: 7));
       return DateFormat('dd-MM-yyyy').format(expiryDate);
     }
 
-// Function to calculate remaining days to expiry
     int getRemainingDaysToExpiry(DateTime creationDate) {
       DateTime expiryDate = creationDate.add(Duration(days: 7));
       return expiryDate.difference(DateTime.now()).inDays;
     }
 
-// Function to determine the color of the expiry date
     Color getExpiryDateColor(DateTime creationDate) {
       int remainingDays = getRemainingDaysToExpiry(creationDate);
 
@@ -1363,7 +1337,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                        // Creation date
                         Text(
                           'Created Date: ${DateFormat('dd-MM-yyyy').format(creationDate)}',
                           style: const TextStyle(
@@ -1371,7 +1344,6 @@ class _SalesOrderPageState extends State<SalesOrderPage> {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        // Expiry date
                         Text(
                           'Expiry Date: ${getExpiryDate(creationDate)}',
                           style: TextStyle(

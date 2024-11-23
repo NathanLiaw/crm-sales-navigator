@@ -18,36 +18,28 @@ class ProductCard extends StatelessWidget {
 
   Future<Map<String, dynamic>> _fetchProductDetails(
       int productId, int areaId) async {
-    // Construct the API URL
     final apiUrl = Uri.parse(
         '${dotenv.env['API_URL']}/product_card/get_product_details.php?productId=$productId');
 
     try {
       final response = await http.get(apiUrl);
 
-      // Check if the request was successful
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        // Check if the API returned success
         if (jsonData['status'] == 'success') {
-          // Convert the description from String to Blob
           String descriptionString = jsonData['description'];
-          Blob descriptionBlob =
-              Blob.fromString(descriptionString); // Convert String to Blob
+          Blob descriptionBlob = Blob.fromString(descriptionString);
 
           return {
-            'description':
-                descriptionBlob, // Now returning Blob instead of String
+            'description': descriptionBlob,
             'uom': jsonData['uom'],
             'price_by_uom': jsonData['price_by_uom'],
           };
         } else {
-          // Handle the error if API returns failure
           developer.log('Error: ${jsonData['message']}');
           return {
-            'description': Blob.fromString(
-                'No description available.'), // Returning a Blob
+            'description': Blob.fromString('No description available.'),
             'uom': '',
             'price_by_uom': '',
           };
@@ -55,8 +47,7 @@ class ProductCard extends StatelessWidget {
       } else {
         developer.log('Failed to load product details');
         return {
-          'description':
-              Blob.fromString('Error fetching details.'), // Returning a Blob
+          'description': Blob.fromString('Error fetching details.'),
           'uom': '',
           'price_by_uom': '',
         };
@@ -64,8 +55,7 @@ class ProductCard extends StatelessWidget {
     } catch (e) {
       developer.log('Error fetching product details: $e');
       return {
-        'description':
-            Blob.fromString('Error fetching details.'), // Returning a Blob
+        'description': Blob.fromString('Error fetching details.'),
         'uom': '',
         'price_by_uom': '',
       };
@@ -84,10 +74,8 @@ class ProductCard extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final photoUrl1 = _formatImageUrl(product['photo1']);
 
-    // Filter out any null or empty URLs
-    final List<String> photoUrls = [photoUrl1]
-        .where((url) => url.isNotEmpty)
-        .toList();
+    final List<String> photoUrls =
+        [photoUrl1].where((url) => url.isNotEmpty).toList();
 
     return GestureDetector(
       onTap: () async {
