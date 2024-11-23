@@ -30,7 +30,6 @@ class EngagementLeadItem extends StatelessWidget {
     final Uri url = Uri.parse(urlString);
     try {
       if (await canLaunchUrl(url)) {
-        // Add LaunchMode
         await launchUrl(
           url,
           mode: LaunchMode.externalApplication,
@@ -42,11 +41,9 @@ class EngagementLeadItem extends StatelessWidget {
   }
 
   Future<void> _launchPhone(String phone) async {
-    // Make sure the phone number is formatted correctly
     final Uri phoneUri = Uri(
       scheme: 'tel',
-      path: phone.replaceAll(
-          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+      path: phone.replaceAll(RegExp(r'[^\d+]'), ''),
     );
     try {
       if (await canLaunchUrl(phoneUri)) {
@@ -60,7 +57,7 @@ class EngagementLeadItem extends StatelessWidget {
   Future<void> _launchEmail(String email) async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: email.trim(), // Clear spaces
+      path: email.trim(),
     );
     try {
       if (await canLaunchUrl(emailUri)) {
@@ -119,16 +116,6 @@ class EngagementLeadItem extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Text(
-                  //   leadItem.customerName.length > 10
-                  //       ? '${leadItem.customerName.substring(0, 15)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 20,
-                  //   ),
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
                   Flexible(
                     child: Text(
                       leadItem.customerName,
@@ -193,18 +180,6 @@ class EngagementLeadItem extends StatelessWidget {
                             );
 
                             if (confirmDelete == true) {
-                              // MySqlConnection conn = await connectToDatabase();
-                              // try {
-                              //   await conn.query(
-                              //     'DELETE FROM sales_lead WHERE id = ?',
-                              //     [leadItem.id],
-                              //   );
-                              //   onDeleteLead(leadItem);
-                              // } catch (e) {
-                              //   developer.log('Error deleting lead item: $e');
-                              // } finally {
-                              //   await conn.close();
-                              // }
                               onDeleteLead(leadItem);
                             }
                           }
@@ -429,7 +404,6 @@ class EngagementLeadItem extends StatelessWidget {
     );
 
     if (result != null && result['error'] == null) {
-      // Move EngagementLeadItem to OrderProcessingLeadItem if the user selects the sales order ID
       if (result['salesOrderId'] != null) {
         String salesOrderId = result['salesOrderId'] as String;
         int? quantity = result['quantity'];

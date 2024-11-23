@@ -58,10 +58,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'success') {
-          // Add each order option to the list
           fetchedOrderOptions = List<String>.from(data['data']);
         } else {
-          // Handle error case
           developer.log('Error: ${data['message']}');
         }
       } else {
@@ -93,21 +91,18 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       double sst;
       String areaName;
 
-      // Await all async operations
       var results = await taxFutures;
       gst = results[0] as double;
       sst = results[1] as double;
       areaName = results[2] as String;
       developer.log(name);
       developer.log(areaName);
-      // Prepare selected order options
       List<String> selectedOrderOptions =
           selectedIndices.map((index) => orderOptions[index]).toList();
       String stringOrderOptions = selectedOrderOptions.isNotEmpty
           ? '["${selectedOrderOptions.join('","')}"]'
           : 'null';
 
-      // Prepare cart data
       Map<String, dynamic> cartData = {
         'order_type': 'SO',
         'expiration_date': UtilityFunction.calculateExpirationDate(),
@@ -133,7 +128,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         'modified': UtilityFunction.getCurrentDateTime(),
       };
 
-      // Make a POST request to the API
       final response = await http.post(
         Uri.parse('${dotenv.env['API_URL']}/cart/create_cart.php'),
         headers: {'Content-Type': 'application/json'},
@@ -161,7 +155,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       int cartId = await fetchSalesOrderId();
       List<Map<String, dynamic>> cartItemsData = [];
 
-      // Prepare data for each cart item
       for (CartItem item in widget.cartItems) {
         Map<String, dynamic> data = {
           'cart_id': cartId,
@@ -184,31 +177,26 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         cartItemsData.add(data);
       }
 
-      // Send the data to the API
       final response = await http.post(
         Uri.parse('${dotenv.env['API_URL']}/cart/complete_cart.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(cartItemsData),
       );
 
-      // Handle the API response
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
 
-        // Check if responseBody is an array or a single object
         if (responseBody is List) {
-          // Iterate over each item in responseBody
           for (int i = 0; i < responseBody.length; i++) {
             var itemResponse = responseBody[i];
-            CartItem item = widget.cartItems[i]; // Get the corresponding item
+            CartItem item = widget.cartItems[i];
 
             if (itemResponse['status'] == 'success') {
               developer.log(
                   'Item inserted successfully: ${itemResponse['message']}');
 
-              // Update item status locally using the existing item.id
               Map<String, dynamic> updateData = {
-                'id': item.id, // Use the existing item ID
+                'id': item.id,
                 'status': 'Confirm',
               };
 
@@ -226,7 +214,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             }
           }
         } else {
-          // If it's a single object, handle accordingly
           if (responseBody['status'] == 'success') {
             developer.log(
                 'All items inserted successfully: ${responseBody['message']}');
@@ -258,7 +245,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         if (responseData['status'] == 'success') {
           salesOrderId = responseData['sales_order_id'] as int;
         } else {
-          // Handle error
           developer.log('Error: ${responseData['message']}');
         }
       } else {
@@ -276,17 +262,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
     double totalDiscount = 0.0;
 
     for (var item in items) {
-      // Original price of the item
       double originalPrice = item.originalUnitPrice;
-      // Current unit price of the item
       double currentPrice = item.unitPrice;
 
-      // Check if the original price is different from the current unit price
       if (originalPrice != currentPrice) {
-        // Calculate the discount amount per item
         double discountAmount = (originalPrice - currentPrice) * item.quantity;
 
-        // Add the discount amount to the total discount
         totalDiscount += discountAmount;
       }
     }
@@ -416,21 +397,16 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                   color: Colors.black, width: 2.0),
                             ),
                             columnWidths: const {
-                              0: FixedColumnWidth(
-                                  130), // Width for product name
-                              1: FixedColumnWidth(50), // Width for quantity
-                              2: FixedColumnWidth(
-                                  70), // Width for original price
-                              3: FixedColumnWidth(
-                                  70), // Width for discounted price
-                              4: FixedColumnWidth(80), // Width for total price
+                              0: FixedColumnWidth(130),
+                              1: FixedColumnWidth(50),
+                              2: FixedColumnWidth(70),
+                              3: FixedColumnWidth(70),
+                              4: FixedColumnWidth(80),
                             },
                             children: [
-                              // Header Row with "RM" symbol only in headers
                               const TableRow(
                                 decoration: BoxDecoration(
-                                  color: Color(
-                                      0xFF007ACC), // Header background color
+                                  color: Color(0xFF007ACC),
                                 ),
                                 children: [
                                   Padding(
@@ -470,16 +446,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                   ),
                                 ],
                               ),
-                              // Data Rows
                               for (var item in widget.cartItems.asMap().entries)
                                 TableRow(
                                   decoration: BoxDecoration(
                                     color: item.key.isEven
                                         ? Colors.grey.shade100
-                                        : Colors.white, // Alternate row colors
+                                        : Colors.white,
                                   ),
                                   children: [
-                                    // Wrap product name to two lines
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Text(
@@ -759,7 +733,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
               ),
             ),
             onPressed: isProcessing
-                ? null // Disable the button when processing
+                ? null
                 : () async {
                     if (!agreedToTerms) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -772,15 +746,14 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     }
 
                     setState(() {
-                      isProcessing = true; // Set to true when processing starts
+                      isProcessing = true;
                     });
 
                     await createCart();
                     await completeCart();
 
                     setState(() {
-                      isProcessing =
-                          false; // Set to false when processing completes
+                      isProcessing = false;
                     });
 
                     if (salesOrderId != null) {
@@ -792,7 +765,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                         ),
                       );
                     } else {
-                      // Handling the case where salesOrderId is null
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content:
@@ -810,8 +782,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 : const Text(
                     'Submit Order',
                     style: TextStyle(
-                      color: Colors.white, // Set text color
-                      fontSize: 20, // Set text size
+                      color: Colors.white,
+                      fontSize: 20,
                     ),
                   ),
           ),

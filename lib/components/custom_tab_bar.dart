@@ -8,12 +8,12 @@ class CustomTabBar extends StatefulWidget {
 }
 
 class _CustomTabBarState extends State<CustomTabBar> {
-  int _selectedIndex = 0; // The index of the selected item
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white, // Background color for the whole row
+      color: Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -34,25 +34,20 @@ class _CustomTabBarState extends State<CustomTabBar> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedIndex = index; // Update the selected index
+          _selectedIndex = index;
         });
-        // Perform any additional actions when a tab is selected
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.blue
-              : Colors.transparent, // Selected item has blue background
-          borderRadius: BorderRadius.circular(20.0), // Rounded corners
+          color: isSelected ? Colors.blue : Colors.transparent,
+          borderRadius: BorderRadius.circular(20.0),
         ),
         child: Text(
           tabNames[index],
           style: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : Colors.black, // Selected item has white text
+            color: isSelected ? Colors.white : Colors.black,
           ),
         ),
       ),

@@ -19,7 +19,7 @@ class CreateTaskPage extends StatefulWidget {
   final DateTime? existingDueDate;
   final bool showTaskDetails;
   final bool showSalesOrderId;
-  final int? taskId; // 新增taskId参数
+  final int? taskId;
 
   const CreateTaskPage({
     super.key,
@@ -34,7 +34,7 @@ class CreateTaskPage extends StatefulWidget {
     this.existingDueDate,
     this.showTaskDetails = true,
     this.showSalesOrderId = true,
-    this.taskId, // 新增taskId参数
+    this.taskId,
   });
 
   @override
@@ -151,7 +151,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       if (newId != null && salesOrderIds.contains(newId)) {
         _fetchSalesOrderDetails(newId);
       } else {
-        // Reset related fields if the selected ID is not valid
         createdDate = null;
         expirationDate = null;
         total = null;
@@ -181,7 +180,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/create_task/get_sales_order_details.php?salesOrderId=$salesOrderId'),
+        Uri.parse(
+            '${dotenv.env['API_URL']}/create_task/get_sales_order_details.php?salesOrderId=$salesOrderId'),
       );
 
       if (response.statusCode == 200) {
@@ -190,41 +190,47 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
         if (data['status'] == 'success') {
           final orderDetails = data['orderDetails'];
 
-          // Extract the data from the API response
           setState(() {
             createdDate = orderDetails['created'];
             expirationDate = orderDetails['expiration_date'];
             total = orderDetails['final_total'].toString();
             quantity = orderDetails['quantity'];
             formattedCreatedDate = _formatDate(createdDate!);
-            cartItemList = List<Map<String, dynamic>>.from(orderDetails['cartItems']);
+            cartItemList =
+                List<Map<String, dynamic>>.from(orderDetails['cartItems']);
           });
         } else {
-          developer.log('Error fetching sales order details: ${data['message']}');
+          developer
+              .log('Error fetching sales order details: ${data['message']}');
         }
       } else {
-        developer.log('Failed to fetch sales order details: ${response.statusCode}');
+        developer
+            .log('Failed to fetch sales order details: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error fetching sales order details: $e');
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchSalesOrderDropdown(String customerName) async {
+  Future<List<Map<String, dynamic>>> fetchSalesOrderDropdown(
+      String customerName) async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     int buyerId = pref.getInt('id') ?? 1;
 
-    String apiUrl = '${dotenv.env['API_URL']}/create_task/get_sales_orders_dropdown.php';
+    String apiUrl =
+        '${dotenv.env['API_URL']}/create_task/get_sales_orders_dropdown.php';
 
     try {
-      final response = await http.get(Uri.parse('$apiUrl?buyer_id=$buyerId&customer_name=${Uri.encodeComponent(customerName)}'));
+      final response = await http.get(Uri.parse(
+          '$apiUrl?buyer_id=$buyerId&customer_name=${Uri.encodeComponent(customerName)}'));
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
         if (jsonResponse['status'] == 'success') {
           return List<Map<String, dynamic>>.from(jsonResponse['data']);
         } else {
-          developer.log('Error fetching sales orders: ${jsonResponse['message']}');
+          developer
+              .log('Error fetching sales orders: ${jsonResponse['message']}');
           return [];
         }
       } else {
@@ -257,9 +263,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Create a NumberFormat instance with the desired format
     final formatter = NumberFormat("#,###.000", "en_US");
-    // Validate and preprocess the lastPurchasedAmount
     String formattedLastPurchasedAmount = '';
     if (widget.lastPurchasedAmount.isNotEmpty) {
       String cleanedAmount =
@@ -295,7 +299,8 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
+                    color: const Color.fromARGB(255, 255, 255, 255)
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -320,7 +325,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              // Use the formatted lastPurchasedAmount
                               'RM $formattedLastPurchasedAmount',
                               style: const TextStyle(
                                 color: Colors.white,
@@ -334,8 +338,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          const Icon(Icons.person,
-                              color: Color(0xff0175FF)),
+                          const Icon(Icons.person, color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.customerName,
@@ -346,8 +349,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.phone,
-                              color: Color(0xff0175FF)),
+                          const Icon(Icons.phone, color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.contactNumber,
@@ -358,8 +360,7 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.email,
-                              color: Color(0xff0175FF)),
+                          const Icon(Icons.email, color: Color(0xff0175FF)),
                           const SizedBox(width: 10),
                           Text(
                             widget.emailAddress,
@@ -492,12 +493,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                               );
                             }
                           }).toList(),
-                          // validator: (value) {
-                          //   if (value == null) {
-                          //     return 'Please select a sales order ID';
-                          //   }
-                          //   return null;
-                          // },
                         ),
                       ),
                       const Spacer(),
@@ -508,36 +503,17 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
                             onTap: _navigateToSelectOrderIDPage,
                             child: const Text(
                               'View Orders Details',
-                              // style: TextStyle(
-                              //     color: Color.fromARGB(255, 127, 127, 127)),
                             ),
                           ),
                           const Icon(
                             Icons.chevron_right,
                             size: 24,
-                            // color: Colors.grey,
                           ),
                         ],
                       )
                     ],
                   ),
                   const SizedBox(height: 10),
-                  // ElevatedButton(
-                  //   onPressed: _navigateToSelectOrderIDPage,
-                  //   style: ElevatedButton.styleFrom(
-                  //     backgroundColor: Color(0xff0069BA),
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(5),
-                  //     ),
-                  //     minimumSize: const Size(120, 40),
-                  //   ),
-                  //   child: const Text(
-                  //     'Check Orders Details',
-                  //     style: TextStyle(
-                  //       color: Colors.white,
-                  //     ),
-                  //   ),
-                  // ),
                   const Text(
                     '*Select a sales order ID',
                     style: TextStyle(fontSize: 14, color: Colors.grey),
@@ -645,7 +621,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     );
   }
 
-
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -669,21 +644,20 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
     String salesOrderId = selectedSalesOrderId ?? '';
     int? quantityInt = quantity;
 
-    // Prepare the payload for the API request
     Map<String, dynamic> payload = {
       'taskTitle': taskTitle,
       'taskDescription': taskDescription,
       'taskDueDate': taskDueDate,
       'salesOrderId': salesOrderId,
       'quantity': quantityInt,
-      'id': widget.id, // Sales lead ID
-      'taskId': widget.taskId, // Task ID if updating an existing task
+      'id': widget.id,
+      'taskId': widget.taskId,
     };
 
     try {
-      // Make the API request
       final response = await http.post(
-        Uri.parse('${dotenv.env['API_URL']}/create_task/save_task_to_database.php'),
+        Uri.parse(
+            '${dotenv.env['API_URL']}/create_task/save_task_to_database.php'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(payload),
       );
@@ -710,45 +684,6 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
       return {'error': 'Failed to save data'};
     }
   }
-
-  // Future<Map<String, Object?>> _saveTaskToDatabase() async {
-  //   MySqlConnection conn = await connectToDatabase();
-
-  //   String taskTitle = titleController.text;
-  //   String taskDescription = descriptionController.text;
-  //   String taskDueDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-  //   String salesOrderId = selectedSalesOrderId ?? '';
-  //   int? quantityInt = quantity;
-
-  //   try {
-  //     await conn.query(
-  //       'UPDATE sales_lead SET task_title = ?, task_description = ?, task_duedate = ?, so_id = ?, quantity = ? WHERE id = ?',
-  //       [
-  //         taskTitle,
-  //         taskDescription,
-  //         taskDueDate,
-  //         salesOrderId.isEmpty ? null : salesOrderId,
-  //         quantityInt,
-  //         widget.id
-  //       ],
-  //     );
-  //     developer.log('Task data saved successfully.');
-  //     return {
-  //       'title': titleController.text,
-  //       'description': descriptionController.text,
-  //       'dueDate': selectedDate,
-  //       'salesOrderId': salesOrderId.isEmpty ? null : salesOrderId,
-  //       'quantity': quantity,
-  //     };
-  //   } catch (e) {
-  //     developer.log('Failed to save task data: $e');
-  //     return {
-  //       'error': 'Failed to save task data',
-  //     };
-  //   } finally {
-  //     await conn.close();
-  //   }
-  // }
 
   String _formatDate(String dateString) {
     if (dateString.isEmpty) {

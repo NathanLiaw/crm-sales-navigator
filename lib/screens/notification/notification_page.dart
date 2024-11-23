@@ -1,5 +1,3 @@
-// ignore_for_file: unused_import, unused_local_variable, deprecated_member_use, library_private_types_in_public_api
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:mysql1/mysql1.dart';
@@ -190,12 +188,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'Notifications',
             style: TextStyle(color: Colors.white),
           ),
-          // leading: IconButton(
-          //   icon: const Icon(Icons.arrow_back, color: Colors.white),
-          //   onPressed: () {
-          //     Navigator.of(context).pushNamed('/home');
-          //   },
-          // ),
         ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -218,11 +210,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
     int? relatedId = notification['related_lead_id'];
 
     switch (notificationType) {
-      // Navigate to order processing stage
       case 'ORDER_STATUS_CHANGED':
         if (description != null && description.toLowerCase().contains('void')) {
-          // Navigate to sales order page
-          Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(1);
+          Provider.of<NavigationProvider>(context, listen: false)
+              .setSelectedIndex(1);
           Navigator.pushReplacementNamed(context, '/sales');
         } else {
           Navigator.push(
@@ -233,7 +224,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
           );
         }
         break;
-      // Navigate to negociation stage
       case 'TASK_DUE_SOON':
         Navigator.push(
           context,
@@ -242,7 +232,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         );
         break;
-      // Navigate to opportunities stage
       case 'NEW_SALES_LEAD':
         Navigator.push(
           context,

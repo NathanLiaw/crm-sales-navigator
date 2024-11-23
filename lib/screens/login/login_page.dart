@@ -25,11 +25,9 @@ class LoginPage extends StatelessWidget {
     String hashedPassword = md5.convert(utf8.encode(password)).toString();
 
     try {
-      // API URL for the login request
       var url = Uri.parse(
           '${dotenv.env['API_URL']}/authentication/authenticate_login.php');
 
-      // Make a POST request to the API
       var response = await http.post(
         url,
         body: {
@@ -38,18 +36,15 @@ class LoginPage extends StatelessWidget {
         },
       );
 
-      // Parse the JSON response
       var jsonResponse = jsonDecode(response.body);
 
       if (jsonResponse['status'] == 'success') {
-        // Fetch salesman data from the response
         var salesman = jsonResponse['salesman'];
 
-        // Save salesman data to shared preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setInt('id', salesman['id']);
-        developer.log(
-            "Saved salesman_id to SharedPreferences: ${salesman['id']}"); // Add this log
+        developer
+            .log("Saved salesman_id to SharedPreferences: ${salesman['id']}");
         prefs.setInt('area', salesman['area']);
         prefs.setString('salesmanName', salesman['salesman_name']);
         prefs.setString('username', salesman['username']);
@@ -67,14 +62,12 @@ class LoginPage extends StatelessWidget {
                 .add(const Duration(days: 31))
                 .millisecondsSinceEpoch);
 
-        // Initialize Workmanager and register tasks
         await _initializeBackgroundTasks();
 
-        // Navigate to HomePage
-        Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
+        Provider.of<NavigationProvider>(context, listen: false)
+            .setSelectedIndex(0);
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        // Show an error message if login fails
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(jsonResponse['message'])),
         );
@@ -278,7 +271,7 @@ class LoginPage extends StatelessWidget {
                       ],
                     ),
                     SizedBox(
-                      height: 244, // Fixed height for the image container
+                      height: 244,
                       child: Stack(
                         fit: StackFit.expand,
                         children: [

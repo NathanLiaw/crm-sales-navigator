@@ -12,7 +12,6 @@ class DatabaseHelper {
     if (_database != null) {
       return _database!;
     }
-    // If the database is null, initialize it
     _database = await initDatabase();
     return _database!;
   }
@@ -25,7 +24,6 @@ class DatabaseHelper {
       databasePath,
       version: 1,
       onCreate: (db, version) async {
-        // Create the cart_items table
         await db.execute(
           '''CREATE TABLE IF NOT EXISTS $cartItemTableName(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,34 +47,27 @@ class DatabaseHelper {
     );
   }
 
-  static Future<int> insertData(Map<String, dynamic> data, String tableName) async {
+  static Future<int> insertData(
+      Map<String, dynamic> data, String tableName) async {
     final db = await database;
 
-    // Check if the data already exists in the database
     final List<Map<String, dynamic>> existingData = await db.query(
       tableName,
       where: 'id = ?',
       whereArgs: [data['id']],
     );
 
-    // If the data already exists, skip insertion
     if (existingData.isNotEmpty) {
       return 0;
     }
-
-    // Flatten nested maps into JSON strings
     Map<String, dynamic> flattenedData = flattenNestedMaps(data);
-
-    // Insert flattened data into the database
     return await db.insert(tableName, flattenedData);
   }
 
-  // Function to flatten nested maps into JSON strings
   static Map<String, dynamic> flattenNestedMaps(Map<String, dynamic> data) {
     Map<String, dynamic> flattenedData = {};
     data.forEach((key, value) {
       if (value is Map) {
-        // Convert nested map to JSON string
         flattenedData[key] = json.encode(value);
       } else {
         flattenedData[key] = value;
@@ -86,13 +77,13 @@ class DatabaseHelper {
   }
 
   static Future<List<Map<String, dynamic>>> readData(
-      Database database,
-      String tableName,
-      String condition,
-      String order,
-      String field, {
-        List<Object?>? whereArgs,
-      }) async {
+    Database database,
+    String tableName,
+    String condition,
+    String order,
+    String field, {
+    List<Object?>? whereArgs,
+  }) async {
     String sqlQuery = '';
     String sqlOrder = '';
 
@@ -104,22 +95,17 @@ class DatabaseHelper {
       sqlOrder = 'ORDER BY $order';
     }
 
-    // Construct the SQL query
     String sql = 'SELECT $field FROM $tableName $sqlQuery $sqlOrder';
 
-    // Execute the query with whereArgs
-    List<Map<String, dynamic>> queryResult = await database.rawQuery(sql, whereArgs);
+    List<Map<String, dynamic>> queryResult =
+        await database.rawQuery(sql, whereArgs);
 
-    // Process the query result
     List<Map<String, dynamic>> results = [];
     for (var row in queryResult) {
-      // Convert Blob to string if necessary
       row.forEach((key, value) {
         if (value is Blob) {
           final blob = value;
-          // Convert Blob data to List<int>
           final bytes = blob.toString().codeUnits;
-          // Decode bytes to String
           final stringValue = utf8.decode(bytes);
           row[key] = stringValue;
         }
@@ -130,7 +116,8 @@ class DatabaseHelper {
     return results;
   }
 
-  static Future<int> countData(Database db, String tableName, String condition) async {
+  static Future<int> countData(
+      Database db, String tableName, String condition) async {
     String sqlQuery = '';
 
     if (condition.isNotEmpty) {
@@ -150,14 +137,13 @@ class DatabaseHelper {
     }
   }
 
-  // Get all data from a specific table
   static Future<List<Map<String, dynamic>>> getAllData(String tableName) async {
     final db = await database;
     return await db.query(tableName);
   }
 
-  // Update data in a specific table
-  static Future<int> updateData(Map<String, dynamic> data, String tableName) async {
+  static Future<int> updateData(
+      Map<String, dynamic> data, String tableName) async {
     final db = await DatabaseHelper.database;
     final id = data['id'];
 
@@ -175,14 +161,12 @@ class DatabaseHelper {
   }
 
   static Future<int> getCartItemCount() async {
-    final db = _database; // Your database initialization
+    final db = _database;
     final List<Map<String, Object?>>? result = await db?.query(
-        'SELECT COUNT(*) as count FROM cart_item WHERE status = "in progress"'
-    );
+        'SELECT COUNT(*) as count FROM cart_item WHERE status = "in progress"');
 
-    // Ensure the count is returned as an int
     return result != null && result.isNotEmpty
-        ? result.first['count'] as int // Cast to int
+        ? result.first['count'] as int
         : 0;
   }
 }

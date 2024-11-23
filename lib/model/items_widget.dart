@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -78,7 +76,6 @@ class _ItemsWidgetState extends State<ItemsWidget> {
       setState(() {
         _isLoading = false;
       });
-      // Handle errors if needed
     }
   }
 
@@ -87,13 +84,11 @@ class _ItemsWidgetState extends State<ItemsWidget> {
     required int limit,
   }) async {
     try {
-      // Construct the query parameters
       final queryParams = {
         'limit': limit.toString(),
         'offset': offset.toString(),
       };
 
-      // Add optional filter parameters only if they are not null and not empty
       if (widget.sortOrder.isNotEmpty) {
         queryParams['sortOrder'] = widget.sortOrder;
       }
@@ -121,11 +116,9 @@ class _ItemsWidgetState extends State<ItemsWidget> {
         final products = data['products'] as List<dynamic>;
 
         return products.map((product) {
-          // Parse the price_by_uom JSON string
           Map<String, dynamic> priceByUom =
               jsonDecode(product['price_by_uom'] as String? ?? '{}');
 
-          // Get the first price and variant count from the first area (ID "1")
           String firstPrice = '0.000';
           int variantCount = 0;
           if (priceByUom.containsKey('1')) {
@@ -185,15 +178,13 @@ class _ItemsWidgetState extends State<ItemsWidget> {
     return GridView.builder(
       controller: _scrollController,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // Two items per row
+        crossAxisCount: 2,
         childAspectRatio:
             MediaQuery.of(context).size.width < 2000 ? 0.60 : 0.70,
       ),
-      itemCount: _products.length +
-          (_hasMore ? 4 : 0), // Add four shimmer placeholders
+      itemCount: _products.length + (_hasMore ? 4 : 0),
       itemBuilder: (context, index) {
         if (index >= _products.length) {
-          // Display four shimmer effects in a 2x2 grid
           return Shimmer.fromColors(
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
@@ -212,7 +203,6 @@ class _ItemsWidgetState extends State<ItemsWidget> {
           );
         }
 
-        // If products are available, display them here
         final product = _products[index];
         final productId = product['id'] as int;
         final productName = product['product_name'] as String;
@@ -223,12 +213,10 @@ class _ItemsWidgetState extends State<ItemsWidget> {
             UtilityFunction.stringToBlob(product['description']);
 
         final photoUrl1 = "${dotenv.env['IMG_URL']}/$localPath";
-        final photoUrl2 = localPath2 != null
-            ? "${dotenv.env['IMG_URL']}/$localPath2"
-            : '';
-        final photoUrl3 = localPath3 != null
-            ? "${dotenv.env['IMG_URL']}/$localPath3"
-            : '';
+        final photoUrl2 =
+            localPath2 != null ? "${dotenv.env['IMG_URL']}/$localPath2" : '';
+        final photoUrl3 =
+            localPath3 != null ? "${dotenv.env['IMG_URL']}/$localPath3" : '';
 
         final containerSize = (MediaQuery.of(context).size.width - 40) / 2;
 
@@ -339,8 +327,8 @@ class _ItemsWidgetState extends State<ItemsWidget> {
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: const Color.fromARGB(
-                                          255, 25, 23, 49),
+                                      color:
+                                          const Color.fromARGB(255, 25, 23, 49),
                                     ),
                                   ),
                                 ],

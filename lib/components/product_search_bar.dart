@@ -26,14 +26,6 @@ class ItemSearchAppBar extends StatelessWidget {
                 color: Colors.white,
                 size: 30,
               )),
-          // Spacer(),
-          // IconButton(
-          //     onPressed: () {},
-          //     icon: const Icon(
-          //       Icons.notifications_none_outlined,
-          //       color: Colors.white,
-          //       size: 30,
-          //     ))
         ]));
   }
 }

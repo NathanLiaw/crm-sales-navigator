@@ -17,7 +17,7 @@ class CustomerDetails extends StatefulWidget {
 class _CustomerDetailsState extends State<CustomerDetails> {
   int? selectedIndex;
   late Customer selectedCustomer;
-  String searchQuery = ''; // Store the search query
+  String searchQuery = '';
   List<Customer> customers = [];
   List<Customer> filteredCustomers = [];
   bool isLoading = false;
@@ -41,13 +41,10 @@ class _CustomerDetailsState extends State<CustomerDetails> {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData =
-            json.decode(response.body); // Decode JSON into a Map
+        final Map<String, dynamic> responseData = json.decode(response.body);
 
-        // Extract total customers count from responseData
         totalCustomers = responseData['total_customers'] ?? 0;
 
-        // Extract the list of customers from the 'customers' key
         final List<dynamic> customerList = responseData['customers'] ?? [];
 
         for (var item in customerList) {
@@ -94,7 +91,6 @@ class _CustomerDetailsState extends State<CustomerDetails> {
       offset += limit;
       customers.addAll(fetchedCustomers);
 
-      // Update the total customers count
       filteredCustomers = customers;
     });
   }
@@ -151,7 +147,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                   prefixIcon: Icon(Icons.search),
                 ),
                 onChanged: (query) {
-                  _filterCustomers(query); // Filter customers as you type
+                  _filterCustomers(query);
                 },
               ),
             ),
@@ -193,7 +189,6 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                           selectedIndex = isSelected ? null : index;
                           selectedCustomer = isSelected ? Customer() : customer;
 
-                          // Call the callback with the updated selected customer
                           widget.onSelectionChanged?.call(selectedCustomer);
                         });
 
@@ -206,8 +201,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
                           decoration: BoxDecoration(
                             border: const BorderDirectional(
                                 top: BorderSide(
-                                    color: Color.fromARGB(
-                                        255, 231, 231, 231),
+                                    color: Color.fromARGB(255, 231, 231, 231),
                                     width: 2)),
                             color: isSelected
                                 ? const Color(0xfff8f9fa)

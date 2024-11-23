@@ -44,11 +44,11 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(height: 90.0),
-              Expanded( // Ensures it takes available space within the parent
+              Expanded(
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
                   child: FittedBox(
-                    fit: BoxFit.scaleDown, // Scales text to fit within its parent
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       'Thank you for your order.',
                       style: TextStyle(
@@ -99,7 +99,8 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
+                    Provider.of<NavigationProvider>(context, listen: false)
+                        .setSelectedIndex(0);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -108,8 +109,8 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                     );
                   },
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all<Color>(
-                        const Color(0xff0175FF)),
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(const Color(0xff0175FF)),
                     shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
@@ -156,11 +157,12 @@ class _OrderSubmittedPageState extends State<OrderSubmittedPage> {
                       ),
                     ),
                     padding: WidgetStateProperty.all<EdgeInsets>(
-                      const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                      const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 10.0),
                     ),
                   ),
                   child: const FittedBox(
-                    fit: BoxFit.scaleDown, // Scales down text to prevent overflow
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       'View Order',
                       style: TextStyle(

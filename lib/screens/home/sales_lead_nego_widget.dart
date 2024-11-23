@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -39,9 +37,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   String? description;
   DateTime? dueDate;
   List<Map<String, dynamic>> tasks = [];
-  String _sortBy = 'creation_date'; // 新添加的状态变量
+  String _sortBy = 'creation_date';
   String _sortOrder = 'descending';
-  bool _isTasksExpanded = false; // New state variable for expansion
+  bool _isTasksExpanded = false;
 
   @override
   void initState() {
@@ -53,7 +51,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     final Uri url = Uri.parse(urlString);
     try {
       if (await canLaunchUrl(url)) {
-        // Add LaunchMode
         await launchUrl(
           url,
           mode: LaunchMode.externalApplication,
@@ -65,11 +62,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   }
 
   Future<void> _launchPhone(String phone) async {
-    // Make sure the phone number is formatted correctly
     final Uri phoneUri = Uri(
       scheme: 'tel',
-      path: phone.replaceAll(
-          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+      path: phone.replaceAll(RegExp(r'[^\d+]'), ''),
     );
     try {
       if (await canLaunchUrl(phoneUri)) {
@@ -83,7 +78,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   Future<void> _launchEmail(String email) async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: email.trim(), // Clear spaces
+      path: email.trim(),
     );
     try {
       if (await canLaunchUrl(emailUri)) {
@@ -93,36 +88,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
       debugPrint('Error launching email: $e');
     }
   }
-
-  // Future<void> _fetchTaskDetails() async {
-  //   MySqlConnection conn = await connectToDatabase();
-  //   try {
-  //     Results results = await conn.query(
-  //       'SELECT t.id, t.title, t.description, t.due_date, t.creation_date FROM tasks t JOIN sales_lead sl ON t.lead_id = sl.id WHERE sl.id = ?',
-  //       [widget.leadItem.id],
-  //     );
-  //     if (results.isNotEmpty && mounted) {
-  //       setState(() {
-  //         tasks = results.map((row) {
-  //           return {
-  //             'title': row['title'],
-  //             'description': row['description'],
-  //             'due_date': row['due_date'],
-  //             'creation_date': row['creation_date'],
-  //             'id': row['id'],
-  //           };
-  //         }).toList();
-  //         // 默认按创建日期排序
-  //         tasks
-  //             .sort((a, b) => b['creation_date'].compareTo(a['creation_date']));
-  //       });
-  //     }
-  //   } catch (e) {
-  //     developer.log('Error fetching task details: $e');
-  //   } finally {
-  //     await conn.close();
-  //   }
-  // }
 
   Future<void> _fetchTaskDetails() async {
     final String baseUrl =
@@ -168,28 +133,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
     }
   }
 
-  // Future<void> _fetchTaskDetails() async {
-  //   MySqlConnection conn = await connectToDatabase();
-  //   try {
-  //     Results results = await conn.query(
-  //       'SELECT task_title, task_description, task_duedate FROM sales_lead WHERE id = ?',
-  //       [widget.leadItem.id],
-  //     );
-  //     if (results.isNotEmpty && mounted) {
-  //       var row = results.first;
-  //       setState(() {
-  //         title = row['task_title'];
-  //         description = row['task_description'];
-  //         dueDate = row['task_duedate'];
-  //       });
-  //     }
-  //   } catch (e) {
-  //     developer.log('Error fetching task details: $e');
-  //   } finally {
-  //     await conn.close();
-  //   }
-  // }
-
   Future<void> _navigateToCreateTaskPage(
       BuildContext context, bool showTaskDetails) async {
     final result = await Navigator.push(
@@ -212,10 +155,9 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
 
     if (result != null && result['error'] == null) {
       if (result['hasTaskDetails'] == true) {
-        _fetchTaskDetails(); // 只有在有任务详情时才刷新任务列表
+        _fetchTaskDetails();
       }
 
-      // 检查是否需要移动到 Order Processing
       if (result['salesOrderId'] != null) {
         String salesOrderId = result['salesOrderId'] as String;
         int? quantity = result['quantity'];
@@ -228,7 +170,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
 
   Future<void> _navigateToEditTaskPage(
       BuildContext context, Map<String, dynamic> task) async {
-    final taskId = task['id']; // fetch taskId
+    final taskId = task['id'];
 
     final result = await Navigator.push(
       context,
@@ -244,27 +186,13 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
           existingDescription: task['description'],
           existingDueDate: task['due_date'],
           showTaskDetails: true,
-          taskId: taskId, // 将任务ID传递给CreateTaskPage
-          showSalesOrderId: false, // 设置为 false，不显示 sales order ID 部分
+          taskId: taskId,
+          showSalesOrderId: false,
         ),
       ),
     );
     _fetchTaskDetails();
   }
-
-  // Future<void> _deleteTask(int taskId) async {
-  //   MySqlConnection conn = await connectToDatabase();
-  //   try {
-  //     await conn.query('DELETE FROM tasks WHERE id = ?', [taskId]);
-  //     setState(() {
-  //       tasks.removeWhere((task) => task['id'] == taskId);
-  //     });
-  //   } catch (e) {
-  //     developer.log('Error deleting task: $e');
-  //   } finally {
-  //     await conn.close();
-  //   }
-  // }
 
   Future<void> _deleteTask(int taskId) async {
     final String baseUrl =
@@ -456,10 +384,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
   void _sortTasks(String sortBy) {
     setState(() {
       if (_sortBy == sortBy) {
-        // 如果点击的是当前排序方式，则切换升序/降序
         _sortOrder = _sortOrder == 'ascending' ? 'descending' : 'ascending';
       } else {
-        // 如果是新的排序方式，默认为升序
         _sortBy = sortBy;
         _sortOrder = 'ascending';
       }
@@ -602,18 +528,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                             );
 
                             if (confirmDelete == true) {
-                              // MySqlConnection conn = await connectToDatabase();
-                              // try {
-                              //   await conn.query(
-                              //     'DELETE FROM sales_lead WHERE id = ?',
-                              //     [widget.leadItem.id],
-                              //   );
-                              //   widget.onDeleteLead(widget.leadItem);
-                              // } catch (e) {
-                              //   developer.log('Error deleting lead item: $e');
-                              // } finally {
-                              //   await conn.close();
-                              // }
                               widget.onDeleteLead(widget.leadItem);
                             }
                           } else if (value == 'complete') {
@@ -756,7 +670,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 ],
               ),
               const SizedBox(height: 8),
-              // Replace the existing task details section with a ListView
               if (tasks.isNotEmpty)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -770,10 +683,10 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F8FF), // 浅蓝色背景
+                          color: const Color(0xFFF5F8FF),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(0xFF0175FF), // 蓝色边框
+                            color: const Color(0xFF0175FF),
                             width: 1,
                           ),
                         ),
@@ -840,23 +753,24 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                         children: [
                           InkWell(
                             onTap: () {
-                              // Pass tasks to ViewTasksPage
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ViewTasksPage(tasks: tasks, leadItem: widget.leadItem),
+                                  builder: (context) => ViewTasksPage(
+                                      tasks: tasks, leadItem: widget.leadItem),
                                 ),
                               );
                             },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Text(
                                     'View More',
                                     style: TextStyle(
-                                      color: Colors.grey[600],  // You can adjust the grey shade as you like
+                                      color: Colors.grey[600],
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -865,7 +779,7 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                                   Icon(
                                     Icons.arrow_forward_ios,
                                     size: 16,
-                                    color: Colors.grey[600],  // Keep the icon consistent with the text color
+                                    color: Colors.grey[600],
                                   ),
                                 ],
                               ),
@@ -873,7 +787,8 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF5F8FF),
                               borderRadius: BorderRadius.circular(20),
@@ -1036,44 +951,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                     fontSize: 14,
                   ),
                 ),
-              // if (title != null && description != null && dueDate != null)
-              //   Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       const SizedBox(height: 8),
-              //       Row(
-              //         children: [
-              //           const Icon(Icons.date_range, color: Color(0xff0069BA)),
-              //           Text(
-              //               'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate!)}'),
-              //         ],
-              //       ),
-              //       const SizedBox(height: 16),
-              //       Row(
-              //         children: [
-              //           Text(
-              //             '${title?.toUpperCase()}',
-              //             style: const TextStyle(
-              //                 fontWeight: FontWeight.bold, fontSize: 16),
-              //           ),
-              //         ],
-              //       ),
-              //       const SizedBox(height: 4),
-              //       Text(
-              //         '$description',
-              //         style: const TextStyle(fontSize: 14),
-              //       ),
-              //       const SizedBox(height: 16),
-              //     ],
-              //   )
-              // else
-              //   const Text(
-              //     'You haven\'t created a task yet! Click the Create Task button to create it.',
-              //     style: TextStyle(
-              //       color: Colors.black,
-              //       fontSize: 14,
-              //     ),
-              //   ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -1134,7 +1011,6 @@ class _NegotiationLeadItemState extends State<NegotiationLeadItem> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    // Wrap the button in Expanded
                     child: SizedBox(
                       height: 34,
                       child: ElevatedButton(

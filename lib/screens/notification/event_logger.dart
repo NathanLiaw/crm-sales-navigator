@@ -17,7 +17,6 @@ class EventLogger {
         'activityType': activityType,
       };
 
-      // Only add leadId if it's not null
       if (leadId != null) {
         requestBody['leadId'] = leadId.toString();
       }
@@ -26,7 +25,6 @@ class EventLogger {
 
       final response = await http.post(apiUrl, body: requestBody);
 
-      // Check if response body is empty
       if (response.body.isEmpty) {
         developer.log('Empty response received from server');
         return;

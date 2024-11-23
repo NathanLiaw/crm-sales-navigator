@@ -51,7 +51,8 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
 
   void _filterTasksByDate(DateTime date) {
     setState(() {
-      filteredTasks = taskEvents[DateTime(date.year, date.month, date.day)] ?? [];
+      filteredTasks =
+          taskEvents[DateTime(date.year, date.month, date.day)] ?? [];
     });
   }
 
@@ -64,7 +65,7 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
     };
 
     final Uri uri =
-    Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
 
     try {
       final response = await http.get(uri);
@@ -75,7 +76,7 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
           setState(() {
             widget.tasks.removeWhere((task) => task['id'] == taskId);
             _organizeTaskEvents();
-            _filterTasksByDate(_selectedDay ?? _focusedDay); // Refresh task list
+            _filterTasksByDate(_selectedDay ?? _focusedDay);
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData['message'])),
@@ -125,7 +126,6 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
     );
 
     if (result is Map<String, dynamic>) {
-      // Update the local task list with the edited task
       final index = widget.tasks.indexWhere((t) => t['id'] == result['id']);
       if (index != -1) {
         setState(() {
@@ -145,7 +145,8 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
       'lead_id': widget.leadItem.id.toString(),
     };
 
-    final Uri uri = Uri.parse(baseUrl).replace(queryParameters: queryParameters);
+    final Uri uri =
+        Uri.parse(baseUrl).replace(queryParameters: queryParameters);
 
     try {
       final response = await http.get(uri);
@@ -156,7 +157,6 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
         if (responseData['status'] == 'success') {
           if (mounted) {
             setState(() {
-              // Map and update tasks
               widget.tasks.clear();
               widget.tasks.addAll((responseData['tasks'] as List).map((task) {
                 return {
@@ -168,7 +168,6 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
                 };
               }));
 
-              // Organize and filter tasks for display
               _organizeTaskEvents();
               _filterTasksByDate(_selectedDay ?? _focusedDay);
             });
@@ -229,7 +228,7 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.primaryColor.withOpacity(0.2), // Slightly transparent color
+                color: theme.primaryColor.withOpacity(0.2),
               ),
               todayTextStyle: TextStyle(
                 color: theme.primaryColor,
@@ -255,11 +254,11 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
                 if (tasks.isEmpty) return null;
 
                 bool hasDueSoon = tasks.any((task) {
-                  final taskMap = task as Map<String, dynamic>; // Explicitly cast task
-                  final dueDate = taskMap['due_date']; // Access 'due_date' after casting
-                  if (dueDate == null) return false; // Skip if dueDate is null
+                  final taskMap = task as Map<String, dynamic>;
+                  final dueDate = taskMap['due_date'];
+                  if (dueDate == null) return false;
                   final difference = dueDate.difference(DateTime.now()).inDays;
-                  return difference <= 3; // Tasks due in 3 or fewer days
+                  return difference <= 3;
                 });
 
                 return Positioned(
@@ -268,12 +267,12 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(
                       tasks.length,
-                          (index) => Container(
+                      (index) => Container(
                         margin: const EdgeInsets.symmetric(horizontal: 1.0),
                         width: 6.0,
                         height: 6.0,
                         decoration: BoxDecoration(
-                          color: hasDueSoon ? Colors.red : Colors.green, // Red for due/soon, green otherwise
+                          color: hasDueSoon ? Colors.red : Colors.green,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -283,94 +282,95 @@ class _ViewTasksPageState extends State<ViewTasksPage> {
               },
             ),
           ),
-
           Expanded(
             child: filteredTasks.isEmpty
                 ? const Center(
-              child: Text('No tasks for the selected date.'),
-            )
+                    child: Text('No tasks for the selected date.'),
+                  )
                 : ListView.builder(
-              itemCount: filteredTasks.length,
-              itemBuilder: (context, index) {
-                final task = filteredTasks[index];
-                final dueDate = task['due_date'];
-                final dueDateStatus = _getDueDateStatus(dueDate);
+                    itemCount: filteredTasks.length,
+                    itemBuilder: (context, index) {
+                      final task = filteredTasks[index];
+                      final dueDate = task['due_date'];
+                      final dueDateStatus = _getDueDateStatus(dueDate);
 
-                final dueInThreeDays =
-                    dueDate.difference(DateTime.now()).inDays < 3;
+                      final dueInThreeDays =
+                          dueDate.difference(DateTime.now()).inDays < 3;
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 8, horizontal: 16),
-                  elevation: 6,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    side: BorderSide(
-                      color: dueInThreeDays
-                          ? Colors.red
-                          : theme.colorScheme.secondaryContainer,
-                    ),
-                  ),
-                  color: dueInThreeDays
-                      ? Colors.red.shade50
-                      : theme.colorScheme.surface,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      task['title'],
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          task['description'],
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 14, color: Colors.grey),
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          side: BorderSide(
+                            color: dueInThreeDays
+                                ? Colors.red
+                                : theme.colorScheme.secondaryContainer,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text(
-                              'Due: ${DateFormat('yyyy-MM-dd').format(dueDate)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
+                        color: dueInThreeDays
+                            ? Colors.red.shade50
+                            : theme.colorScheme.surface,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          title: Text(
+                            task['title'],
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                task['description'],
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.grey),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              dueDateStatus,
-                              style: TextStyle(
-                                color: dueInThreeDays
-                                    ? Colors.red
-                                    : Colors.black,
-                                fontWeight: FontWeight.w500,
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Due: ${DateFormat('yyyy-MM-dd').format(dueDate)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    dueDateStatus,
+                                    style: TextStyle(
+                                      color: dueInThreeDays
+                                          ? Colors.red
+                                          : Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _editTask(task),
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteTask(task['id']),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => _editTask(task),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteTask(task['id']),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

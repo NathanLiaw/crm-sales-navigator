@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +28,6 @@ class OrderProcessingLeadItem extends StatelessWidget {
     final Uri url = Uri.parse(urlString);
     try {
       if (await canLaunchUrl(url)) {
-        // Add LaunchMode
         await launchUrl(
           url,
           mode: LaunchMode.externalApplication,
@@ -42,11 +39,9 @@ class OrderProcessingLeadItem extends StatelessWidget {
   }
 
   Future<void> _launchPhone(String phone) async {
-    // Make sure the phone number is formatted correctly
     final Uri phoneUri = Uri(
       scheme: 'tel',
-      path: phone.replaceAll(
-          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+      path: phone.replaceAll(RegExp(r'[^\d+]'), ''),
     );
     try {
       if (await canLaunchUrl(phoneUri)) {
@@ -60,7 +55,7 @@ class OrderProcessingLeadItem extends StatelessWidget {
   Future<void> _launchEmail(String email) async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: email.trim(), // Clear spaces
+      path: email.trim(),
     );
     try {
       if (await canLaunchUrl(emailUri)) {
@@ -80,7 +75,6 @@ class OrderProcessingLeadItem extends StatelessWidget {
   }
 
   Future<void> _removeOrder(BuildContext context) async {
-    // Show confirmation dialog before deleting the order
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -89,13 +83,11 @@ class OrderProcessingLeadItem extends StatelessWidget {
           content: const Text('Are you sure you want to delete this order?'),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(false), // User pressed Cancel
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(true), // User pressed Confirm
+              onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Delete'),
             ),
           ],
@@ -116,19 +108,15 @@ class OrderProcessingLeadItem extends StatelessWidget {
         if (responseData['status'] == 'success') {
           developer.log('Order deleted successfully');
 
-          // Show Snackbar for successful deletion
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Sales lead deleted successfully!'),
               duration: Duration(seconds: 2),
             ),
           );
-
-          // Optionally, you can add logic here to update your UI or notify the user
         } else {
           developer.log('Failed to delete order: ${responseData['message']}');
 
-          // Show Snackbar for failure
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
@@ -141,7 +129,6 @@ class OrderProcessingLeadItem extends StatelessWidget {
         developer
             .log('HTTP request failed with status: ${response.statusCode}');
 
-        // Show Snackbar for HTTP request failure
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to delete order. Please try again.'),
@@ -320,7 +307,6 @@ class OrderProcessingLeadItem extends StatelessWidget {
                         : 'Quantity: Unknown      Total: RM$formattedTotal',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  // Delete icon for removing the order
                   Visibility(
                     visible: orderStatus == 'Void',
                     child: IconButton(

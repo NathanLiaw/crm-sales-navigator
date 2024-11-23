@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -148,22 +146,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
       String apiUrl =
           '${dotenv.env['API_URL']}/customer_insights/get_customer_salesdata.php?customer_id=$customerId';
 
-      // Prepare the API request
       final url = Uri.parse(apiUrl);
 
-      // Parse the API response
       final data = jsonDecode((await http.get(url)).body);
 
-      // Check if the response is successful
       if (data['status'] == 'success') {
         try {
-          // Assuming `data` is the parsed JSON response from your API
           var latestSpendingData = data['latest_spending'];
 
-          // Check if latestSpendingData is not null and has the expected structure
           if (latestSpendingData != null &&
               latestSpendingData.containsKey('final_total')) {
-            // Store the last spending in a Future
             var finalTotal = await latestSpendingData['final_total'];
 
             if (finalTotal is String) {
@@ -181,14 +173,11 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
           developer.log('Error fetching sales data: $e');
         }
 
-        // Return the sales data from the API response
         return List<Map<String, dynamic>>.from(data['data']);
       } else {
-        // Throw an exception if the API returns an error
         throw Exception(data['message']);
       }
     } catch (e) {
-      // Log the error for debugging
       developer.log('Error fetching sales data: $e', error: e);
       rethrow;
     }
@@ -197,26 +186,20 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   Future<List<Map<String, dynamic>>> fetchProductsByCustomer(
       int customerId) async {
     try {
-      // API URL where the PHP script is hosted
       final String apiUrl =
           '${dotenv.env['API_URL']}/customer_insights/get_products_by_customer_id.php?customer_id=$customerId';
 
-      // Prepare the API request
       final url = Uri.parse(apiUrl);
       final response = await http.get(url);
 
-      // Parse the API response
       final data = jsonDecode(response.body);
 
-      // Check if the response is successful
       if (data['status'] == 'success') {
         return List<Map<String, dynamic>>.from(data['data']);
       } else {
-        // Handle error response from the API
         throw Exception(data['message']);
       }
     } catch (e) {
-      // Log the error for debugging
       developer.log('Error fetching products: $e', error: e);
       return [];
     }
@@ -227,18 +210,15 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         '${dotenv.env['API_URL']}/product/get_product_by_id.php?id=$selectedProductId';
 
     try {
-      // Make an HTTP GET request to fetch the product details
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
 
-        // Check if the status is success and product data is present
         if (jsonResponse['status'] == 'success' &&
             jsonResponse['product'] != null) {
           Map<String, dynamic> product = jsonResponse['product'];
 
-          // Extract the product details from the JSON response
           int productId = product['id'];
           String productName = product['product_name'];
           List<String> itemAssetName = [
@@ -249,7 +229,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
           Blob description = stringToBlob(product['description']);
           String priceByUom = product['price_by_uom'] ?? '';
 
-          // Navigate to ItemScreen and pass the necessary parameters
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -276,7 +255,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   }
 
   Blob stringToBlob(String data) {
-    // Create a Blob instance from the string using Blob.fromString
     Blob blob = Blob.fromString(data);
 
     return blob;
@@ -285,29 +263,21 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   Future<List<Map<String, dynamic>>> getProductRecommendations(
       String keyword) async {
     try {
-      // Set the API URL with the keyword as a query parameter
       String apiUrl =
           '${dotenv.env['API_URL']}/customer_insights/get_product_recommendation.php?keyword=${Uri.encodeComponent(keyword)}';
 
-      // Prepare the API request
       final url = Uri.parse(apiUrl);
 
-      // Parse the API response
       final response = await http.get(url);
 
-      // Decode the JSON response
       final data = jsonDecode(response.body);
 
-      // Check if the response is successful
       if (data['status'] == 'success') {
-        // Store the product recommendations from the API response in the variable
         return List<Map<String, dynamic>>.from(data['data']);
       } else {
-        // Throw an exception if the API returns an error
         throw Exception(data['message']);
       }
     } catch (e) {
-      // Log the error for debugging
       developer.log('Error fetching product recommendations: $e');
       return [];
     }
@@ -317,26 +287,20 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   Future<List<String>> fetchKeywords(int customerId) async {
     try {
       String sqlUrl =
-          '${dotenv.env['API_URL']}/customer_insights/get_keywords.php?customer_id=$customerId'; // Adjust this API endpoint to fetch keywords
+          '${dotenv.env['API_URL']}/customer_insights/get_keywords.php?customer_id=$customerId';
 
-      // Prepare the API request
       final url = Uri.parse(sqlUrl);
 
-      // Parse the API response
       final response = await http.get(url);
       final data = jsonDecode(response.body);
 
-      // Check if the response is successful
       if (data['status'] == 'success') {
-        // Extract the keywords from the response
         return List<String>.from(
             data['data'].map((item) => item['sub_category']) ?? '');
       } else {
-        // Throw an exception if the API returns an error
         throw Exception(data['message']);
       }
     } catch (e) {
-      // Log the error for debugging
       developer.log('Error fetching keywords: $e');
       rethrow;
     }
@@ -362,38 +326,36 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
   }
 
   Future<void> fetchCustomerSegmentation() async {
-    final String apiUrl = '${dotenv.env['API_URL']}/customer_segmentation/customer_segmentation_api.php';
+    final String apiUrl =
+        '${dotenv.env['API_URL']}/customer_segmentation/customer_segmentation_api.php';
 
     try {
-      final response = await http.get(Uri.parse(apiUrl)).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(Uri.parse(apiUrl))
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        // Parse the JSON response
         final customerData = json.decode(response.body)['data'];
 
         int currentCustomerId = customerId;
 
-        // Filter the data to find the relevant customer
         relevantCustomer = customerData.firstWhere(
-              (customer) => customer['customer_id'].toString() == currentCustomerId.toString(),
-          orElse: () => null, // Return null if not found
+          (customer) =>
+              customer['customer_id'].toString() ==
+              currentCustomerId.toString(),
+          orElse: () => null,
         );
 
-        // If relevant customer data is found, classify recency
         if (relevantCustomer != null) {
-          // developer.log("test ${relevantCustomer!['days_since_last_purchase']}");
-          // developer.log("test ${relevantCustomer!['total_spend_group']}");
-
           relevantCustomer!['recency_category'] =
               categorizeRecency(relevantCustomer!['days_since_last_purchase']);
-          // relevantCustomer!['total_spend_group'] =
-          //     categoriseTotalSpentGroup(relevantCustomer!['total_spend_group']);
           relevantCustomer!['Cluster_Label'] =
               categoriseTotalSpentGroup(relevantCustomer!['Cluster_Label']);
           developer.log('Relevant Customer Data: $relevantCustomer');
         }
       } else {
-        throw Exception('Failed to load customer segmentation: ${response.statusCode}');
+        throw Exception(
+            'Failed to load customer segmentation: ${response.statusCode}');
       }
     } catch (error) {
       developer.log('Error fetching data: $error');
@@ -422,23 +384,23 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
       return const Color(0xff94FFDF);
     } else if (totalSpendGroup == 'Mid') {
       // Mid spend group
-      return const Color(0xffF1F78B); // Softer yellow
+      return const Color(0xffF1F78B);
     } else {
       // Low spend group
-      return const Color(0xffFF6666); // Muted red
+      return const Color(0xffFF6666);
     }
   }
 
   Color getCustomerValueTextColor(String spendGroup) {
     if (spendGroup == 'High') {
       // High spend group
-      return const Color(0xff008A64); // Original color for High group
+      return const Color(0xff008A64);
     } else if (spendGroup == 'Mid') {
       // Mid spend group
-      return const Color(0xff808000); // Darker yellow for Mid group
+      return const Color(0xff808000);
     } else {
       // Low spend group
-      return const Color(0xff840000); // Darker red for Low group
+      return const Color(0xff840000);
     }
   }
 
@@ -460,28 +422,21 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         '${dotenv.env['API_URL']}/customer_insights/get_recency.php?customer_id=$customerId';
 
     try {
-      // Make the API request
       final response = await http.get(Uri.parse(apiUrl));
 
-      // Check if the response status is successful (200 OK)
       if (response.statusCode == 200) {
-        // Parse the JSON response body
         final jsonResponse = json.decode(response.body);
 
         setState(() {
-          // Assuming the API returns a number in JSON, you can store it as a string
           recency = jsonResponse.toString();
         });
 
-        // Print recency to debug
         developer.log('Recency: $recency');
       } else {
-        // If the server did not return a 200 OK response, handle the error
         developer.log(
             'Failed to fetch recency. Status code: ${response.statusCode}');
       }
     } catch (error) {
-      // Handle any exceptions during the API call
       developer.log('Error occurred: $error');
     }
   }
@@ -491,27 +446,21 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
         '${dotenv.env['API_URL']}/customer_insights/get_total_spend_group.php?customer_id=$customerId';
 
     try {
-      // Make the API request
       final response = await http.get(Uri.parse(apiUrl));
 
-      // Check if the response status is successful (200 OK)
       if (response.statusCode == 200) {
-        // Parse the JSON response body
         final jsonResponse = json.decode(response.body);
 
         setState(() {
           totalSpendGroup = jsonResponse;
         });
 
-        // Print totalSpendGroup to debug
         developer.log('Total Spend Group: $totalSpendGroup');
       } else {
-        // If the server did not return a 200 OK response, handle the error
         developer.log(
             'Failed to fetch total spend group. Status code: ${response.statusCode}');
       }
     } catch (error) {
-      // Handle any exceptions during the API call
       developer.log('Error occurred: $error');
     }
   }
@@ -561,27 +510,24 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
       final response = await http.get(Uri.parse(
           '${dotenv.env['API_URL']}/customer_insights/get_next_visit.php?customer_id=$customerId'));
 
-      // Check if the request was successful
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
 
-        // Check for success status
         if (responseData['status'] == 'success') {
           nextVisit = responseData['predicted_visit_day'].toString();
           developer.log(responseData['predicted_visit_day'].toString());
-          return responseData[
-              'predicted_visit_day']; // Return the predicted day
+          return responseData['predicted_visit_day'];
         } else {
           developer.log('Error: ${responseData['message']}');
-          return null; // Return null if there was an error
+          return null;
         }
       } else {
         developer.log('Failed to load data: ${response.reasonPhrase}');
-        return null; // Return null for other status codes
+        return null;
       }
     } catch (e) {
       developer.log('Error occurred: $e');
-      return null; // Return null on exception
+      return null;
     }
   }
 
@@ -842,7 +788,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
               ),
             );
           } else {
-            // Customer data found, continue loading additional data
             Customer.Customer customer = snapshot.data!;
             return FutureBuilder<List<dynamic>>(
               future: Future.wait([
@@ -855,13 +800,10 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                 if (salesSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center, // Center vertically
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(),
-                        SizedBox(
-                            height:
-                                16), // Add space between the indicator and text
+                        SizedBox(height: 16),
                         Text('Fetching Customer Details'),
                       ],
                     ),
@@ -869,7 +811,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                 } else if (salesSnapshot.hasError) {
                   return Center(child: Text('Error: ${salesSnapshot.error}'));
                 } else {
-                  // All data is loaded, building the full UI
                   List<Map<String, dynamic>> salesData =
                       salesSnapshot.data![0] as List<Map<String, dynamic>>;
                   List<Map<String, dynamic>> products =
@@ -877,22 +818,16 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                   List<Map<String, dynamic>> recommendations =
                       salesSnapshot.data![2] as List<Map<String, dynamic>>;
 
-                  // Extract total spent
                   String totalSpent = salesData.isNotEmpty
                       ? salesData
-                          .map((entry) =>
-                              entry['total_spent'] ??
-                              '0.00') // Reference total_spent and default to '0.00' if null
-                          .map((spent) => double.parse(
-                              spent.toString())) // Ensure we parse to double
-                          .reduce((a, b) => (a + b)) // Sum the values
-                          .toString() // Convert back to string
+                          .map((entry) => entry['total_spent'] ?? '0.00')
+                          .map((spent) => double.parse(spent.toString()))
+                          .reduce((a, b) => (a + b))
+                          .toString()
                       : '0.00';
 
-                  // Extract latest spending
                   String lastSpending = latestSpending.toString();
 
-                  // Format the total sales with a thousand separator
                   final formatter = NumberFormat("#,##0.000", "en_MY");
                   String formattedTotalSpent =
                       formatter.format(double.parse(totalSpent));
@@ -923,11 +858,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                     Color(0xffA5DBE7)
                                   ])),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment
-                                .start, // Align children to the start
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                // Row 1 Insigts, Powered by AI
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 12, horizontal: 8),
                                 child: Row(
@@ -953,7 +886,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 ),
                               ),
                               Container(
-                                // Row 2 Customer Name and value,
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 12, horizontal: 10),
                                 child: Row(
@@ -962,7 +894,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
-                                      // Wrap with Expanded to prevent overflow
                                       child: Text(
                                         widget.customerName,
                                         style: GoogleFonts.inter(
@@ -998,7 +929,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 ),
                               ),
                               Container(
-                                // Row 3 Total Spent
                                 margin: const EdgeInsets.only(
                                   top: 22,
                                   left: 8,
@@ -1028,7 +958,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 ),
                               ),
                               Container(
-                                // Row 3 Total Spent
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 2, horizontal: 16),
                                 child: Text(
@@ -1070,8 +999,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 14, horizontal: 14),
-                                  width: MediaQuery.of(context).size.width -
-                                      20, // Subtract horizontal margin
+                                  width: MediaQuery.of(context).size.width - 20,
                                   decoration: const BoxDecoration(
                                     borderRadius:
                                         BorderRadius.all(Radius.circular(8)),
@@ -1109,7 +1037,7 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                             width: MediaQuery.of(context)
                                                     .size
                                                     .width -
-                                                48, // Adjust width
+                                                48,
                                             child: Text(
                                               '${customer.addressLine1}${customer.addressLine2.isNotEmpty ? '\n${customer.addressLine2}' : ''}',
                                               style: GoogleFonts.inter(
@@ -1132,7 +1060,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            // Wrap with Expanded
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
@@ -1166,7 +1093,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                             ),
                                           ),
                                           Expanded(
-                                            // Wrap with Expanded
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
@@ -1248,7 +1174,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 Row(
                                   children: [
                                     Expanded(
-                                      // Wrap with Expanded
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 8, horizontal: 10),
@@ -1312,7 +1237,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                       width: 12,
                                     ),
                                     Expanded(
-                                      // Wrap with Expanded
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 8, horizontal: 10),
@@ -1395,7 +1319,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                 Row(
                                   children: [
                                     Expanded(
-                                      // Wrap with Expanded
                                       child: Container(
                                         height: 246,
                                         decoration: const BoxDecoration(
@@ -1444,11 +1367,9 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                     ],
                                                   ),
                                                   SizedBox(
-                                                    width: double
-                                                        .infinity, // Adjust the width as needed
+                                                    width: double.infinity,
                                                     child: FittedBox(
-                                                      fit: BoxFit
-                                                          .scaleDown, // Scale down to fit
+                                                      fit: BoxFit.scaleDown,
                                                       child: Text(
                                                         'RM $formattedLastSpending',
                                                         style:
@@ -1456,16 +1377,14 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                           textStyle:
                                                               const TextStyle(
                                                             letterSpacing: -0.8,
-                                                            fontSize:
-                                                                24, // Starting font size
+                                                            fontSize: 24,
                                                             fontWeight:
                                                                 FontWeight.w700,
                                                             color: Color(
                                                                 0xff0066FF),
                                                           ),
                                                         ),
-                                                        maxLines:
-                                                            1, // Limit to one line
+                                                        maxLines: 1,
                                                       ),
                                                     ),
                                                   ),
@@ -1533,7 +1452,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                       width: 12,
                                     ),
                                     Expanded(
-                                      // Wrap with Expanded
                                       child: Container(
                                         height: 246,
                                         decoration: const BoxDecoration(
@@ -1720,7 +1638,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                         CrossAxisAlignment
                                                             .center,
                                                     children: [
-                                                      // Container for product photo
                                                       SizedBox(
                                                         width: 120.0,
                                                         height: 120.0,
@@ -1740,7 +1657,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                         ),
                                                       ),
                                                       const SizedBox(height: 8),
-                                                      // Container for product name with fixed width
                                                       SizedBox(
                                                         width: 120.0,
                                                         child: Text(
@@ -1757,7 +1673,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                         ),
                                                       ),
                                                       const SizedBox(height: 4),
-                                                      // Container for product uom with fixed width
                                                       SizedBox(
                                                         width: 120.0,
                                                         child: Text(
@@ -1800,27 +1715,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                               255, 0, 0, 0),
                                         ),
                                       ),
-                                      // Row(
-                                      //   children: [
-                                      //     GestureDetector(
-                                      //       onTap: () {
-                                      //         Navigator.push(
-                                      //           context,
-                                      //           MaterialPageRoute(builder: (context) => RecentOrder(customerId: customer.id)),
-                                      //         );
-                                      //       },
-                                      //       child: const Text(
-                                      //         'View more',
-                                      //         style: TextStyle(fontSize: 16.0, color: Colors.grey),
-                                      //       ),
-                                      //     ),
-                                      //     const Icon(
-                                      //       Icons.chevron_right,
-                                      //       size: 24,
-                                      //       color: Colors.grey,
-                                      //     ),
-                                      //   ],
-                                      // ),
                                     ]),
                                 const SizedBox(height: 10.0),
                                 SizedBox(
@@ -1829,7 +1723,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                       ? const Text('No purchases yet')
                                       : ListView.builder(
                                           scrollDirection: Axis.horizontal,
-                                          // Use min to limit the number of displayed products to 20
                                           itemCount: recommendations.length > 50
                                               ? 50
                                               : recommendations.length,
@@ -1862,7 +1755,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                         CrossAxisAlignment
                                                             .center,
                                                     children: [
-                                                      // Container for product photo
                                                       SizedBox(
                                                         width: 120.0,
                                                         height: 120.0,
@@ -1882,7 +1774,6 @@ class _CustomerInsightsPageState extends State<CustomerInsightsPage> {
                                                         ),
                                                       ),
                                                       const SizedBox(height: 8),
-                                                      // Container for product name with fixed width
                                                       SizedBox(
                                                         width: 120.0,
                                                         child: Text(

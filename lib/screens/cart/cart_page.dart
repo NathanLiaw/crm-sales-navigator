@@ -83,11 +83,9 @@ class _CartPage extends State<CartPage> {
   Future<void> loadTaxFromCacheOrApi() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Try to load from cache
     gst = prefs.getDouble('gst') ?? 0;
     sst = prefs.getDouble('sst') ?? 0;
 
-    // If not found in cache, load from API and save to cache
     if (gst == 0 || sst == 0) {
       await getTax();
     }
@@ -182,16 +180,12 @@ class _CartPage extends State<CartPage> {
           .toList();
     }
     developer.log(cartItemsJson.toString());
-    return []; // Return an empty list if there are no cached items
+    return [];
   }
 
   Future<List<CartItem>> readCartItems() async {
     // Load cached items first
     List<CartItem> cachedCartItems = await getCachedCartItems();
-
-    // if (cachedCartItems.isNotEmpty) {
-    //   return cachedCartItems; // Return cached items if available
-    // }
 
     // Proceed to load items from the database if no cached items are found
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -267,12 +261,10 @@ class _CartPage extends State<CartPage> {
       // Reload the cart items after deletion
       await loadCartItemsAndPhotos();
 
-      // Clear the selected cart items list after successful deletion
       setState(() {
         selectedCartItems.clear();
       });
 
-      // Show a snackbar to confirm deletion
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$deletedItemsCount item(s) deleted from cart'),
@@ -285,7 +277,6 @@ class _CartPage extends State<CartPage> {
       cartModel.initializeCartCount();
     } catch (e) {
       developer.log('Error deleting selected cart items: $e', error: e);
-      // Show an error message if deletion fails
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to delete items. Please try again.'),
@@ -302,7 +293,7 @@ class _CartPage extends State<CartPage> {
       await DatabaseHelper.deleteData(
           cartItemId, DatabaseHelper.cartItemTableName);
 
-      // Log the event (you may want to adjust this based on your logging strategy)
+      // Log the event
       await EventLogger.logEvent(
         salesmanId,
         'Deleted item with ID $cartItemId from cart',
@@ -312,7 +303,6 @@ class _CartPage extends State<CartPage> {
       // Reload the cart items after deletion
       await loadCartItemsAndPhotos();
 
-      // Show a snackbar to confirm deletion
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Item removed from cart'),
@@ -326,7 +316,6 @@ class _CartPage extends State<CartPage> {
       cartModel.initializeCartCount();
     } catch (e) {
       developer.log('Error deleting item with ID $cartItemId: $e', error: e);
-      // Show an error message if deletion fails
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to delete item. Please try again.'),
@@ -366,7 +355,6 @@ class _CartPage extends State<CartPage> {
         '${dotenv.env['API_URL']}/product/get_product_by_id.php?id=$selectedProductId';
 
     try {
-      // Make an HTTP GET request to fetch the product details
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -377,7 +365,6 @@ class _CartPage extends State<CartPage> {
             jsonResponse['product'] != null) {
           Map<String, dynamic> product = jsonResponse['product'];
 
-          // Extract the product details from the JSON response
           int productId = product['id'];
           String productName = product['product_name'];
           List<String> itemAssetName = [
@@ -388,7 +375,6 @@ class _CartPage extends State<CartPage> {
           Blob description = stringToBlob(product['description']);
           String priceByUom = product['price_by_uom'] ?? '';
 
-          // Navigate to ItemScreen and pass the necessary parameters
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -415,24 +401,19 @@ class _CartPage extends State<CartPage> {
   }
 
   Blob stringToBlob(String data) {
-    // Create a Blob instance from the string using Blob.fromString
     Blob blob = Blob.fromString(data);
-
     return blob;
   }
 
   Future<Map<int, double>> retrieveLatestPrices(List<int> productIds) async {
-    // API URL
     String apiUrl =
         '${dotenv.env['API_URL']}/sales_order/get_product_prices.php';
 
-    // Prepare the JSON body
     final Map<String, dynamic> body = {
       'customer_id': customer?.id,
       'product_ids': productIds,
     };
 
-    // Send a POST request to the API
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {
@@ -443,17 +424,13 @@ class _CartPage extends State<CartPage> {
 
     // Check if the request was successful
     if (response.statusCode == 200) {
-      // Parse the JSON response
       final Map<String, dynamic> data = json.decode(response.body);
 
       if (data['status'] == 'success') {
-        // Create a map for latest prices
         Map<int, double> latestPrices = {};
         final pricesData = data['data'] as Map<String, dynamic>;
 
-        // Populate the latest prices map
         pricesData.forEach((key, value) {
-          // Ensure the value is a number and convert to double
           latestPrices[int.parse(key)] = (value is String)
               ? double.tryParse(value) ?? 0.0
               : value.toDouble();
@@ -469,7 +446,7 @@ class _CartPage extends State<CartPage> {
     }
   }
 
-  // Function to update cart items with the latest prices
+  // Update cart items with the latest prices
   Future<void> updateCartItemsWithLatestPrices() async {
     if (cartItems.isEmpty) {
       developer.log('Cart is empty. No products to update.');
@@ -500,9 +477,9 @@ class _CartPage extends State<CartPage> {
   // Callback function to update customer info
   void updateCustomer(Customer newCustomer) {
     setState(() {
-      customer = newCustomer; // Update the customer in the cart
-      calculateTotalAndSubTotal(); // Recalculate total when customer is updated
-      updateCartItemsWithLatestPrices(); // Update cart items with latest prices
+      customer = newCustomer;
+      calculateTotalAndSubTotal();
+      updateCartItemsWithLatestPrices();
     });
   }
 
@@ -613,11 +590,11 @@ class _CartPage extends State<CartPage> {
                   TextButton(
                     onPressed: () {
                       setState(() {
-                        editCart = !editCart; // Toggle editCart state
+                        editCart = !editCart;
                       });
                     },
                     child: Text(
-                      editCart ? 'Done' : 'Edit', // Toggle button text
+                      editCart ? 'Done' : 'Edit',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -651,8 +628,7 @@ class _CartPage extends State<CartPage> {
               customerSelected
                   ? CustomerInfo(
                       initialCustomer: customer!,
-                      onCustomerUpdated:
-                          updateCustomer, // Pass callback to update customer
+                      onCustomerUpdated: updateCustomer,
                     )
                   : Padding(
                       padding: const EdgeInsets.only(left: 8.0),
@@ -673,14 +649,11 @@ class _CartPage extends State<CartPage> {
                           value: selectAll,
                           onChanged: (bool? value) {
                             setState(() {
-                              selectAll =
-                                  value ?? false; // Toggle "Select All" state
+                              selectAll = value ?? false;
 
                               if (selectAll) {
-                                // Select all cart items
                                 selectedCartItems = List.from(cartItems);
                               } else {
-                                // Deselect all cart items
                                 selectedCartItems.clear();
                               }
                             });
@@ -731,7 +704,6 @@ class _CartPage extends State<CartPage> {
                     final currentQuantity = item.quantity;
                     final formattedPrice =
                         formatter.format(item.unitPrice * item.quantity);
-                    // Format previous price only if it's not null
                     String? formattedPreviousPrice;
                     if (item.previousPrice != null) {
                       formattedPreviousPrice =
@@ -757,15 +729,13 @@ class _CartPage extends State<CartPage> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(
-                                          false); // User canceled the action
+                                      Navigator.of(context).pop(false);
                                     },
                                     child: const Text("Cancel"),
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context).pop(
-                                          true); // User confirmed the action
+                                      Navigator.of(context).pop(true);
                                     },
                                     child: const Text("Remove"),
                                   ),
@@ -778,12 +748,9 @@ class _CartPage extends State<CartPage> {
                           // Call the delete function for the single cart item
                           await deleteSingleCartItem(item.id);
 
-                          // Optionally, you can remove the item from the list here as well
                           setState(() {
-                            cartItems.removeAt(
-                                index); // Assuming you have access to the index
-                            selectedCartItems.remove(
-                                item); // Remove from selected items if necessary
+                            cartItems.removeAt(index);
+                            selectedCartItems.remove(item);
                           });
                         },
                         background: Container(
@@ -822,16 +789,14 @@ class _CartPage extends State<CartPage> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  if (editCart) // Conditionally render checkbox if editCart is true
+                                  if (editCart)
                                     Checkbox(
                                       value: isSelected,
                                       onChanged: (value) {
                                         setState(() {
                                           if (value != null && value) {
-                                            // Add the item to selectedCartItems when checkbox is checked
                                             selectedCartItems.add(item);
                                           } else {
-                                            // Remove the item from selectedCartItems when checkbox is unchecked
                                             selectedCartItems.remove(item);
                                           }
                                         });
@@ -872,10 +837,9 @@ class _CartPage extends State<CartPage> {
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                   ),
-                                                  overflow: TextOverflow
-                                                      .ellipsis, // Overflow handling
-                                                  maxLines:
-                                                      3, // Allow up to 3 lines of text
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 3,
                                                 ),
                                               ),
                                             ),
@@ -909,7 +873,6 @@ class _CartPage extends State<CartPage> {
                                                         updatedPrice;
                                                     calculateTotalAndSubTotal();
                                                   });
-                                                  // Refresh cart items to update prices and percentages
                                                   loadCartItemsAndPhotos();
                                                 }
                                               },
@@ -968,7 +931,7 @@ class _CartPage extends State<CartPage> {
                                                                           .ellipsis,
                                                                 ),
                                                                 if (item.previousPrice !=
-                                                                    null) // Check if previousPrice is not null
+                                                                    null)
                                                                   Text(
                                                                     item.unitPrice - item.previousPrice! >
                                                                             0
@@ -992,7 +955,7 @@ class _CartPage extends State<CartPage> {
                                                                         null &&
                                                                     (item.unitPrice -
                                                                             item.previousPrice!) !=
-                                                                        0) // Check if previousPrice is not null and price difference is not 0
+                                                                        0)
                                                                   Text(
                                                                     '${((item.unitPrice - item.previousPrice!) / item.previousPrice! * 100).toStringAsFixed(0)}%',
                                                                     style:
@@ -1013,7 +976,7 @@ class _CartPage extends State<CartPage> {
                                                   child: (item.previousPrice !=
                                                               null &&
                                                           item.previousPrice !=
-                                                              item.unitPrice) // Check if previousPrice is not null and is different from unitPrice
+                                                              item.unitPrice)
                                                       ? Text(
                                                           formattedPreviousPrice!,
                                                           style:
@@ -1035,10 +998,8 @@ class _CartPage extends State<CartPage> {
                                             ),
                                           ],
                                         ),
-                                        // Group for quantity controls (IconButton and TextField)
                                         Visibility(
-                                          visible:
-                                              !editCart, // Set visibility based on the value of editCart
+                                          visible: !editCart,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.end,
@@ -1046,7 +1007,6 @@ class _CartPage extends State<CartPage> {
                                               IconButton(
                                                 iconSize: 28,
                                                 onPressed: () {
-                                                  // Decrement quantity when minus button is pressed
                                                   if (currentQuantity > 1) {
                                                     setState(() {
                                                       item.quantity =
@@ -1072,7 +1032,7 @@ class _CartPage extends State<CartPage> {
                                                           TextButton(
                                                             onPressed: () {
                                                               Navigator.pop(
-                                                                  context); // Close the dialog
+                                                                  context);
                                                             },
                                                             child: const Text(
                                                                 'Cancel'),
@@ -1094,7 +1054,7 @@ class _CartPage extends State<CartPage> {
                                                               DatabaseHelper.deleteData(
                                                                   item.id,
                                                                   DatabaseHelper
-                                                                      .cartItemTableName); // Assuming this is an asynchronous operation
+                                                                      .cartItemTableName);
                                                               ScaffoldMessenger
                                                                       .of(context)
                                                                   .showSnackBar(
@@ -1111,7 +1071,7 @@ class _CartPage extends State<CartPage> {
                                                                 ),
                                                               );
                                                               Navigator.pop(
-                                                                  context); // Close the dialog
+                                                                  context);
                                                             },
                                                             child: const Text(
                                                                 'Delete'),
@@ -1124,8 +1084,7 @@ class _CartPage extends State<CartPage> {
                                                 icon: const Icon(Icons.remove),
                                               ),
                                               SizedBox(
-                                                width:
-                                                    60, // Adjust the width of the TextField container
+                                                width: 60,
                                                 child: TextField(
                                                   textAlign: TextAlign.center,
                                                   keyboardType:
@@ -1135,7 +1094,7 @@ class _CartPage extends State<CartPage> {
                                                         .allow(RegExp(
                                                             r'[0-9]')), // Only allow numeric input
                                                     LengthLimitingTextInputFormatter(
-                                                        5), // Limit the length of input to 5 characters
+                                                        5),
                                                   ],
                                                   controller: textController,
                                                   onChanged: (value) {
@@ -1151,7 +1110,6 @@ class _CartPage extends State<CartPage> {
                                                         calculateTotalAndSubTotal();
                                                       });
                                                     }
-                                                    // Check if the entered value is 0 and show confirmation dialog
                                                     if (newValue == 0 ||
                                                         newValue == null) {
                                                       showDialog(
@@ -1171,13 +1129,13 @@ class _CartPage extends State<CartPage> {
                                                                       1;
                                                                   textController
                                                                           .text =
-                                                                      '1'; // Reset text field value
+                                                                      '1';
                                                                   totalCartItems =
                                                                       cartItems
                                                                           .length;
                                                                 });
                                                                 Navigator.pop(
-                                                                    context); // Close the dialog
+                                                                    context);
                                                               },
                                                               child: const Text(
                                                                   'Cancel'),
@@ -1197,7 +1155,7 @@ class _CartPage extends State<CartPage> {
                                                                     .deleteData(
                                                                         item.id,
                                                                         DatabaseHelper
-                                                                            .cartItemTableName); // Assuming this is an asynchronous operation
+                                                                            .cartItemTableName);
                                                                 ScaffoldMessenger.of(
                                                                         context)
                                                                     .showSnackBar(
@@ -1213,7 +1171,7 @@ class _CartPage extends State<CartPage> {
                                                                   ),
                                                                 );
                                                                 Navigator.pop(
-                                                                    context); // Close the dialog
+                                                                    context);
                                                               },
                                                               child: const Text(
                                                                   'Delete'),
@@ -1326,8 +1284,7 @@ class _CartPage extends State<CartPage> {
                                           const SizedBox(height: 10),
                                           ConstrainedBox(
                                             constraints: const BoxConstraints(
-                                              maxHeight:
-                                                  200.0, // Limit height to 200px for scrollable content
+                                              maxHeight: 200.0,
                                             ),
                                             child: Scrollbar(
                                               thumbVisibility: true,
@@ -1382,8 +1339,7 @@ class _CartPage extends State<CartPage> {
                                       actions: [
                                         TextButton(
                                           onPressed: () {
-                                            Navigator.pop(
-                                                context); // Close the dialog
+                                            Navigator.pop(context);
                                           },
                                           child: const Text('Cancel'),
                                         ),
@@ -1391,8 +1347,7 @@ class _CartPage extends State<CartPage> {
                                           onPressed: () {
                                             // Perform the delete action
                                             deleteSelectedCartItems();
-                                            Navigator.pop(
-                                                context); // Close the dialog
+                                            Navigator.pop(context);
                                             setState(() {
                                               editCart = false;
                                             });
@@ -1440,8 +1395,7 @@ class _CartPage extends State<CartPage> {
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pop(
-                                            context); // Close the dialog
+                                        Navigator.pop(context);
                                       },
                                       child: const Text('OK'),
                                     ),
@@ -1461,8 +1415,7 @@ class _CartPage extends State<CartPage> {
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pop(
-                                            context); // Close the dialog
+                                        Navigator.pop(context);
                                       },
                                       child: const Text('OK'),
                                     ),
@@ -1503,8 +1456,7 @@ class _CartPage extends State<CartPage> {
                             ),
                           ),
                           minimumSize: WidgetStateProperty.all<Size>(
-                            const Size(120,
-                                40), // Adjust the minimum width and height of the button
+                            const Size(120, 40),
                           ),
                         ),
                         child: const Text(
@@ -1528,7 +1480,6 @@ class _CartPage extends State<CartPage> {
   Widget _buildSelectCustomerCard(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        // Navigate to the CustomerDetails page and wait for result
         Customer? selectedCustomer = await Navigator.push<Customer?>(
           context,
           MaterialPageRoute(
@@ -1543,7 +1494,6 @@ class _CartPage extends State<CartPage> {
           ),
         );
 
-        // Handle the selected customer received from CustomerDetails page
         if (selectedCustomer != null) {
           setState(() {
             customer = selectedCustomer;
@@ -1589,12 +1539,12 @@ class _CartPage extends State<CartPage> {
 
 class CustomerInfo extends StatefulWidget {
   Customer initialCustomer;
-  final Function(Customer) onCustomerUpdated; // Callback to notify cart page
+  final Function(Customer) onCustomerUpdated;
 
   CustomerInfo({
     super.key,
     required this.initialCustomer,
-    required this.onCustomerUpdated, // Inject callback
+    required this.onCustomerUpdated,
   });
 
   @override
@@ -1614,20 +1564,16 @@ class _CustomerInfoState extends State<CustomerInfo> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        // Navigate to the CustomerDetails page and wait for result
         Customer? selectedCustomer = await Navigator.push<Customer?>(
           context,
           MaterialPageRoute(builder: (context) => const CustomerDetails()),
         );
 
-        // Handle the selected customer received from CustomerDetails page
         if (selectedCustomer != null) {
-          // Update the state of the selected customer
           setState(() {
             _customer = selectedCustomer;
           });
 
-          // Notify cart page of the update
           widget.onCustomerUpdated(_customer);
         }
       },

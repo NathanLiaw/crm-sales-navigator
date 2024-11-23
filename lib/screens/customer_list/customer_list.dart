@@ -16,7 +16,7 @@ class CustomerList extends StatefulWidget {
 class _CustomerListState extends State<CustomerList> {
   int? selectedIndex;
   late Customer selectedCustomer;
-  String searchQuery = ''; // Store the search query
+  String searchQuery = '';
   List<Customer> customers = [];
   List<Customer> filteredCustomers = [];
   bool isLoading = false;
@@ -40,18 +40,15 @@ class _CustomerListState extends State<CustomerList> {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData =
-        json.decode(response.body); // Decode JSON into a Map
+        final Map<String, dynamic> responseData = json.decode(response.body);
 
-        // Extract total customers count from responseData
         totalCustomers = responseData['total_customers'] ?? 0;
 
-        // Extract the list of customers from the 'customers' key
         final List<dynamic> customerList = responseData['customers'] ?? [];
 
         for (var item in customerList) {
           final Map<String, dynamic> customerData =
-          item as Map<String, dynamic>;
+              item as Map<String, dynamic>;
           fetchedCustomers.add(Customer(
             id: customerData['id'] is int
                 ? customerData['id']
@@ -93,7 +90,6 @@ class _CustomerListState extends State<CustomerList> {
       offset += limit;
       customers.addAll(fetchedCustomers);
 
-      // Update the total customers count
       filteredCustomers = customers;
     });
   }
@@ -103,13 +99,13 @@ class _CustomerListState extends State<CustomerList> {
       searchQuery = query;
       filteredCustomers = customers
           .where((customer) =>
-      customer.companyName
-          .toLowerCase()
-          .contains(query.toLowerCase()) ||
-          customer.email.toLowerCase().contains(query.toLowerCase()) ||
-          customer.contactNumber.contains(query) ||
-          customer.addressLine1.contains(query) ||
-          customer.addressLine2.contains(query))
+              customer.companyName
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ||
+              customer.email.toLowerCase().contains(query.toLowerCase()) ||
+              customer.contactNumber.contains(query) ||
+              customer.addressLine1.contains(query) ||
+              customer.addressLine2.contains(query))
           .toList();
     });
   }
@@ -150,7 +146,7 @@ class _CustomerListState extends State<CustomerList> {
                   prefixIcon: Icon(Icons.search),
                 ),
                 onChanged: (query) {
-                  _filterCustomers(query); // Filter customers as you type
+                  _filterCustomers(query);
                 },
               ),
             ),
@@ -193,8 +189,8 @@ class _CustomerListState extends State<CustomerList> {
                           selectedCustomer = isSelected ? Customer() : customer;
 
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
+                            context,
+                            MaterialPageRoute(
                               builder: (context) => CustomerInsightsPage(
                                 customerName: customer.companyName,
                               ),
@@ -209,8 +205,7 @@ class _CustomerListState extends State<CustomerList> {
                           decoration: BoxDecoration(
                             border: const BorderDirectional(
                                 top: BorderSide(
-                                    color: Color.fromARGB(
-                                        255, 231, 231, 231),
+                                    color: Color.fromARGB(255, 231, 231, 231),
                                     width: 2)),
                             color: isSelected
                                 ? const Color(0xfff8f9fa)
@@ -249,7 +244,7 @@ class _CustomerListState extends State<CustomerList> {
                                 const SizedBox(height: 16.0),
                                 Row(
                                   mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       customer.contactNumber,

@@ -64,30 +64,6 @@ class _EditItemPageState extends State<EditItemPage> {
     }
   }
 
-  // Future<void> fetchOriginalCartPrice() async {
-  //   try {
-  //     Database database = await DatabaseHelper.database;
-  //     List<Map<String, dynamic>> result = await database.rawQuery('''
-  //     SELECT unit_price
-  //     FROM cart_item
-  //     WHERE id = ?
-  //     ORDER BY created ASC
-  //     LIMIT 1
-  //     ''', [widget.itemId]);
-
-  //     if (result.isNotEmpty) {
-  //       setState(() {
-  //         cartOriginalPrice = result.first['unit_price'];
-  //         print('Original cart price: $cartOriginalPrice');
-  //       });
-  //     } else {
-  //       developer.log('No price record found for item ${widget.itemId}');
-  //     }
-  //   } catch (e) {
-  //     developer.log('Error fetching original cart price: $e', error: e);
-  //   }
-  // }
-
   Future<void> resetPriceToOriginal() async {
     try {
       int itemId = widget.itemId ?? 0;
@@ -169,7 +145,6 @@ class _EditItemPageState extends State<EditItemPage> {
   }
 
   void updatePriceAndAuthority() {
-    // Parse input values from text controllers
     double inputPrice = priceController.text.trim().isNotEmpty
         ? double.parse(priceController.text)
         : 0.0;
@@ -177,13 +152,11 @@ class _EditItemPageState extends State<EditItemPage> {
         ? double.parse(discountController.text)
         : 0.0;
 
-    // Check if discount is within the valid range
     if (inputDiscount < 0.0 || inputDiscount >= 100.0) {
       showAlertDialog('Discount must be between 0% and 100%', Colors.red);
       return;
     }
 
-    // Determine if input values are provided and user has corresponding authority
     bool hasRepriceAuthority = repriceAuthority && inputPrice > 0.0;
     bool hasDiscountAuthority = discountAuthority && inputDiscount > 0.0;
 
@@ -248,7 +221,6 @@ class _EditItemPageState extends State<EditItemPage> {
       ),
     );
 
-    // Automatically close dialog after 1 second
     Future.delayed(const Duration(seconds: 1), () {
       Navigator.pop(context);
     });

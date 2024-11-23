@@ -86,33 +86,33 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
   Widget buildOrderList(List<Map<String, dynamic>> salesOrders) {
     if (salesOrders.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.all(32.0), // Add padding for a clean layout
+        padding: EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              Icons.assignment_late, // Use an icon to represent the empty state
+              Icons.assignment_late,
               size: 80.0,
-              color: Color(0xff0175FF), // Same blue color for consistency
+              color: Color(0xff0175FF),
             ),
-            SizedBox(height: 20.0), // Space between icon and text
+            SizedBox(height: 20.0),
             Text(
               'No pending sales order for this customer',
-              textAlign: TextAlign.center, // Center-align the text
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 22.0, // Larger font size
-                fontWeight: FontWeight.w600, // Slightly bold for emphasis
-                color: Color(0xff191731), // Darker color for better contrast
+                fontSize: 22.0,
+                fontWeight: FontWeight.w600,
+                color: Color(0xff191731),
               ),
             ),
             SizedBox(height: 10.0),
             Text(
               'Please check again later or contact support for assistance.',
-              textAlign: TextAlign.center, // Center-align the text
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 16.0, // Smaller sub-text font size
-                color: Color(0xff6b7280), // Use a softer, neutral color
+                fontSize: 16.0,
+                color: Color(0xff6b7280),
               ),
             ),
           ],
@@ -138,7 +138,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
             child: ListView.separated(
               itemCount: salesOrders.length,
               separatorBuilder: (context, index) =>
-                  const SizedBox(height: 12.0), // Add space between items
+                  const SizedBox(height: 12.0),
               itemBuilder: (context, index) {
                 final order = salesOrders[index];
                 final cartID = order['id'];
@@ -165,14 +165,13 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                     });
                   },
                   child: Card(
-                    elevation: 5.0, // Increased elevation for better depth
+                    elevation: 5.0,
                     color: const Color(0xffcde5f2),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12), // Rounded corners
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0), // Increased padding
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -189,8 +188,7 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(
-                                  width: 8.0), // Space between elements
+                              const SizedBox(width: 8.0),
                               const Text(
                                 'View Details',
                                 style: TextStyle(
@@ -226,11 +224,9 @@ class _SelectOrderIDPageState extends State<SelectOrderIDPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xff0069BA),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(8), // Rounded button
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              minimumSize: const Size(
-                                  double.infinity, 40), // Full width button
+                              minimumSize: const Size(double.infinity, 40),
                             ),
                             child: const Text(
                               'Select',

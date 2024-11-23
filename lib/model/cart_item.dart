@@ -4,12 +4,12 @@ class CartItem {
   final int? buyerId;
   final int productId;
   final String productName;
-  final String uom; // Unit of measurement
+  final String uom;
   int quantity;
   final int discount;
   final double originalUnitPrice;
   double unitPrice;
-  late  double total;
+  late double total;
   final String? cancel;
   final String? remark;
   final String status;
@@ -63,7 +63,6 @@ class CartItem {
     );
   }
 
-  // Convert CartItem instance to a map
   Map<String, dynamic> toMap({bool excludeId = false}) {
     Map<String, dynamic> map = {
       'buyer_id': buyerId,

@@ -12,7 +12,6 @@ class SalesOrder {
   String status;
   String cancel;
 
-  // Constructor
   SalesOrder({
     required this.id,
     required this.session,
@@ -28,7 +27,6 @@ class SalesOrder {
     required this.cancel,
   });
 
-  // Factory method to create a SalesOrder object from JSON
   factory SalesOrder.fromJson(Map<String, dynamic> json) {
     return SalesOrder(
       id: json['id'] as int,
@@ -46,7 +44,6 @@ class SalesOrder {
     );
   }
 
-  // Method to convert a SalesOrder object to JSON (optional, for POST requests or local storage)
   Map<String, dynamic> toJson() {
     return {
       'id': id,

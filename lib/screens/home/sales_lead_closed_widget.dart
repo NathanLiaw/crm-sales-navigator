@@ -25,7 +25,6 @@ class ClosedLeadItem extends StatelessWidget {
     final Uri url = Uri.parse(urlString);
     try {
       if (await canLaunchUrl(url)) {
-        // Add LaunchMode
         await launchUrl(
           url,
           mode: LaunchMode.externalApplication,
@@ -37,11 +36,9 @@ class ClosedLeadItem extends StatelessWidget {
   }
 
   Future<void> _launchPhone(String phone) async {
-    // Make sure the phone number is formatted correctly
     final Uri phoneUri = Uri(
       scheme: 'tel',
-      path: phone.replaceAll(
-          RegExp(r'[^\d+]'), ''), // Cleaning up non-numeric characters
+      path: phone.replaceAll(RegExp(r'[^\d+]'), ''),
     );
     try {
       if (await canLaunchUrl(phoneUri)) {
@@ -55,7 +52,7 @@ class ClosedLeadItem extends StatelessWidget {
   Future<void> _launchEmail(String email) async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: email.trim(), // Clear spaces
+      path: email.trim(),
     );
     try {
       if (await canLaunchUrl(emailUri)) {
@@ -112,16 +109,6 @@ class ClosedLeadItem extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Text(
-                  //   leadItem.customerName.length > 15
-                  //       ? '${leadItem.customerName.substring(0, 15)}...'
-                  //       : leadItem.customerName,
-                  //   style: const TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 20,
-                  //   ),
-                  //   overflow: TextOverflow.ellipsis,
-                  // ),
                   Flexible(
                     child: Text(
                       leadItem.customerName,
@@ -162,9 +149,7 @@ class ClosedLeadItem extends StatelessWidget {
                         width: 10,
                       ),
                       PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          // Perform an action based on the selected value
-                        },
+                        onSelected: (String value) {},
                         itemBuilder: (BuildContext context) =>
                             <PopupMenuEntry<String>>[
                           const PopupMenuItem<String>(

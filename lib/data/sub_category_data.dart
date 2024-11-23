@@ -29,7 +29,8 @@ Future<List<List<SubCategoryData>>> fetchAllSubCategories() async {
 
   // Create a list of Futures for fetching each category's subcategories
   final subCategoryFutures = categories.map((category) {
-    final url = '${dotenv.env['API_URL']}/sub_category/get_sub_categories.php?category_id=${category.id}';
+    final url =
+        '${dotenv.env['API_URL']}/sub_category/get_sub_categories.php?category_id=${category.id}';
     return http.get(Uri.parse(url)).then((response) {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -46,6 +47,5 @@ Future<List<List<SubCategoryData>>> fetchAllSubCategories() async {
     });
   }).toList();
 
-  // Wait for all requests to complete
   return Future.wait(subCategoryFutures);
 }

@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sales_navigator/utility_function.dart'; // For requesting permissions
+import 'package:sales_navigator/utility_function.dart';
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -22,7 +22,6 @@ class FirebaseApi {
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
   Future<void> initNotifications() async {
-    // Check and request notification permission
     await _checkNotificationPermission();
 
     final fCMToken = await _firebaseMessaging.getToken();
@@ -32,11 +31,9 @@ class FirebaseApi {
     await initLocalNotifications();
   }
 
-  // Function to check and request notification permission
+  // Check and request notification permission
   Future<void> _checkNotificationPermission() async {
-    // Check if notification permission is already granted
     if (!await Permission.notification.isGranted) {
-      // Request permission if not granted
       PermissionStatus status = await Permission.notification.request();
 
       if (status.isGranted) {
@@ -62,18 +59,15 @@ class FirebaseApi {
       final notification = message.notification;
       if (notification == null) return;
 
-      // Update the number of unread messages
       final salesmanId = await UtilityFunction.getUserId();
       final unreadCount = await NotificationsPage.getUnreadCount(salesmanId);
 
-      // Update unread count via Provider
       final notificationState = Provider.of<NotificationState>(
         navigatorKey.currentContext!,
         listen: false,
       );
       notificationState.setUnreadCount(unreadCount);
 
-      // Show local notification if permission is granted
       _localNotifications.show(
         notification.hashCode,
         notification.title,
@@ -89,7 +83,6 @@ class FirebaseApi {
         payload: jsonEncode(message.toMap()),
       );
 
-      // Display a dialog box to allow the user to choose to view the notification
       showDialog(
         context: navigatorKey.currentContext!,
         builder: (_) => AlertDialog(
@@ -118,7 +111,6 @@ class FirebaseApi {
 
     developer.log("Handling message: ${message.messageId}");
 
-    // Use Future.delayed to ensure a valid navigation context
     Future.delayed(Duration.zero, () {
       developer.log("Attempting to navigate to NotificationsPage");
       navigatorKey.currentState?.pushNamed(
@@ -157,7 +149,6 @@ class FirebaseApi {
 
   Future<void> sendPushNotification(
       String salesmanId, String title, String body) async {
-    // Get FCM token
     final fcmToken = await _getFCMTokenForSalesman(salesmanId);
     developer.log('Sending push notification to token: $fcmToken');
 
@@ -192,9 +183,8 @@ class FirebaseApi {
     }
   }
 
-  // Function to get FCM token
+  // Get FCM token
   Future<String> _getFCMTokenForSalesman(String salesmanId) async {
-    // Replace with actual logic to fetch FCM token for the salesman
     return "salesmanFCMToken";
   }
 
@@ -224,5 +214,4 @@ class FirebaseApi {
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   developer.log("Handling a background message: ${message.messageId}");
-  // Process the message here if needed
 }
