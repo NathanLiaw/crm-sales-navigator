@@ -1,54 +1,106 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:sales_navigator/cached_page_manager.dart';
+import 'package:sales_navigator/screens/cart/cart_page.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
+import 'package:sales_navigator/screens/home/home_page.dart';
 import 'package:sales_navigator/model/cart_model.dart';
+import 'package:sales_navigator/screens/product/products_screen.dart';
+import 'package:sales_navigator/screens/profile/profile_page.dart';
+import 'package:sales_navigator/screens/sales_order/sales_order_page.dart';
 
-class CustomNavigationBar extends StatefulWidget {
+class CustomNavigationBar extends StatelessWidget {
   const CustomNavigationBar({super.key});
 
-  @override
-  _CustomNavigationBarState createState() => _CustomNavigationBarState();
-}
+  void _handleNavigation(BuildContext context, int index) {
+    final navigationProvider =
+        Provider.of<NavigationProvider>(context, listen: false);
+    navigationProvider.setSelectedIndex(index);
 
-class _CustomNavigationBarState extends State<CustomNavigationBar> {
-  static int _selectedIndex = 0;
-  bool _isVisible = true;
-  late ScrollController _scrollController;
+    final String currentRoute =
+        ModalRoute.of(context)?.settings.name ?? '/home';
+    String targetRoute;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_scrollListener);
+    switch (index) {
+      case 0:
+        targetRoute = '/home';
+        break;
+      case 1:
+        targetRoute = '/sales';
+        break;
+      case 2:
+        targetRoute = '/product';
+        break;
+      case 3:
+        targetRoute = '/cart';
+        break;
+      case 4:
+        targetRoute = '/profile';
+        break;
+      default:
+        targetRoute = '/home';
+    }
+
+    if (currentRoute != targetRoute) {
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          settings: RouteSettings(name: targetRoute),
+          transitionDuration: const Duration(milliseconds: 150),
+          reverseTransitionDuration: const Duration(milliseconds: 150),
+          pageBuilder: (context, animation, secondaryAnimation) {
+            Widget page = CachedPageManager.getCachedPage(targetRoute, () {
+              switch (targetRoute) {
+                case '/home':
+                  return const HomePage();
+                case '/sales':
+                  return const SalesOrderPage();
+                case '/product':
+                  return const ProductsScreen();
+                case '/cart':
+                  return const CartPage();
+                case '/profile':
+                  return const ProfilePage();
+                default:
+                  return const HomePage();
+              }
+            });
+
+            return FadeTransition(
+              opacity: animation,
+              child: page,
+            );
+          },
+        ),
+      );
+    }
   }
 
-  @override
-  void dispose() {
-    _scrollController.removeListener(_scrollListener);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _scrollListener() {
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
-      setState(() {
-        _isVisible = false;
-      });
-    }
-    if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
-      setState(() {
-        _isVisible = true;
-      });
-    }
+  Widget _buildCachedPage(String route) {
+    return CachedPageManager.getCachedPage(route, () {
+      switch (route) {
+        case '/home':
+          return const HomePage();
+        case '/sales':
+          return const SalesOrderPage();
+        case '/product':
+          return const ProductsScreen();
+        case '/cart':
+          return const CartPage();
+        case '/profile':
+          return const ProfilePage();
+        default:
+          return const HomePage();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      height: _isVisible ? 80 : 0,
-      duration: const Duration(milliseconds: 300),
-      child: Scaffold(
-        bottomNavigationBar: Container(
+    return Consumer<NavigationProvider>(
+      builder: (context, navigationProvider, child) {
+        return Container(
+          height: 80,
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
@@ -59,56 +111,18 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
               ),
             ],
           ),
-          child: Consumer<CartModel>( // Use Consumer to listen for cart count changes
+          child: Consumer<CartModel>(
             builder: (context, cartModel, child) {
               return NavigationBar(
                 elevation: 0,
                 backgroundColor: Colors.white,
-                onDestinationSelected: (int index) {
-                  setState(() {
-                    _selectedIndex = index;
-                  });
-                  switch (index) {
-                    case 0:
-                      if (ModalRoute.of(context)!.settings.name != '/home') {
-                        Navigator.pushReplacementNamed(context, '/home');
-                      }
-                      break;
-                    case 1:
-                      if (ModalRoute.of(context)!.settings.name != '/sales') {
-                        Navigator.pushReplacementNamed(context, '/sales');
-                      }
-                      break;
-                    case 2:
-                      if (ModalRoute.of(context)!.settings.name != '/product') {
-                        Navigator.pushReplacementNamed(context, '/product');
-                      }
-                      break;
-                    case 3:
-                      if (ModalRoute.of(context)!.settings.name != '/cart') {
-                        Navigator.pushReplacementNamed(context, '/cart');
-                      }
-                      break;
-                    case 4:
-                      if (ModalRoute.of(context)!.settings.name != '/profile') {
-                        Navigator.pushReplacementNamed(context, '/profile');
-                      }
-                      break;
-                    default:
-                      if (ModalRoute.of(context)!.settings.name != '/home') {
-                        Navigator.pushReplacementNamed(context, '/home');
-                      }
-                      break;
-                  }
-                },
+                onDestinationSelected: (index) =>
+                    _handleNavigation(context, index),
                 indicatorColor: const Color(0xff0175FF),
-                selectedIndex: _selectedIndex,
+                selectedIndex: navigationProvider.selectedIndex,
                 destinations: <Widget>[
                   const NavigationDestination(
-                    selectedIcon: Icon(
-                      Icons.home,
-                      color: Colors.white,
-                    ),
+                    selectedIcon: Icon(Icons.home, color: Colors.white),
                     icon: Icon(Icons.home_outlined),
                     label: 'Home',
                   ),
@@ -118,36 +132,34 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
                     label: 'Sales',
                   ),
                   const NavigationDestination(
-                    selectedIcon: Icon(
-                      Icons.shopping_bag,
-                      color: Colors.white,
-                    ),
+                    selectedIcon: Icon(Icons.shopping_bag, color: Colors.white),
                     icon: Icon(Icons.shopping_bag_outlined),
                     label: 'Product',
                   ),
                   NavigationDestination(
                     selectedIcon: Badge(
-                      label: Text(cartModel.cartItemCount.toString(), style: const TextStyle(fontSize: 16),), // Use cart count from model
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: const Icon(
-                        Icons.shopping_cart,
-                        color: Colors.white,
+                      label: Text(
+                        cartModel.cartItemCount.toString(),
+                        style: const TextStyle(fontSize: 16),
                       ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      child:
+                          const Icon(Icons.shopping_cart, color: Colors.white),
                     ),
                     icon: Badge(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      label: Text(cartModel.cartItemCount.toString(), style: const TextStyle(fontSize: 12)), // Use cart count from model
-                      child: const Icon(
-                        Icons.shopping_cart_outlined,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      label: Text(
+                        cartModel.cartItemCount.toString(),
+                        style: const TextStyle(fontSize: 12),
                       ),
+                      child: const Icon(Icons.shopping_cart_outlined),
                     ),
                     label: 'Cart',
                   ),
                   const NavigationDestination(
-                    selectedIcon: Icon(
-                      Icons.person,
-                      color: Colors.white,
-                    ),
+                    selectedIcon: Icon(Icons.person, color: Colors.white),
                     icon: Icon(Icons.person_outline),
                     label: 'Profile',
                   ),
@@ -155,8 +167,8 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
               );
             },
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

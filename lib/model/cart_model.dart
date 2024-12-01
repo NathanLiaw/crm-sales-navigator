@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_navigator/db_sqlite.dart';
+import 'package:sales_navigator/data/db_sqlite.dart';
 import 'package:sales_navigator/utility_function.dart';
 
 class CartModel extends ChangeNotifier {
@@ -9,12 +9,12 @@ class CartModel extends ChangeNotifier {
 
   Future<void> initializeCartCount() async {
     _cartItemCount = await _fetchCartItemCount();
-    notifyListeners(); // Notify listeners after setting the count
+    notifyListeners();
   }
 
   void updateCartCount(int count) {
     _cartItemCount = count;
-    notifyListeners(); // Notify all listeners
+    notifyListeners();
   }
 
   Future<int> _fetchCartItemCount() async {
@@ -33,9 +33,7 @@ class CartModel extends ChangeNotifier {
       );
       return itemCount;
     } catch (e) {
-      // Handle errors here
       return 0;
     }
   }
 }
-

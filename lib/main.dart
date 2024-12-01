@@ -3,21 +3,23 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sales_navigator/api/firebase_api.dart';
-import 'package:sales_navigator/background_tasks.dart';
-import 'package:sales_navigator/cart_page.dart';
-import 'package:sales_navigator/firebase_options.dart';
-import 'package:sales_navigator/home_page.dart';
-import 'package:sales_navigator/notification_page.dart';
-import 'package:sales_navigator/login_page.dart';
-import 'package:sales_navigator/profile_page.dart';
-import 'package:sales_navigator/sales_order_page.dart';
-import 'package:sales_navigator/starting_page.dart';
-import 'package:workmanager/workmanager.dart';
-import 'db_sqlite.dart';
-import 'products_screen.dart';
+import 'package:sales_navigator/screens/notification/background_tasks.dart';
+import 'package:sales_navigator/screens/cart/cart_page.dart';
+import 'package:sales_navigator/components/navigation_provider.dart';
+import 'package:sales_navigator/screens/notification/firebase_options.dart';
+import 'package:sales_navigator/screens/home/home_page.dart';
+import 'package:sales_navigator/model/notification_state.dart';
+import 'package:sales_navigator/screens/notification/notification_page.dart';
+import 'package:sales_navigator/screens/login/login_page.dart';
+import 'package:sales_navigator/screens/profile/profile_page.dart';
+import 'package:sales_navigator/screens/sales_order/sales_order_page.dart';
+import 'package:sales_navigator/screens/login/starting_page.dart';
+import 'data/db_sqlite.dart';
+import 'package:sales_navigator/screens/product/products_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:developer' as developer;
 import 'package:provider/provider.dart';
+import 'package:sales_navigator/model/order_status_provider.dart';
 import 'package:sales_navigator/model/cart_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -30,48 +32,17 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initNotifications();
 
-  // Initialize local notifications
+  await requestStoragePermission();
+
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@drawable/sales_navigator');
   const InitializationSettings initializationSettings =
       InitializationSettings(android: initializationSettingsAndroid);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Check and request the SCHEDULE_EXACT_ALARM permission for Android 14+
   if (await shouldRequestExactAlarmPermission()) {
     await requestExactAlarmPermission();
   }
-
-  // // Initialize Workmanager
-  // await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-
-  // // Register periodic tasks
-  // await Workmanager().registerPeriodicTask(
-  //   "1",
-  //   "fetchSalesOrderStatus",
-  //   frequency: const Duration(minutes: 15),
-  //   constraints: Constraints(
-  //     networkType: NetworkType.connected,
-  //   ),
-  // );
-
-  // await Workmanager().registerPeriodicTask(
-  //   "2",
-  //   "checkTaskDueDates",
-  //   frequency: const Duration(days: 1),
-  //   constraints: Constraints(
-  //     networkType: NetworkType.connected,
-  //   ),
-  // );
-
-  // await Workmanager().registerPeriodicTask(
-  //   "3",
-  //   "checkNewSalesLeads",
-  //   frequency: const Duration(days: 1),
-  //   constraints: Constraints(
-  //     networkType: NetworkType.connected,
-  //   ),
-  // );
 
   // Handling notifications received when the app is completely closed
   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
@@ -96,18 +67,32 @@ void main() async {
     });
   });
 
-  // Initialize the SQLite database
   await DatabaseHelper.database;
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartModel()),
-        // Add other providers here
+        ChangeNotifierProvider(create: (_) => NotificationState()),
+        ChangeNotifierProvider(create: (context) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => OrderStatusProvider()),
       ],
       child: const MyApp(),
     ),
   );
+}
+
+// Permission handling for storage permission
+Future<void> requestStoragePermission() async {
+  final status = await Permission.storage.status;
+  if (status.isDenied || status.isPermanentlyDenied) {
+    await Permission.storage.request();
+  }
+  if (await Permission.storage.isGranted) {
+    developer.log("Storage permission granted.");
+  } else {
+    developer.log("Storage permission denied.");
+  }
 }
 
 // Permission handling functions for Android 14+
@@ -149,7 +134,6 @@ class _MyAppState extends State<MyApp> {
       isOffline = result == ConnectivityResult.none;
     });
 
-    // Listen for connectivity changes
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
           setState(() {
             isOffline = result == ConnectivityResult.none;
@@ -165,7 +149,20 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      home: isOffline ? NoInternetScreen() : const StartingPage(),
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFF8F8F8),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+        primaryColor: const Color(0xFF0175FF),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.black),
+          bodyMedium: TextStyle(color: Colors.black),
+          headlineSmall: TextStyle(color: Colors.black),
+        ),
+      ),
+      home: isOffline ? const NoInternetScreen() : const StartingPage(),
       routes: {
         '/home': (context) => const HomePage(),
         '/sales': (context) => const SalesOrderPage(),
@@ -180,6 +177,8 @@ class _MyAppState extends State<MyApp> {
 }
 
 class NoInternetScreen extends StatelessWidget {
+  const NoInternetScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
